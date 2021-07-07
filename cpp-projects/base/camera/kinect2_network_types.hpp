@@ -46,7 +46,7 @@ struct TcpPacket{
     std::uint8_t idGrabber; // 8
     TcpCommand cmd; // 8
     FrameRequest frameMode; // 8
-    Parameters p;
+    Settings p;
     int64_t t; // 64
     uint16_t sizeUdpPackets; // 16
     int writingPort; // 32

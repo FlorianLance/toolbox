@@ -33,40 +33,38 @@
 
 using namespace tool::camera::K2;
 
-bool ScanerConfig::save_grabber_camera_settings_file(const Parameters &p, std::string path){
+std::pair<bool, std::string> ScanerConfig::save_grabber_settings_config_file(const Settings &settings, std::string path){
 
     if(path.length() == 0){
-        path = (std::filesystem::current_path() / "config/camera/camera_saved.config").string();
+        path = (std::filesystem::current_path() / "config/settings/settings_saved.config").string();
     }
 
     std::ofstream file;
     file.open(path);
     if(!file.is_open()){
-        return  false;
+        return {false, std::format("Cannot write on grabber settings config file with path: {}\n", path)};
     }
 
-    file << p.to_string();
+    file << settings.to_string();
 
-    return true;
+    return {true, std::format("Grabber settings config file written: {}", path)};
 }
 
-std::optional<Parameters> ScanerConfig::read_grabber_camera_settings_file(std::string path){
+std::pair<std::optional<Settings>, std::string> ScanerConfig::read_grabber_settings_config_file(std::string path){
 
     std::filesystem::path fsPath;
     if(path.length() == 0){
-        fsPath = std::filesystem::current_path() / "config/camera/camera_default.config";
+        fsPath = std::filesystem::current_path() / "config/settings/settings_default.config";
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            std::cerr << "Invalid extension for config file " << fsPath.string() << "\n";
-            return {};
+            return {std::nullopt, std::format("Invalid extension for settings config file {}\n", fsPath.string())};
         }
     }
 
     std::ifstream inConfigFile(fsPath.string());
     if(!inConfigFile.is_open()){
-        std::cerr << "No config file found at: " << fsPath.string() << "\n";
-        return {};
+        return {std::nullopt, std::format("No settings config file found at {}\n", fsPath.string())};
     }
 
     std::string str;
@@ -75,10 +73,10 @@ std::optional<Parameters> ScanerConfig::read_grabber_camera_settings_file(std::s
     inConfigFile.seekg(0, std::ios::beg);
     str.assign((std::istreambuf_iterator<char>(inConfigFile)),std::istreambuf_iterator<char>());
 
-    return Parameters::from_string(str);
+    return {Settings::from_string(str), std::format("Grabber settings config file read: {}", fsPath.string())};
 }
 
-bool ScanerConfig::read_grabber_config_file(int *readingPort, std::string path){
+std::pair<bool, std::string> ScanerConfig::read_grabber_network_config_file(int *readingPort, std::string path){
 
     std::filesystem::path fsPath;
     if(path.length() == 0){
@@ -86,15 +84,13 @@ bool ScanerConfig::read_grabber_config_file(int *readingPort, std::string path){
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            std::cerr << "Invalid extension for config file " << fsPath.string() << "\n";
-            return false;
+            return {false, std::format("Invalid extension for grabber network config file {}\n",fsPath.string())};
         }
     }
 
     std::ifstream inConfigFile(fsPath.string());
     if(!inConfigFile.is_open()){
-        std::cerr << "No config file found at: " << fsPath.string() << "\n";
-        return false;
+        return {false, std::format("Cannot open grabber network config file with path: {}\n", fsPath.string())};
     }
 
     // retrieve reading port
@@ -103,27 +99,24 @@ bool ScanerConfig::read_grabber_config_file(int *readingPort, std::string path){
         *readingPort = std::stoi(line);
     }
 
-    return true;
+    return {true, std::format("Grabber network config file read: {}", fsPath.string())};
 }
 
-std::vector<GrabberTargetInfo> ScanerConfig::read_manager_network_config_file(std::string path){
+std::pair<std::vector<GrabberTargetInfo>, std::string> ScanerConfig::read_manager_network_config_file(std::string path){
 
     std::filesystem::path fsPath;
-    std::cout << "Read manager network confile file: " << path << "\n";
     if(path.length() == 0){
         fsPath = std::filesystem::current_path() / "config/network/network_default.config";
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            std::cerr << "Invalid extension for config file " << fsPath.string() << "\n";
-            return {};
+            return {{}, std::format("Invalid extension for manager network config file {}\n", fsPath.string())};
         }
     }
 
     std::ifstream inConfigFile(fsPath.string());
     if(!inConfigFile.is_open()){
-        std::cerr << "Cannot open manager network config file with path: " << fsPath.string() << "\n";
-        return {};
+        return {{}, std::format("Cannot open manager network config file with path: {}\n", fsPath.string())};
     }
 
     // retrieve infos
@@ -132,32 +125,29 @@ std::vector<GrabberTargetInfo> ScanerConfig::read_manager_network_config_file(st
     while (std::getline(inConfigFile, line)){
         auto split = tool::str::split(line, ' ');
         if(split.size() != 4){
-            std::cerr << "Invalid manager network config file with path: " << fsPath.string() << "\n";
-            return {};
+            return {{}, std::format("Invalid manager network config file with path:: {}\n", fsPath.string())};
         }
         infos.emplace_back(GrabberTargetInfo{split[0],std::stoi(split[1]),std::stoi(split[2]),std::stoi(split[3])});
     }
-
-    return infos;
+    return {infos, std::format("Manager network config file read: {}", fsPath.string())};
 }
 
-std::vector<tool::geo::Mat4d> ScanerConfig::read_manager_calibration_file(std::string path){
+
+std::pair<std::vector<tool::geo::Mat4d>, std::string> ScanerConfig::read_manager_calibration_file(std::string path){
 
     std::filesystem::path fsPath;
     if(path.length() == 0){
-        fsPath = std::filesystem::current_path() / "config/calibrations/network_default.config";
+        fsPath = std::filesystem::current_path() / "config/calibration/calibration_default.config";
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            std::cerr << "Invalid extension for config file " << fsPath.string() << "\n";
-            return {};
+            return {{}, std::format("Invalid extension for manager calibration config file {}\n", fsPath.string())};
         }
     }
 
     std::ifstream inConfigfile(fsPath.string());
     if(!inConfigfile.is_open()){
-        std::cerr << "Cannot open manager calibration file " << fsPath.string() << "\n";
-        return {};
+        return {{}, std::format("Cannot open manager calibration config file with path: {}\n", fsPath.string())};
     }
 
     std::stringstream buffer;
@@ -198,8 +188,7 @@ std::vector<tool::geo::Mat4d> ScanerConfig::read_manager_calibration_file(std::s
             if(matrix.has_value()){
                 mCalibs.emplace_back(std::move(matrix.value()));
             }else{
-                std::cerr << "Invalid manager calibration file " << fsPath.string() << "\n";
-                return {};
+                return {{}, std::format("Invalid manager calibration config file with path:: {}\n", fsPath.string())};
             }
 
         }else{
@@ -207,5 +196,5 @@ std::vector<tool::geo::Mat4d> ScanerConfig::read_manager_calibration_file(std::s
         }
     }
 
-    return mCalibs;
+    return {mCalibs, std::format("Manager calibfration config file read: {}", fsPath.string())};
 }

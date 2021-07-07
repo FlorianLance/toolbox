@@ -41,7 +41,7 @@ public:
     void close_kinect();
 
     std::int64_t get_data();
-    void update_parameters(camera::K2::Parameters parameters);
+    void update_parameters(camera::K2::Settings parameters);
 
     inline camera::K2::FrameRequest mode() const{return kinect.mode();}
 

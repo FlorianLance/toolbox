@@ -102,43 +102,43 @@ GrabberParametersW::GrabberParametersW(){
     trListW  = {ui.dsbT03, ui.dsbT13, ui.dsbT23};
 
     for( auto &w : rotListW){
-        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_display_parameters();});
+        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_current_ui_display_options();});
     }
     for( auto &w : trListW){
-        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_display_parameters();});
+        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_current_ui_display_options();});
     }
     // ### euclidian transform
     eulerRotListW   = { ui.dsbRx, ui.dsbRy, ui.dsbRz};
     eulerTrListW    = { ui.dsbTx, ui.dsbTy, ui.dsbTz};
     eulerScListW    = { ui.dsbSx, ui.dsbSy, ui.dsbSz};
     for(auto &w : eulerRotListW){
-        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_display_parameters();});
+        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_current_ui_display_options();});
     }
     for(auto &w : eulerTrListW){
-        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_display_parameters();});
+        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_current_ui_display_options();});
     }
     for(auto &w : eulerScListW){
-        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_display_parameters();});
+        connect(w, QOverload<double>::of(&QDoubleSpinBox::valueChanged),   this, [&]{send_current_ui_display_options();});
     }
 
-    connect(ui.dsbSizePts,             QOverload<double>::of(&QDoubleSpinBox::valueChanged),    this, [&]{send_display_parameters();});
-    connect(ui.cbForceCloudColor,      &QCheckBox::clicked,                                     this, [&]{send_display_parameters();});
-    connect(ui.cbDisplayCloud,         &QCheckBox::clicked,                                     this, [&]{send_display_parameters();});
-    connect(ui.sbCloudColorR,          QOverload<int>::of(&QSpinBox::valueChanged),             this, [&]{send_display_parameters();});
-    connect(ui.sbCloudColorG,          QOverload<int>::of(&QSpinBox::valueChanged),             this, [&]{send_display_parameters();});
-    connect(ui.sbCloudColorB,          QOverload<int>::of(&QSpinBox::valueChanged),             this, [&]{send_display_parameters();});
+    connect(ui.dsbSizePts,             QOverload<double>::of(&QDoubleSpinBox::valueChanged),    this, [&]{send_current_ui_display_options();});
+    connect(ui.cbForceCloudColor,      &QCheckBox::clicked,                                     this, [&]{send_current_ui_display_options();});
+    connect(ui.cbDisplayCloud,         &QCheckBox::clicked,                                     this, [&]{send_current_ui_display_options();});
+    connect(ui.sbCloudColorR,          QOverload<int>::of(&QSpinBox::valueChanged),             this, [&]{send_current_ui_display_options();});
+    connect(ui.sbCloudColorG,          QOverload<int>::of(&QSpinBox::valueChanged),             this, [&]{send_current_ui_display_options();});
+    connect(ui.sbCloudColorB,          QOverload<int>::of(&QSpinBox::valueChanged),             this, [&]{send_current_ui_display_options();});
 
     for(auto w : cameraParametersElements){
         if(qobject_cast<QSpinBox*>(w)){
-            connect(qobject_cast<QSpinBox*>(w), QOverload<int>::of(&QSpinBox::valueChanged),this, [&]{send_camera_parameters();});
+            connect(qobject_cast<QSpinBox*>(w), QOverload<int>::of(&QSpinBox::valueChanged),this, [&]{send_current_ui_settings();});
         }else if(qobject_cast<QDoubleSpinBox*>(w)){
-            connect(qobject_cast<QDoubleSpinBox*>(w), QOverload<double>::of(&QDoubleSpinBox::valueChanged),this, [&]{send_camera_parameters();});
+            connect(qobject_cast<QDoubleSpinBox*>(w), QOverload<double>::of(&QDoubleSpinBox::valueChanged),this, [&]{send_current_ui_settings();});
         }else if(qobject_cast<QCheckBox*>(w)){
-            connect(qobject_cast<QCheckBox*>(w),&QCheckBox::clicked, this, [&]{send_camera_parameters();});
+            connect(qobject_cast<QCheckBox*>(w),&QCheckBox::clicked, this, [&]{send_current_ui_settings();});
         }else if(qobject_cast<QComboBox*>(w)){
-            connect(qobject_cast<QComboBox*>(w), &QComboBox::currentTextChanged, this, [&]{send_camera_parameters();});
+            connect(qobject_cast<QComboBox*>(w), &QComboBox::currentTextChanged, this, [&]{send_current_ui_settings();});
         }else if(qobject_cast<QRadioButton*>(w)){
-            connect(qobject_cast<QRadioButton*>(w), &QRadioButton::toggled, this, [&]{send_camera_parameters();});
+            connect(qobject_cast<QRadioButton*>(w), &QRadioButton::toggled, this, [&]{send_current_ui_settings();});
         }
     }
 }
@@ -248,52 +248,52 @@ void GrabberParametersW::close_camera(){
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
 }
 
-void GrabberParametersW::set_camera_parameters(K2::Parameters p){
+void GrabberParametersW::update_ui_settings(K2::Settings s){
 
     // misc
-    w_blocking(ui.sbFPS)->setValue(static_cast<int>(p.fps));
+    w_blocking(ui.sbFPS)->setValue(static_cast<int>(s.fps));
     // size
-    w_blocking(ui.sbMinW)->setValue(static_cast<int>(p.minWidth));
-    w_blocking(ui.sbMaxW)->setValue(static_cast<int>(p.maxWidth));
-    w_blocking(ui.sbMinH)->setValue(static_cast<int>(p.minHeight));
-    w_blocking(ui.sbMaxH)->setValue(static_cast<int>(p.maxHeight));
+    w_blocking(ui.sbMinW)->setValue(static_cast<int>(s.minWidth));
+    w_blocking(ui.sbMaxW)->setValue(static_cast<int>(s.maxWidth));
+    w_blocking(ui.sbMinH)->setValue(static_cast<int>(s.minHeight));
+    w_blocking(ui.sbMaxH)->setValue(static_cast<int>(s.maxHeight));
     // color
-    w_blocking(ui.sbRFiltered)->setValue(p.filterColor.x());
-    w_blocking(ui.sbGFiltered)->setValue(p.filterColor.y());
-    w_blocking(ui.sbBFiltered)->setValue(p.filterColor.z());
-    w_blocking(ui.cbFilterDepthWithColor)->setChecked(p.filterDepthWithColor);
-    w_blocking(ui.sbMaxDiffR)->setValue(p.maxDiffColor.x());
-    w_blocking(ui.sbMaxDiffG)->setValue(p.maxDiffColor.y());
-    w_blocking(ui.sbMaxDiffB)->setValue(p.maxDiffColor.z());
-    w_blocking(ui.dsbYF)->setValue(static_cast<qreal>(p.yFactor));
-    w_blocking(ui.dsbUF)->setValue(static_cast<qreal>(p.uFactor));
-    w_blocking(ui.dsbVF)->setValue(static_cast<qreal>(p.vFactor));
-    w_blocking(ui.sbJpegCompressionRate)->setValue(static_cast<int>(p.jpegCompressionRate));
+    w_blocking(ui.sbRFiltered)->setValue(s.filterColor.x());
+    w_blocking(ui.sbGFiltered)->setValue(s.filterColor.y());
+    w_blocking(ui.sbBFiltered)->setValue(s.filterColor.z());
+    w_blocking(ui.cbFilterDepthWithColor)->setChecked(s.filterDepthWithColor);
+    w_blocking(ui.sbMaxDiffR)->setValue(s.maxDiffColor.x());
+    w_blocking(ui.sbMaxDiffG)->setValue(s.maxDiffColor.y());
+    w_blocking(ui.sbMaxDiffB)->setValue(s.maxDiffColor.z());
+    w_blocking(ui.dsbYF)->setValue(static_cast<qreal>(s.yFactor));
+    w_blocking(ui.dsbUF)->setValue(static_cast<qreal>(s.uFactor));
+    w_blocking(ui.dsbVF)->setValue(static_cast<qreal>(s.vFactor));
+    w_blocking(ui.sbJpegCompressionRate)->setValue(static_cast<int>(s.jpegCompressionRate));
     // infrared
-    w_blocking(ui.sbMinInfra)->setValue(static_cast<int>(p.minInfra));
-    w_blocking(ui.sbMaxInfra)->setValue(static_cast<int>(p.maxInfra));
-    w_blocking(ui.sbInfraMinRange)->setValue(static_cast<int>(p.minInfraRange));
-    w_blocking(ui.sbInfraMaxRange)->setValue(static_cast<int>(p.maxInfraRange));
-    w_blocking(ui.cbInfraBinary)->setChecked(p.infraBinary);
-    w_blocking(ui.cbInfraInvert)->setChecked(p.infraInvert);
+    w_blocking(ui.sbMinInfra)->setValue(static_cast<int>(s.minInfra));
+    w_blocking(ui.sbMaxInfra)->setValue(static_cast<int>(s.maxInfra));
+    w_blocking(ui.sbInfraMinRange)->setValue(static_cast<int>(s.minInfraRange));
+    w_blocking(ui.sbInfraMaxRange)->setValue(static_cast<int>(s.maxInfraRange));
+    w_blocking(ui.cbInfraBinary)->setChecked(s.infraBinary);
+    w_blocking(ui.cbInfraInvert)->setChecked(s.infraInvert);
     // depth
-    w_blocking(ui.cbEnableSmoothing)->setChecked(p.smoothingEnabled);
-    w_blocking(ui.cbSmoothingMethod)->setCurrentIndex(p.smoothingMethod);
-    w_blocking(ui.sbSmoothingKernelSize)->setValue(p.smoothingKernelSize);
-    w_blocking(ui.sbSizeKernelErode)->setValue(p.erosionSize);
-    w_blocking(ui.cbErosion)->setChecked(p.doErosion);
-    w_blocking(ui.sbMinErosionValue)->setValue(p.minErosionValue);
-    w_blocking(ui.cbErosionType)->setCurrentIndex(p.erosionType);
-    w_blocking(ui.dsbMinDepth)->setValue(static_cast<double>(p.minDepthValue));
-    w_blocking(ui.dsbMaxDepth)->setValue(static_cast<double>(p.maxDepthValue));
-    w_blocking(ui.dsbLocalDiff)->setValue(static_cast<double>(p.maxLocalDiff));
-    w_blocking(ui.dsbOffsetAfterMin)->setValue(static_cast<double>(p.offsetAfterMin));
-    w_blocking(ui.sbMinNeighboursNb)->setValue(p.nbMinNeighboursNb);
-    w_blocking(ui.sbMinNeighboursLoops)->setValue(p.minNeighboursLoops);
-    w_blocking(ui.cbTemporal)->setChecked(p.doTemporalFilter);
-    w_blocking(ui.dsbVMin)->setValue(static_cast<double>(p.vmin));
-    w_blocking(ui.dsbVMax)->setValue(static_cast<double>(p.vmax));
-    w_blocking(ui.dsbGMin)->setValue(static_cast<double>(p.gmin));
+    w_blocking(ui.cbEnableSmoothing)->setChecked(s.smoothingEnabled);
+    w_blocking(ui.cbSmoothingMethod)->setCurrentIndex(s.smoothingMethod);
+    w_blocking(ui.sbSmoothingKernelSize)->setValue(s.smoothingKernelSize);
+    w_blocking(ui.sbSizeKernelErode)->setValue(s.erosionSize);
+    w_blocking(ui.cbErosion)->setChecked(s.doErosion);
+    w_blocking(ui.sbMinErosionValue)->setValue(s.minErosionValue);
+    w_blocking(ui.cbErosionType)->setCurrentIndex(s.erosionType);
+    w_blocking(ui.dsbMinDepth)->setValue(static_cast<double>(s.minDepthValue));
+    w_blocking(ui.dsbMaxDepth)->setValue(static_cast<double>(s.maxDepthValue));
+    w_blocking(ui.dsbLocalDiff)->setValue(static_cast<double>(s.maxLocalDiff));
+    w_blocking(ui.dsbOffsetAfterMin)->setValue(static_cast<double>(s.offsetAfterMin));
+    w_blocking(ui.sbMinNeighboursNb)->setValue(s.nbMinNeighboursNb);
+    w_blocking(ui.sbMinNeighboursLoops)->setValue(s.minNeighboursLoops);
+    w_blocking(ui.cbTemporal)->setChecked(s.doTemporalFilter);
+    w_blocking(ui.dsbVMin)->setValue(static_cast<double>(s.vmin));
+    w_blocking(ui.dsbVMax)->setValue(static_cast<double>(s.vmax));
+    w_blocking(ui.dsbGMin)->setValue(static_cast<double>(s.gmin));
 }
 
 void GrabberParametersW::set_camera_state_ui(bool state){
@@ -328,8 +328,8 @@ Mat4<double> GrabberParametersW::get_transformation() const{
     return tr;
 }
 
-K2::Parameters GrabberParametersW::read_camera_parameters() const{
-    K2::Parameters p;
+K2::Settings GrabberParametersW::read_settings_from_ui() const{
+    K2::Settings p;
     // misc
     p.fps                   = static_cast<unsigned char>(ui.sbFPS->value());
     // size
@@ -379,9 +379,9 @@ K2::Parameters GrabberParametersW::read_camera_parameters() const{
     return p;
 }
 
-DisplayParameters GrabberParametersW::read_display_parameters() const{
+DisplayOptions GrabberParametersW::read_display_options_from_ui() const{
 
-    DisplayParameters p;
+    DisplayOptions p;
 
 //    auto offsetM = Mat4d::transform(   Pt3d{ui.dsbSx->value(),ui.dsbSy->value(),ui.dsbSz->value()},
 //                                            Pt3d{ui.dsbRx->value(),ui.dsbRy->value(),ui.dsbRz->value()},
@@ -396,12 +396,12 @@ DisplayParameters GrabberParametersW::read_display_parameters() const{
     return p;
 }
 
-void GrabberParametersW::copy_camera_parameters(){
-    emit copy_camera_parameters_signal(read_camera_parameters());
+void GrabberParametersW::copy_current_ui_settings(){
+    emit copy_camera_parameters_signal(read_settings_from_ui());
 }
 
-void GrabberParametersW::send_display_parameters(){
-    emit send_display_parameters_signal(read_display_parameters());
+void GrabberParametersW::send_current_ui_display_options(){
+    emit send_display_options_signal(read_display_options_from_ui());
 }
 
 void GrabberParametersW::add_network_log_message(QString message){
@@ -442,8 +442,8 @@ void GrabberParametersW::set_parameters_tab_index(int index){
     ui.twParameters->setCurrentIndex(index);
 }
 
-void GrabberParametersW::send_camera_parameters(){
-    emit send_camera_parameters_signal(read_camera_parameters());
+void GrabberParametersW::send_current_ui_settings(){
+    emit send_settings_parameters_signal(read_settings_from_ui());
 }
 
 void GrabberParametersW::send_reading_connection_parameters(){

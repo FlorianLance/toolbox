@@ -57,7 +57,7 @@ using namespace tool::camera::K2;
 
 
 
-std::string Parameters::to_string() const{
+std::string Settings::to_string() const{
     std::ostringstream ss;
     ss << "window: " << minWidth << " " << maxWidth << " " << minHeight << " " << maxHeight << "\n";
     ss << "infra_threshold: " << minInfra << " " << maxInfra << " " << minInfraRange << " " << maxInfraRange << "\n";
@@ -74,13 +74,12 @@ std::string Parameters::to_string() const{
     return ss.str();
 }
 
-Parameters Parameters::from_string(const std::string &parametersStr){
+Settings Settings::from_string(const std::string &parametersStr){
 
-    Parameters p;
+    Settings p;
 
     std::istringstream in(parametersStr);
     std::string line;
-
 
     std::getline(in, line);
     auto split = str::split(line, ' ');

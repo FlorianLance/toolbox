@@ -517,7 +517,7 @@ struct SavedData{
 };
 
 
-struct Parameters{
+struct Settings{
 
     // # width / height
     unsigned int minWidth = 0;
@@ -577,7 +577,7 @@ struct Parameters{
     bool doTemporalFilter = false;
 
     std::string to_string() const;
-    static Parameters from_string(const std::string &parametersStr);
+    static Settings from_string(const std::string &parametersStr);
 };
 
 
@@ -588,7 +588,7 @@ struct Frame{
     Frame copy_frame();
 
     FrameRequest mode;
-    Parameters parameters;
+    Settings parameters;
     std_v1<float> intrinsics;
 
     // output formated kinect data

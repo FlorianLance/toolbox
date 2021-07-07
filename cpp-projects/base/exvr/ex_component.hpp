@@ -38,6 +38,7 @@
 
 typedef void (__stdcall * StrackTraceCB)(const char*);
 typedef void (__stdcall * LogCB)(const char*);
+typedef void (__stdcall * LogWarningCB)(const char*);
 typedef void (__stdcall * LogErrorCB)(const char*);
 typedef long (__stdcall * EllapsedTimeExpMsCB)();
 typedef long (__stdcall * EllapsedTimeRoutineMsCB)();
@@ -230,6 +231,14 @@ public:
         }
     }
 
+    static void log_warning(std::string warningMessage){
+        if(logWarningCB){
+            (*logWarningCB)(warningMessage.c_str());
+        }else{
+            std::cerr << warningMessage << "\n";
+        }
+    }
+
     static void log_error(std::string errorMessage){
         if(logErrorCB){
             (*logErrorCB)(errorMessage.c_str());
@@ -303,6 +312,7 @@ public:
 
     inline static std::unique_ptr<StrackTraceCB> strackTraceCB = nullptr;
     inline static std::unique_ptr<LogCB> logCB = nullptr;
+    inline static std::unique_ptr<LogWarningCB> logWarningCB = nullptr;
     inline static std::unique_ptr<LogErrorCB> logErrorCB= nullptr;
     inline static std::unique_ptr<EllapsedTimeExpMsCB> ellapsedTimeExpMsCB= nullptr;
     inline static std::unique_ptr<EllapsedTimeRoutineMsCB> ellapsedTimeRoutineMsCB= nullptr;

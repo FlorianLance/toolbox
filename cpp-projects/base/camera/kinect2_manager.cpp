@@ -73,7 +73,7 @@ std::int64_t Kinect2Manager::get_data(){
     return -1;
 }
 
-void Kinect2Manager::update_parameters(K2::Parameters parameters){
+void Kinect2Manager::update_parameters(K2::Settings parameters){
     kinect.parameters = std::move(parameters);
 }
 

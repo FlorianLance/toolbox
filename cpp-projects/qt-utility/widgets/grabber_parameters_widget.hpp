@@ -26,7 +26,7 @@ namespace Ui {
 namespace tool::ui{
 
 
-struct DisplayParameters{
+struct DisplayOptions{
 
     // cloud
     bool displayCloud = true;
@@ -58,17 +58,24 @@ public slots:
     void send_writing_connection_parameters();
     void send_reading_connection_parameters();
 
-    // parameters        
-    void copy_camera_parameters();
-    void send_camera_parameters();
-    void send_display_parameters();
-    camera::K2::Parameters read_camera_parameters() const;
-    DisplayParameters read_display_parameters() const;
+    // settings
+    void update_ui_settings(camera::K2::Settings settings);
+    camera::K2::Settings read_settings_from_ui() const;
+    void copy_current_ui_settings();
+    void send_current_ui_settings();
 
-    // display
+    // display options
+    void send_current_ui_display_options();
+    DisplayOptions read_display_options_from_ui() const;
+
+    // camera
+    void open_camera(camera::K2::FrameRequest frameMode);
+    void close_camera();
+    void set_camera_state_ui(bool state);
+
+    // 3D
     void update_transformation(const geo::Mat4<double> &m);
     geo::Mat4<double> get_transformation()const;
-
     void add_network_log_message(QString message);
     void display_cloud();
     void hide_cloud();
@@ -78,33 +85,28 @@ public slots:
     void update_last_frame_time(std::int64_t microS);
     void set_parameters_tab_index(int index);
 
-    // camera
-    void open_camera(camera::K2::FrameRequest frameMode);
-    void close_camera();
-    void set_camera_parameters(camera::K2::Parameters p);
-    void set_camera_state_ui(bool);
-
-
 signals:
 
     // network
     void send_grabber_reading_connection_parameters_signal(int readingPort);
     void send_grabber_writing_connection_parameters_signal(QString writingAddress, int writingPort);
-
     void send_manager_reading_connection_parameters_signal(int readingInterface, int readingPort);
     void send_manager_writing_connection_parameters_signal(QString grabberName, int writingPort, int readingInterface, int readingPort);
-
     void disable_connection_signal();
 
-    // display
-    void send_display_parameters_signal(DisplayParameters);
-    void set_display_state_signal(bool state);
+    // settings
+    void send_settings_parameters_signal(camera::K2::Settings);
+    void copy_camera_parameters_signal(camera::K2::Settings);
+
+    // display options
+    void send_display_options_signal(DisplayOptions displayOptions);
 
     // camera
     void open_camera_signal(camera::K2::FrameRequest frameMode);
     void close_camera_signal();
-    void send_camera_parameters_signal(camera::K2::Parameters);
-    void copy_camera_parameters_signal(camera::K2::Parameters);
+
+    // state
+    void set_display_state_signal(bool state);
     void set_data_state_signal(bool state);
 
 private :

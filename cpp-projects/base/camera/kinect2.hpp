@@ -85,7 +85,7 @@ public :
     bool save_camera_space_depth_table(std::string filePath);
 
 
-    K2::Parameters parameters; // Kinect2 current camera parameters
+    K2::Settings parameters; // Kinect2 current camera parameters
 
 
 private:

@@ -39,12 +39,20 @@ class ScanerConfig{
 
 public:
 
-    static bool save_grabber_camera_settings_file(const Parameters &p, std::string path);
-    static std::optional<Parameters> read_grabber_camera_settings_file(std::string path = "");
-    static bool read_grabber_config_file(int *readingPort, std::string path = "");
+    // camera
+    // # grabber
+    static std::pair<bool, std::string> save_grabber_settings_config_file(const Settings &p, std::string path);
+    static std::pair<std::optional<Settings>, std::string> read_grabber_settings_config_file(std::string path = "");
 
-    static std_v1<GrabberTargetInfo> read_manager_network_config_file(std::string path = "");
-    static std_v1<geo::Mat4d> read_manager_calibration_file(std::string path = "");
+    // network
+    // # grabber
+    static std::pair<bool, std::string> read_grabber_network_config_file(int *readingPort, std::string path = "");
+    // # manager
+    static std::pair<std::vector<GrabberTargetInfo>, std::string> read_manager_network_config_file(std::string path = "");
+
+    // calibration
+    // # manager
+    static std::pair<std::vector<tool::geo::Mat4d>, std::string> read_manager_calibration_file(std::string path = "");
 };
 
 }
