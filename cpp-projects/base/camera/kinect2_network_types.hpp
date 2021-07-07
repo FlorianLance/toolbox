@@ -39,7 +39,8 @@ enum class TcpCommand : uint8_t{
     UpdateParameters,
     AskNewFrame,
     ShutdownComputer,
-    RestartComputer
+    RestartComputer,
+    AskToSaveSettingsFile
 };
 
 struct TcpPacket{
