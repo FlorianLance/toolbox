@@ -20,6 +20,7 @@ GLFW_DIR                             = $$TOOLBOX_CPP_THIRDPARTY_DIR"/glfw-3.3.2"
 SFML_DIR                             = $$TOOLBOX_CPP_THIRDPARTY_DIR"/SFML"
 GLM_DIR                              = $$TOOLBOX_CPP_THIRDPARTY_DIR"/glm"
 BIOPAC_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/biopac"
+QWT_DIR                              = $$TOOLBOX_CPP_THIRDPARTY_DIR"/qwt-6.1.4"
 
 ########################################################## INCLUDES
 
@@ -70,6 +71,11 @@ TURBOJPG_INCLUDES =\
 ############################ FASTPFOR
 FASTPFOR_INCLUDES =\
     $$FASTPFOR_DIR"/"
+
+############################# QWT
+QWT_INCLUDES = \
+    $$QWT_DIR"/src"
+
 
 ########################################################## WINDOWS LIBS
 WINDOWS_LIBS = \
@@ -123,6 +129,11 @@ equals(COMPILER, "vs"){
 
 
 ############################ FASTPFOR
+
+############################# QWT
+        QWT_LIBS =\
+            -L$$QWT_DIR"/lib/debug" \
+            -lqwtd\
     }
 
 ########################################################## RELEASE LIBS
@@ -196,5 +207,11 @@ equals(COMPILER, "vs"){
         FASTPFOR_LIBS =\
             -L$$FASTPFOR_DIR"/msvc/x64/Release" \
             -lFastPFor \
+
+############################# QWT
+        QWT_LIBS =\
+            -L$$QWT_DIR"/lib/release" \
+            -lqwt\
+
     }
 }
