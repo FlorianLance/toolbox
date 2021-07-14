@@ -69,6 +69,7 @@ DEFINES += QWT_DLL
 ####################################### INCLUDES
 INCLUDEPATH += \    
     # local
+    $$QT_UTILITY_MOC \
     widgets \
     ex_widgets \
     ex_widgets/items \
