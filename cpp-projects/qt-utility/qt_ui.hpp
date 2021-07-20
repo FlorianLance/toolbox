@@ -130,6 +130,7 @@ namespace tool::ui {
             }
             return cb;
         }
+
         static QCheckBox* init(QCheckBox *cb, QString txt, bool checked, bool enabled = true){
             cb->setText(txt);
             cb->setChecked(checked);
