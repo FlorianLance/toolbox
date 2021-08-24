@@ -35,24 +35,55 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
 
     // generate widgets
     curveW = new CurveW();
-    auto f1  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Range X axis:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
-    auto f2  = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("min"),1}, {minX(), 10}, {ui::W::txt("max"),1}, {maxX(),10}},   0, LMarginsD{0,0,0,0,2});
-    auto f3  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Range Y axis:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
-    auto f4  = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("min"),1}, {minY(), 10}, {ui::W::txt("max"),1}, {maxY(),10}},   0, LMarginsD{0,0,0,0,2});
-    auto f5  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Y values:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
-    auto f6  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("first"),1},{firstY(),10}, {ui::W::txt("last"),1},{lastY(), 10}},  0, LMarginsD{0,0,0,0,2});
-    auto f7  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Add specific point:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
-    auto f8  = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("X"),1}, {addX(), 10}, {ui::W::txt("Y"),1}, {addY(),10}},   0, LMarginsD{0,0,0,0,2});
-    auto f9  = ui::F::gen_frame(ui::L::HB(), {{addPointB  = new QPushButton("Add point"),1}, {resetB  = new QPushButton("Reset points"),2}},  0, LMarginsD{0,0,0,0,2});
-    auto f10 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Others:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
-    auto f11 = ui::F::gen_frame(ui::L::HB(), {{fitted(),1}},  0, LMarginsD{0,0,0,0,2});
-    auto f12 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Infos:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
-    auto f13 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("Add point with left click"),1}},  0, LMarginsD{0,0,0,0,2});
-    auto f14 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("Remove point with right click"),1}},  0, LMarginsD{0,0,0,0,2});
-    auto fControl = ui::F::gen_frame(ui::L::VB(), {f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14},
-            LStretchD{}, LMarginsD{4,4,4,4}, QFrame::Shape::Box);
+
+    // right layout
+    // # all curves
+    auto fg0  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Range X axis:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
+    auto fg1  = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("min"),1}, {minX(), 10}, {ui::W::txt("max"),1}, {maxX(),10}},   0, LMarginsD{0,0,0,0,2});
+    auto fg2  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Range Y axis:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
+    auto fg3  = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("min"),1}, {minY(), 10}, {ui::W::txt("max"),1}, {maxY(),10}},   0, LMarginsD{0,0,0,0,2});
+    auto allCurves = ui::F::gen_frame(ui::L::VB(), {fg0,fg1,fg2,fg3}, LStretchD{}, LMarginsD{4,4,4,4}, QFrame::Shape::Box);
+    // # current curve
+    auto fc0  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Current curve:</b>"),1},{currentCurveId(),3}},   0, LMarginsD{0,0,0,0,2});
+    auto fc1  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Preset:</b>"),1},{type(),3}},   0, LMarginsD{0,0,0,0,2});
+    auto fc2  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Y values:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
+    auto fc3  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("first"),1},{firstY(),10}, {ui::W::txt("last"),1},{lastY(), 10}},  0, LMarginsD{0,0,0,0,2});
+    auto fc4 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Add specific point:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
+    auto fc5 = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("X"),1}, {addX(), 10}, {ui::W::txt("Y"),1}, {addY(),10}},   0, LMarginsD{0,0,0,0,2});
+    auto fc6 = ui::F::gen_frame(ui::L::HB(), {{addPointB  = new QPushButton("Add point"),1}, {resetB  = new QPushButton("Reset points"),2}},  0, LMarginsD{0,0,0,0,2});
+    auto fc7 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Others:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
+    auto fc8 = ui::F::gen_frame(ui::L::HB(), {{fitted(),1}},  0, LMarginsD{0,0,0,0,2});
+    auto fc9 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Infos:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
+    auto fc10 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("Add point with left click"),1}},  0, LMarginsD{0,0,0,0,2});
+    auto fc11 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("Remove point with right click"),1}},  0, LMarginsD{0,0,0,0,2});
+    auto currentCurve = ui::F::gen_frame(ui::L::VB(), {fc0,fc1,fc2,fc3,fc4,fc5,fc6,fc7,fc8,fc9,fc10,fc11}, LStretchD{}, LMarginsD{4,4,4,4}, QFrame::Shape::Box);
+    // # container
+    auto rightL = new QVBoxLayout();
+    rightL->addWidget(allCurves);
+    rightL->addWidget(currentCurve);
+    rightL->setContentsMargins(0,0,0,0);
+    auto rightW = new QWidget();
+    rightW->setLayout(rightL);
+
+    // main layout
+    auto mainL = new QHBoxLayout();
+    w->setLayout(mainL);
+    mainL->addWidget(ui::F::gen(ui::L::HB(), {curveW}, LStretch{false}, LMargins{false}, QFrame::Box));
+    mainL->addWidget(rightW);
+    mainL->setStretch(0, 3);
+    mainL->setStretch(1, 1);
 
     // init widets
+    QStringList items;
+    items << "custom"        << "y=x"             <<
+             "easeInSine"    << "easeInCubic"     << "easeInQuint"    << "easeInCirc"    << "easeInElastic"    <<
+             "easeInQuad"    << "easeInQuart"     << "easeInExpo"     << "easeInBack"    << // "easeInBounce"     <<
+             "easeOutSine"   << "easeOutCubic"    << "easeOutQuint"   << "easeOutCirc"   << "easeOutElastic"   <<
+             "easeOutQuad"   << "easeOutQuart"    << "easeOutExpo"    << "easeOutBack"   << // "easeOutBounce"    <<
+             "easeInOutSine" << "easeInOutCubic"  << "easeOutInQuint" << "easeInOutCirc" << "easeInOutElastic" <<
+             "easeInOutQuad" << "easeInOutQuart"  << "easeInOutExpo"  << "easeInOutBack";// <<  "easeInOutBounce";
+    type.init_widget(items, Index{0});
+
     auto diffRangeX = xRange.y() - xRange.x();
     auto diffRangeY = yRange.y() - yRange.x();
     // # range
@@ -70,18 +101,13 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
     // # add
     addX.init_widget(MinV<qreal>{-100000.}, V<qreal>{diffRangeX*0.5}, MaxV<qreal>{100000.}, StepV<qreal>{diffRangeY*0.01}, 3);
     addY.init_widget(MinV<qreal>{-100000.},  V<qreal>{diffRangeX*0.5}, MaxV<qreal>{100000.}, StepV<qreal>{diffRangeY*0.01}, 3);
+
+    // # curve id
+    currentCurveId.w->setMinimum(0);
+    currentCurveId.w->setMaximum(10);
     // # actions
     resetB->setMinimumWidth(150);
     fitted.init_widget("fitted ", true);
-
-    // add widgets to layout
-    auto mainL = new QHBoxLayout();
-    w->setLayout(mainL);
-    mainL->addWidget(ui::F::gen(ui::L::HB(), {curveW}, LStretch{false}, LMargins{false}, QFrame::Box));
-    mainL->addWidget(fControl);
-    mainL->setStretch(0, 3);
-    mainL->setStretch(1, 1);
-
     resetB->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 
     // # curve
@@ -90,8 +116,7 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
     curveW->set_y_title(yTitle);
     curveW->set_x_range(xRange.x(), xRange.y());
     curveW->set_y_range(yRange.x(), yRange.y());
-    curveW->set_points({xRange.x(), xRange.y()}, {yRange.x(), yRange.y()});
-
+    curveW->set_points({xRange.x(), xRange.y()}, {yRange.x(), yRange.y()}, 0);
 
     w->setEnabled(enabled);
 
@@ -107,6 +132,7 @@ void ExCurveW::init_connection(const QString &nameParam){
     firstY.init_connection(QSL("first_y"));
     lastY.init_connection(QSL("last_y"));
     fitted.init_connection(QSL("fitted"));
+    type.init_connection(QSL("type"));
 
     connect(curveW, &CurveW::data_updated_signal, this, [=]{
         emit ui_change_signal(nameParam);
@@ -187,6 +213,8 @@ void ExCurveW::init_connection(const QString &nameParam){
         curveW->set_y_range(minY.w->value(), maxY.w->value());
     });
     connect(&firstY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+
+
         double v = firstY.w->value();
         if(v < minY.w->value()){
             v = minY.w->value();
@@ -194,9 +222,11 @@ void ExCurveW::init_connection(const QString &nameParam){
         if(v > maxY.w->value()){
             v = maxY.w->value();
         }
-        curveW->set_first_y(v);
+        curveW->set_first_y(v, currentCurveId.w->value());
     });
     connect(&lastY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+
+
         double v = lastY.w->value();
         if(v < minY.w->value()){
             v = minY.w->value();
@@ -204,14 +234,19 @@ void ExCurveW::init_connection(const QString &nameParam){
         if(v > maxY.w->value()){
             v = maxY.w->value();
         }
-        curveW->set_last_y(v);
+        curveW->set_last_y(v, currentCurveId.w->value());
     });
 
     connect(addPointB,    &QPushButton::clicked,   this, [&]{
-        curveW->add_point(addX.w->value(), addY.w->value());
+
+        curveW->add_point(addX.w->value(), addY.w->value(), currentCurveId.w->value());
     });
 
     connect(resetB,    &QPushButton::clicked,   this, [&]{
+
+        type.blockSignals(true);
+        type.w->setCurrentIndex(0);
+        type.blockSignals(false);
 
         firstY.blockSignals(true);
         lastY.blockSignals(true);
@@ -221,6 +256,11 @@ void ExCurveW::init_connection(const QString &nameParam){
         lastY.blockSignals(false);
 
         curveW->reset();
+    });
+
+    connect(&type, &ExComboBoxTextW::ui_change_signal, this, [&,nameParam]{
+        auto id = type.w->currentIndex();
+        curveW->set_type(static_cast<Curve::Type>(id), currentCurveId.w->value());
     });
 }
 
@@ -296,7 +336,7 @@ void ExCurveW::update_from_arg(const Arg &arg){
 
     curveW->set_x_range(minXV, maxXV);
     curveW->set_y_range(minYV, maxYV);
-    curveW->set_points(std::move(pts.first), std::move(pts.second));
+    curveW->set_points(std::move(pts.first), std::move(pts.second), 0);
 
     w->blockSignals(false);
 }

@@ -39,21 +39,45 @@
 
 namespace tool::ui{
 
+
+
 struct Curve{
+
+    enum class Type : int {
+        Custom = 0, YEqualsX,
+        EaseInSine, EaseInCubic, EaseInQuint, EaseInCirc, EaseInElastic,
+        EaseInQuad, EaseInQuart, EaseInExpo, EaseInBack, //EaseInBounce,
+        EaseOutSine, EaseOutCubic, EaseOutQuint, EaseOutCirc,  EaseOutElastic,
+        EaseOutQuad, EaseOutQuart, EaseOutExpo, EaseOutBack, //EaseOutBounce,
+        EaseInOutSine, EaseInOutCubic, EaseOutInQuint, EaseInOutCirc, EaseInOutElastic,
+        EaseInOutQuad, EaseInOutQuart, EaseInOutExpo, EaseInOutBack, //EaseInOutBounce,
+        SizeEnum
+    };
 
     Curve();
 
-    void set_fitted_state(bool state);
-    void update_plot_samples();
     void insert_point(double rPosX, double rPosY);
     void remove_point(QPointF pt, double minScaleX, double minScaleY, double diffScaleX, double diffScaleY);
 
+    void set_fitted_state(bool state);
     void set_pen(const QPen &pen);
+    void set_type(Type type, double minX, double maxX, double minY, double maxY);
+
+    void update_plot_samples();
 
     std::vector<double> xCoords = {0,1};
     std::vector<double> yCoords = {0,1};
     QwtPlotCurve plot;
     bool fitted = true;
+
+    Curve::Type type = Curve::Type::Custom;
+
+private :
+
+    const static inline auto n1 = 7.5625;
+    const static inline auto d1 = 2.75;
+
+//    double ease_out_bounce(double x);
 };
 
 
@@ -78,22 +102,24 @@ private:
     double minScaleY = 0.;
     double maxScaleY = 1.;
 
+
 public slots:
 
     void reset(size_t nbCurves = 1);
 
     // data
-    void add_point_to_end(double xOffset, double y, size_t idCurve = 0);
-    void add_point(double x, double y, size_t idCurve = 0);
-    void set_points(std::vector<double> x, std::vector<double> y, size_t idCurve = 0);
-    void set_first_y(double value, size_t idCurve = 0);
-    void set_last_y(double value, size_t idCurve = 0);
+    void add_point_to_end(double xOffset, double y, size_t idCurve);
+    void add_point(double x, double y, size_t idCurve);
+    void set_points(std::vector<double> x, std::vector<double> y, size_t idCurve);
+    void set_first_y(double value, size_t idCurve);
+    void set_last_y(double value, size_t idCurve);
+    void set_type(Curve::Type type, size_t idCurve);
 
     // interpolation
-    void set_fitted_state(bool state, size_t idCurve = 0);
+    void set_fitted_state(bool state);//, size_t idCurve = 0);
 
     // display
-    void remove_symbol(size_t idCurve = 0);
+    void remove_symbol(size_t idCurve);
 
     void set_title(QString title);
     void set_x_title(QString title);
@@ -102,7 +128,7 @@ public slots:
     void set_y_range(qreal min, qreal max);
 
 
-    void set_pen(const QPen &pen, size_t idCurve = 0);
+    void set_pen(const QPen &pen, size_t idCurve);
 
 public:
 

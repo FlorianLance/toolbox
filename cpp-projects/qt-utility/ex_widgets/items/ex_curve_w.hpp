@@ -31,8 +31,10 @@
 
 // local
 #include "widgets/curve_widget.hpp"
+#include "ex_spin_box_w.hpp"
 #include "ex_double_spin_box_w.hpp"
 #include "ex_checkbox_w.hpp"
+#include "ex_combo_box_text_w.hpp"
 
 namespace tool::ex{
 
@@ -49,10 +51,11 @@ public :
 
     // curve
     tool::ui::CurveW *curveW = nullptr;
+    // id curve
+    ExSpinBoxW currentCurveId;
     // actions
     QPushButton *resetB = nullptr;
     QPushButton *addPointB = nullptr;
-//    QPushButton *presetSinusB = nullptr;
     // range x    
     ExDoubleSpinBoxW minX;
     ExDoubleSpinBoxW maxX;
@@ -68,6 +71,7 @@ public :
     // settings
     ExCheckBoxW fitted;
 //    ExCheckBoxW relative;
+    ExComboBoxTextW type;
 };
 
 

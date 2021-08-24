@@ -33,6 +33,7 @@
 #include <qwt_curve_fitter.h>
 
 // base
+#include "utility/maths_utility.hpp"
 #include "geometry/point2.hpp"
 
 using namespace tool;
@@ -67,6 +68,258 @@ void Curve::set_pen(const QPen &pen){
     plot.setPen(pen);
 }
 
+void Curve::set_type(Curve::Type type, double minX, double maxX, double minY, double maxY){
+
+    this->type = type;
+
+    if(type == Type::Custom || type == Type::YEqualsX){
+        xCoords = {minX, maxX};
+        yCoords = {minY, maxY};
+    }else{
+
+        size_t nbPoints = 50;
+        const auto stepX = (maxX - minX) / (nbPoints-1);
+        xCoords.resize(nbPoints);
+        yCoords.resize(nbPoints);
+        for(size_t ii = 0; ii < nbPoints; ++ii){
+            xCoords[ii] = minX + ii * stepX;
+        }
+
+        switch (type) {
+        case Type::EaseInSine:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1.0 - cos((xCoords[ii] * tool::PI<double>)/ 2.);
+            }
+        break;
+        case Type::EaseInCubic:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = std::pow(xCoords[ii], 3);
+            }
+        break;
+        case Type::EaseInQuint:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = std::pow(xCoords[ii], 5);
+            }
+        break;
+        case Type::EaseInCirc:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1 - std::sqrt(1 - std::pow(xCoords[ii],2));
+            }
+        break;                        
+        case Type::EaseInElastic:{
+            const auto c4 = tool::two_PI<double>/3.;
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(almost_equal<double>(xCoords[ii],0)){
+                    yCoords[ii] = 0;
+                }else if(almost_equal<double>(xCoords[ii],1)){
+                    yCoords[ii] = 1;
+                }else{
+                    yCoords[ii] = -std::pow(2.0, 10. * xCoords[ii] - 10.) * sin((xCoords[ii] * 10. - 10.75) * c4);
+                }
+            }
+        break;}
+        case Type::EaseInQuad:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = std::pow(xCoords[ii], 2);
+            }
+        break;
+        case Type::EaseInQuart:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = std::pow(xCoords[ii], 4);
+            }
+        break;
+        case Type::EaseInExpo:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(almost_equal<double>(xCoords[ii],0)){
+                    yCoords[ii] = 0;
+                }else {
+                    yCoords[ii] = std::pow(2., 10. * xCoords[ii] - 10.);
+                }
+            }
+        break;
+        case Type::EaseInBack:{
+            const auto c1 = 1.70158;
+            const auto c3 = c1 + 1;
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = c3 * std::pow(xCoords[ii],3) - c1 * std::pow(xCoords[ii],2);
+            }
+        break;}
+//        case Type::EaseInBounce:
+//            for(size_t ii = 0; ii < nbPoints; ++ii){
+//                yCoords[ii] = 1.0 - ease_out_bounce(1.0 - xCoords[ii]);
+//            }
+//        break;
+        case Type::EaseOutSine:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = sin((xCoords[ii] *  tool::PI<double>)/ 2.);
+            }
+        break;
+        case Type::EaseOutCubic:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1 - std::pow(1 - xCoords[ii], 3);
+            }
+        break;
+        case Type::EaseOutQuint:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1 - std::pow(1 - xCoords[ii], 5);
+            }
+        break;
+        case Type::EaseOutCirc:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = sqrt(1.0 - std::pow(xCoords[ii]-1,2));
+            }
+        break;
+        case Type::EaseOutElastic:{
+            const auto c4 = tool::two_PI<double>/3.;
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(almost_equal<double>(xCoords[ii],0)){
+                    yCoords[ii] = 0;
+                }else if(almost_equal<double>(xCoords[ii],1)){
+                    yCoords[ii] = 1;
+                }else{
+                    yCoords[ii] = std::pow(2, -10. * xCoords[ii] ) * sin((xCoords[ii] * 10. - 0.75) * c4) + 1;
+                }
+            }
+        break;}
+        case Type::EaseOutQuad:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1 - std::pow(1 - xCoords[ii], 2);
+            }
+        break;
+        case Type::EaseOutQuart:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1 - std::pow(1 - xCoords[ii], 4);
+            }
+        break;
+        case Type::EaseOutExpo:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(almost_equal<double>(xCoords[ii],1)){
+                    yCoords[ii] = 1;
+                }else {
+                    yCoords[ii] = 1. - std::pow(2., -10. * xCoords[ii]);
+                }
+            }
+        break;
+        case Type::EaseOutBack:{
+            const auto c1 = 1.70158;
+            const auto c3 = c1 + 1;
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = 1 + c3 * std::pow(xCoords[ii]-1., 3) + c1 * std::pow(xCoords[ii] -1. , 2);
+            }
+        break;}
+//        case Type::EaseOutBounce:{
+
+//            for(size_t ii = 0; ii < nbPoints; ++ii){
+//                yCoords[ii] = ease_out_bounce(xCoords[ii]);
+//            }
+
+//        break;}
+        case Type::EaseInOutSine:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                yCoords[ii] = -(cos(PI<double> * xCoords[ii])- 1.0) / 2.0;
+            }
+        break;
+        case Type::EaseInOutCubic:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(xCoords[ii] < 0.5){
+                    yCoords[ii] = 4 * std::pow(xCoords[ii],3);
+                }else {
+                    yCoords[ii] = 1 - std::pow(-2. * xCoords[ii] + 2., 3.) / 2.;
+                }
+            }
+        break;
+        case Type::EaseOutInQuint:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(xCoords[ii] < 0.5){
+                    yCoords[ii] = 16 * std::pow(xCoords[ii],5);
+                }else {
+                    yCoords[ii] = 1 - std::pow(-2. * xCoords[ii] + 2., 5.) / 2.;
+                }
+            }
+        break;
+        case Type::EaseInOutCirc:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(xCoords[ii] < 0.5){
+                    yCoords[ii] = (1. - sqrt(1. - std::pow(2. * xCoords[ii], 2))) / 2.;
+                }else {
+                    yCoords[ii] = (sqrt(1. - std::pow(-2. * xCoords[ii] + 2., 2.)) + 1) / 2.;
+                }
+            }
+        break;
+        case Type::EaseInOutElastic:{
+            const auto c5 = tool::two_PI<double>/4.5;
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(almost_equal<double>(xCoords[ii],0)){
+                    yCoords[ii] = 0;
+                }else if(almost_equal<double>(xCoords[ii],1)){
+                    yCoords[ii] = 1;
+                }else if(xCoords[ii] < 0.5){
+                    yCoords[ii] = -(std::pow(2., 20. * xCoords[ii] - 10.) * sin((20. * xCoords[ii] - 11.125) * c5)) / 2.;
+                }else{
+                    yCoords[ii] = (std::pow(2, -20. * xCoords[ii] + 10) * sin((20. * xCoords[ii] - 11.125) * c5)) / 2. + 1;
+                }
+            }
+        break;}
+        case Type::EaseInOutQuad:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(xCoords[ii] < 0.5){
+                    yCoords[ii] = 2. * std::pow(xCoords[ii], 2);
+                }else {
+                    yCoords[ii] = 1. - std::pow(-2. * xCoords[ii] + 2., 2.) / 2.;
+                }
+            }
+        break;
+        case Type::EaseInOutQuart:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(xCoords[ii] < 0.5){
+                    yCoords[ii] = 8. * std::pow(xCoords[ii], 4);
+                }else {
+                    yCoords[ii] = 1. - std::pow(-2. * xCoords[ii] + 2., 4.) / 2.;
+                }
+            }
+        break;
+        case Type::EaseInOutExpo:
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(almost_equal<double>(xCoords[ii],0)){
+                    yCoords[ii] = 0;
+                }else if(almost_equal<double>(xCoords[ii],1)){
+                    yCoords[ii] = 1;
+                }else if(xCoords[ii] < 0.5){
+                    yCoords[ii] = std::pow(2., 20. * xCoords[ii] - 10.) / 2.;
+                }else{
+                    yCoords[ii] = (2. - std::pow(2., -20. * xCoords[ii] + 10.)) / 2.;
+                }
+            }
+        break;
+        case Type::EaseInOutBack:{
+            const auto c1 = 1.70158;
+            const auto c2 = c1 * 1.525;
+            for(size_t ii = 0; ii < nbPoints; ++ii){
+                if(xCoords[ii] < 0.5){
+                    yCoords[ii] = (std::pow(2. * xCoords[ii], 2.) * ((c2 +1) * 2. * xCoords[ii] - c2)) / 2.;
+                }else {
+                    yCoords[ii] = (std::pow(2. * xCoords[ii] - 2., 2.) * ((c2 + 1.) * (xCoords[ii] * 2. - 2.) + c2) +2) / 2.;
+                }
+            }
+        break;}
+//        case Type::EaseInOutBounce:
+//        break;
+        default:
+        break;
+        }
+    }
+
+    // check bondaries of y values
+//    for(auto &v : yCoords){
+//        if(v < minY){
+//            v = minY;
+//        }
+//        if(v > maxY){
+//            v = maxY;
+//        }
+//    }
+}
+
 void Curve::set_fitted_state(bool state){
     plot.setCurveAttribute(QwtPlotCurve::Fitted, fitted = state);
 }
@@ -75,7 +328,34 @@ void Curve::update_plot_samples(){
     plot.setRawSamples(xCoords.data(), yCoords.data(), static_cast<int>(xCoords.size()));
 }
 
+//double Curve::ease_out_bounce(double x){
+
+//    return (t = +t) < b1 ?
+//        b0 * t * t : t < b3 ?
+//            b0 * (t -= b2) * t + b4 :
+//        t < b6 ? b0 * (t -= b5) * t + b7 : b0 * (t -= b8) * t + b9;
+
+
+
+//    if (x < (1. / d1)) {
+//        return n1 * std::pow(2, x);
+//    } else if (x < (2 / d1)) {
+//        const auto xp = x - 1.5;
+//        return  n1 * (xp  / d1) * xp + 0.75;
+//    } else if (x < (2.5 / d1)) {
+//        const auto xp = x - 2.25;
+//        return n1 * (xp  / d1) * xp + 0.9375;
+//    } else {
+//        const auto xp = x - 2.625;
+//        return n1 * (xp  / d1) * xp + 0.984375;
+//    }
+
+//    return 0.;
+//}
+
 void Curve::insert_point(double rPosX, double rPosY){
+
+    type = Type::Custom;
 
     for(size_t ii = 0; ii < xCoords.size(); ++ii){
         if(xCoords[ii] > rPosX){
@@ -87,6 +367,8 @@ void Curve::insert_point(double rPosX, double rPosY){
 }
 
 void Curve::remove_point(QPointF pt, double minScaleX, double minScaleY, double diffScaleX, double diffScaleY){
+
+    type = Type::Custom;
 
     double min = 0.1;
     int index = -1;
@@ -328,7 +610,7 @@ void CurveW::reset(size_t nbCurves){
     emit data_updated_signal();
 }
 
-void CurveW::add_point_to_end(double xOffset, double y, size_t idCurve){
+void CurveW::add_point_to_end(double xOffset, double y, size_t idCurve){    
 
     if(idCurve >= curves.size()){
         return;
@@ -348,7 +630,7 @@ void CurveW::add_point_to_end(double xOffset, double y, size_t idCurve){
 
 }
 
-void CurveW::add_point(double x, double y, size_t idCurve){
+void CurveW::add_point(double x, double y, size_t idCurve){   
 
     if(idCurve >= curves.size()){
         return;
@@ -413,12 +695,30 @@ void CurveW::set_last_y(double value, size_t idCurve){
     emit data_updated_signal();
 }
 
-void CurveW::set_fitted_state(bool state, size_t idCurve){
+void CurveW::set_type(Curve::Type type, size_t idCurve){
 
     if(idCurve >= curves.size()){
         return;
     }
-    curves[idCurve]->set_fitted_state(state);
+
+    curves[idCurve]->set_type(type, minScaleX, maxScaleX, minScaleX, maxScaleY);
+    curves[idCurve]->update_plot_samples();
+
+    QwtPlot::replot();
+    QwtPlot::repaint();
+    emit data_updated_signal();
+}
+
+void CurveW::set_fitted_state(bool state){
+
+//    if(idCurve >= curves.size()){
+//        return;
+//    }
+
+    for(auto &curve : curves){
+        curve->set_fitted_state(state);
+    }
+//    curves[idCurve]->set_fitted_state(state);
 
     QwtPlot::replot();
     QwtPlot::repaint();

@@ -79,9 +79,8 @@ struct Arg{
     inline double to_double_value() const{return str::Convertor::to_double(m_value);}
     inline QColor to_color_value() const{return str::Convertor::to_color(m_value);}
     inline QString to_string_value() const{return str::Convertor::to_str(m_value);}
-    inline std::pair<std_v1<double>, std_v1<double>> to_curve_value() const{
-        return str::Convertor::to_curve(m_value, m_separator);
-    }
+    inline std::pair<std_v1<double>, std_v1<double>> to_curve_value() const{ return str::Convertor::to_curve(m_value, m_separator);}
+    inline std::vector<std::pair<std_v1<double>, std_v1<double>>> to_curves_value() const {return str::Convertor::to_curves(m_value, "*", m_separator);}
 
     inline QStringList split_value() const{return m_value.split(m_separator);}
     inline QStringList split_value(QString sep) const{return m_value.split(sep);}

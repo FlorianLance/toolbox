@@ -111,6 +111,19 @@ struct Convertor{
         return {px,py};
     }
 
+    static std::vector<std::pair<std_v1<double>,std_v1<double>>> to_curves(const QString &value, QString sep1 = "*", QString sep2 = " "){
+
+        std::vector<std::pair<std_v1<double>,std_v1<double>>> curves;
+        QStringList split = value.split(sep1);
+
+        curves.reserve(split.size());
+        for(int ii = 0; ii < split.size(); ++ii){
+            curves.emplace_back(to_curve(split[ii], sep2));
+        }
+
+        return curves;
+    }
+
     static QString to_str(const geo::Pt2<float> &value){
         return  QString::number(static_cast<double>(value.x())) % QSL(", ") %
                 QString::number(static_cast<double>(value.y()));
