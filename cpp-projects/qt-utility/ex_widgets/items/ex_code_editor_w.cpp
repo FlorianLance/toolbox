@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-qt-utility                                                         **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -24,55 +24,44 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "kinect2_manager.hpp"
+#include "ex_code_editor_w.hpp"
 
-// std
-#include <chrono>
-#include <iostream>
+using namespace tool::ui;
+using namespace tool::ex;
 
-// base
-#include "utility/benchmark.hpp"
 
-using namespace std::chrono;
-using namespace tool::scan;
-using namespace tool::camera;
+ExCodeEditorW::ExCodeEditorW() : ExItemW<CodeEditor>(UiType::Code_editor) {}
 
-Kinect2Manager::Kinect2Manager(){
+ExCodeEditorW *ExCodeEditorW::init_widget(QString txt, bool enabled){
+    w->setPlainText(txt);
+    w->setEnabled(enabled);
+    return this;
 }
 
-bool Kinect2Manager::open_kinect(K2::FrameRequest mode){
-    return initialized = kinect.open(mode);
-}
+void ExCodeEditorW::init_connection(const QString &nameParam){connect(w.get(), &CodeEditor::textChanged,this, [=]{emit ui_change_signal(nameParam);});}
 
-void Kinect2Manager::close_kinect(){
-    initialized = false;
-    kinect.close();
-}
+void ExCodeEditorW::update_from_arg(const Arg &arg){
 
-std::int64_t Kinect2Manager::get_data(){
+    ExItemW::update_from_arg(arg);
 
-    if(!initialized){
-        return -1;
+    w->blockSignals(true);
+
+    if(arg.generator.name.length() > 0){
+        // ...
     }
+    w->setPlainText(arg.to_string_value());
 
-    auto timeStart = high_resolution_clock::now();
-    timeStampFrame = timeStart.time_since_epoch().count();
+    w->blockSignals(false);
+}
 
+Arg ExCodeEditorW::convert_to_arg() const{
 
-    Bench::reset();
-    if(auto newFrame = kinect.get_kinect_data(); newFrame.has_value()){
+    Arg arg = ExItemW::convert_to_arg();
+    arg.init_from(w->toPlainText());
 
-        frame = std::make_shared<K2::Frame>(std::move(newFrame.value()));
-//        if(rand()%100 == 0){
-//            Bench::display(BenchUnit::microseconds,1);
-//        }
-        return duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count();
+    // generator
+    if(generatorName.length() > 0){
+        // ...
     }
-
-    return -1;
+    return arg;
 }
-
-void Kinect2Manager::update_parameters(K2::Settings parameters){
-    kinect.parameters = std::move(parameters);
-}
-

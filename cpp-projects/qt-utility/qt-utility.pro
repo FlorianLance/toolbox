@@ -106,6 +106,7 @@ SOURCES += \
     data/argument.cpp \
     data/id_key.cpp \
     ex_widgets/items/ex_checkbox_w.cpp \
+    ex_widgets/items/ex_code_editor_w.cpp \
     ex_widgets/items/ex_color_frame_w.cpp \
     ex_widgets/items/ex_combo_box_index_w.cpp \
     ex_widgets/items/ex_combo_box_text_w.cpp \
@@ -129,12 +130,14 @@ SOURCES += \
     qt_str.cpp \
     qt_ui.cpp \
     qt_utility_main.cpp \
+    widgets/code_editor_w.cpp \
     widgets/grabber_parameters_widget.cpp \
     widgets/image_viewer.cpp \
     widgets/list_widget.cpp \
     widgets/rich_text_edit.cpp \
     widgets/sfmlqt_gl_widget.cpp \
     widgets/curve_widget.cpp  \
+    widgets/text_widget_highlighter.cpp
 
 HEADERS += \
     data/argument.hpp \
@@ -144,6 +147,7 @@ HEADERS += \
     ex_widgets/base/ex_base_w.hpp \
     ex_widgets/base/ex_item_w.hpp \
     ex_widgets/items/ex_checkbox_w.hpp \
+    ex_widgets/items/ex_code_editor_w.hpp \
     ex_widgets/items/ex_color_frame_w.hpp \
     ex_widgets/items/ex_combo_box_index_w.hpp \
     ex_widgets/items/ex_combo_box_text_w.hpp \
@@ -170,6 +174,7 @@ HEADERS += \
     qt_types.hpp \
     qt_ui.hpp \
     qt_convertors.hpp \
+    widgets/code_editor_w.hpp \
     widgets/custom_combobox_w.hpp \
     widgets/curve_widget.hpp \
     widgets/grabber_parameters_widget.hpp \
@@ -177,6 +182,7 @@ HEADERS += \
     widgets/image_viewer.hpp \
     widgets/rich_text_edit.hpp \
     widgets/sfmlqt_gl_widget.hpp \
+    widgets/text_widget_highlighter.hpp \
     wrapper/qt_gl_wrapper.hpp \
 
 RESOURCES += \

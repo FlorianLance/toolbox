@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-qt-utility                                                         **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -24,55 +24,56 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "kinect2_manager.hpp"
+#pragma once
 
 // std
-#include <chrono>
-#include <iostream>
+#include <vector>
 
-// base
-#include "utility/benchmark.hpp"
+// Qt
+#include <QPlainTextEdit>
 
-using namespace std::chrono;
-using namespace tool::scan;
-using namespace tool::camera;
+namespace tool::ui{
 
-Kinect2Manager::Kinect2Manager(){
-}
+class CodeEditor : public QPlainTextEdit{
+    Q_OBJECT
 
-bool Kinect2Manager::open_kinect(K2::FrameRequest mode){
-    return initialized = kinect.open(mode);
-}
+public:
+    CodeEditor(QWidget *parent = nullptr);
 
-void Kinect2Manager::close_kinect(){
-    initialized = false;
-    kinect.close();
-}
+    void lineNumberAreaPaintEvent(QPaintEvent *event);
+    int lineNumberAreaWidth();
 
-std::int64_t Kinect2Manager::get_data(){
+    QColor highlightedLineColor = QColor(80,80,80);
+    int offsetLineCounter = 0;
 
-    if(!initialized){
-        return -1;
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
+private slots:
+    void updateLineNumberAreaWidth(int newBlockCount);
+    void highlightCurrentLine();
+    void updateLineNumberArea(const QRect &rect, int dy);
+
+private:
+    QWidget *lineNumberArea = nullptr;
+};
+
+class LineNumberArea : public QWidget{
+
+public:
+
+    LineNumberArea(CodeEditor *editor) : QWidget(editor), codeEditor(editor){}
+    QSize sizeHint() const override{
+        return QSize(codeEditor->lineNumberAreaWidth(), 0);
     }
 
-    auto timeStart = high_resolution_clock::now();
-    timeStampFrame = timeStart.time_since_epoch().count();
-
-
-    Bench::reset();
-    if(auto newFrame = kinect.get_kinect_data(); newFrame.has_value()){
-
-        frame = std::make_shared<K2::Frame>(std::move(newFrame.value()));
-//        if(rand()%100 == 0){
-//            Bench::display(BenchUnit::microseconds,1);
-//        }
-        return duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count();
+protected:
+    void paintEvent(QPaintEvent *event) override{
+        codeEditor->lineNumberAreaPaintEvent(event);
     }
 
-    return -1;
-}
+private:
+    CodeEditor *codeEditor = nullptr;
+};
 
-void Kinect2Manager::update_parameters(K2::Settings parameters){
-    kinect.parameters = std::move(parameters);
 }
-

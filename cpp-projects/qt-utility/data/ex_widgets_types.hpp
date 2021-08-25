@@ -34,7 +34,7 @@ namespace tool::ex {
     using namespace std::literals::string_view_literals;
 
     enum class UiType : int {
-        Spin_box, Float_spin_box, Double_spin_box, Line_edit, Slider_integer, Slider_double, Check_box, Text_edit, Color_pick, Vector2D, Vector3D, Transformation, Combo_box_text,Combo_box_index,
+        Spin_box, Float_spin_box, Double_spin_box, Line_edit, Slider_integer, Slider_double, Check_box, Text_edit, Code_editor, Color_pick, Vector2D, Vector3D, Transformation, Combo_box_text,Combo_box_index,
         Button, Radio_button, Generator, List_labels, Non_ui_labels, Label, Color_frame, Curve, Camera_position, Tab, NonUI, Time, PushButton, Component, ComponentsList,
         Resource, ResourcesList, Component_config,
         SizeEnum};
@@ -46,7 +46,7 @@ namespace tool::ex {
 
     using TUiType = std::tuple<
         UiType,                 Name,                    Tooltip,                          Generative>;
-    static constexpr TupleArray<30, TUiType> uiTypes{{
+    static constexpr TupleArray<31, TUiType> uiTypes{{
         TUiType
         {UiT::Resource,         "Resource"sv,            "get_resource"sv,                 true},
         {UiT::ResourcesList,    "Resources list"sv,      "get_resource_list"sv,            true},
@@ -60,6 +60,7 @@ namespace tool::ex {
         {UiT::Check_box,        "Check box"sv,           "bool"sv,                         true},
         {UiT::Line_edit,        "Line text editor"sv,    "string"sv,                       true},
         {UiT::Text_edit,        "Block text editor"sv,   "string"sv,                       true},
+        {UiT::Code_editor,      "Code editor"sv,         "string"sv,                       false},
         {UiT::Color_pick,       "Color pick"sv,          "get_color"sv,                    true},
         {UiT::Combo_box_text,   "Combo box text"sv,      "string"sv,                       true},
         {UiT::Combo_box_index,  "Combo box index"sv,     "int"sv,                          true},

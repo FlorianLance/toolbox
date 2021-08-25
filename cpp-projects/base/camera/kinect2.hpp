@@ -120,13 +120,13 @@ private:
     void process_depth_512x424();
     void process_infra_512x424();
 
-
     void release_color_data();
     void release_depth_data();
     void release_infra_data();
     void release_long_exposure_infra_data();
     void release_body_data();
     void release_multi_source_data();
+    void clean_frame();
 
     struct Impl;
     std::unique_ptr<Impl> m_p = nullptr;

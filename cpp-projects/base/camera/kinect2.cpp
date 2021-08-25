@@ -268,13 +268,12 @@ bool Kinect2::acquire_multi_sources_frame(){
             continue;
         }else if(!check_func_sucess(ret)){
             Logger::error("Failed: AcquireLatestFrame");
-            release_multi_source_data();
             return false;
         }
         break;
     }
 
-    ++m_p->currentFrame;
+
     return true;
 }
 
@@ -466,12 +465,12 @@ std::optional<Frame> Kinect2::get_kinect_data() {
 
     // get data
     if(!acquire_multi_sources_frame()){
+        clean_frame();
         return {};
     }
-    // get frame timestamp
+
     m_p->processedFrame->timeStampGetFrame = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     Bench::stop();
-
 
     // store intrinsics
     if(m_p->processedFrame->intrinsics.size() == 0){
@@ -483,7 +482,10 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     if(depth_channel_required(m_p->mode)){
         if(acquire_depth_frame()){
             get_depth_data();
-        }       
+        }else{
+            clean_frame();
+            return {};
+        }
     }  
     Bench::stop();
     Bench::start("Kinect2::get_color_data"sv);
@@ -491,7 +493,10 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     if(color_channel_required(m_p->mode)){
         if(acquire_color_frame()){
             get_color_data();
-        }        
+        }else{
+            clean_frame();
+            return {};
+        }
     }
     Bench::stop();
     Bench::start("Kinect2::get_infra_data"sv);
@@ -499,6 +504,9 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     if(infra_channel_required(m_p->mode)){
         if(acquire_infra_frame()){
             get_infra_data();
+        }else{
+            clean_frame();
+            return {};
         }
     }
     Bench::stop();
@@ -507,6 +515,9 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     if(long_infra_channel_required(m_p->mode)){
         if(acquire_long_exposure_infra_frame()){
             get_long_exposure_infra_data();
+        }else{
+            clean_frame();
+            return {};
         }
     }
     Bench::stop();
@@ -566,16 +577,14 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     Bench::stop();
     Bench::start("Kinect2::release"sv);
 
+    // increase frame id
+    ++m_p->currentFrame;
+
     // get end process timestamp
     m_p->processedFrame->timeStampEndProcessing = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
     // clean
-    release_depth_data();
-    release_color_data();
-    release_infra_data();
-    release_long_exposure_infra_data();
-    release_body_data();
-    release_multi_source_data();
+    clean_frame();
 
     Bench::stop();
 
@@ -1571,6 +1580,15 @@ void Kinect2::release_multi_source_data(){
         m_p->multiSouceFrame->Release();
         m_p->multiSouceFrame = nullptr;
     }
+}
+
+void Kinect2::clean_frame(){
+    release_depth_data();
+    release_color_data();
+    release_infra_data();
+    release_long_exposure_infra_data();
+    release_body_data();
+    release_multi_source_data();
 }
 
 

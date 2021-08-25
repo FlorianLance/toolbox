@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-qt-utility                                                         **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -24,55 +24,52 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "kinect2_manager.hpp"
+#pragma once
 
-// std
-#include <chrono>
-#include <iostream>
+// Qt
+#include <QSyntaxHighlighter>
+#include <QRegularExpression>
 
-// base
-#include "utility/benchmark.hpp"
 
-using namespace std::chrono;
-using namespace tool::scan;
-using namespace tool::camera;
+namespace tool::ui {
 
-Kinect2Manager::Kinect2Manager(){
+struct HighlightingRule
+{
+    QRegularExpression pattern;
+    QTextCharFormat format;
+};
+
+class CSharpHighlighter : public QSyntaxHighlighter{
+    Q_OBJECT
+
+public:
+    CSharpHighlighter(QTextDocument *parent = nullptr);
+
+    void add_classes(const std::vector<QString> &classNames);
+
+protected:
+    void highlightBlock(const QString &text) override;
+
+private:
+
+    QVector<HighlightingRule> highlightingRules;
+
+    QRegularExpression commentStartExpression;
+    QRegularExpression commentEndExpression;
+
+    QTextCharFormat digitFormat;
+    QTextCharFormat keywordFormat;
+    QTextCharFormat typeFormat;
+
+    QTextCharFormat structInstancesFormat;
+    QTextCharFormat classesInstancesFormat;
+
+    QTextCharFormat classFormat;
+    QTextCharFormat singleLineCommentFormat;
+    QTextCharFormat multiLineCommentFormat;
+    QTextCharFormat quotationFormat;
+    QTextCharFormat functionFormat;
+
+    QTextCharFormat defaultFormat;
+};
 }
-
-bool Kinect2Manager::open_kinect(K2::FrameRequest mode){
-    return initialized = kinect.open(mode);
-}
-
-void Kinect2Manager::close_kinect(){
-    initialized = false;
-    kinect.close();
-}
-
-std::int64_t Kinect2Manager::get_data(){
-
-    if(!initialized){
-        return -1;
-    }
-
-    auto timeStart = high_resolution_clock::now();
-    timeStampFrame = timeStart.time_since_epoch().count();
-
-
-    Bench::reset();
-    if(auto newFrame = kinect.get_kinect_data(); newFrame.has_value()){
-
-        frame = std::make_shared<K2::Frame>(std::move(newFrame.value()));
-//        if(rand()%100 == 0){
-//            Bench::display(BenchUnit::microseconds,1);
-//        }
-        return duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count();
-    }
-
-    return -1;
-}
-
-void Kinect2Manager::update_parameters(K2::Settings parameters){
-    kinect.parameters = std::move(parameters);
-}
-
