@@ -133,6 +133,7 @@ struct Kinect2::Impl{
     CloudDataUP cloudData  = nullptr;
     unsigned short* depthBuffer = nullptr;
     unsigned int depthBufferSize = 0;
+    int previousSumDepthValues = 0;
 
     // color
     tjhandle jpegCompressor;
@@ -481,7 +482,10 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     // # depth
     if(depth_channel_required(m_p->mode)){
         if(acquire_depth_frame()){
-            get_depth_data();
+            if(!get_depth_data()){
+                clean_frame();
+                return {};
+            }
         }else{
             clean_frame();
             return {};
@@ -794,15 +798,28 @@ void Kinect2::get_color_data(){
 }
 
 
-void Kinect2::get_depth_data() {
+bool Kinect2::get_depth_data() {
 
     Bench::start("Kinect2::get_depth_data_0"sv);
 
     // get data
     m_p->depthBuffer = nullptr;
     m_p->depthFrame->AccessUnderlyingBuffer(&m_p->depthBufferSize, &m_p->depthBuffer);
-
     Bench::stop();
+
+    int sumDepthValues = 0;
+    for(size_t ii = 0; ii < m_p->depthBufferSize; ++ii){
+        sumDepthValues = static_cast<int>(m_p->depthBuffer[ii]);
+    }
+    if(m_p->previousSumDepthValues > 0){
+        if(sumDepthValues == m_p->previousSumDepthValues){
+            // identical frame, ghost cloud
+            Logger::error("Identical depth frame");
+            return false;
+        }
+    }
+    m_p->previousSumDepthValues = sumDepthValues;
+
     Bench::start("Kinect2::get_depth_data_1"sv);
 
     m_p->depthFrame->get_RelativeTime(&m_p->processedFrame->relativeTimeDepth);
@@ -833,6 +850,7 @@ void Kinect2::get_depth_data() {
 
 
     Bench::stop();
+    return true;
 }
 
 void Kinect2::get_infra_data(){

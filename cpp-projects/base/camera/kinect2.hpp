@@ -103,7 +103,7 @@ private:
     bool acquire_body_frame();
 
     void get_color_data();
-    void get_depth_data();
+    bool get_depth_data();
     void get_infra_data();
     void get_long_exposure_infra_data();
     void get_body_data();
