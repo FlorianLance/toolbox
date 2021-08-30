@@ -317,15 +317,18 @@ void ExCurveW::update_from_arg(const Arg &arg){
     maxX.w->setValue(maxXV);
     minY.w->setValue(minYV);
     maxY.w->setValue(maxYV);
+
     firstY.w->setValue(pts.second[0]);
     lastY.w->setValue(pts.second[pts.second.size()-1]);
 
-    minX.w->setSingleStep(diffX*0.01);
-    maxX.w->setSingleStep(diffX*0.01);
-    minY.w->setSingleStep(diffY*0.01);
-    maxY.w->setSingleStep(diffY*0.01);
-    firstY.w->setSingleStep(diffY*0.01);
-    lastY.w->setSingleStep(diffY*0.01);
+    const auto stepX =  diffX*0.01;
+    const auto stepY =  diffY*0.01;
+    minX.w->setSingleStep(stepX);
+    maxX.w->setSingleStep(stepX);
+    minY.w->setSingleStep(stepY);
+    maxY.w->setSingleStep(stepY);
+    firstY.w->setSingleStep(stepY);
+    lastY.w->setSingleStep(stepY);
 
     firstY.blockSignals(false);
     lastY.blockSignals(false);
@@ -334,11 +337,21 @@ void ExCurveW::update_from_arg(const Arg &arg){
     minX.blockSignals(false);
     maxX.blockSignals(false);
 
+//    qDebug() << "range";
     curveW->set_x_range(minXV, maxXV);
     curveW->set_y_range(minYV, maxYV);
+
+//    qDebug() << "diffX " << diffX;
+//    qDebug() << "diffY " << diffY;
+//    qDebug() << "pts.first " << pts.first.size();
+//    qDebug() << "pts.second " << pts.second.size();
+
     curveW->set_points(std::move(pts.first), std::move(pts.second), 0);
+//    qDebug() << "--";
 
     w->blockSignals(false);
+
+//    qDebug() << "ExCurveW::update_from_arg end";
 }
 
 Arg ExCurveW::convert_to_arg() const{
