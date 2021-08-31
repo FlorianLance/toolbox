@@ -262,10 +262,19 @@ bool Kinect2::acquire_multi_sources_frame(){
 
     m_p->multiSouceFrame = nullptr;
 
+    using namespace std::chrono;
+
+    auto timeStart = high_resolution_clock::now();
+
     bool get = true;
     while(get){
         auto ret = m_p->reader->AcquireLatestFrame(&m_p->multiSouceFrame);
         if(ret == E_PENDING){
+            auto currenTime = duration_cast<milliseconds>(high_resolution_clock::now() - timeStart).count();
+            if(currenTime > 3000){
+                Logger::error("Failed: AcquireLatestFrame still pending");
+                return false;
+            }
             continue;
         }else if(!check_func_sucess(ret)){
             Logger::error("Failed: AcquireLatestFrame");
@@ -316,12 +325,13 @@ bool Kinect2::acquire_color_frame(){
 bool Kinect2::acquire_depth_frame(){
 
     if(!check_func_sucess(m_p->multiSouceFrame->get_DepthFrameReference(&m_p->depthFrameRef))){
-         Logger::warning("Fail get_DepthFrameReference");
+        Logger::warning("Fail get_DepthFrameReference");
         return false;
     }
 
     auto ret = m_p->depthFrameRef->AcquireFrame(&m_p->depthFrame);
     if(!check_func_sucess(ret)){
+        Logger::warning("Fail to acquire depth frame");
         return false;
     }
 
@@ -810,7 +820,7 @@ bool Kinect2::get_depth_data() {
     int sumDepthValues = std::accumulate(m_p->depthBuffer, m_p->depthBuffer + m_p->depthBufferSize, 0);
     if(m_p->previousSumDepthValues > 0){
         if(sumDepthValues == m_p->previousSumDepthValues){
-            // identical frame, ghost cloud
+            // identical frame
             Logger::error("Identical depth frame");
             return false;
         }

@@ -66,6 +66,7 @@ std::int64_t Kinect2Manager::get_data(){
 //        if(rand()%100 == 0){
 //            Bench::display(BenchUnit::microseconds,1);
 //        }
+//        std::cout << "d" << duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count() << " ";
         return duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count();
     }
 
