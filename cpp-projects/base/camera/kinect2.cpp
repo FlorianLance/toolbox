@@ -35,6 +35,7 @@
 #include <execution>
 #include <iostream>
 #include <fstream>
+#include <numeric>
 
 // windows
 #include <Ole2.h>
@@ -205,8 +206,7 @@ bool check_func_sucess(HRESULT res){
 }
 
 Kinect2::Kinect2() : m_p(std::make_unique<Impl>()){
-
-
+    Logger::message("Init kinect2");
 }
 
 Kinect2::~Kinect2(){
@@ -807,10 +807,7 @@ bool Kinect2::get_depth_data() {
     m_p->depthFrame->AccessUnderlyingBuffer(&m_p->depthBufferSize, &m_p->depthBuffer);
     Bench::stop();
 
-    int sumDepthValues = 0;
-    for(size_t ii = 0; ii < m_p->depthBufferSize; ++ii){
-        sumDepthValues = static_cast<int>(m_p->depthBuffer[ii]);
-    }
+    int sumDepthValues = std::accumulate(m_p->depthBuffer, m_p->depthBuffer + m_p->depthBufferSize, 0);
     if(m_p->previousSumDepthValues > 0){
         if(sumDepthValues == m_p->previousSumDepthValues){
             // identical frame, ghost cloud

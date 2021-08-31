@@ -49,6 +49,8 @@ public:
     static Logger *get();
 
     static void init(std::string_view logDirectoryPath = "", std::string_view logFileName = "default_log.html");
+    static void no_file_init(bool noFormat = false);
+
     static void message(std::string_view message, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void error(std::string_view error, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void warning(std::string_view warning, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);

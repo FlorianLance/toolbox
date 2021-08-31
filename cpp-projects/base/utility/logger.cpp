@@ -45,6 +45,7 @@ struct Logger::Impl{
     static inline std::unique_ptr<Logger> logger = nullptr;
     static inline std::unique_ptr<std::ofstream> out = nullptr;
     static inline std::chrono::nanoseconds epochStart;
+    static inline bool doFormat = false;
 
     static inline constexpr std::string_view startHtmlBalise           = "<p>";
     static inline constexpr std::string_view startTimestampHtmlBalise  = "<p> [";
@@ -125,6 +126,13 @@ void Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
     }
 }
 
+void Logger::no_file_init(bool doFormat){
+    Logger::Impl::epochStart = nanoseconds_since_epoch();
+    Logger::Impl::logger     = std::make_unique<Logger>();
+    Logger::Impl::out        = nullptr;
+    Logger::Impl::doFormat   = doFormat;
+}
+
 void Logger::message(std::string_view message, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::logger == nullptr){
@@ -133,10 +141,10 @@ void Logger::message(std::string_view message, bool htmlFormat, bool triggersSig
     }
 
     if(triggersSignal){
-        trigger_message(message, htmlFormat);
+        trigger_message(message, htmlFormat && Logger::Impl::doFormat);
     }
 
-    if(saveToFile){
+    if(saveToFile && (Logger::Impl::out != nullptr)){
         insert_line_to_log_file(MessageType::normal, message);
     }
 }
@@ -150,10 +158,10 @@ void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal,
     }
 
     if(triggersSignal){
-        trigger_error(error, htmlFormat);
+        trigger_error(error, htmlFormat && Logger::Impl::doFormat);
     }
 
-    if(saveToFile){
+    if(saveToFile && (Logger::Impl::out != nullptr)){
         insert_line_to_log_file(MessageType::error, error);
     }
 }
@@ -167,10 +175,10 @@ void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSig
     }
 
     if(triggersSignal){
-        trigger_warning(warning, htmlFormat);
+        trigger_warning(warning, htmlFormat && Logger::Impl::doFormat);
     }
 
-    if(saveToFile){
+    if(saveToFile && (Logger::Impl::out != nullptr)){
         insert_line_to_log_file(MessageType::warning, warning);
     }
 }
