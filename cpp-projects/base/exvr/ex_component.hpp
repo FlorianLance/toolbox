@@ -85,17 +85,33 @@ public:
     }
 
     virtual ~ExComponent(){}
+
     virtual bool initialize(){return true;}
+    virtual void clean(){}
+
     virtual void start_experiment(){}
     virtual void stop_experiment(){}
+
+    virtual void set_current_config(const std::string &configName){static_cast<void>(configName);}
+    virtual void update_from_current_config(){}
+    virtual void pre_start_routine(){}
     virtual void start_routine(){}
+    virtual void post_start_routine(){}
     virtual void stop_routine(){}
+
+    virtual void on_gui(){}
+    virtual void pre_update(){}
     virtual void update(){}
+    virtual void post_update(){}
+
     virtual void set_visibility(bool visible){static_cast<void>(visible);}
-    virtual void set_update_state(bool doUpdate){static_cast<void>(doUpdate);}
+    virtual void set_update_state(bool doUpdate){static_cast<void>(doUpdate);}    
     virtual void play(){}
     virtual void pause(){}
-    virtual void clean(){}
+
+    virtual void update_parameter_from_gui(const std::string &updatedParameter){static_cast<void>(updatedParameter);}
+    virtual void action_from_gui(bool initConfig, const std::string &action){static_cast<void>(initConfig);static_cast<void>(action);}
+
     virtual void slot(int index){static_cast<void>(index);}
 
     template<typename T>

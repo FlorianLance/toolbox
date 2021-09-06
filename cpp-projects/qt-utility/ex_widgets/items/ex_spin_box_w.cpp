@@ -50,11 +50,15 @@ void ExSpinBoxW::update_from_arg(const Arg &arg){
     w->blockSignals(true);
 
     if(generatorName.length() > 0){
-        w->setMinimum(arg.generator.min.value().toInt());
-        w->setMaximum(arg.generator.max.value().toInt());
-        w->setSingleStep(arg.generator.step.value().toInt());        
+        init_widget(
+            MinV<int>{arg.generator.min.value().toInt()},
+            V<int>{arg.to_int_value()},
+            MaxV<int>{arg.generator.max.value().toInt()},
+            StepV<int>{arg.generator.step.value().toInt()}
+        );
+    }else{
+        w->setValue(arg.to_int_value());
     }
-    w->setValue(arg.to_int_value());
 
     w->blockSignals(false);
 }

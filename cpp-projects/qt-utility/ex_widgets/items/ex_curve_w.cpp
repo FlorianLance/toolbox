@@ -31,10 +31,10 @@ using namespace tool;
 using namespace tool::ui;
 using namespace tool::ex;
 
-ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, geo::Pt2d xRange, geo::Pt2d yRange, bool enabled){
-
-    // generate widgets
-    curveW = new CurveW();
+ExCurveW::ExCurveW() : ExItemW<QFrame>(UiType::Curve){
+    resetB    = new QPushButton("Reset points");
+    addPointB = new QPushButton("Add point");
+    curveW = new ui::CurveW();
 
     // right layout
     // # all curves
@@ -50,7 +50,7 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
     auto fc3  = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("first"),1},{firstY(),10}, {ui::W::txt("last"),1},{lastY(), 10}},  0, LMarginsD{0,0,0,0,2});
     auto fc4 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Add specific point:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
     auto fc5 = ui::F::gen_frame(ui::L::HB(), { {ui::W::txt("X"),1}, {addX(), 10}, {ui::W::txt("Y"),1}, {addY(),10}},   0, LMarginsD{0,0,0,0,2});
-    auto fc6 = ui::F::gen_frame(ui::L::HB(), {{addPointB  = new QPushButton("Add point"),1}, {resetB  = new QPushButton("Reset points"),2}},  0, LMarginsD{0,0,0,0,2});
+    auto fc6 = ui::F::gen_frame(ui::L::HB(), {{addPointB,1}, {resetB,2}},  0, LMarginsD{0,0,0,0,2});
     auto fc7 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Others:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
     auto fc8 = ui::F::gen_frame(ui::L::HB(), {{fitted(),1}},  0, LMarginsD{0,0,0,0,2});
     auto fc9 = ui::F::gen_frame(ui::L::HB(), {{ui::W::txt("<b>Infos:</b>"),1}},   0, LMarginsD{0,0,0,0,2});
@@ -83,6 +83,9 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
              "easeInOutSine" << "easeInOutCubic"  << "easeOutInQuint" << "easeInOutCirc" << "easeInOutElastic" <<
              "easeInOutQuad" << "easeInOutQuart"  << "easeInOutExpo"  << "easeInOutBack";// <<  "easeInOutBounce";
     type.init_widget(items, Index{0});
+}
+
+ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, geo::Pt2d xRange, geo::Pt2d yRange, bool enabled){
 
     auto diffRangeX = xRange.y() - xRange.x();
     auto diffRangeY = yRange.y() - yRange.x();
@@ -125,14 +128,14 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
 
 void ExCurveW::init_connection(const QString &nameParam){
 
-    minX.init_connection(QSL("min_x"));
-    maxX.init_connection(QSL("max_x"));
-    minY.init_connection(QSL("min_y"));
-    maxY.init_connection(QSL("max_y"));
-    firstY.init_connection(QSL("first_y"));
-    lastY.init_connection(QSL("last_y"));
-    fitted.init_connection(QSL("fitted"));
-    type.init_connection(QSL("type"));
+    minX.init_connection(nameParam);
+    maxX.init_connection(nameParam);
+    minY.init_connection(nameParam);
+    maxY.init_connection(nameParam);
+    firstY.init_connection(nameParam);
+    lastY.init_connection(nameParam);
+    fitted.init_connection(nameParam);
+    type.init_connection(nameParam);
 
     connect(curveW, &CurveW::data_updated_signal, this, [=]{
         emit ui_change_signal(nameParam);
@@ -140,12 +143,11 @@ void ExCurveW::init_connection(const QString &nameParam){
     connect(curveW, &CurveW::settings_updated_signal, this, [=]{
         emit ui_change_signal(nameParam);
     });
-
-    connect(&fitted, &ExCheckBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&fitted, &ExCheckBoxW::ui_change_signal, this, [&]{
         curveW->set_fitted_state(fitted.w->isChecked());
     });
 
-    connect(&minX,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&minX,  &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
 
         minX.blockSignals(true);
         if(minX.w->value() > maxX.w->value()){
@@ -155,7 +157,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         curveW->set_x_range(minX.w->value(), maxX.w->value());
     });
-    connect(&maxX,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&maxX,  &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
 
         maxX.blockSignals(true);
         if(minX.w->value() > maxX.w->value()){
@@ -165,7 +167,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         curveW->set_x_range(minX.w->value(), maxX.w->value());
     });
-    connect(&minY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&minY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
 
         minY.blockSignals(true);
         if(minY.w->value() > maxY.w->value()){
@@ -185,7 +187,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         curveW->set_y_range(minY.w->value(), maxY.w->value());
     });
-    connect(&maxY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&maxY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
 
         maxY.blockSignals(true);
         if(minY.w->value() > maxY.w->value()){
@@ -212,7 +214,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         curveW->set_y_range(minY.w->value(), maxY.w->value());
     });
-    connect(&firstY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&firstY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
 
 
         double v = firstY.w->value();
@@ -224,7 +226,7 @@ void ExCurveW::init_connection(const QString &nameParam){
         }
         curveW->set_first_y(v, currentCurveId.w->value());
     });
-    connect(&lastY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
+    connect(&lastY,  &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
 
 
         double v = lastY.w->value();
@@ -237,12 +239,11 @@ void ExCurveW::init_connection(const QString &nameParam){
         curveW->set_last_y(v, currentCurveId.w->value());
     });
 
-    connect(addPointB,    &QPushButton::clicked,   this, [&]{
-
+    connect(addPointB,  &QPushButton::clicked,   this, [&]{
         curveW->add_point(addX.w->value(), addY.w->value(), currentCurveId.w->value());
     });
 
-    connect(resetB,    &QPushButton::clicked,   this, [&]{
+    connect(resetB, &QPushButton::clicked,   this, [&]{
 
         type.blockSignals(true);
         type.w->setCurrentIndex(0);
@@ -258,7 +259,7 @@ void ExCurveW::init_connection(const QString &nameParam){
         curveW->reset();
     });
 
-    connect(&type, &ExComboBoxTextW::ui_change_signal, this, [&,nameParam]{
+    connect(&type, &ExComboBoxTextW::ui_change_signal, this, [&]{
         auto id = type.w->currentIndex();
         curveW->set_type(static_cast<Curve::Type>(id), currentCurveId.w->value());
     });
@@ -269,6 +270,12 @@ void ExCurveW::update_from_arg(const Arg &arg){
     ExItemW::update_from_arg(arg);
 
     w->blockSignals(true);
+
+    if(generatorName.length() > 0 && arg.generator.info.has_value()){
+//        auto v = arg.generator.info.value();
+//        arg.generator.min;
+//        arg.generator.max;
+    }
 
     auto pts = arg.to_curve_value();
 
@@ -337,21 +344,11 @@ void ExCurveW::update_from_arg(const Arg &arg){
     minX.blockSignals(false);
     maxX.blockSignals(false);
 
-//    qDebug() << "range";
     curveW->set_x_range(minXV, maxXV);
     curveW->set_y_range(minYV, maxYV);
-
-//    qDebug() << "diffX " << diffX;
-//    qDebug() << "diffY " << diffY;
-//    qDebug() << "pts.first " << pts.first.size();
-//    qDebug() << "pts.second " << pts.second.size();
-
     curveW->set_points(std::move(pts.first), std::move(pts.second), 0);
-//    qDebug() << "--";
 
     w->blockSignals(false);
-
-//    qDebug() << "ExCurveW::update_from_arg end";
 }
 
 Arg ExCurveW::convert_to_arg() const{

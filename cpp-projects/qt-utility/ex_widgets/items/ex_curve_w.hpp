@@ -43,8 +43,9 @@ class ExCurveW : public ExItemW<QFrame>{
 
 public :
 
-    ExCurveW() : ExItemW<QFrame>(UiType::Curve){}
+    ExCurveW();
     ExCurveW  *init_widget(QString title, QString xTitle = "x", QString yTitle = "y", geo::Pt2d xRange = {0,1}, geo::Pt2d yRange = {0,1}, bool enabled = true);
+
     void init_connection(const QString &nameParam) override;
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;

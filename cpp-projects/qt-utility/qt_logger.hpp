@@ -31,6 +31,8 @@ public:
 
     static QtLogger *get();
 
+    static void set_type_message_color(MessageType type, const QColor &col);
+
     static void init(QString logDirectoryPath = "", QString logFileName = "default_log.html");
 
     static void message(const QString &message, bool triggersSignal = true, bool saveToFile = true);

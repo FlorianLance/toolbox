@@ -74,7 +74,7 @@ namespace tool::ex {
         {UiT::List_labels,      "List of lines"sv,       "List<string>"sv,                 false},
         {UiT::Transformation,   "Transformation"sv,      "Transform or List<Vector3>"sv,   true},
         {UiT::Non_ui_labels,    "Non ui labels"sv,       "List<string>"sv,                 false},
-        {UiT::Curve,            "Curve"sv,               "List<float>"sv,                  false},
+        {UiT::Curve,            "Curve"sv,               "List<float>"sv,                  true},
         {UiT::Color_frame,      "Color Frame"sv,         "bool"sv,                         false},
         {UiT::Camera_position,  "Camera position"sv,     "string"sv,                       false},
         {UiT::Tab,              "Tab"sv,                 "string"sv,                       false},
