@@ -34,9 +34,10 @@ class ExTextEditW : public ExItemW<QTextEdit>{
 
 public:
 
-    ExTextEditW();
+    ExTextEditW(QString name ="");
     ExTextEditW *init_widget(QString txt, bool enabled = true);
-    void init_connection(const QString &nameParam) override;
+    ExTextEditW *init_widget_as_csharp_editor(const QStringList &classesToAdd, const QColor &backgroundColor, QString txt, bool enabled = true);
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 };

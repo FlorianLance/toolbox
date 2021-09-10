@@ -42,9 +42,9 @@ public:
     constexpr static DsbSettings DefaultRotV = {MinV<qreal>{-10000.}, V<qreal>{0}, MaxV<qreal>{10000.}, StepV<qreal>{0.1},  3};
     constexpr static DsbSettings DefaultScaV = {MinV<qreal>{-10000.}, V<qreal>{1}, MaxV<qreal>{10000.}, StepV<qreal>{0.01}, 3};
 
-    ExVector3dW();
+    ExVector3dW(QString name ="");
     ExVector3dW *init_widget(const QString &title, Vector3dSettings settings={}, bool enabled=true);
-    void init_connection(const QString &nameParam) override;
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
     void set_generator(QString genName) override;

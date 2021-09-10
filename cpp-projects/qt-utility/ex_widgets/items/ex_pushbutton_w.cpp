@@ -28,21 +28,15 @@
 
 using namespace tool::ex;
 
+ExPushButtonW::ExPushButtonW(QString name) : ExItemW<QPushButton>(UiType::PushButton, name){
+    connect(w.get(), &QPushButton::clicked, this, [=]{
+        trigger_action();
+    });
+}
+
 ExPushButtonW *ExPushButtonW::init_widget(QString txt, bool enabled){
     ui::W::init(w.get(), txt, enabled);
     return this;
 }
 
-void ExPushButtonW::init_connection(const QString &nameParam){
-    connect(w.get(), &QPushButton::clicked, this, [=]{emit action_signal(nameParam);});
-}
 
-void ExPushButtonW::update_from_arg(const Arg &arg){
-    Q_UNUSED(arg)
-//    w->blockSignals(true);
-//    w->blockSignals(false);
-}
-
-Arg ExPushButtonW::convert_to_arg() const{
-    return Arg{};
-}

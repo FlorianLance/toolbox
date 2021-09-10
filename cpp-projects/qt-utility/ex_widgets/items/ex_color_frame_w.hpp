@@ -35,10 +35,9 @@ class ExColorFrameW : public ExItemW<QFrame>{
 
 public :
 
-    ExColorFrameW();
+    ExColorFrameW(QString name ="");
     ExColorFrameW  *init_widget(bool on, bool enabled = true);
 
-    void init_connection(const QString &nameParam) override;
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 

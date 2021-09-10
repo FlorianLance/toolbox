@@ -26,17 +26,45 @@
 
 #include "ex_text_edit_w.hpp"
 
+
+
+// qt-utility
+#include "widgets/text_widget_highlighter.hpp"
+
 using namespace tool::ex;
 
-
-ExTextEditW::ExTextEditW() : ExItemW<QTextEdit>(UiType::Text_edit) {}
+ExTextEditW::ExTextEditW(QString name) : ExItemW<QTextEdit>(UiType::Text_edit, name) {
+    connect(w.get(), &QTextEdit::textChanged,this, [=]{trigger_ui_change();});
+}
 
 ExTextEditW *ExTextEditW::init_widget(QString txt, bool enabled){
     ui::W::init(w.get(), txt, enabled);
     return this;
 }
 
-void ExTextEditW::init_connection(const QString &nameParam){connect(w.get(), &QTextEdit::textChanged,this, [=]{emit ui_change_signal(nameParam);});}
+ExTextEditW *ExTextEditW::init_widget_as_csharp_editor(const QStringList &classesToAdd, const QColor &bc, QString txt, bool enabled){
+
+    QFont font;
+    font.setFamily("Courier");
+    font.setStyleHint(QFont::Monospace);
+    font.setFixedPitch(true);
+    font.setPointSize(10);
+    w->setFont(font);
+
+    // tab size
+    QFontMetrics metrics(font);
+    auto distance = metrics.horizontalAdvance("    ");
+    w->setTabStopDistance(distance);
+
+    ui::CSharpHighlighter *cshStartFunction = new ui::CSharpHighlighter(w->document());
+    cshStartFunction->add_classes(classesToAdd);
+    w->setStyleSheet(QString("background-color: rgb(%1,%2,%3); border: 0px ;").arg(bc.red()).arg(bc.green()).arg(bc.blue()));
+    w->zoomIn(2);
+
+    w->setPlainText(txt);
+    w->setEnabled(enabled);
+    return this;
+}
 
 void ExTextEditW::update_from_arg(const Arg &arg){
 
@@ -54,7 +82,7 @@ void ExTextEditW::update_from_arg(const Arg &arg){
 
 Arg ExTextEditW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->toPlainText());
 
     // generator

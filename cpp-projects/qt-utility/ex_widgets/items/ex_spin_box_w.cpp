@@ -37,11 +37,9 @@ using namespace tool::ex;
 ExSpinBoxW *ExSpinBoxW::init_widget(MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled){
     ui::W::init(w.get(), min,value,max,singleStep,enabled);
     w->setMinimumWidth(30);
+    connect(w.get(), QOverload<int>::of(&QSpinBox::valueChanged), this, [=]{trigger_ui_change();});
     return this;
 }
-
-
-void ExSpinBoxW::init_connection(const QString &nameParam){connect(w.get(), QOverload<int>::of(&QSpinBox::valueChanged), this, [=]{emit ui_change_signal(nameParam);});}
 
 void ExSpinBoxW::update_from_arg(const Arg &arg){
 
@@ -50,12 +48,19 @@ void ExSpinBoxW::update_from_arg(const Arg &arg){
     w->blockSignals(true);
 
     if(generatorName.length() > 0){
-        init_widget(
-            MinV<int>{arg.generator.min.value().toInt()},
-            V<int>{arg.to_int_value()},
-            MaxV<int>{arg.generator.max.value().toInt()},
-            StepV<int>{arg.generator.step.value().toInt()}
-        );
+
+        if(const auto &min = arg.generator.min, max = arg.generator.max, step = arg.generator.step;
+            min.has_value() && max.has_value() && step.has_value()){
+
+            init_widget(
+                MinV<int>{min.value().toInt()},
+                V<int>{arg.to_int_value()},
+                MaxV<int>{max.value().toInt()},
+                StepV<int>{step.value().toInt()}
+            );
+        }else{
+            qDebug() << "ExSpinBoxW Invalid generator";
+        }
     }else{
         w->setValue(arg.to_int_value());
     }
@@ -65,13 +70,13 @@ void ExSpinBoxW::update_from_arg(const Arg &arg){
 
 Arg ExSpinBoxW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->value());
 
     // generator
     if(generatorName.length() > 0){
-        arg.generator.min        = QString::number(w->minimum());
-        arg.generator.max        = QString::number(w->maximum());
+        arg.generator.min  = QString::number(w->minimum());
+        arg.generator.max  = QString::number(w->maximum());
         arg.generator.step = QString::number(w->singleStep());
     }
     return arg;

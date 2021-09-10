@@ -34,6 +34,7 @@ void ExRadioButtonW::update_from_arg(const Arg &arg) {
     w->blockSignals(true);
     w->setChecked(arg.to_bool_value());
     w->blockSignals(false);
+    connect(w.get(), &QRadioButton::toggled, this, [=]{trigger_ui_change();});
 }
 
 ExRadioButtonW *ExRadioButtonW::init_widget(QString txt, bool checked, bool enabled){
@@ -41,12 +42,8 @@ ExRadioButtonW *ExRadioButtonW::init_widget(QString txt, bool checked, bool enab
     return this;
 }
 
-void ExRadioButtonW::init_connection(const QString &nameParam) {
-    connect(w.get(), &QRadioButton::toggled, this, [=]{emit ui_change_signal(nameParam);});
-}
-
 Arg ExRadioButtonW::convert_to_arg() const {
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->isChecked());
     return arg;
 }

@@ -658,8 +658,8 @@ void CurveW::set_points(std::vector<double> x, std::vector<double> y, size_t idC
         return;
     }
 
-    curves[idCurve]->xCoords = x;
-    curves[idCurve]->yCoords = y;
+    curves[idCurve]->xCoords = std::move(x);
+    curves[idCurve]->yCoords = std::move(y);
     curves[idCurve]->update_plot_samples();
 
     QwtPlot::replot();

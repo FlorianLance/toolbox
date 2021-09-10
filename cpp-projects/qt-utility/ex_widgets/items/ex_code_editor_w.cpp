@@ -26,11 +26,14 @@
 
 #include "ex_code_editor_w.hpp"
 
+// qt-utility
+#include "widgets/text_widget_highlighter.hpp"
+
+
 using namespace tool::ui;
 using namespace tool::ex;
 
-
-ExCodeEditorW::ExCodeEditorW() : ExItemW<CodeEditor>(UiType::Code_editor) {}
+ExCodeEditorW::ExCodeEditorW(QString name) : ExItemW<CodeEditor>(UiType::Code_editor, name) {}
 
 ExCodeEditorW *ExCodeEditorW::init_widget(QString txt, bool enabled){
     w->setPlainText(txt);
@@ -38,7 +41,34 @@ ExCodeEditorW *ExCodeEditorW::init_widget(QString txt, bool enabled){
     return this;
 }
 
-void ExCodeEditorW::init_connection(const QString &nameParam){connect(w.get(), &CodeEditor::textChanged,this, [=]{emit ui_change_signal(nameParam);});}
+ExCodeEditorW *ExCodeEditorW::init_widget_as_csharp_editor(const QStringList &classesToAdd, const QColor &bc, QString txt, bool enabled){
+
+    QFont font;
+    font.setFamily("Courier");
+    font.setStyleHint(QFont::Monospace);
+    font.setFixedPitch(true);
+    font.setPointSize(10);
+    w->setFont(font);
+
+    // tab size
+    QFontMetrics metrics(font);
+    auto distance = metrics.horizontalAdvance("    ");
+    w->setTabStopDistance(distance);
+
+    ui::CSharpHighlighter *cshStartFunction = new ui::CSharpHighlighter(w->document());
+    cshStartFunction->add_classes(classesToAdd);
+    w->setStyleSheet(QString("background-color: rgb(%1,%2,%3); border: 0px ;").arg(bc.red()).arg(bc.green()).arg(bc.blue()));
+    w->zoomIn(2);
+
+    w->setPlainText(txt);
+    w->setEnabled(enabled);
+
+
+    connect(w.get(), &CodeEditor::textChanged,this, [=]{trigger_ui_change();});
+
+    return this;
+}
+
 
 void ExCodeEditorW::update_from_arg(const Arg &arg){
 
@@ -47,16 +77,24 @@ void ExCodeEditorW::update_from_arg(const Arg &arg){
     w->blockSignals(true);
 
     if(arg.generator.name.length() > 0){
+        if(const auto &info = arg.generator.info; info.has_value()){
+            // arg.generator.info->split(" ");
+            // arg.to_string_value()
+        }else{
+            qDebug() << "ExCodeEditorW Invalid genrator.";
+        }
+
         // ...
+    }else{
+        w->setPlainText(arg.to_string_value());
     }
-    w->setPlainText(arg.to_string_value());
 
     w->blockSignals(false);
 }
 
 Arg ExCodeEditorW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->toPlainText());
 
     // generator

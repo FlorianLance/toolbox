@@ -41,13 +41,14 @@ class ExSelectColorW : public ExItemW<QPushButton>{
 
 public:
 
-    ExSelectColorW();
+    ExSelectColorW(QString name ="");
     ~ExSelectColorW() override;
 
     QColor current_color() const;
+    void set_color(const QColor &color);
 
-    ExSelectColorW *init_widget(QString dialogName, QColor color, bool enabled = true);    
-    void init_connection(const QString &nameParam) override;
+    ExSelectColorW *init_widget(QString dialogName, QColor color, bool enabled = true);
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 
@@ -58,6 +59,7 @@ public slots:
 private :
 
     QColorDialog m_colDialog;
+    std::unique_ptr<QPixmap> p = nullptr;
 };
 
 }

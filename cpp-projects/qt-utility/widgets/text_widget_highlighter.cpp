@@ -158,7 +158,7 @@ CSharpHighlighter::CSharpHighlighter(QTextDocument *parent): QSyntaxHighlighter(
     commentEndExpression = QRegularExpression(QSL("\\*/"));
 }
 
-void CSharpHighlighter::add_classes(const std::vector<QString> &classNames){
+void CSharpHighlighter::add_classes(const QStringList &classNames){
     for(const auto& name : classNames){
         highlightingRules.append(HighlightingRule{QRegularExpression(name), classesInstancesFormat});
     }

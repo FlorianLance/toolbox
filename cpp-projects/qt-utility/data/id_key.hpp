@@ -46,6 +46,9 @@ struct ComponentKey{int v;};
 struct ConnectionKey{int v;};
 struct ConnectorKey{int v;};
 
+[[maybe_unused]] static bool operator==(const UiElementKey &l, const UiElementKey &r){
+    return  (l.v == r.v);
+}
 [[maybe_unused]] static bool operator==(const ComponentKey &l, const ComponentKey &r){
     return  (l.v == r.v);
 }
@@ -119,6 +122,17 @@ private:
 
     Type m_type;
     int m_id = -1;
+};
+}
+
+namespace std{
+
+template<>
+class hash<tool::ex::UiElementKey>{
+public:
+    size_t operator()(tool::ex::UiElementKey const& k) const{
+         return std::hash<int>{}(k.v);
+    }
 };
 }
 

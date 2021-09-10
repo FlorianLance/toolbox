@@ -31,7 +31,7 @@ using namespace tool;
 using namespace tool::ui;
 using namespace tool::ex;
 
-ExCurveW::ExCurveW() : ExItemW<QFrame>(UiType::Curve){
+ExCurveW::ExCurveW(QString name) : ExItemW<QFrame>(UiType::Curve, name){
     resetB    = new QPushButton("Reset points");
     addPointB = new QPushButton("Add point");
     curveW = new ui::CurveW();
@@ -85,7 +85,8 @@ ExCurveW::ExCurveW() : ExItemW<QFrame>(UiType::Curve){
     type.init_widget(items, Index{0});
 }
 
-ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, geo::Pt2d xRange, geo::Pt2d yRange, bool enabled){
+ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, geo::Pt2d xRange, geo::Pt2d yRange,
+                                const std::pair<std::vector<double>, std::vector<double>> &points, bool enabled){
 
     auto diffRangeX = xRange.y() - xRange.x();
     auto diffRangeY = yRange.y() - yRange.x();
@@ -119,29 +120,16 @@ ExCurveW *ExCurveW::init_widget(QString title, QString xTitle, QString yTitle, g
     curveW->set_y_title(yTitle);
     curveW->set_x_range(xRange.x(), xRange.y());
     curveW->set_y_range(yRange.x(), yRange.y());
-    curveW->set_points({xRange.x(), xRange.y()}, {yRange.x(), yRange.y()}, 0);
+
+    set_points(points);
 
     w->setEnabled(enabled);
 
-    return this;
-}
-
-void ExCurveW::init_connection(const QString &nameParam){
-
-    minX.init_connection(nameParam);
-    maxX.init_connection(nameParam);
-    minY.init_connection(nameParam);
-    maxY.init_connection(nameParam);
-    firstY.init_connection(nameParam);
-    lastY.init_connection(nameParam);
-    fitted.init_connection(nameParam);
-    type.init_connection(nameParam);
-
     connect(curveW, &CurveW::data_updated_signal, this, [=]{
-        emit ui_change_signal(nameParam);
+        trigger_ui_change();
     });
     connect(curveW, &CurveW::settings_updated_signal, this, [=]{
-        emit ui_change_signal(nameParam);
+        trigger_ui_change();
     });
     connect(&fitted, &ExCheckBoxW::ui_change_signal, this, [&]{
         curveW->set_fitted_state(fitted.w->isChecked());
@@ -151,7 +139,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         minX.blockSignals(true);
         if(minX.w->value() > maxX.w->value()){
-           minX.w->setValue(maxX.w->value()-0.01);
+            minX.w->setValue(maxX.w->value()-0.01);
         }
         minX.blockSignals(false);
 
@@ -161,7 +149,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         maxX.blockSignals(true);
         if(minX.w->value() > maxX.w->value()){
-           maxX.w->setValue(minX.w->value()+0.01);
+            maxX.w->setValue(minX.w->value()+0.01);
         }
         maxX.blockSignals(false);
 
@@ -171,7 +159,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         minY.blockSignals(true);
         if(minY.w->value() > maxY.w->value()){
-           minY.w->setValue(maxY.w->value()-0.01);
+            minY.w->setValue(maxY.w->value()-0.01);
         }
         minY.blockSignals(false);
 
@@ -191,7 +179,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         maxY.blockSignals(true);
         if(minY.w->value() > maxY.w->value()){
-           maxY.w->setValue(minY.w->value()+0.01);
+            maxY.w->setValue(minY.w->value()+0.01);
         }
         maxY.blockSignals(false);
 
@@ -200,7 +188,7 @@ void ExCurveW::init_connection(const QString &nameParam){
 
         const auto diff = maxY.w->value() - minY.w->value();
         firstY.w->setRange(minY.w->value(), maxY.w->value());
-        lastY.w->setRange(minY.w->value(), maxY.w->value());        
+        lastY.w->setRange(minY.w->value(), maxY.w->value());
         firstY.w->setSingleStep(diff*0.01);
         lastY.w->setSingleStep(diff*0.01);
 
@@ -263,7 +251,11 @@ void ExCurveW::init_connection(const QString &nameParam){
         auto id = type.w->currentIndex();
         curveW->set_type(static_cast<Curve::Type>(id), currentCurveId.w->value());
     });
+
+    return this;
 }
+
+
 
 void ExCurveW::update_from_arg(const Arg &arg){
 
@@ -271,91 +263,137 @@ void ExCurveW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0 && arg.generator.info.has_value()){
-//        auto v = arg.generator.info.value();
-//        arg.generator.min;
-//        arg.generator.max;
-    }
+    if(generatorName.length() > 0){
+        if(const auto &info = arg.generator.info; info.has_value()){
+            //        auto v = arg.generator.info.value();
+            //        arg.generator.min;
+            //        arg.generator.max;
 
-    auto pts = arg.to_curve_value();
+            // init_widget ...
+            // set_points(arg.to_curve_value());
 
-    if(pts.first.size() < 2){
-        pts.first = {0,1};
-    }
-    if(pts.second.size() < 2){
-        pts.second = {0,1};
-    }
-
-    auto minXV = minX.w->value();
-    auto maxXV = maxX.w->value();
-
-    auto minYV = minY.w->value();
-    auto maxYV = maxY.w->value();
-
-    for(const auto & v : pts.first){
-        if(v < minXV){
-            minXV = v;
-        }
-        if(v > maxXV){
-            maxXV = v;
+        }else{
+            qDebug() << "ExCurveW Invalid generator.";
         }
     }
 
-    for(const auto & v : pts.second){
-        if(v < minYV){
-            minYV = v;
-        }
-        if(v > maxYV){
-            maxYV = v;
-        }
-    }
+    set_points(arg.to_curve_value());
 
-    auto diffX = maxXV - minXV;
-    auto diffY = maxYV - minYV;
+//    auto pts = arg.to_curve_value();
 
-    minX.blockSignals(true);
-    maxX.blockSignals(true);
-    minY.blockSignals(true);
-    maxY.blockSignals(true);
-    firstY.blockSignals(true);
-    lastY.blockSignals(true);
+//    if(pts.first.size() < 2){
+//        pts.first = {0,1};
+//    }
+//    if(pts.second.size() < 2){
+//        pts.second = {0,1};
+//    }
 
-    minX.w->setValue(minXV);
-    maxX.w->setValue(maxXV);
-    minY.w->setValue(minYV);
-    maxY.w->setValue(maxYV);
+//    auto minXV = minX.w->value();
+//    auto maxXV = maxX.w->value();
 
-    firstY.w->setValue(pts.second[0]);
-    lastY.w->setValue(pts.second[pts.second.size()-1]);
+//    auto minYV = minY.w->value();
+//    auto maxYV = maxY.w->value();
 
-    const auto stepX =  diffX*0.01;
-    const auto stepY =  diffY*0.01;
-    minX.w->setSingleStep(stepX);
-    maxX.w->setSingleStep(stepX);
-    minY.w->setSingleStep(stepY);
-    maxY.w->setSingleStep(stepY);
-    firstY.w->setSingleStep(stepY);
-    lastY.w->setSingleStep(stepY);
+//    for(const auto & v : pts.first){
+//        if(v < minXV){
+//            minXV = v;
+//        }
+//        if(v > maxXV){
+//            maxXV = v;
+//        }
+//    }
 
-    firstY.blockSignals(false);
-    lastY.blockSignals(false);
-    minY.blockSignals(false);
-    maxY.blockSignals(false);
-    minX.blockSignals(false);
-    maxX.blockSignals(false);
+//    for(const auto & v : pts.second){
+//        if(v < minYV){
+//            minYV = v;
+//        }
+//        if(v > maxYV){
+//            maxYV = v;
+//        }
+//    }
 
-    curveW->set_x_range(minXV, maxXV);
-    curveW->set_y_range(minYV, maxYV);
-    curveW->set_points(std::move(pts.first), std::move(pts.second), 0);
+//    auto diffX = maxXV - minXV;
+//    auto diffY = maxYV - minYV;
+
+//    minX.blockSignals(true);
+//    maxX.blockSignals(true);
+//    minY.blockSignals(true);
+//    maxY.blockSignals(true);
+//    firstY.blockSignals(true);
+//    lastY.blockSignals(true);
+
+//    minX.w->setValue(minXV);
+//    maxX.w->setValue(maxXV);
+//    minY.w->setValue(minYV);
+//    maxY.w->setValue(maxYV);
+
+//    firstY.w->setValue(pts.second[0]);
+//    lastY.w->setValue(pts.second[pts.second.size()-1]);
+
+//    const auto stepX =  diffX*0.01;
+//    const auto stepY =  diffY*0.01;
+//    minX.w->setSingleStep(stepX);
+//    maxX.w->setSingleStep(stepX);
+//    minY.w->setSingleStep(stepY);
+//    maxY.w->setSingleStep(stepY);
+//    firstY.w->setSingleStep(stepY);
+//    lastY.w->setSingleStep(stepY);
+
+//    firstY.blockSignals(false);
+//    lastY.blockSignals(false);
+//    minY.blockSignals(false);
+//    maxY.blockSignals(false);
+//    minX.blockSignals(false);
+//    maxX.blockSignals(false);
+
+//    curveW->set_x_range(minXV, maxXV);
+//    curveW->set_y_range(minYV, maxYV);
+//    curveW->set_points(std::move(pts.first), std::move(pts.second), 0);
 
     w->blockSignals(false);
 }
 
 Arg ExCurveW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from_curve(&curveW->curves[0]->xCoords, &curveW->curves[0]->yCoords, " ");
     return arg;
+}
+
+void ExCurveW::set_points(const std::pair<std::vector<double>, std::vector<double> > &points){
+
+    if((points.first.size() == 0) || (points.second.size() == 0) || (points.first.size() != points.second.size())){
+        curveW->set_points({minX.w->value(), maxX.w->value()}, {minY.w->value(), maxY.w->value()}, 0);
+    }else{
+        std::vector<double> xV,yV;
+        xV.reserve(points.first.size());
+        yV.reserve(points.first.size());
+
+        for(const auto &x : points.first){
+            if(x < minX.w->value()){
+                xV.push_back(minX.w->value());
+                continue;
+            }
+            if(x > maxX.w->value()){
+                xV.push_back(maxX.w->value());
+                continue;
+            }
+            xV.push_back(x);
+        }
+        for(const auto &y : points.second){
+            if(y < minY.w->value()){
+                yV.push_back(minY.w->value());
+                continue;
+            }
+            if(y > maxY.w->value()){
+                yV.push_back(maxY.w->value());
+                continue;
+            }
+            yV.push_back(y);
+        }
+
+        curveW->set_points(std::move(xV), std::move(yV), 0);
+    }
 }
 
 

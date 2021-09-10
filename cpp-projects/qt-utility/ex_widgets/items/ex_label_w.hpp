@@ -35,9 +35,9 @@ class ExLabelW : public ExItemW<QLabel>{
 
 public :
 
-    ExLabelW() : ExItemW<QLabel>(UiType::Label){}
+    ExLabelW(QString name ="");
     ExLabelW  *init_widget(QString txt, bool enabled = true);
-    void init_connection(const QString &nameParam) override;
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 };

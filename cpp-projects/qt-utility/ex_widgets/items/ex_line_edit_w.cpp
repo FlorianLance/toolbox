@@ -29,13 +29,15 @@
 using namespace tool::ex;
 
 
+ExLineEditW::ExLineEditW(QString name) : ExItemW<QLineEdit>(UiType::Line_edit, name){
+    connect(w.get(), &QLineEdit::textChanged,this, [=]{trigger_ui_change();});
+}
+
 ExLineEditW *ExLineEditW::init_widget(QString txt, bool enabled){
     ui::W::init(w.get(), txt, enabled);
     return this;
 }
 
-
-void ExLineEditW::init_connection(const QString &nameParam){connect(w.get(), &QLineEdit::textChanged,this, [=]{emit ui_change_signal(nameParam);});}
 
 void ExLineEditW::update_from_arg(const Arg &arg){
 
@@ -53,7 +55,7 @@ void ExLineEditW::update_from_arg(const Arg &arg){
 
 Arg ExLineEditW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->text());
 
     // generator

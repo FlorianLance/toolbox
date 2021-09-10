@@ -30,7 +30,7 @@
 using namespace tool;
 using namespace tool::ex;
 
-ExTransformationW::ExTransformationW() : ExItemW<QFrame>(UiType::Transformation){
+ExTransformationW::ExTransformationW(QString name) : ExItemW<QFrame>(UiType::Transformation, name){
 
     w->setFrameShadow(QFrame::Raised);
     w->setFrameShape(QFrame::Shape::Box);
@@ -41,7 +41,7 @@ ExTransformationW::ExTransformationW() : ExItemW<QFrame>(UiType::Transformation)
     // TSc  scX     scY     scZ
     layout = new QGridLayout();
     w->setLayout(layout);
-    layout->addWidget(name = ui::W::txt("Default"),0,0,1,4);
+    layout->addWidget(trName = ui::W::txt("Default"),0,0,1,4);
     layout->addWidget(ui::W::txt("Translation"), 1, 0, 1, 1);
     layout->addWidget(trX(), 1, 1, 1, 1);
     layout->addWidget(trY(), 1, 2, 1, 1);
@@ -68,7 +68,7 @@ ExTransformationW::ExTransformationW() : ExItemW<QFrame>(UiType::Transformation)
 
 ExTransformationW *ExTransformationW::init_widget(const QString &title, Vector3dSettings transS, Vector3dSettings rotationS, Vector3dSettings scaleS, bool enabled){
 
-    name->setText(QSL("<b>") % title % QSL("</b>"));
+    trName->setText(QSL("<b>") % title % QSL("</b>"));
 
     trX.init_widget(transS.sX);
     trY.init_widget(transS.sY);
@@ -82,20 +82,6 @@ ExTransformationW *ExTransformationW::init_widget(const QString &title, Vector3d
     w->setEnabled(enabled);
     return this;
 }
-
-void ExTransformationW::init_connection(const QString &nameParam){
-
-    trX.init_connection(nameParam);
-    trY.init_connection(nameParam);
-    trZ.init_connection(nameParam);
-    rotX.init_connection(nameParam);
-    rotY.init_connection(nameParam);
-    rotZ.init_connection(nameParam);
-    scX.init_connection(nameParam);
-    scY.init_connection(nameParam);
-    scZ.init_connection(nameParam);
-}
-
 
 void ExTransformationW::update_from_arg(const Arg &arg){
 
@@ -165,7 +151,7 @@ void ExTransformationW::update_from_arg(const Arg &arg){
 
 Arg ExTransformationW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();    
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from_args({
         trX.convert_to_arg(),trY.convert_to_arg(),trZ.convert_to_arg(),
         rotX.convert_to_arg(),rotY.convert_to_arg(),rotZ.convert_to_arg(),

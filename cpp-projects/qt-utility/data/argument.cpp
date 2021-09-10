@@ -187,11 +187,11 @@ Arg Arg::generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiTyp
     return arg;
 }
 
-Arg Arg::generate_non_ui_arg(QString value, QString separator){
+Arg Arg::generate_non_ui_arg(QString value, QString separator, QString name){
     Arg arg;
     arg.uiElementKey       = UiElementKey{-1};
     arg.m_associatedUiType = UiType::Non_ui_labels;
-    arg.name               = "";
+    arg.name               = name;
     arg.m_value            = value;
     arg.m_separator        = separator;
     arg.m_sizes            = {value.count(separator)+1};

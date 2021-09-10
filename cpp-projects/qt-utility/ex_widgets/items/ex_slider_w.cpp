@@ -31,7 +31,7 @@ using namespace tool::ex;
 
 
 
-ExSliderIntegerW::ExSliderIntegerW() : ExItemW<QFrame>(UiType::Slider_integer){
+ExSliderIntegerW::ExSliderIntegerW(QString name) : ExItemW<QFrame>(UiType::Slider_integer, name){
 
     w->setFrameShadow(QFrame::Raised);
     w->setFrameShape(QFrame::Shape::NoFrame);
@@ -46,6 +46,11 @@ ExSliderIntegerW::ExSliderIntegerW() : ExItemW<QFrame>(UiType::Slider_integer){
 
     layout->setContentsMargins(2,2,2,2);
     layout->setSpacing(2);
+
+    connect(value, &QSlider::valueChanged, this, [&](int value){
+        valueTxt->setText(QString::number(value));
+        trigger_ui_change();
+    });
 }
 
 ExSliderIntegerW *ExSliderIntegerW::init_widget(QString titleV, MinV<int> minV, V<int> valueV, MaxV<int> maxV, StepV<int> stepV){
@@ -56,13 +61,6 @@ ExSliderIntegerW *ExSliderIntegerW::init_widget(QString titleV, MinV<int> minV, 
     return this;
 }
 
-
-void ExSliderIntegerW::init_connection(const QString &nameParam){
-    connect(value, &QSlider::valueChanged, this, [&](int value){
-        valueTxt->setText(QString::number(value));
-        emit ui_change_signal(nameParam);
-    });
-}
 
 void ExSliderIntegerW::update_from_arg(const Arg &arg){
 
@@ -95,7 +93,7 @@ void ExSliderIntegerW::update_from_arg(const Arg &arg){
 
 Arg ExSliderIntegerW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(value->value());
 
     // generator
@@ -121,7 +119,7 @@ void ExSliderIntegerW::init_default_tooltip(QString name){
     value->setToolTip(tooltip);
 }
 
-ExSliderFloatW::ExSliderFloatW() : ExItemW<QFrame>(UiType::Slider_double){
+ExSliderFloatW::ExSliderFloatW(QString name) : ExItemW<QFrame>(UiType::Slider_double, name){
 
     w->setFrameShadow(QFrame::Raised);
     w->setFrameShape(QFrame::Shape::NoFrame);
@@ -133,6 +131,12 @@ ExSliderFloatW::ExSliderFloatW() : ExItemW<QFrame>(UiType::Slider_double){
     layout->addWidget(value = new QSlider());
     value->setOrientation(Qt::Horizontal);
     layout->addWidget(valueTxt = new QLabel());
+
+    connect(value, &QSlider::valueChanged, this, [&](int value){
+        qreal dVal = m_min + (1.0*value/m_nbSteps) * (m_max-m_min);
+        valueTxt->setText(QString::number(dVal));
+        trigger_ui_change();
+    });
 }
 
 ExSliderFloatW *ExSliderFloatW::init_widget(QString titleV, MinV<qreal> minV, V<qreal> valueV, MaxV<qreal> maxV, StepV<qreal> stepV){
@@ -158,14 +162,6 @@ QString ExSliderFloatW::value_to_string() const {
     return QString::number(dVal);
 }
 
-void ExSliderFloatW::init_connection(const QString &nameParam){
-
-    connect(value, &QSlider::valueChanged, this, [&](int value){
-        qreal dVal = m_min + (1.0*value/m_nbSteps) * (m_max-m_min);
-        valueTxt->setText(QString::number(dVal));
-        emit ui_change_signal(nameParam);
-    });
-}
 
 void ExSliderFloatW::update_from_arg(const Arg &arg){
 
@@ -202,7 +198,7 @@ void ExSliderFloatW::update_from_arg(const Arg &arg){
 
 Arg ExSliderFloatW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(static_cast<float>(m_min + (1.0*value->value()/m_nbSteps) * (m_max-m_min)));
 
     // generator
@@ -227,5 +223,3 @@ void ExSliderFloatW::init_default_tooltip(QString name){
     value->setToolTipDuration(-1);
     value->setToolTip(tooltip);
 }
-
-#include "moc_ex_slider_w.cpp"

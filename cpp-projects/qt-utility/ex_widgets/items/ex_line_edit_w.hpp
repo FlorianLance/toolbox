@@ -34,9 +34,9 @@ class ExLineEditW : public ExItemW<QLineEdit>{
 
 public :
 
-    ExLineEditW() : ExItemW<QLineEdit>(UiType::Line_edit){}
+    ExLineEditW(QString name ="");
     ExLineEditW *init_widget(QString txt, bool enabled = true);
-    void init_connection(const QString &nameParam) override;
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 };

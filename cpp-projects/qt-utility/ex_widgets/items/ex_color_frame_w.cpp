@@ -29,7 +29,7 @@
 using namespace tool;
 using namespace tool::ex;
 
-ExColorFrameW::ExColorFrameW() : ExItemW<QFrame>(UiType::Color_frame){
+ExColorFrameW::ExColorFrameW(QString name) : ExItemW<QFrame>(UiType::Color_frame, name){
     w->setMinimumSize(QSize(20,20));
 }
 
@@ -43,13 +43,18 @@ void ExColorFrameW::update_from_arg(const Arg &arg){
     ExItemW::update_from_arg(arg);
 
     w->blockSignals(true);
+
+    if(generatorName.length()){
+        // ..
+    }
+
     update(arg.to_bool_value());
     w->blockSignals(false);
 }
 
 Arg ExColorFrameW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(onState);
 
     // generator
@@ -66,7 +71,3 @@ void ExColorFrameW::update(bool on){
     w->setStyleSheet((onState = on) ? stateOn : stateOff);
 }
 
-void ExColorFrameW::init_connection(const QString &nameParam){
-    // no events
-    Q_UNUSED(nameParam)
-}

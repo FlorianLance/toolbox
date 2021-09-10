@@ -29,19 +29,19 @@
 using namespace tool::ex;
 
 
+ExListLabelsW::ExListLabelsW(QString name) : ExItemW<QListWidget>(UiType::List_labels, name){
+    connect(w.get(), &QListWidget::itemChanged, this, [=]{trigger_ui_change();});
+}
+
 ExListLabelsW *ExListLabelsW::init_widget(bool enabled){
     w->clear();
     w->setEnabled(enabled);
     return this;
 }
 
-void ExListLabelsW::init_connection(const QString &nameParam){
-    connect(w.get(), &QListWidget::itemChanged, this, [=]{emit ui_change_signal(nameParam);});
-}
-
 Arg ExListLabelsW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
 
     // value
     QStringList list;

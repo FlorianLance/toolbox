@@ -45,7 +45,7 @@ class CSharpHighlighter : public QSyntaxHighlighter{
 public:
     CSharpHighlighter(QTextDocument *parent = nullptr);
 
-    void add_classes(const std::vector<QString> &classNames);
+    void add_classes(const QStringList &classNames);
 
 protected:
     void highlightBlock(const QString &text) override;

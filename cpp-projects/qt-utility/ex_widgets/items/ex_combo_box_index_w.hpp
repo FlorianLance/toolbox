@@ -34,9 +34,9 @@ class ExComboBoxIndexW : public ExItemW<QComboBox>{
 
 public:
 
-    ExComboBoxIndexW() : ExItemW<QComboBox>(UiType::Combo_box_index){}
+    ExComboBoxIndexW(QString name ="");
     ExComboBoxIndexW *init_widget(QStringList items, int index = 0, bool enabled = true);
-    void init_connection(const QString &nameParam) override;
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 };

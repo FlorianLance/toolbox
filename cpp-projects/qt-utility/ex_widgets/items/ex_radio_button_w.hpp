@@ -34,10 +34,9 @@ class ExRadioButtonW : public ExItemW<QRadioButton>{
 Q_OBJECT
 public:
 
-    ExRadioButtonW() : ExItemW<QRadioButton>(UiType::Radio_button){}
+    ExRadioButtonW(QString name ="") : ExItemW<QRadioButton>(UiType::Radio_button, name){}
     ExRadioButtonW *init_widget(QString txt, bool checked, bool enabled = true);
 
-    void init_connection(const QString &nameParam) override;
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 };

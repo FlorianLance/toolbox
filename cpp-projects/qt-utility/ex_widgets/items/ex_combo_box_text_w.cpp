@@ -29,6 +29,10 @@
 using namespace tool;
 using namespace tool::ex;
 
+ExComboBoxTextW::ExComboBoxTextW(QString name) : ExItemW<QComboBox>(UiType::Combo_box_text, name){
+    connect(w.get(), QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=]{trigger_ui_change();});
+}
+
 ExComboBoxTextW *ExComboBoxTextW::init_widget(QStringList items, Index index, bool enabled){
     ui::W::init(w.get(), items, enabled);
     if(index.v < w->count()){
@@ -37,10 +41,13 @@ ExComboBoxTextW *ExComboBoxTextW::init_widget(QStringList items, Index index, bo
     return this;
 }
 
-void ExComboBoxTextW::init_connection(const QString &nameParam) {
-    connect(w.get(), QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=]{emit ui_change_signal(nameParam);});
+ExComboBoxTextW *ExComboBoxTextW::init_widget(QStringList items, QString currentText, bool enabled){
+    ui::W::init(w.get(), items, enabled);
+    if(currentText.length() > 0){
+        w->setCurrentText(currentText);
+    }
+    return this;
 }
-
 
 void ExComboBoxTextW::update_from_arg(const Arg &arg){
 
@@ -49,14 +56,16 @@ void ExComboBoxTextW::update_from_arg(const Arg &arg){
     w->blockSignals(true);
 
     if(generatorName.length() > 0){
-        if(auto info = arg.generator.info; info.has_value()){
-            w->addItems(arg.generator.info.value().split("|"));
+        if(const auto &info = arg.generator.info; info.has_value()){
+            init_widget(arg.generator.info.value().split("|"), arg.to_string_value());
+        }else{
+            qDebug() << "ExComboBoxTextW Invalid generator.";
         }
-    }
-
-    const auto text  = arg.to_string_value();
-    if(text.length() > 0){        
-        w->setCurrentText(text);        
+    }else{
+        const auto text  = arg.to_string_value();
+        if(text.length() > 0){
+        w->setCurrentText(text);
+        }
     }
 
     w->blockSignals(false);
@@ -64,7 +73,7 @@ void ExComboBoxTextW::update_from_arg(const Arg &arg){
 
 Arg ExComboBoxTextW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->currentText());
 
     // generator

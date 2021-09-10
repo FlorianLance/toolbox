@@ -28,6 +28,21 @@
 
 using namespace tool::ex;
 
+ExComboBoxIndexW::ExComboBoxIndexW(QString name) : ExItemW<QComboBox>(UiType::Combo_box_index, name){
+
+    connect(w.get(), QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=]{trigger_ui_change();});
+}
+
+ExComboBoxIndexW *ExComboBoxIndexW::init_widget(QStringList items, int index, bool enabled){
+
+    ui::W::init(w.get(), items, enabled);
+    if(index < w->count()){
+        w->setCurrentIndex(index);
+    }
+    return this;
+}
+
+
 void ExComboBoxIndexW::update_from_arg(const Arg &arg){
 
     ExItemW::update_from_arg(arg);
@@ -35,19 +50,22 @@ void ExComboBoxIndexW::update_from_arg(const Arg &arg){
     w->blockSignals(true);
 
     if(generatorName.length() > 0){
-        if(auto info = arg.generator.info; info.has_value()){
-            w->addItems(arg.generator.info.value().split("|"));
-
+        if(const auto &info = arg.generator.info; info.has_value()){
+            init_widget(arg.generator.info.value().split("|"), arg.to_int_value());
+        }else{
+            qDebug() << "ExComboBoxIndexW Invalid generator.";
         }
+    }else{
+        w->setCurrentIndex(arg.to_int_value());
     }
-    w->setCurrentIndex(arg.to_int_value());
+
 
     w->blockSignals(false);
 }
 
 Arg ExComboBoxIndexW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->currentIndex());
 
     // generator
@@ -63,16 +81,4 @@ Arg ExComboBoxIndexW::convert_to_arg() const{
     return arg;
 }
 
-ExComboBoxIndexW *ExComboBoxIndexW::init_widget(QStringList items, int index, bool enabled){
-
-    ui::W::init(w.get(), items, enabled);
-    if(index < w->count()){
-        w->setCurrentIndex(index);
-    }
-    return this;
-}
-
-void ExComboBoxIndexW::init_connection(const QString &nameParam) {
-    connect(w.get(), QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=]{emit ui_change_signal(nameParam);});
-}
 

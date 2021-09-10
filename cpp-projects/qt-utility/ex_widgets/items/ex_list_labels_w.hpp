@@ -39,10 +39,9 @@ class ExListLabelsW : public ExItemW<QListWidget>{
 
 public:
 
-    ExListLabelsW() : ExItemW<QListWidget>(UiType::List_labels){}
+    ExListLabelsW(QString name ="");
     ExListLabelsW *init_widget(bool enabled = true);
 
-    void init_connection(const QString &nameParam) override;
     Arg convert_to_arg() const override;
     void update_from_arg(const Arg &arg) override;
 };

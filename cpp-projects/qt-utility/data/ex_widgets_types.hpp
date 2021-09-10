@@ -60,7 +60,7 @@ namespace tool::ex {
         {UiT::Check_box,        "Check box"sv,           "bool"sv,                         true},
         {UiT::Line_edit,        "Line text editor"sv,    "string"sv,                       true},
         {UiT::Text_edit,        "Block text editor"sv,   "string"sv,                       true},
-        {UiT::Code_editor,      "Code editor"sv,         "string"sv,                       false},
+        {UiT::Code_editor,      "Code editor"sv,         "string"sv,                       true},
         {UiT::Color_pick,       "Color pick"sv,          "get_color"sv,                    true},
         {UiT::Combo_box_text,   "Combo box text"sv,      "string"sv,                       true},
         {UiT::Combo_box_index,  "Combo box index"sv,     "int"sv,                          true},

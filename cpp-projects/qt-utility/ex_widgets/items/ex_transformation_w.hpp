@@ -44,10 +44,9 @@ class ExTransformationW : public ExItemW<QFrame>{
 
 public:
 
-    ExTransformationW();
+    ExTransformationW(QString name ="");
     ExTransformationW *init_widget(const QString &title, Vector3dSettings transS = DefaultTranVec, Vector3dSettings rotationS = DefaultRotVec, Vector3dSettings scaleS = DefaultScaVec, bool enabled = true);
 
-    void init_connection(const QString &nameParam) override;
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
     void set_generator(QString genName) override;
@@ -75,7 +74,7 @@ public:
 
 public:
 
-    QLabel *name = nullptr;
+    QLabel *trName = nullptr;
     ExFloatSpinBoxW trX, trY, trZ;
     ExFloatSpinBoxW rotX, rotY, rotZ;
     ExFloatSpinBoxW scX, scY, scZ;

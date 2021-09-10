@@ -29,7 +29,7 @@
 using namespace tool;
 using namespace tool::ex;
 
-ExVector2dW::ExVector2dW() : ExItemW<QFrame>(UiType::Vector2D){
+ExVector2dW::ExVector2dW(QString name) : ExItemW<QFrame>(UiType::Vector2D, name){
 
     w->setFrameShadow(QFrame::Raised);
     w->setFrameShape(QFrame::Shape::NoFrame);
@@ -56,13 +56,6 @@ ExVector2dW *ExVector2dW::init_widget(const QString &title, Vector2dSettings set
     return this;
 }
 
-
-void ExVector2dW::init_connection(const QString &nameParam){
-    x.init_connection(nameParam);
-    y.init_connection(nameParam);
-}
-
-
 void ExVector2dW::update_from_arg(const Arg &arg){
 
     ExItemW::update_from_arg(arg);
@@ -77,40 +70,38 @@ void ExVector2dW::update_from_arg(const Arg &arg){
 
     if(generatorName.length() > 0){
 
-        if(arg.generator.decimals.has_value()){
-            const auto value = arg.generator.decimals.value().toInt();
-            x.w->setDecimals(value);
-            y.w->setDecimals(value);
-        }
+        if(const auto &min = arg.generator.min, max = arg.generator.max, decimals = arg.generator.decimals, step = arg.generator.step;
+            min.has_value() && max.has_value() && decimals.has_value() && step.has_value()){
 
-        if(arg.generator.min.has_value()){
-            const auto value = arg.generator.min.value().toDouble();
-            x.w->setMinimum(value);
-            y.w->setMinimum(value);
-        }
+            init_widget("", Vector2dSettings{
+                DsbSettings{
+                    MinV<qreal>{min.value().toDouble()},
+                    V<qreal>{args[0].value().toDouble()}, MaxV<qreal>{max.value().toDouble()},
+                    StepV<qreal>{step.value().toDouble()},
+                    decimals.value().toInt()
+                },
+                DsbSettings{
+                    MinV<qreal>{min.value().toDouble()},
+                    V<qreal>{args[1].value().toDouble()}, MaxV<qreal>{max.value().toDouble()},
+                    StepV<qreal>{step.value().toDouble()},
+                    decimals.value().toInt()
+                }
+            });
 
-        if(arg.generator.max.has_value()){
-            const auto value = arg.generator.max.value().toDouble();
-            x.w->setMaximum(value);
-            y.w->setMaximum(value);
+        }else{
+            qDebug() << "ExVector2dW Invalid generator";
         }
-
-        if(arg.generator.step.has_value()){
-            const auto value = arg.generator.step.value().toDouble();
-            x.w->setSingleStep(value);
-            y.w->setSingleStep(value);
-        }
+    }else{
+        x.update_from_arg(args[0]);
+        y.update_from_arg(args[1]);
     }
-
-    x.update_from_arg(args[0]);
-    y.update_from_arg(args[1]);
 
     w->blockSignals(false);
 }
 
 Arg ExVector2dW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from_args({x.convert_to_arg(),
                         y.convert_to_arg()}, " ", UnityType::System_single);
 

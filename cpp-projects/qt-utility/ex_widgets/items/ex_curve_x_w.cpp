@@ -209,6 +209,36 @@ CurveXManagerW::CurveXManagerW(){
     layout->addWidget(ui::F::gen(ui::L::HB(), {ui::W::txt("Max size:"), sizeMax(), ui::W::txt("Curve color:"), color()}, LStretch{true}, LMargins{false}));
 }
 
+ExCurveXW::ExCurveXW(QString name) : ExItemW<CurveXManagerW>(UiType::Curve, name){
+
+
+    connect(&w->name, &ExLineEditW::ui_change_signal, this, [&]{
+        trigger_ui_change();
+        emit name_changed_signal(w->name.w->text());
+    });
+    connect(&w->minY, &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
+        w->curve.set_y_range(w->minY.w->value(), w->maxY.w->value(), w->automaticMinMax.w->isChecked());
+        trigger_ui_change();
+    });
+    connect(&w->maxY, &ExDoubleSpinBoxW::ui_change_signal, this, [&]{
+        w->curve.set_y_range(w->minY.w->value(), w->maxY.w->value(), w->automaticMinMax.w->isChecked());
+        trigger_ui_change();
+    });
+    connect(&w->automaticMinMax, &ExCheckBoxW::ui_change_signal, this, [&]{
+        w->curve.set_y_range(w->minY.w->value(), w->maxY.w->value(), w->automaticMinMax.w->isChecked());
+        trigger_ui_change();
+    });
+    connect(&w->sizeMax, &ExSpinBoxW::ui_change_signal, this, [&]{
+        w->curve.set_max_size(w->sizeMax.w->value());
+        trigger_ui_change();
+    });
+    connect(&w->color, &ExSelectColorW::ui_change_signal, this, [&]{
+        w->curve.set_line_color(w->color.current_color());
+        trigger_ui_change();
+    });
+
+}
+
 ExCurveXW *ExCurveXW::init_widget(QString title, bool enabled){
 
     QwtText titleC(title);
@@ -229,40 +259,7 @@ ExCurveXW *ExCurveXW::init_widget(QString title, bool enabled){
     return this;
 }
 
-void ExCurveXW::init_connection(const QString &nameParam){
 
-    w->name.init_connection(QSL("name"));
-    w->minY.init_connection(QSL("min_x"));
-    w->maxY.init_connection(QSL("max_y"));
-    w->automaticMinMax.init_connection(QSL("auto"));
-    w->sizeMax.init_connection(QSL("size_max"));
-    w->color.init_connection(QSL("color"));
-
-    connect(&w->name, &ExLineEditW::ui_change_signal, this, [&,nameParam]{
-        emit ui_change_signal(nameParam);
-        emit name_changed_signal(w->name.w->text());
-    });
-    connect(&w->minY, &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
-        w->curve.set_y_range(w->minY.w->value(), w->maxY.w->value(), w->automaticMinMax.w->isChecked());
-        emit ui_change_signal(nameParam);
-    });
-    connect(&w->maxY, &ExDoubleSpinBoxW::ui_change_signal, this, [&,nameParam]{
-        w->curve.set_y_range(w->minY.w->value(), w->maxY.w->value(), w->automaticMinMax.w->isChecked());
-        emit ui_change_signal(nameParam);
-    });
-    connect(&w->automaticMinMax, &ExCheckBoxW::ui_change_signal, this, [&,nameParam]{
-        w->curve.set_y_range(w->minY.w->value(), w->maxY.w->value(), w->automaticMinMax.w->isChecked());
-        emit ui_change_signal(nameParam);
-    });
-    connect(&w->sizeMax, &ExSpinBoxW::ui_change_signal, this, [&,nameParam]{
-        w->curve.set_max_size(w->sizeMax.w->value());
-        emit ui_change_signal(nameParam);
-    });
-    connect(&w->color, &ExSelectColorW::ui_change_signal, this, [&,nameParam]{
-        w->curve.set_line_color(w->color.current_color());
-        emit ui_change_signal(nameParam);
-    });
-}
 
 void ExCurveXW::update_from_arg(const Arg &arg){
 
@@ -321,7 +318,7 @@ void ExCurveXW::update_from_arg(const Arg &arg){
 
 Arg ExCurveXW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
 
     const auto nameA = w->name.convert_to_arg();
     const auto minA = w->minY.convert_to_arg();

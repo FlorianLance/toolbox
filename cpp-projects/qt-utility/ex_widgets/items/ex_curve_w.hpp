@@ -43,36 +43,37 @@ class ExCurveW : public ExItemW<QFrame>{
 
 public :
 
-    ExCurveW();
-    ExCurveW  *init_widget(QString title, QString xTitle = "x", QString yTitle = "y", geo::Pt2d xRange = {0,1}, geo::Pt2d yRange = {0,1}, bool enabled = true);
+    ExCurveW(QString name ="");
+    ExCurveW  *init_widget(QString title, QString xTitle = "x", QString yTitle = "y", geo::Pt2d xRange = {0,1}, geo::Pt2d yRange = {0,1},
+                          const std::pair<std::vector<double>, std::vector<double>> &points = {}, bool enabled = true);
 
-    void init_connection(const QString &nameParam) override;
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
+
+    void set_points(const std::pair<std::vector<double>, std::vector<double>> &points);
 
     // curve
     tool::ui::CurveW *curveW = nullptr;
     // id curve
-    ExSpinBoxW currentCurveId;
+    ExSpinBoxW currentCurveId = {"current_curve_id"};
     // actions
     QPushButton *resetB = nullptr;
     QPushButton *addPointB = nullptr;
-    // range x    
-    ExDoubleSpinBoxW minX;
-    ExDoubleSpinBoxW maxX;
+    // range x
+    ExDoubleSpinBoxW minX = {"min_x"};
+    ExDoubleSpinBoxW maxX = {"max_x"};
     // range y
-    ExDoubleSpinBoxW minY;
-    ExDoubleSpinBoxW maxY;
+    ExDoubleSpinBoxW minY = {"min_y"};
+    ExDoubleSpinBoxW maxY = {"max_y"};
     // first/last y
-    ExDoubleSpinBoxW firstY;
-    ExDoubleSpinBoxW lastY;
+    ExDoubleSpinBoxW firstY = {"first_y"};
+    ExDoubleSpinBoxW lastY  = {"last_y"};
     // point to add
-    ExDoubleSpinBoxW addX;
-    ExDoubleSpinBoxW addY;
+    ExDoubleSpinBoxW addX = {"add_x"};
+    ExDoubleSpinBoxW addY = {"add_y"};
     // settings
-    ExCheckBoxW fitted;
-//    ExCheckBoxW relative;
-    ExComboBoxTextW type;
+    ExCheckBoxW fitted = {"fitted"};
+    ExComboBoxTextW type = {"type"};
 };
 
 

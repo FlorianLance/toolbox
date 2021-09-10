@@ -34,13 +34,11 @@ namespace tool::ex {
 
 class ExSliderIntegerW : public ExItemW<QFrame>{
 
-    Q_OBJECT
-
 public:
 
-    ExSliderIntegerW();
+    ExSliderIntegerW(QString name ="");
     ExSliderIntegerW* init_widget(QString title, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> step);
-    void init_connection(const QString &nameParam) override;
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 
@@ -54,13 +52,11 @@ public:
 
 class ExSliderFloatW : public ExItemW<QFrame>{
 
-    Q_OBJECT
-
 public:
 
-    ExSliderFloatW();
+    ExSliderFloatW(QString name ="");
     ExSliderFloatW *init_widget(QString title, MinV<qreal> min, V<qreal> valueTxt, MaxV<qreal> max, StepV<qreal> step);
-    void init_connection(const QString &nameParam) override;
+
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 

@@ -28,13 +28,13 @@
 
 using namespace tool::ex;
 
+ExCheckBoxW::ExCheckBoxW(QString name) : ExItemW<QCheckBox>(UiType::Check_box, name){
+    connect(w.get(), &QCheckBox::stateChanged, this, [=]{trigger_ui_change();});
+}
+
 ExCheckBoxW *ExCheckBoxW::init_widget(QString txt, bool checked, bool enabled){
     ui::W::init(w.get(), txt, checked, enabled);
     return this;
-}
-
-void ExCheckBoxW::init_connection(const QString &nameParam){
-    connect(w.get(), &QCheckBox::stateChanged, this, [=]{emit ui_change_signal(nameParam);});
 }
 
 void ExCheckBoxW::update_from_arg(const Arg &arg){
@@ -43,18 +43,23 @@ void ExCheckBoxW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0 && arg.generator.info.has_value()){
-        w->setText(arg.generator.info.value());
+    if(generatorName.length()){
+        if(arg.generator.info.has_value()){
+            init_widget(arg.generator.info.value(), arg.to_bool_value(), true);
+        }else{
+            qDebug() << "ExCheckBoxW Invalid generator.";
+        }
+    }else{
+        w->setChecked(arg.to_bool_value());
     }
 
-    w->setChecked(arg.to_bool_value());
 
     w->blockSignals(false);
 }
 
 Arg ExCheckBoxW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->isChecked());
 
     // generator

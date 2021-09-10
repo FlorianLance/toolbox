@@ -117,108 +117,27 @@ namespace tool::ui {
     };
 
     struct W{
-        static QFrame* init(QFrame *f, bool on, bool enabled = true){
-            f->setStyleSheet(on ? "background-color:green;" : "background-color:red;");
-            f->setEnabled(enabled);
-            return f;
-        }
-        static QComboBox* init(QComboBox *cb, QStringList items, int index=0, bool enabled = true){
-            cb->addItems(items);
-            cb->setEnabled(enabled);
-            if(index < cb->count()){
-                cb->setCurrentIndex(index);
-            }
-            return cb;
-        }
 
-        static QCheckBox* init(QCheckBox *cb, QString txt, bool checked, bool enabled = true){
-            cb->setText(txt);
-            cb->setChecked(checked);
-            cb->setEnabled(enabled);
-            return cb;
-        }
-        static QRadioButton* init(QRadioButton *rb, QString txt, bool checked, bool enabled = true){
-            rb->setText(txt);
-            rb->setEnabled(enabled);
-            rb->setChecked(checked);
-            return rb;
-        }
-        static QSlider* init(QSlider *sl, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled = true){
-            sl->setMinimum(min.v);
-            sl->setMaximum(max.v);
-            sl->setValue(value.v);
-            sl->setSingleStep(singleStep.v);
-            sl->setEnabled(enabled);
-            return sl;
-        }
-        static QPushButton* init(QPushButton *pb, QString txt, bool enabled = true){
-            pb->setText(txt);
-            pb->setEnabled(enabled);
-            return pb;
-        }
-        static QTextEdit* init(QTextEdit *te, QString txt, bool enabled = true){
-            te->setText(txt);
-            te->setEnabled(enabled);
-            return te;
-        }
-        static QLineEdit* init(QLineEdit *le, QString txt, bool enabled = true){
-            le->setText(txt);
-            le->setEnabled(enabled);
-            return le;
-        }
-        static QLabel* init_label(QLabel *la, QString txt, bool enabled = true){
-            la->setText(txt);
-            la->setEnabled(enabled);
-            return la;
-        }
-        static QSpinBox* init(QSpinBox *sb, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled = true){
-            sb->setMinimum(min.v);
-            sb->setMaximum(max.v);
-            sb->setValue(value.v);
-            sb->setSingleStep(singleStep.v);
-            sb->setEnabled(enabled);
-            return sb;
-        }
+        static QFrame* init(QFrame *f, bool on, bool enabled = true);
+        static QComboBox* init(QComboBox *cb, QStringList items, int index=0, bool enabled = true);
+        static QCheckBox* init(QCheckBox *cb, QString txt, bool checked, bool enabled = true);
+        static QRadioButton* init(QRadioButton *rb, QString txt, bool checked, bool enabled = true);
+        static QSlider* init(QSlider *sl, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled = true);
+        static QPushButton* init(QPushButton *pb, QString txt, bool enabled = true);
+        static QTextEdit* init(QTextEdit *te, QString txt, bool enabled = true);
+        static QLineEdit* init(QLineEdit *le, QString txt, bool enabled = true);
+        static QLabel* init_label(QLabel *la, QString txt, bool enabled = true);
+        static QSpinBox* init(QSpinBox *sb, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled = true);
         static QDoubleSpinBox* init(QDoubleSpinBox *dsb, MinV<qreal> min, V<qreal> value, MaxV<qreal> max, StepV<qreal> singleStep, int decimals, bool enabled = true);
-        static inline QLabel *txt(QString txt){return new QLabel(txt);}
 
-        static inline QLabel *icon(QIcon icon, QSize size){
-            auto l = new QLabel();
-            l->setPixmap(icon.pixmap(size));
-            return l;
-        }
-
-        static inline QLabel *icon(QColor color, QSize size){
-            auto l = new QLabel();
-            auto p = QPixmap(size);
-            p.fill(color);
-            l->setPixmap(std::move(p));
-            return l;
-        }
-
-        static QFrame *horizontal_line(){
-            auto line = new QFrame();
-            line->setObjectName(QString::fromUtf8("line"));
-            line->setGeometry(QRect(320, 150, 118, 3));
-            line->setFrameShape(QFrame::HLine);
-            line->setFrameShadow(QFrame::Sunken);
-            return line;
-        }
+        static QLabel *txt(QString txt);
+        static QLabel *icon(QIcon icon, QSize size);
+        static QLabel *icon(QColor color, QSize size);
+        static QFrame *horizontal_line();
     };
 
     struct L{
-        static void stretch(QLayout *layout){
-            auto hbl = qobject_cast<QHBoxLayout*>(layout);
-            if(hbl){
-                hbl->addStretch();
-                return;
-            }
-            auto vbl = qobject_cast<QVBoxLayout*>(layout);
-            if(vbl){
-                vbl->addStretch();
-                return;
-            }
-        }
+        static void stretch(QLayout *layout);
         static inline QVBoxLayout *VB(){return new QVBoxLayout();}
         static inline QHBoxLayout *HB(){return new QHBoxLayout();}
         static inline QGridLayout *G(){return new QGridLayout();}
@@ -227,111 +146,13 @@ namespace tool::ui {
     struct F{
 
         static QFrame *gen_frame(QLayout *layout, std::vector<std::pair<QWidget*,int>> widgetsStretch, int stretchFactor = 0, LMarginsD margins = LMarginsD{},
-                           QFrame::Shape shape = QFrame::Shape::NoFrame, QFrame::Shadow shadow = QFrame::Raised){
-
-
-            QFrame *frame = new QFrame();
-            frame->setLayout(layout);
-            layout->setContentsMargins(margins.left, margins.top, margins.right, margins.bottom);
-            layout->setSpacing(margins.inter);
-
-            for(auto widget : widgetsStretch){
-                frame->layout()->addWidget(widget.first);
-            }
-
-            if(auto hbL = qobject_cast<QHBoxLayout*>(frame->layout()); hbL != nullptr){
-                for(size_t ii = 0; ii < widgetsStretch.size(); ++ii){
-                    hbL->setStretch(static_cast<int>(ii), widgetsStretch[ii].second);
-                }
-                if(stretchFactor > 0){
-                    hbL->addStretch(stretchFactor);
-                }
-
-            }else if(auto vbL = qobject_cast<QVBoxLayout*>(frame->layout()); hbL != nullptr){
-                for(size_t ii = 0; ii < widgetsStretch.size(); ++ii){
-                    vbL->setStretch(static_cast<int>(ii), widgetsStretch[ii].second);
-                }
-                if(stretchFactor > 0){
-                    vbL->addStretch(stretchFactor);
-                }
-            }
-
-            frame->setFrameShadow(shadow);
-            frame->setFrameShape(shape);
-
-            return frame;
-        }
+                           QFrame::Shape shape = QFrame::Shape::NoFrame, QFrame::Shadow shadow = QFrame::Raised);
 
         static QFrame *gen_frame(QLayout *layout, std::vector<QWidget*> widgets, LStretchD strech = LStretchD{}, LMarginsD margins = LMarginsD{},
-                           QFrame::Shape shape = QFrame::Shape::NoFrame, QFrame::Shadow shadow = QFrame::Raised){
-
-            QFrame *frame = new QFrame();
-            frame->setLayout(layout);
-            layout->setContentsMargins(margins.left, margins.top, margins.right, margins.bottom);
-            layout->setSpacing(margins.inter);
-
-            for(auto widget : widgets){
-                frame->layout()->addWidget(widget);
-            }
-
-            if(auto hbL = qobject_cast<QHBoxLayout*>(frame->layout()); hbL != nullptr){
-
-                for(size_t ii = 0; ii < strech.elementsStretch.size(); ++ii){
-                    if(ii < static_cast<size_t>(layout->count())){
-                        hbL->setStretch(static_cast<int>(ii), strech.elementsStretch[ii]);
-                    }
-                }
-
-                if(strech.spacerStretch > 0){
-                    hbL->addStretch(strech.spacerStretch);
-                }
-
-
-            }else if(auto vbL = qobject_cast<QVBoxLayout*>(frame->layout()); vbL != nullptr){
-
-                for(size_t ii = 0; ii < strech.elementsStretch.size(); ++ii){
-                    if(ii < static_cast<size_t>(layout->count())){
-                        vbL->setStretch(static_cast<int>(ii), strech.elementsStretch[ii]);
-                    }
-                }
-
-                if(strech.spacerStretch > 0){
-                    vbL->addStretch(strech.spacerStretch);
-                }
-            }
-
-            frame->setFrameShadow(shadow);
-            frame->setFrameShape(shape);
-
-            return frame;
-        }
-
+                           QFrame::Shape shape = QFrame::Shape::NoFrame, QFrame::Shadow shadow = QFrame::Raised);
 
         static QFrame* gen(QLayout *layout, std::vector<QWidget*> widgets, LStretch stretch = LStretch{true}, LMargins margins = LMargins{true},
-                           QFrame::Shape shape = QFrame::Shape::NoFrame, QFrame::Shadow shadow = QFrame::Raised){
-            QFrame *frame = new QFrame();
-            frame->setLayout(layout);
-            if(!margins.v){
-                layout->setContentsMargins(0,0,0,0);
-            }
-
-            for(auto widget : widgets){
-                frame->layout()->addWidget(widget);
-            }
-
-            auto *hbL = qobject_cast<QHBoxLayout*>(frame->layout());
-            if(hbL && stretch.v){
-                hbL->addStretch(20);
-            }
-            auto *vbL = qobject_cast<QVBoxLayout*>(frame->layout());
-            if(vbL && stretch.v){
-                vbL->addStretch(20);
-            }
-            frame->setFrameShadow(shadow);
-            frame->setFrameShape(shape);
-
-            return frame;
-        }
+                           QFrame::Shape shape = QFrame::Shape::NoFrame, QFrame::Shadow shadow = QFrame::Raised);
     };
 
 

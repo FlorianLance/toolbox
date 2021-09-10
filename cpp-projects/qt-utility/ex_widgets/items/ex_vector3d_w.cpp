@@ -29,7 +29,7 @@
 using namespace tool;
 using namespace tool::ex;
 
-ExVector3dW::ExVector3dW() : ExItemW<QFrame>(UiType::Vector3D){
+ExVector3dW::ExVector3dW(QString name) : ExItemW<QFrame>(UiType::Vector3D, name){
 
     w->setFrameShadow(QFrame::Raised);
     w->setFrameShape(QFrame::Shape::NoFrame);
@@ -46,9 +46,9 @@ ExVector3dW::ExVector3dW() : ExItemW<QFrame>(UiType::Vector3D){
     layout->addWidget(z());
     layout->setContentsMargins(0,0,0,0);
 
-    connect(&x, &ExBaseW::ui_change_signal ,this, &ExBaseW::ui_change_signal);
-    connect(&y, &ExBaseW::ui_change_signal ,this, &ExBaseW::ui_change_signal);
-    connect(&z, &ExBaseW::ui_change_signal ,this, &ExBaseW::ui_change_signal);
+    connect(&x, &ExBaseW::ui_change_signal, this, &ExBaseW::ui_change_signal);
+    connect(&y, &ExBaseW::ui_change_signal, this, &ExBaseW::ui_change_signal);
+    connect(&z, &ExBaseW::ui_change_signal, this, &ExBaseW::ui_change_signal);
 }
 
 ExVector3dW *ExVector3dW::init_widget(const QString &title, Vector3dSettings settings, bool enabled){
@@ -58,12 +58,6 @@ ExVector3dW *ExVector3dW::init_widget(const QString &title, Vector3dSettings set
     y.init_widget(settings.sY);
     z.init_widget(settings.sZ);
     return this;
-}
-
-void ExVector3dW::init_connection(const QString &nameParam){
-    x.init_connection(nameParam);
-    y.init_connection(nameParam);
-    z.init_connection(nameParam);
 }
 
 void ExVector3dW::update_from_arg(const Arg &arg){
@@ -118,7 +112,7 @@ void ExVector3dW::update_from_arg(const Arg &arg){
 
 Arg ExVector3dW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from_args({x.convert_to_arg(),
                         y.convert_to_arg(),
                         z.convert_to_arg()}, " ", UnityType::System_single);

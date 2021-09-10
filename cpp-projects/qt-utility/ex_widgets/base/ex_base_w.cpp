@@ -1,4 +1,5 @@
 
+
 /*******************************************************************************
 ** Toolbox-qt-utility                                                         **
 ** MIT License                                                                **
@@ -24,33 +25,23 @@
 **                                                                            **
 ********************************************************************************/
 
+
 #pragma once
 
-
-// local
 #include "ex_base_w.hpp"
 
-namespace tool::ex {
+using namespace tool::ex;
 
-template<typename widget>
-class ExItemW : public ExBaseW{
-public:
+void ExBaseW::update_from_arg(const Arg &arg){
 
-    ExItemW(UiType t, QString uiName) : ExBaseW(t, uiName), w(std::make_unique<widget>()){}
+    key      = IdKey(IdKey::Type::UiItemArgument, arg.uiElementKey.v);
+    itemName = arg.name;
 
-    virtual void init_tooltip(QString tooltip  = "") override{
-        w->setToolTipDuration(-1);
-        w->setToolTip(tooltip);
+    if(generatorName.length() > 0){
+        generatorOrder = arg.generator.order;
     }
+}
 
-    virtual void init_default_tooltip(QString name) override{
-        w->setToolTipDuration(-1);
-        w->setToolTip(QSL("name: ") % name % QSL("  C# type: ") % from_view(get_tooltip_string(type)));
-    }
-
-    inline widget *release(){ return w.release();}
-    widget * operator()() { return w.get();}
-
-    std::unique_ptr<widget> w = nullptr;
-};
+Arg ExBaseW::convert_to_arg() const {
+    return Arg::generate_item_ui_arg(UiElementKey{key()}, itemName, generatorName, type, generatorOrder);
 }

@@ -39,17 +39,18 @@ class ExBaseW : public QObject{
 
 Q_OBJECT
 public:
-    ExBaseW(UiType t) : type(t), key(IdKey::Type::UiItemArgument, -1){}
-
+    ExBaseW(UiType t, QString uiName) : type(t), key(IdKey::Type::UiItemArgument, -1), itemName(uiName){}
     virtual ~ExBaseW(){}
-    virtual void init_connection(const QString &nameParam) = 0;
-    virtual void update_from_arg(const Arg &arg) = 0;    
-    virtual Arg convert_to_arg()const = 0;
+
     virtual void init_tooltip(QString tooltip) = 0;
-    virtual void init_default_tooltip(QString key) = 0;    
+    virtual void init_default_tooltip(QString key) = 0;
+
     virtual void set_generator(QString genName){
         generatorName = genName;
     }
+
+    virtual void update_from_arg(const Arg &arg);
+    virtual Arg convert_to_arg() const;
 
     virtual void update_from_resources(){}
     virtual void update_from_components(){}
@@ -59,18 +60,22 @@ public:
         return this;
     }
 
+    inline void trigger_ui_change(){emit ui_change_signal(UiElementKey{key()});}
+    inline void trigger_action(){emit action_signal(UiElementKey{key()});}
+
+    UiType type;
+    IdKey key;
     QString itemName;
     QString generatorName = "";
     int generatorOrder = -1;
-    UiType type;
-    IdKey key;
+
+private:
 
 signals:
 
-    void ui_change_signal(QString nameParam);
-    void action_signal(QString nameAction);
+    void ui_change_signal(UiElementKey key);
+    void action_signal(UiElementKey key);
 
-    // test
     void update_from_components_signal();
     void update_from_resources_signal();
 };

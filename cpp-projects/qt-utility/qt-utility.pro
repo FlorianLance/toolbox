@@ -105,6 +105,7 @@ LIBS +=  \
 SOURCES += \
     data/argument.cpp \
     data/id_key.cpp \
+    ex_widgets/base/ex_base_w.cpp \
     ex_widgets/items/ex_checkbox_w.cpp \
     ex_widgets/items/ex_code_editor_w.cpp \
     ex_widgets/items/ex_color_frame_w.cpp \

@@ -75,13 +75,14 @@ public:
 
     CurveXManagerW();
 
-    ExLineEditW name;
     CurveXW curve;
-    ExDoubleSpinBoxW minY;
-    ExDoubleSpinBoxW maxY;
-    ExCheckBoxW automaticMinMax;
-    ExSpinBoxW sizeMax;
-    ExSelectColorW color;
+
+    ExLineEditW name = {"name"};    
+    ExDoubleSpinBoxW minY = {"min_y"};
+    ExDoubleSpinBoxW maxY = {"max_y"};
+    ExCheckBoxW automaticMinMax = {"auto"};
+    ExSpinBoxW sizeMax = {"size_max"};
+    ExSelectColorW color = {"color"};
 };
 
 
@@ -90,13 +91,11 @@ class ExCurveXW : public ExItemW<CurveXManagerW>{
 Q_OBJECT
 public :
 
-    ExCurveXW() : ExItemW<CurveXManagerW>(UiType::Curve){}
+    ExCurveXW(QString name ="");
     ExCurveXW  *init_widget(QString title, bool enabled = true);
 
-    void init_connection(const QString &nameParam) override;
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
-
 
 signals:
 

@@ -30,12 +30,13 @@
 using namespace tool::ex;
 
 
+ExLabelW::ExLabelW(QString name) : ExItemW<QLabel>(UiType::Label, name){
+}
 
 ExLabelW *ExLabelW::init_widget(QString txt, bool enabled){
     ui::W::init_label(w.get(), txt, enabled);
     return this;
 }
-
 
 void ExLabelW::update_from_arg(const Arg &arg){
 
@@ -53,7 +54,7 @@ void ExLabelW::update_from_arg(const Arg &arg){
 
 Arg ExLabelW::convert_to_arg() const{
 
-    Arg arg = ExItemW::convert_to_arg();
+    Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->text());
 
     // generator
@@ -64,6 +65,3 @@ Arg ExLabelW::convert_to_arg() const{
     return arg;
 }
 
-void ExLabelW::init_connection(const QString &nameParam){
-    Q_UNUSED(nameParam)
-}
