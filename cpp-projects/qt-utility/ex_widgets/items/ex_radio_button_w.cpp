@@ -34,12 +34,54 @@ void ExRadioButtonW::update_from_arg(const Arg &arg) {
     w->blockSignals(true);
     w->setChecked(arg.to_bool_value());
     w->blockSignals(false);
-    connect(w.get(), &QRadioButton::toggled, this, [=]{trigger_ui_change();});
+    connect(w.get(), &QRadioButton::toggled, this, [=]{
+        trigger_ui_change();}
+    );
 }
 
-ExRadioButtonW *ExRadioButtonW::init_widget(QString txt, bool checked, bool enabled){
-    ui::W::init(w.get(), txt, checked, enabled);
-    return this;
+
+std::vector<ExBaseW *> ExRadioButtonW::init_group_widgets(QButtonGroup &group, std::vector<ExRadioButtonW *> widgets, std::vector<QString> textes, std::vector<bool> checkedState, std::vector<bool> enabledState){
+
+    std::vector<ExBaseW *> bW;
+    group.blockSignals(true);
+
+    for(auto &w : widgets){
+        w->blockSignals(true);
+        bW.push_back(w);
+        group.addButton(w->w.get());
+    }
+
+    if(widgets.size() == textes.size() && widgets.size() == checkedState.size()){
+        for(size_t ii = 0; ii < widgets.size(); ++ii){
+            widgets[ii]->w->setText(textes[ii]);
+            widgets[ii]->w->setChecked(checkedState[ii]);
+        }
+
+    }else{
+        qWarning() << "ExRadioButtonW::init_group_widgets error";
+        for(auto &w : widgets){
+            w->blockSignals(false);
+        }
+
+        return bW;
+    }
+
+    if(widgets.size() == enabledState.size()){
+        for(size_t ii = 0; ii < widgets.size(); ++ii){
+            widgets[ii]->w->setEnabled(enabledState[ii]);
+        }
+    }else{
+        for(size_t ii = 0; ii < widgets.size(); ++ii){
+            widgets[ii]->w->setEnabled(true);
+        }
+    }
+
+    for(auto &w : widgets){
+        w->blockSignals(false);
+    }
+    group.blockSignals(false);
+
+    return bW;
 }
 
 Arg ExRadioButtonW::convert_to_arg() const {

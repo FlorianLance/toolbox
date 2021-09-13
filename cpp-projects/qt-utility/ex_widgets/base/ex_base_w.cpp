@@ -34,7 +34,7 @@ using namespace tool::ex;
 
 void ExBaseW::update_from_arg(const Arg &arg){
 
-    key      = IdKey(IdKey::Type::UiItemArgument, arg.uiElementKey.v);
+//    key      = IdKey(IdKey::Type::UiItemArgument, arg.uiElementKey.v);
     itemName = arg.name;
 
     if(generatorName.length() > 0){
@@ -43,5 +43,6 @@ void ExBaseW::update_from_arg(const Arg &arg){
 }
 
 Arg ExBaseW::convert_to_arg() const {
-    return Arg::generate_item_ui_arg(UiElementKey{key()}, itemName, generatorName, type, generatorOrder);
+//    return Arg::generate_item_ui_arg(UiElementKey{key()}, itemName, generatorName, type, generatorOrder);
+    return Arg::generate_item_ui_arg(itemName, generatorName, type, generatorOrder);
 }

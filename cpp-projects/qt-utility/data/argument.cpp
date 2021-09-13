@@ -35,7 +35,8 @@ std::vector<Arg> Arg::split_value_to_atoms_args() const{
     std_v1<Arg> args;
     for(auto &v : list){
         Arg arg;
-        arg.uiElementKey = uiElementKey;
+//        arg.uiElementKey = uiElementKey;
+        arg.name           = name; // ?
         arg.m_unityType    = m_unityType;
         arg.m_value        = v;
         arg.m_separator    = "";
@@ -52,7 +53,7 @@ std::array<Arg, 3> Arg::to_transform_args() const{
     auto l = split_value();
     std::array<Arg, 3> args;
     for(auto &arg : args){
-        arg.uiElementKey    = uiElementKey;
+//        arg.uiElementKey    = uiElementKey;
         arg.m_separator       = m_separator;
         arg.m_sizes           = {3};
     }
@@ -63,8 +64,9 @@ std::array<Arg, 3> Arg::to_transform_args() const{
     return args;
 }
 
-void Arg::init_from_unknow(UiElementKey key, QString v){
-    uiElementKey   = key;
+//void Arg::init_from_unknow(UiElementKey key, QString v){
+void Arg::init_from_unknow(QString v){
+//    uiElementKey   = key;
     m_unityType    = UnityType::Unknow;
     m_separator    = "";
     m_value        = Convertor::to_str(v);
@@ -157,9 +159,10 @@ void Arg::init_from_args(std::vector<Arg> args, QString sep, UnityType uType){
     m_sizes = {static_cast<int>(args.size())};
 }
 
-Arg Arg::generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString generatorName, UiType associatedUiType, int generatorOrder){
+//Arg Arg::generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString generatorName, UiType associatedUiType, int generatorOrder){
+Arg Arg::generate_item_ui_arg(QString name, QString generatorName, UiType associatedUiType, int generatorOrder){
     Arg arg;
-    arg.uiElementKey       = uiElementKey;
+//    arg.uiElementKey       = uiElementKey;
     arg.name               = name;
     arg.generator.name     = generatorName;
     arg.m_associatedUiType = associatedUiType;
@@ -167,17 +170,19 @@ Arg Arg::generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString g
     return arg;
 }
 
-Arg Arg::generate_init_ui_arg(UiElementKey uiElementKey, UiType uiType, QString name){
+//Arg Arg::generate_init_ui_arg(UiElementKey uiElementKey, UiType uiType, QString name){
+Arg Arg::generate_init_ui_arg(UiType uiType, QString name){
     Arg arg;
-    arg.uiElementKey       = uiElementKey;
+//    arg.uiElementKey       = uiElementKey;
     arg.m_associatedUiType = uiType;
     arg.name               = name;
     return arg;
 }
 
-Arg Arg::generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type){
+//Arg Arg::generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type){
+Arg Arg::generate_from_loaded_xml_values(UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type){
     Arg arg;
-    arg.uiElementKey       = uiElementKey;
+//    arg.uiElementKey       = uiElementKey;
     arg.m_associatedUiType = uiType;
     arg.name               = name;
     arg.m_value            = value;
@@ -189,7 +194,7 @@ Arg Arg::generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiTyp
 
 Arg Arg::generate_non_ui_arg(QString value, QString separator, QString name){
     Arg arg;
-    arg.uiElementKey       = UiElementKey{-1};
+//    arg.uiElementKey       = UiElementKey{-1};
     arg.m_associatedUiType = UiType::Non_ui_labels;
     arg.name               = name;
     arg.m_value            = value;
@@ -201,7 +206,7 @@ Arg Arg::generate_non_ui_arg(QString value, QString separator, QString name){
 
 Arg Arg::copy_with_new_element_id(const Arg &argToCopy){
     Arg arg;
-    arg.uiElementKey       = UiElementKey{IdKey(IdKey::Type::UiItemArgument)()};
+//    arg.uiElementKey       = UiElementKey{IdKey(IdKey::Type::UiItemArgument)()};
     arg.name               = argToCopy.name;
     arg.m_associatedUiType = argToCopy.m_associatedUiType;
     arg.m_value            = argToCopy.m_value;

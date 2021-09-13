@@ -62,9 +62,12 @@ struct Arg{
     Arg() = default;
 
     // generate
-    static Arg generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString generatorName, UiType m_associatedUiType, int generatorOrder);
-    static Arg generate_init_ui_arg(UiElementKey uiElementKey, UiType uiType, QString name);
-    static Arg generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type);
+    static Arg generate_item_ui_arg(QString name, QString generatorName, UiType m_associatedUiType, int generatorOrder);
+    static Arg generate_init_ui_arg(UiType uiType, QString name);
+    static Arg generate_from_loaded_xml_values(UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type);
+//    static Arg generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString generatorName, UiType m_associatedUiType, int generatorOrder);
+//    static Arg generate_init_ui_arg(UiElementKey uiElementKey, UiType uiType, QString name);
+//    static Arg generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type);
     static Arg generate_non_ui_arg(QString value, QString separator, QString name);
 
     // copy
@@ -99,7 +102,8 @@ struct Arg{
         init_from_curve_str(str::Convertor::curve_to_str(xCoords,yCoords,sep), sep);
     }
 
-    void init_from_unknow(UiElementKey key, QString v);
+//    void init_from_unknow(UiElementKey key, QString v);
+    void init_from_unknow(QString v);
     void init_from(QString v);
     void init_from(QStringList list, QString sep = "|");
 
@@ -127,7 +131,7 @@ struct Arg{
     inline void set_value(QString value){m_value = value;}
     inline void set_separator(QString sep){m_separator = sep;}
 
-    UiElementKey uiElementKey = {-1};
+//    UiElementKey uiElementKey = {-1};
     QString name; // only updated when reading
 
     // generator

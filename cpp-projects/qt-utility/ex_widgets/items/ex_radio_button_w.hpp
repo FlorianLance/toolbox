@@ -26,6 +26,10 @@
 
 #pragma once
 
+// Qt
+#include <QButtonGroup>
+
+// local
 #include "ex_item_w.hpp"
 
 namespace tool::ex{
@@ -35,7 +39,7 @@ Q_OBJECT
 public:
 
     ExRadioButtonW(QString name ="") : ExItemW<QRadioButton>(UiType::Radio_button, name){}
-    ExRadioButtonW *init_widget(QString txt, bool checked, bool enabled = true);
+    static std::vector<ExBaseW*> init_group_widgets(QButtonGroup &group, std::vector<ExRadioButtonW *> widgets, std::vector<QString> textes, std::vector<bool> checkedState, std::vector<bool> enabledState = {});
 
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
