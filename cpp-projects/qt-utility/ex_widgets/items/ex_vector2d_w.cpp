@@ -68,9 +68,12 @@ void ExVector2dW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
+    if(arg.generator.has_value()){
 
-        if(const auto &min = arg.generator.min, max = arg.generator.max, decimals = arg.generator.decimals, step = arg.generator.step;
+        if(const auto &min = arg.generator->min,
+                      &max = arg.generator->max,
+                      &decimals = arg.generator->decimals,
+                      &step = arg.generator->step;
             min.has_value() && max.has_value() && decimals.has_value() && step.has_value()){
 
             init_widget("", Vector2dSettings{
@@ -89,7 +92,7 @@ void ExVector2dW::update_from_arg(const Arg &arg){
             });
 
         }else{
-            qDebug() << "ExVector2dW Invalid generator";
+            qWarning() << "ExVector2dW Invalid generator";
         }
     }else{
         x.update_from_arg(args[0]);
@@ -106,20 +109,19 @@ Arg ExVector2dW::convert_to_arg() const{
                         y.convert_to_arg()}, " ", UnityType::System_single);
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.min        = QString::number(x.w->minimum());
-        arg.generator.max        = QString::number(x.w->maximum());
-        arg.generator.step = QString::number(x.w->singleStep());
-        arg.generator.decimals   = QString::number(x.w->decimals());
+    if(hasGenerator){
+        arg.generator->min        = QString::number(x.w->minimum());
+        arg.generator->max        = QString::number(x.w->maximum());
+        arg.generator->step       = QString::number(x.w->singleStep());
+        arg.generator->decimals   = QString::number(x.w->decimals());
     }
     return arg;
 }
 
-void ExVector2dW::set_generator(QString genName){
-
-    ExItemW::set_generator(genName);
-    x.set_generator(genName);
-    y.set_generator(genName);
+void ExVector2dW::set_as_generator(){
+    ExItemW::set_as_generator();
+    x.set_as_generator();
+    y.set_as_generator();
 }
 
 void ExVector2dW::set_decimals(int d){

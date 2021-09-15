@@ -38,7 +38,7 @@ class ExRadioButtonW : public ExItemW<QRadioButton>{
 Q_OBJECT
 public:
 
-    ExRadioButtonW(QString name ="") : ExItemW<QRadioButton>(UiType::Radio_button, name){}
+    ExRadioButtonW(QString name ="");
     static std::vector<ExBaseW*> init_group_widgets(QButtonGroup &group, std::vector<ExRadioButtonW *> widgets, std::vector<QString> textes, std::vector<bool> checkedState, std::vector<bool> enabledState = {});
 
     void update_from_arg(const Arg &arg) override;

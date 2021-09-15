@@ -28,17 +28,9 @@
 
 using namespace tool::ex;
 
-void ExRadioButtonW::update_from_arg(const Arg &arg) {
-    ExItemW::update_from_arg(arg);
-
-    w->blockSignals(true);
-    w->setChecked(arg.to_bool_value());
-    w->blockSignals(false);
-    connect(w.get(), &QRadioButton::toggled, this, [=]{
-        trigger_ui_change();}
-    );
+ExRadioButtonW::ExRadioButtonW(QString name) : ExItemW<QRadioButton>(UiType::Radio_button, name){
+    connect(w.get(), &QRadioButton::toggled, this, [=]{trigger_ui_change();});
 }
-
 
 std::vector<ExBaseW *> ExRadioButtonW::init_group_widgets(QButtonGroup &group, std::vector<ExRadioButtonW *> widgets, std::vector<QString> textes, std::vector<bool> checkedState, std::vector<bool> enabledState){
 
@@ -84,9 +76,34 @@ std::vector<ExBaseW *> ExRadioButtonW::init_group_widgets(QButtonGroup &group, s
     return bW;
 }
 
+void ExRadioButtonW::update_from_arg(const Arg &arg) {
+
+    ExItemW::update_from_arg(arg);
+
+    w->blockSignals(true);
+
+    if(arg.generator.has_value()){
+
+    }else{
+
+    }
+
+    w->setChecked(arg.to_bool_value());
+
+    w->blockSignals(false);
+}
+
+
+
 Arg ExRadioButtonW::convert_to_arg() const {
     Arg arg = ExBaseW::convert_to_arg();
     arg.init_from(w->isChecked());
+
+    // generator
+    if(hasGenerator){
+        // ...
+    }
+
     return arg;
 }
 

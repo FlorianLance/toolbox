@@ -55,16 +55,16 @@ void ExComboBoxTextW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
-        if(const auto &info = arg.generator.info; info.has_value()){
-            init_widget(arg.generator.info.value().split("|"), arg.to_string_value());
+    if(arg.generator.has_value()){
+        if(const auto &info = arg.generator->info; info.has_value()){
+            init_widget(arg.generator->info.value().split("|"), arg.to_string_value());
         }else{
-            qDebug() << "ExComboBoxTextW Invalid generator.";
+            qWarning() << "ExComboBoxTextW Invalid generator.";
         }
     }else{
         const auto text  = arg.to_string_value();
         if(text.length() > 0){
-        w->setCurrentText(text);
+            w->setCurrentText(text);
         }
     }
 
@@ -77,15 +77,14 @@ Arg ExComboBoxTextW::convert_to_arg() const{
     arg.init_from(w->currentText());
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.info = "";
+    if(hasGenerator){
+        arg.generator->info = "";
         for(int ii = 0; ii < w->count(); ++ii){
-            arg.generator.info.value() += w->itemText(ii);
+            arg.generator->info.value() += w->itemText(ii);
             if(ii < w->count()-1){
-                arg.generator.info.value() += "|";
+                arg.generator->info.value() += "|";
             }
         }
     }
-
     return arg;
 }

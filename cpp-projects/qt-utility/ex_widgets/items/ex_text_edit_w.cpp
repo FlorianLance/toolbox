@@ -72,7 +72,7 @@ void ExTextEditW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(arg.generator.name.length() > 0){
+    if(arg.generator.has_value()){
         // ...
     }
     w->setText(arg.to_string_value());
@@ -86,7 +86,7 @@ Arg ExTextEditW::convert_to_arg() const{
     arg.init_from(w->toPlainText());
 
     // generator
-    if(generatorName.length() > 0){
+    if(hasGenerator){
         // ...
     }
     return arg;

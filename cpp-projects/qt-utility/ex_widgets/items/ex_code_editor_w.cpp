@@ -76,15 +76,12 @@ void ExCodeEditorW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(arg.generator.name.length() > 0){
-        if(const auto &info = arg.generator.info; info.has_value()){
-            // arg.generator.info->split(" ");
-            // arg.to_string_value()
-        }else{
-            qDebug() << "ExCodeEditorW Invalid genrator.";
-        }
+    if(arg.generator.has_value()){
+//        if(const auto &info = arg.generator->info; info.has_value()){
 
-        // ...
+//        }else{
+//            qDebug() << "ExCodeEditorW Invalid genrator.";
+//        }
     }else{
         w->setPlainText(arg.to_string_value());
     }
@@ -98,7 +95,7 @@ Arg ExCodeEditorW::convert_to_arg() const{
     arg.init_from(w->toPlainText());
 
     // generator
-    if(generatorName.length() > 0){
+    if(hasGenerator){
         // ...
     }
     return arg;

@@ -72,31 +72,31 @@ void ExVector3dW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
+    if(arg.generator.has_value()){
 
-        if(arg.generator.decimals.has_value()){
-            const auto value = arg.generator.decimals.value().toInt();
+        if(auto dec = arg.generator->decimals; dec.has_value()){
+            const auto value = dec.value().toInt();
             x.w->setDecimals(value);
             y.w->setDecimals(value);
             z.w->setDecimals(value);
         }
 
-        if(arg.generator.min.has_value()){
-            const auto value = arg.generator.min.value().toDouble();
+        if(auto min = arg.generator->min; min.has_value()){
+            const auto value = min.value().toDouble();
             x.w->setMinimum(value);
             y.w->setMinimum(value);
             z.w->setMinimum(value);
         }
 
-        if(arg.generator.max.has_value()){
-            const auto value = arg.generator.max.value().toDouble();
+        if(auto max = arg.generator->max; max.has_value()){
+            const auto value = max.value().toDouble();
             x.w->setMaximum(value);
             y.w->setMaximum(value);
             z.w->setMaximum(value);
         }
 
-        if(arg.generator.step.has_value()){
-            const auto value = arg.generator.step.value().toDouble();
+        if(auto step = arg.generator->step; step.has_value()){
+            const auto value = step.value().toDouble();
             x.w->setSingleStep(value);
             y.w->setSingleStep(value);
             z.w->setSingleStep(value);
@@ -118,20 +118,20 @@ Arg ExVector3dW::convert_to_arg() const{
                         z.convert_to_arg()}, " ", UnityType::System_single);
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.min        = QString::number(x.w->minimum());
-        arg.generator.max        = QString::number(x.w->maximum());
-        arg.generator.step = QString::number(x.w->singleStep());
-        arg.generator.decimals   = QString::number(x.w->decimals());
+    if(hasGenerator){
+            arg.generator->min      = QString::number(x.w->minimum());
+            arg.generator->max      = QString::number(x.w->maximum());
+            arg.generator->step     = QString::number(x.w->singleStep());
+            arg.generator->decimals = QString::number(x.w->decimals());
     }
     return arg;
 }
 
-void ExVector3dW::set_generator(QString genName){
-    ExItemW::set_generator(genName);
-    x.set_generator(genName);
-    y.set_generator(genName);
-    z.set_generator(genName);
+void ExVector3dW::set_as_generator(){
+    ExItemW::set_as_generator();
+    x.set_as_generator();
+    y.set_as_generator();
+    z.set_as_generator();
 }
 
 void ExVector3dW::set_decimals(int d){

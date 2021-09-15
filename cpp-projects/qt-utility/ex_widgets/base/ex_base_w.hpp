@@ -39,15 +39,15 @@ class ExBaseW : public QObject{
 
 Q_OBJECT
 public:
-//    ExBaseW(UiType t, QString uiName) : type(t), key(IdKey::Type::UiItemArgument, -1), itemName(uiName){}
+
     ExBaseW(UiType t, QString uiName) : type(t), itemName(uiName){}
     virtual ~ExBaseW(){}
 
     virtual void init_tooltip(QString tooltip) = 0;
     virtual void init_default_tooltip(QString key) = 0;
 
-    virtual void set_generator(QString genName){
-        generatorName = genName;
+    virtual void set_as_generator(){
+        hasGenerator = true;
     }
 
     virtual void update_from_arg(const Arg &arg);
@@ -61,24 +61,16 @@ public:
         return this;
     }
 
-//    inline void trigger_ui_change(){emit ui_change_signal(UiElementKey{key()});}
-//    inline void trigger_action(){emit action_signal(UiElementKey{key()});}
-
     inline void trigger_ui_change(){emit ui_change_signal(itemName);}
     inline void trigger_action(){emit action_signal(itemName);}
 
     UiType type;
-//    IdKey key;
     QString itemName;
-    QString generatorName = "";
+    bool hasGenerator = false;
     int generatorOrder = -1;
-
-private:
 
 signals:
 
-//    void ui_change_signal(UiElementKey key);
-//    void action_signal(UiElementKey key);
     void ui_change_signal(QStringView name);
     void action_signal(QStringView name);
 

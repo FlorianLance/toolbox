@@ -68,25 +68,26 @@ void ExSliderIntegerW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
+    if(arg.generator.has_value()){
 
-        if(arg.generator.min.has_value()){
-            value->setMinimum(arg.generator.min.value().toInt());
+        if(const auto &min = arg.generator->min,
+                      &max = arg.generator->max,
+                     &step = arg.generator->step;
+            min.has_value() && max.has_value() && step.has_value()){
+            init_widget("",
+                MinV<int>{min.value().toInt()},
+                V<int>{arg.to_int_value()},
+                MaxV<int>{max.value().toInt()},
+                StepV<int>{step.value().toInt()});
+        }else{
+            qWarning() << "ExSliderIntegerW invalid generator";
         }
-
-        if(arg.generator.max.has_value()){
-            value->setMaximum(arg.generator.max.value().toInt());
-        }
-
-        if(arg.generator.step.has_value()){
-            value->setSingleStep(arg.generator.step.value().toInt());
-        }
+    }else{
+        int valueV = arg.to_int_value();
+        value->setValue(valueV);
+        minMax->setText(QSL("[") % QString::number(value->minimum()) % QSL(" : ") % QString::number(value->maximum()) % QSL("]"));
+        valueTxt->setText(QString::number(valueV));
     }
-
-    int valueV = arg.to_int_value();
-    value->setValue(valueV);
-    minMax->setText(QSL("[") % QString::number(value->minimum()) % QSL(" : ") % QString::number(value->maximum()) % QSL("]"));
-    valueTxt->setText(QString::number(valueV));
 
     w->blockSignals(false);
 }
@@ -97,10 +98,10 @@ Arg ExSliderIntegerW::convert_to_arg() const{
     arg.init_from(value->value());
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.min   = QString::number(value->minimum());
-        arg.generator.max   = QString::number(value->maximum());
-        arg.generator.step  = QString::number(value->singleStep());
+    if(hasGenerator){
+        arg.generator->min   = QString::number(value->minimum());
+        arg.generator->max   = QString::number(value->maximum());
+        arg.generator->step  = QString::number(value->singleStep());
     }
 
     return arg;
@@ -169,31 +170,29 @@ void ExSliderFloatW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    qreal valueV = arg.to_double_value();
+    if(arg.generator.has_value()){
 
-    if(generatorName.length() > 0){
-
-        if(arg.generator.min.has_value()){
-            m_min = arg.generator.min.value().toDouble();
+        if(const auto &min = arg.generator->min,
+                      &max = arg.generator->max,
+                     &step = arg.generator->step;
+            min.has_value() && max.has_value() && step.has_value()){
+            init_widget("",
+                MinV<qreal>{min.value().toDouble()},
+                V<qreal>{arg.to_double_value()},
+                MaxV<qreal>{max.value().toDouble()},
+                StepV<qreal>{step.value().toDouble()});
+        }else{
+            qWarning() << "ExSliderFloatW invalid generator";
         }
+    }else{
 
-        if(arg.generator.max.has_value()){
-            m_max = arg.generator.max.value().toDouble();
-        }
-
-        if(arg.generator.step.has_value()){
-            m_step = arg.generator.step.value().toDouble();
-        }
-
-        m_nbSteps = static_cast<int>((m_max-m_min)/m_step);
+        qreal valueV = arg.to_double_value();
+        value->setValue(valueV);
+        minMax->setText(QSL("[") % QString::number(m_min) % QSL(" : ") % QString::number(m_max) % QSL("]"));
+        valueTxt->setText(QString::number(valueV));
     }
 
-    ui::W::init(value, MinV<int>{0}, V<int>{static_cast<int>((valueV/m_max)*m_nbSteps)}, MaxV<int>{m_nbSteps},  StepV<int>{1});
-    minMax->setText(QSL("[") % QString::number(m_min) % QSL(" : ") % QString::number(m_max) % QSL("]"));
-    valueTxt->setText(QString::number(valueV));
-
     w->blockSignals(false);
-
 }
 
 Arg ExSliderFloatW::convert_to_arg() const{
@@ -202,10 +201,10 @@ Arg ExSliderFloatW::convert_to_arg() const{
     arg.init_from(static_cast<float>(m_min + (1.0*value->value()/m_nbSteps) * (m_max-m_min)));
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.min   = QString::number(m_min);
-        arg.generator.max   = QString::number(m_max);
-        arg.generator.step  = QString::number(m_step);
+    if(hasGenerator){
+        arg.generator->min   = QString::number(m_min);
+        arg.generator->max   = QString::number(m_max);
+        arg.generator->step  = QString::number(m_step);
     }
 
     return arg;

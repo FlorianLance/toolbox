@@ -159,30 +159,26 @@ void Arg::init_from_args(std::vector<Arg> args, QString sep, UnityType uType){
     m_sizes = {static_cast<int>(args.size())};
 }
 
-//Arg Arg::generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString generatorName, UiType associatedUiType, int generatorOrder){
-Arg Arg::generate_item_ui_arg(QString name, QString generatorName, UiType associatedUiType, int generatorOrder){
+Arg Arg::generate_item_ui_arg(QString name, UiType associatedUiType, bool hasGenerator, int generatorOrder){
     Arg arg;
-//    arg.uiElementKey       = uiElementKey;
-    arg.name               = name;
-    arg.generator.name     = generatorName;
+    arg.name = name;
+    if(hasGenerator){
+        arg.generator = Generator(generatorOrder);
+    }
     arg.m_associatedUiType = associatedUiType;
-    arg.generator.order    = generatorOrder;
     return arg;
 }
 
-//Arg Arg::generate_init_ui_arg(UiElementKey uiElementKey, UiType uiType, QString name){
-Arg Arg::generate_init_ui_arg(UiType uiType, QString name){
+Arg Arg::generate_init_ui_arg(UiType uiType, QString name, int order){
     Arg arg;
-//    arg.uiElementKey       = uiElementKey;
+    arg.generator = Generator(order);
     arg.m_associatedUiType = uiType;
     arg.name               = name;
     return arg;
 }
 
-//Arg Arg::generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type){
 Arg Arg::generate_from_loaded_xml_values(UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type){
     Arg arg;
-//    arg.uiElementKey       = uiElementKey;
     arg.m_associatedUiType = uiType;
     arg.name               = name;
     arg.m_value            = value;

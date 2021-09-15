@@ -44,7 +44,7 @@ void ExColorFrameW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length()){
+    if(arg.generator.has_value()){
         // ..
     }
 
@@ -58,7 +58,7 @@ Arg ExColorFrameW::convert_to_arg() const{
     arg.init_from(onState);
 
     // generator
-    if(generatorName.length() > 0){
+    if(hasGenerator){
         // ...
     }
     return arg;

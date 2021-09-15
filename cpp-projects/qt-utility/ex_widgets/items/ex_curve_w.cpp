@@ -263,92 +263,18 @@ void ExCurveW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
-        if(const auto &info = arg.generator.info; info.has_value()){
-            //        auto v = arg.generator.info.value();
-            //        arg.generator.min;
-            //        arg.generator.max;
-
-            // init_widget ...
-            // set_points(arg.to_curve_value());
-
+    if(arg.generator.has_value()){
+        if(const auto &info = arg.generator->info, &min = arg.generator->min, &max = arg.generator->max; info.has_value() && min.has_value() && max.has_value()){
+            auto titles = info->split("%%%");
+            auto minV = min->split(" ");
+            auto maxV = max->split(" ");
+            init_widget(titles[0], titles[1], titles[2], {minV[0].toDouble(), maxV[0].toDouble()}, {minV[1].toDouble(), maxV[1].toDouble()}, arg.to_curve_value());
         }else{
-            qDebug() << "ExCurveW Invalid generator.";
+            qWarning() << "ExCurveW Invalid generator.";
         }
+    }else{
+        set_points(arg.to_curve_value());
     }
-
-    set_points(arg.to_curve_value());
-
-//    auto pts = arg.to_curve_value();
-
-//    if(pts.first.size() < 2){
-//        pts.first = {0,1};
-//    }
-//    if(pts.second.size() < 2){
-//        pts.second = {0,1};
-//    }
-
-//    auto minXV = minX.w->value();
-//    auto maxXV = maxX.w->value();
-
-//    auto minYV = minY.w->value();
-//    auto maxYV = maxY.w->value();
-
-//    for(const auto & v : pts.first){
-//        if(v < minXV){
-//            minXV = v;
-//        }
-//        if(v > maxXV){
-//            maxXV = v;
-//        }
-//    }
-
-//    for(const auto & v : pts.second){
-//        if(v < minYV){
-//            minYV = v;
-//        }
-//        if(v > maxYV){
-//            maxYV = v;
-//        }
-//    }
-
-//    auto diffX = maxXV - minXV;
-//    auto diffY = maxYV - minYV;
-
-//    minX.blockSignals(true);
-//    maxX.blockSignals(true);
-//    minY.blockSignals(true);
-//    maxY.blockSignals(true);
-//    firstY.blockSignals(true);
-//    lastY.blockSignals(true);
-
-//    minX.w->setValue(minXV);
-//    maxX.w->setValue(maxXV);
-//    minY.w->setValue(minYV);
-//    maxY.w->setValue(maxYV);
-
-//    firstY.w->setValue(pts.second[0]);
-//    lastY.w->setValue(pts.second[pts.second.size()-1]);
-
-//    const auto stepX =  diffX*0.01;
-//    const auto stepY =  diffY*0.01;
-//    minX.w->setSingleStep(stepX);
-//    maxX.w->setSingleStep(stepX);
-//    minY.w->setSingleStep(stepY);
-//    maxY.w->setSingleStep(stepY);
-//    firstY.w->setSingleStep(stepY);
-//    lastY.w->setSingleStep(stepY);
-
-//    firstY.blockSignals(false);
-//    lastY.blockSignals(false);
-//    minY.blockSignals(false);
-//    maxY.blockSignals(false);
-//    minX.blockSignals(false);
-//    maxX.blockSignals(false);
-
-//    curveW->set_x_range(minXV, maxXV);
-//    curveW->set_y_range(minYV, maxYV);
-//    curveW->set_points(std::move(pts.first), std::move(pts.second), 0);
 
     w->blockSignals(false);
 }
@@ -357,6 +283,14 @@ Arg ExCurveW::convert_to_arg() const{
 
     Arg arg = ExBaseW::convert_to_arg();
     arg.init_from_curve(&curveW->curves[0]->xCoords, &curveW->curves[0]->yCoords, " ");
+
+    // generator
+    if(hasGenerator){
+        arg.generator->info = curveW->title().text() % QSL("%%%") % curveW->axisTitle(0).text() % QSL("%%%") % curveW->axisTitle(1).text();
+        arg.generator->min = QString::number(minX.w->value()) % QSL("%%%") % QString::number(minY.w->value());
+        arg.generator->max = QString::number(maxX.w->value()) % QSL("%%%") % QString::number(maxY.w->value());
+    }
+
     return arg;
 }
 

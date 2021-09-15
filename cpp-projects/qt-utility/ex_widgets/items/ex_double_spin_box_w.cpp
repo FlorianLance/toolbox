@@ -63,9 +63,12 @@ void ExDoubleSpinBoxW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(arg.generator.name.length() > 0){
+    if(arg.generator.has_value()){
 
-        if(const auto &min = arg.generator.min, max = arg.generator.max, decimals = arg.generator.decimals, step = arg.generator.step;
+        if(const auto &min = arg.generator->min,
+                      &max = arg.generator->max,
+                 &decimals = arg.generator->decimals,
+                     &step = arg.generator->step;
             min.has_value() && max.has_value() && decimals.has_value() && step.has_value()){
 
             init_widget(
@@ -76,7 +79,7 @@ void ExDoubleSpinBoxW::update_from_arg(const Arg &arg){
                 decimals.value().toInt()
             );
         }else{
-            qDebug() << "ExDoubleSpinBoxW Invalid generator";
+            qWarning() << "ExDoubleSpinBoxW Invalid generator";
         }
     }else{
         w->setValue(arg.to_double_value());
@@ -91,11 +94,11 @@ Arg ExDoubleSpinBoxW::convert_to_arg() const{
     arg.init_from(w->value());
 
     // generator
-    if(arg.generator.name.length() > 0){
-        arg.generator.min        = QString::number(w->minimum());
-        arg.generator.max        = QString::number(w->maximum());
-        arg.generator.step       = QString::number(w->singleStep());
-        arg.generator.decimals   = QString::number(w->decimals());
+    if(hasGenerator){
+        arg.generator->min        = QString::number(w->minimum());
+        arg.generator->max        = QString::number(w->maximum());
+        arg.generator->step       = QString::number(w->singleStep());
+        arg.generator->decimals   = QString::number(w->decimals());
     }
     return arg;
 }

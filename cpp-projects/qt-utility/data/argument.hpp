@@ -46,9 +46,10 @@ struct Arg;
 struct Generator{
 
     Generator() = default;
-    Generator(Name n) : name(from_view(n)){}
+//    Generator(Name n) : name(from_view(n)){}
+    Generator(int order) : order(order){}
 
-    QString name;
+//    QString name;
     int order = -1;
     std::optional<QString> info     = std::nullopt;
     std::optional<QString> decimals = std::nullopt;
@@ -62,12 +63,9 @@ struct Arg{
     Arg() = default;
 
     // generate
-    static Arg generate_item_ui_arg(QString name, QString generatorName, UiType m_associatedUiType, int generatorOrder);
-    static Arg generate_init_ui_arg(UiType uiType, QString name);
+    static Arg generate_item_ui_arg(QString name, UiType associatedUiType, bool hasGenerator, int generatorOrder);
+    static Arg generate_init_ui_arg(UiType uiType, QString name, int order);
     static Arg generate_from_loaded_xml_values(UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type);
-//    static Arg generate_item_ui_arg(UiElementKey uiElementKey, QString name, QString generatorName, UiType m_associatedUiType, int generatorOrder);
-//    static Arg generate_init_ui_arg(UiElementKey uiElementKey, UiType uiType, QString name);
-//    static Arg generate_from_loaded_xml_values(UiElementKey uiElementKey, UiType uiType, QString name, QString value, QString separator, QVector<int> sizes, UnityType type);
     static Arg generate_non_ui_arg(QString value, QString separator, QString name);
 
     // copy
@@ -131,11 +129,10 @@ struct Arg{
     inline void set_value(QString value){m_value = value;}
     inline void set_separator(QString sep){m_separator = sep;}
 
-//    UiElementKey uiElementKey = {-1};
     QString name; // only updated when reading
 
     // generator
-    Generator generator;
+    std::optional<Generator> generator = {};
 
 private:
 

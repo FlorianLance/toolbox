@@ -45,7 +45,7 @@ void ExLineEditW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
+    if(arg.generator.has_value()){
         // ...
     }
     w->setText(arg.to_string_value());
@@ -59,7 +59,7 @@ Arg ExLineEditW::convert_to_arg() const{
     arg.init_from(w->text());
 
     // generator
-    if(generatorName.length() > 0){
+    if(hasGenerator){
         // ...
     }
     return arg;

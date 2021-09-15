@@ -47,9 +47,11 @@ void ExSpinBoxW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
+    if(arg.generator.has_value()){
 
-        if(const auto &min = arg.generator.min, max = arg.generator.max, step = arg.generator.step;
+        if(const auto &min = arg.generator->min,
+                      &max = arg.generator->max,
+                      &step = arg.generator->step;
             min.has_value() && max.has_value() && step.has_value()){
 
             init_widget(
@@ -59,7 +61,7 @@ void ExSpinBoxW::update_from_arg(const Arg &arg){
                 StepV<int>{step.value().toInt()}
             );
         }else{
-            qDebug() << "ExSpinBoxW Invalid generator";
+            qWarning() << "ExSpinBoxW Invalid generator";
         }
     }else{
         w->setValue(arg.to_int_value());
@@ -74,10 +76,10 @@ Arg ExSpinBoxW::convert_to_arg() const{
     arg.init_from(w->value());
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.min  = QString::number(w->minimum());
-        arg.generator.max  = QString::number(w->maximum());
-        arg.generator.step = QString::number(w->singleStep());
+    if(hasGenerator){
+        arg.generator->min  = QString::number(w->minimum());
+        arg.generator->max  = QString::number(w->maximum());
+        arg.generator->step = QString::number(w->singleStep());
     }
     return arg;
 }

@@ -39,6 +39,26 @@ ExListLabelsW *ExListLabelsW::init_widget(bool enabled){
     return this;
 }
 
+void ExListLabelsW::update_from_arg(const Arg &arg){
+
+    ExItemW::update_from_arg(arg);
+
+    w->blockSignals(true);
+
+    if(arg.generator.has_value()){
+        // ...
+    }
+
+    w->clear();
+    auto labels = arg.split_value();
+    for(auto &label : labels){
+        w->addItem(label);
+    }
+
+    w->blockSignals(false);
+}
+
+
 Arg ExListLabelsW::convert_to_arg() const{
 
     Arg arg = ExBaseW::convert_to_arg();
@@ -51,27 +71,9 @@ Arg ExListLabelsW::convert_to_arg() const{
     arg.init_from(list, "|");
 
     // generator
-    if(generatorName.length() > 0){
+    if(hasGenerator){
         // ...
     }
     return arg;
 }
 
-void ExListLabelsW::update_from_arg(const Arg &arg){
-
-    ExItemW::update_from_arg(arg);
-
-    w->blockSignals(true);
-
-    if(generatorName.length() > 0){
-        // ...
-    }
-
-    w->clear();
-    auto labels = arg.split_value();
-    for(auto &label : labels){
-        w->addItem(label);
-    }
-
-    w->blockSignals(false);
-}

@@ -75,8 +75,8 @@ void ExSelectColorW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
-        init_widget(generatorName, arg.to_color_value());
+    if(arg.generator.has_value()){
+        init_widget("Select color", arg.to_color_value());
     }else{
         set_color(arg.to_color_value());
     }
@@ -90,7 +90,7 @@ Arg ExSelectColorW::convert_to_arg() const{
     arg.init_from(m_colDialog.currentColor());
 
     // generator
-    if(generatorName.length() > 0){
+    if(hasGenerator){
         // ...
     }
     return arg;

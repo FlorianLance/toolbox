@@ -96,18 +96,18 @@ void ExTransformationW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length() > 0){
+    if(arg.generator.has_value()){
 
-        if(arg.generator.decimals.has_value()){
-            if(const auto split = arg.generator.decimals.value().split(arg.separator()); split.size() > 2){
+        if(auto dec = arg.generator->decimals; dec.has_value()){
+            if(const auto split = dec.value().split(arg.separator()); split.size() > 2){
                 set_trans_decimals(split[0].toInt());
                 set_rotation_decimals(split[1].toInt());
                 set_scale_decimals(split[2].toInt());
             }
         }
 
-        if(arg.generator.min.has_value()){
-            if(const auto split = arg.generator.min.value().split(arg.separator()); split.size() > 2){
+        if(auto min = arg.generator->min; min.has_value()){
+            if(const auto split = min.value().split(arg.separator()); split.size() > 2){
                 const auto tr = split[0].toDouble();
                 const auto rt = split[1].toDouble();
                 const auto sc = split[2].toDouble();
@@ -117,8 +117,8 @@ void ExTransformationW::update_from_arg(const Arg &arg){
             }
         }
 
-        if(arg.generator.max.has_value()){
-            if(const auto split = arg.generator.max.value().split(arg.separator()); split.size() > 2){
+        if(auto max = arg.generator->max; max.has_value()){
+            if(const auto split = max.value().split(arg.separator()); split.size() > 2){
                 const auto tr = split[0].toDouble();
                 const auto rt = split[1].toDouble();
                 const auto sc = split[2].toDouble();
@@ -128,8 +128,8 @@ void ExTransformationW::update_from_arg(const Arg &arg){
             }
         }
 
-        if(arg.generator.step.has_value()){
-            if(const auto split = arg.generator.step.value().split(arg.separator()); split.size() > 2){
+        if(auto step = arg.generator->step; step.has_value()){
+            if(const auto split = step.value().split(arg.separator()); split.size() > 2){
                 const auto tr = split[0].toDouble();
                 const auto rt = split[1].toDouble();
                 const auto sc = split[2].toDouble();
@@ -160,20 +160,20 @@ Arg ExTransformationW::convert_to_arg() const{
     );
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.min = QString::number(trX.w->minimum())   % arg.separator() %
+    if(hasGenerator){
+        arg.generator->min = QString::number(trX.w->minimum())   % arg.separator() %
                             QString::number(rotX.w->minimum())  % arg.separator() %
                             QString::number(scX.w->minimum());
 
-        arg.generator.max = QString::number(trX.w->maximum())   % arg.separator() %
+        arg.generator->max = QString::number(trX.w->maximum())   % arg.separator() %
                             QString::number(rotX.w->maximum())  % arg.separator() %
                             QString::number(scX.w->maximum());
 
-        arg.generator.step = QString::number(trX.w->singleStep())   % arg.separator() %
+        arg.generator->step = QString::number(trX.w->singleStep())   % arg.separator() %
                              QString::number(rotX.w->singleStep())  % arg.separator() %
                              QString::number(scX.w->singleStep());
 
-        arg.generator.decimals = QString::number(trX.w->decimals())   % arg.separator() %
+        arg.generator->decimals = QString::number(trX.w->decimals())   % arg.separator() %
                                  QString::number(rotX.w->decimals())  % arg.separator() %
                                  QString::number(scX.w->decimals());
     }
@@ -385,16 +385,16 @@ void ExTransformationW::set_scale_values(geo::Pt3<qreal> v){
     scZ.blockSignals(false);
 }
 
-void ExTransformationW::set_generator(QString genName){
-    ExItemW::set_generator(genName);
-    trX.set_generator(genName);
-    trY.set_generator(genName);
-    trZ.set_generator(genName);
-    rotX.set_generator(genName);
-    rotY.set_generator(genName);
-    rotZ.set_generator(genName);
-    scX.set_generator(genName);
-    scY.set_generator(genName);
-    scZ.set_generator(genName);
+void ExTransformationW::set_as_generator(){
+    ExItemW::set_as_generator();
+    trX.set_as_generator();
+    trY.set_as_generator();
+    trZ.set_as_generator();
+    rotX.set_as_generator();
+    rotY.set_as_generator();
+    rotZ.set_as_generator();
+    scX.set_as_generator();
+    scY.set_as_generator();
+    scZ.set_as_generator();
 }
 

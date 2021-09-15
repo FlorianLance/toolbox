@@ -43,12 +43,13 @@ void ExCheckBoxW::update_from_arg(const Arg &arg){
 
     w->blockSignals(true);
 
-    if(generatorName.length()){
-        if(arg.generator.info.has_value()){
-            init_widget(arg.generator.info.value(), arg.to_bool_value(), true);
-        }else{
-            qDebug() << "ExCheckBoxW Invalid generator.";
-        }
+    if(arg.generator.has_value()){
+
+//        if(arg.generator->info.has_value()){
+        init_widget("", arg.to_bool_value(), true);
+//        }else{
+//            qWarning() << "ExCheckBoxW Invalid generator.";
+//        }
     }else{
         w->setChecked(arg.to_bool_value());
     }
@@ -63,8 +64,8 @@ Arg ExCheckBoxW::convert_to_arg() const{
     arg.init_from(w->isChecked());
 
     // generator
-    if(generatorName.length() > 0){
-        arg.generator.info = w->text();
+    if(hasGenerator){
+        arg.generator->info = w->text();
     }
     return arg;
 }
