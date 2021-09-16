@@ -24,62 +24,87 @@
 **                                                                            **
 ********************************************************************************/
 
+#include "ex_radio_button_w.hpp"
 
-#pragma once
+using namespace tool::ex;
 
-// std
-#include <any>
+ExRadioButtonW::ExRadioButtonW(QString name) : ExItemW<QRadioButton>(UiType::Radio_button, name){
+    connect(w.get(), &QRadioButton::toggled, this, [=]{trigger_ui_change();});
+}
 
-// local
-#include "argument.hpp"
+std::vector<ExBaseW *> ExRadioButtonW::init_group_widgets(QButtonGroup &group, std::vector<ExRadioButtonW *> widgets, std::vector<QString> textes, std::vector<bool> checkedState, std::vector<bool> enabledState){
 
-namespace tool::ex {
+    std::vector<ExBaseW *> bW;
+    group.blockSignals(true);
 
-class ExBaseW : public QObject{
-
-Q_OBJECT
-public:
-
-    ExBaseW(UiType t, QString uiName) : type(t), itemName(uiName){}
-    virtual ~ExBaseW(){}
-
-    virtual void init_tooltip(QString tooltip) = 0;
-    virtual void init_default_tooltip(QString key) = 0;
-
-    virtual void set_as_generator(){
-        hasGenerator = true;
+    for(auto &w : widgets){
+        w->blockSignals(true);
+        bW.push_back(w);
+        group.addButton(w->w.get());
     }
 
-    virtual void update_from_arg(const Arg &arg);
-    virtual Arg convert_to_arg() const;
+    if(widgets.size() == textes.size() && widgets.size() == checkedState.size()){
+        for(size_t ii = 0; ii < widgets.size(); ++ii){
+            widgets[ii]->w->setText(textes[ii]);
+            widgets[ii]->w->setChecked(checkedState[ii]);
+        }
 
-    virtual void update_from_resources(){}
-    virtual void update_from_components(){}
+    }else{
+        qWarning() << "ExRadioButtonW::init_group_widgets error";
+        for(auto &w : widgets){
+            w->blockSignals(false);
+        }
 
-    virtual ExBaseW *init_widget2(std_v1<std::any> parameters){
-        Q_UNUSED(parameters)
-        return this;
+        return bW;
     }
 
-    inline void trigger_ui_change(){emit ui_change_signal(itemName);}
-    inline void trigger_action(){emit action_signal(itemName);}
+    if(widgets.size() == enabledState.size()){
+        for(size_t ii = 0; ii < widgets.size(); ++ii){
+            widgets[ii]->w->setEnabled(enabledState[ii]);
+        }
+    }else{
+        for(size_t ii = 0; ii < widgets.size(); ++ii){
+            widgets[ii]->w->setEnabled(true);
+        }
+    }
 
-    UiType type;
-    QString itemName;
-    bool hasGenerator = false;
-    int generatorOrder = -1;
+    for(auto &w : widgets){
+        w->blockSignals(false);
+    }
+    group.blockSignals(false);
 
-signals:
+    return bW;
+}
 
-    void ui_change_signal(QStringView name);
-    void action_signal(QStringView name);
+void ExRadioButtonW::update_from_arg(const Arg &arg) {
 
-    void update_from_components_signal();
-    void update_from_resources_signal();
-};
+    ExItemW::update_from_arg(arg);
 
+    w->blockSignals(true);
 
+    if(arg.generator.has_value()){
 
+    }else{
+
+    }
+
+    w->setChecked(arg.to_bool_value());
+
+    w->blockSignals(false);
 }
 
 
+
+Arg ExRadioButtonW::convert_to_arg() const {
+    Arg arg = ExBaseW::convert_to_arg();
+    arg.init_from(w->isChecked());
+
+    // generator
+    if(hasGenerator){
+        // ...
+    }
+
+    return arg;
+}
+
+//#include "moc_ex_radio_button_w.cpp"

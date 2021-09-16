@@ -738,3 +738,5 @@ void CurveW::remove_symbol(size_t idCurve){
     emit settings_updated_signal();
 }
 
+//#include "moc_curve_widget.cpp"
+

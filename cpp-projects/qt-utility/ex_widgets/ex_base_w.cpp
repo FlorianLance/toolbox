@@ -1,4 +1,5 @@
 
+
 /*******************************************************************************
 ** Toolbox-qt-utility                                                         **
 ** MIT License                                                                **
@@ -24,80 +25,25 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "ex_select_color_w.hpp"
 
-using namespace tool::str;
+#pragma once
+
+#include "ex_base_w.hpp"
+
 using namespace tool::ex;
 
-ExSelectColorW::ExSelectColorW(QString name) : ExItemW<QPushButton>(UiType::Color_pick, name){
+void ExBaseW::update_from_arg(const Arg &arg){
 
-    p = std::make_unique<QPixmap>(50,50);
-    connect(w.get(), &QPushButton::clicked, &m_colDialog, &QColorDialog::show);
-    w->setMinimumSize(QSize(50,50));
-    w->setMaximumSize(QSize(50,50));
-    m_colDialog.setOptions(QColorDialog::ShowAlphaChannel | QColorDialog::NoButtons);
-    m_colDialog.setModal(true);
-//    hintHeightSize = 70;
+    itemName = arg.name;
 
-    connect(&m_colDialog, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        set_color(c);
-        trigger_ui_change();
-    });
-}
-
-ExSelectColorW::~ExSelectColorW(){
-    m_colDialog.close();
-}
-
-QColor ExSelectColorW::current_color() const{
-    return m_colDialog.currentColor();
-}
-
-void ExSelectColorW::set_color(const QColor &color){
-    m_colDialog.setCurrentColor(color);
-
-    p->fill(color);
-    w->setIcon(QIcon(*p));
-    w->setIconSize(QSize(40,40));
-}
-
-ExSelectColorW *ExSelectColorW::init_widget(QString dialogName, QColor color, bool enabled){
-
-    m_colDialog.setWindowTitle(dialogName);
-    set_color(color);
-    w->setEnabled(enabled);
-    return this;
-}
-
-void ExSelectColorW::update_from_arg(const Arg &arg){
-
-    ExItemW::update_from_arg(arg);
-
-    w->blockSignals(true);
-
-    if(arg.generator.has_value()){
-        init_widget("Select color", arg.to_color_value());
-    }else{
-        set_color(arg.to_color_value());
+    if(hasGenerator && arg.generator.has_value()){
+        generatorOrder = arg.generator->order;
     }
-
-    w->blockSignals(false);
 }
 
-Arg ExSelectColorW::convert_to_arg() const{
-
-    Arg arg = ExBaseW::convert_to_arg();
-    arg.init_from(m_colDialog.currentColor());
-
-    // generator
-    if(hasGenerator){
-        // ...
-    }
-    return arg;
+Arg ExBaseW::convert_to_arg() const {
+    return Arg::generate_item_ui_arg(itemName, type, hasGenerator, generatorOrder);
 }
 
-void ExSelectColorW::close(){
-    m_colDialog.close();
-}
 
-#include "moc_ex_select_color_w.cpp"
+//#include "moc_ex_base_w.cpp"

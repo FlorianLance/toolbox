@@ -479,4 +479,4 @@ void GrabberParametersW::send_writing_connection_parameters(){
     }
 }
 
-#include "moc_grabber_parameters_widget.cpp"
+//#include "moc_grabber_parameters_widget.cpp"

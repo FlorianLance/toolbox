@@ -1,5 +1,4 @@
 
-
 /*******************************************************************************
 ** Toolbox-qt-utility                                                         **
 ** MIT License                                                                **
@@ -28,19 +27,59 @@
 
 #pragma once
 
-#include "ex_base_w.hpp"
+// std
+#include <any>
 
-using namespace tool::ex;
+// local
+#include "data/argument.hpp"
 
-void ExBaseW::update_from_arg(const Arg &arg){
+namespace tool::ex {
 
-    itemName = arg.name;
+class ExBaseW : public QObject{
 
-    if(hasGenerator && arg.generator.has_value()){
-        generatorOrder = arg.generator->order;
+Q_OBJECT
+public:
+
+    ExBaseW(UiType t, QString uiName) : type(t), itemName(uiName){}
+    virtual ~ExBaseW(){}
+
+    virtual void init_tooltip(QString tooltip) = 0;
+    virtual void init_default_tooltip(QString key) = 0;
+
+    virtual void set_as_generator(){
+        hasGenerator = true;
     }
+
+    virtual void update_from_arg(const Arg &arg);
+    virtual Arg convert_to_arg() const;
+
+    virtual void update_from_resources(){}
+    virtual void update_from_components(){}
+
+    virtual ExBaseW *init_widget2(std_v1<std::any> parameters){
+        Q_UNUSED(parameters)
+        return this;
+    }
+
+    inline void trigger_ui_change(){emit ui_change_signal(itemName);}
+    inline void trigger_action(){emit action_signal(itemName);}
+
+    UiType type;
+    QString itemName;
+    bool hasGenerator = false;
+    int generatorOrder = -1;
+
+signals:
+
+    void ui_change_signal(QStringView name);
+    void action_signal(QStringView name);
+
+    void update_from_components_signal();
+    void update_from_resources_signal();
+};
+
+
+
 }
 
-Arg ExBaseW::convert_to_arg() const {
-    return Arg::generate_item_ui_arg(itemName, type, hasGenerator, generatorOrder);
-}
+

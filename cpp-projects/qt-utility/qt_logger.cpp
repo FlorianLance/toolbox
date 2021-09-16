@@ -334,7 +334,4 @@ void QtLogger::unity_unknow(QStringView unknow, bool triggersSignal, bool saveTo
     }
 }
 
-
-
-
-#include "moc_qt_logger.cpp"
+// #include "moc_qt_logger.cpp"

@@ -125,3 +125,5 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event){
         ++blockNumber;
     }
 }
+
+//#include "moc_code_editor_w.cpp"

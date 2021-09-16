@@ -330,5 +330,5 @@ Arg ExCurveXW::convert_to_arg() const{
     return arg;
 }
 
-#include "moc_ex_curve_x_w.cpp"
+//#include "moc_ex_curve_x_w.cpp"
 

@@ -24,87 +24,80 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "ex_radio_button_w.hpp"
+#include "ex_select_color_w.hpp"
 
+using namespace tool::str;
 using namespace tool::ex;
 
-ExRadioButtonW::ExRadioButtonW(QString name) : ExItemW<QRadioButton>(UiType::Radio_button, name){
-    connect(w.get(), &QRadioButton::toggled, this, [=]{trigger_ui_change();});
+ExSelectColorW::ExSelectColorW(QString name) : ExItemW<QPushButton>(UiType::Color_pick, name){
+
+    p = std::make_unique<QPixmap>(50,50);
+    connect(w.get(), &QPushButton::clicked, &m_colDialog, &QColorDialog::show);
+    w->setMinimumSize(QSize(50,50));
+    w->setMaximumSize(QSize(50,50));
+    m_colDialog.setOptions(QColorDialog::ShowAlphaChannel | QColorDialog::NoButtons);
+    m_colDialog.setModal(true);
+//    hintHeightSize = 70;
+
+    connect(&m_colDialog, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+        set_color(c);
+        trigger_ui_change();
+    });
 }
 
-std::vector<ExBaseW *> ExRadioButtonW::init_group_widgets(QButtonGroup &group, std::vector<ExRadioButtonW *> widgets, std::vector<QString> textes, std::vector<bool> checkedState, std::vector<bool> enabledState){
-
-    std::vector<ExBaseW *> bW;
-    group.blockSignals(true);
-
-    for(auto &w : widgets){
-        w->blockSignals(true);
-        bW.push_back(w);
-        group.addButton(w->w.get());
-    }
-
-    if(widgets.size() == textes.size() && widgets.size() == checkedState.size()){
-        for(size_t ii = 0; ii < widgets.size(); ++ii){
-            widgets[ii]->w->setText(textes[ii]);
-            widgets[ii]->w->setChecked(checkedState[ii]);
-        }
-
-    }else{
-        qWarning() << "ExRadioButtonW::init_group_widgets error";
-        for(auto &w : widgets){
-            w->blockSignals(false);
-        }
-
-        return bW;
-    }
-
-    if(widgets.size() == enabledState.size()){
-        for(size_t ii = 0; ii < widgets.size(); ++ii){
-            widgets[ii]->w->setEnabled(enabledState[ii]);
-        }
-    }else{
-        for(size_t ii = 0; ii < widgets.size(); ++ii){
-            widgets[ii]->w->setEnabled(true);
-        }
-    }
-
-    for(auto &w : widgets){
-        w->blockSignals(false);
-    }
-    group.blockSignals(false);
-
-    return bW;
+ExSelectColorW::~ExSelectColorW(){
+    m_colDialog.close();
 }
 
-void ExRadioButtonW::update_from_arg(const Arg &arg) {
+QColor ExSelectColorW::current_color() const{
+    return m_colDialog.currentColor();
+}
+
+void ExSelectColorW::set_color(const QColor &color){
+    m_colDialog.setCurrentColor(color);
+
+    p->fill(color);
+    w->setIcon(QIcon(*p));
+    w->setIconSize(QSize(40,40));
+}
+
+ExSelectColorW *ExSelectColorW::init_widget(QString dialogName, QColor color, bool enabled){
+
+    m_colDialog.setWindowTitle(dialogName);
+    set_color(color);
+    w->setEnabled(enabled);
+    return this;
+}
+
+void ExSelectColorW::update_from_arg(const Arg &arg){
 
     ExItemW::update_from_arg(arg);
 
     w->blockSignals(true);
 
     if(arg.generator.has_value()){
-
+        init_widget("Select color", arg.to_color_value());
     }else{
-
+        set_color(arg.to_color_value());
     }
-
-    w->setChecked(arg.to_bool_value());
 
     w->blockSignals(false);
 }
 
+Arg ExSelectColorW::convert_to_arg() const{
 
-
-Arg ExRadioButtonW::convert_to_arg() const {
     Arg arg = ExBaseW::convert_to_arg();
-    arg.init_from(w->isChecked());
+    arg.init_from(m_colDialog.currentColor());
 
     // generator
     if(hasGenerator){
         // ...
     }
-
     return arg;
 }
 
+void ExSelectColorW::close(){
+    m_colDialog.close();
+}
 
+//#include "moc_ex_select_color_w.cpp"
