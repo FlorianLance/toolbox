@@ -31,7 +31,8 @@ public:
 
     static QtLogger *get();
 
-    static void set_type_message_color(MessageType type, const QColor &col);
+    static void set_html_ui_type_message_color(MessageType type, const QColor &col);
+//    static void set_as_console_type_message(MessageType type);
 
     static void init(QString logDirectoryPath = "", QString logFileName = "default_log.html");
 

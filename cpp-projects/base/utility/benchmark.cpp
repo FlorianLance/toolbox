@@ -50,6 +50,7 @@ struct Bench::Impl{
         std::vector<std::chrono::steady_clock::time_point> stopTime;
     };
 
+    static inline bool displayEnabled = true;
     static inline std::unordered_map<BenchId,TimesInfo> times = {};
     static inline std::stack<BenchId> stack  = {};
     static inline std::vector<BenchId> order  = {};
@@ -74,6 +75,10 @@ struct Bench::Impl{
 };
 
 Bench::Bench() : m_p(std::make_unique<Impl>()){
+}
+
+void Bench::disable_display(){
+    Bench::Impl::displayEnabled = false;
 }
 
 void Bench::reset(){
@@ -167,7 +172,9 @@ void Bench::stop(std::string_view id){
 }
 
 void Bench::display(BenchUnit unit, int64_t minTime, bool sort){
-    std::cout << to_string(unit, minTime, sort);
+    if(Bench::Impl::displayEnabled){
+        std::cout << to_string(unit, minTime, sort);
+    }
 }
 
 constexpr std::string_view Bench::unit_to_str(BenchUnit unit){

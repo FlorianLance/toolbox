@@ -131,8 +131,7 @@ QPointF NodeGeometry::portScenePosition(PortIndex index,PortType portType,QTrans
     tool::Bench::start("NodeGeometry::portScenePosition");
 
     const float cpd = StyleCollection::nodeStyle().ConnectionPointDiameter;
-    const unsigned int step = _entryHeight + _spacing;
-    const double totalHeight = captionHeight() + (step * index) + (step / 2.0);
+    const double totalHeight = captionHeight() + (_step * index) + (_halfStep);
     QPointF res;
     if(portType == PortType::Out){
         res = t.map(QPointF(_width + cpd, totalHeight));

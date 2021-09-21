@@ -43,10 +43,10 @@ struct QtLogger::Impl{
     static const inline QString midTimestampHtmlBalise    = QSL("] ");
     static const inline QString endHtmlBalise             = QSL("</font></p>\n");
 
-    static inline QString htmlNormalBaliseColor   = QSL("<font color=\"DarkBlue\">");
-    static inline QString htmlWarningBaliseColor = QSL("<font color=\"Orange\">");
-    static inline QString htmlErrorBaliseColor    = QSL("<font color=\"DarkRed\">");
-    static inline QString htmlUnknowBaliseColor  = QSL("<font color=\"Black\">");
+    static inline QString htmlNormalBaliseColor     = QSL("<font color=\"DarkBlue\">");
+    static inline QString htmlWarningBaliseColor    = QSL("<font color=\"Orange\">");
+    static inline QString htmlErrorBaliseColor      = QSL("<font color=\"DarkRed\">");
+    static inline QString htmlUnknowBaliseColor     = QSL("<font color=\"Black\">");
 
     // rgb(224, 0, 0)
 
@@ -64,7 +64,8 @@ QtLogger *QtLogger::get(){
     return nullptr;
 }
 
-void QtLogger::set_type_message_color(QtLogger::MessageType type, const QColor &col){
+void QtLogger::set_html_ui_type_message_color(QtLogger::MessageType type, const QColor &col){
+
     const QString baliseStr = QSL("<font color=") % col.name() %QSL(">");
     switch (type) {
     case MessageType::normal:
@@ -81,6 +82,24 @@ void QtLogger::set_type_message_color(QtLogger::MessageType type, const QColor &
         break;
     }
 }
+
+//void QtLogger::set_as_console_type_message(QtLogger::MessageType type){
+
+//    switch (type) {
+//    case MessageType::normal:
+//        QtLogger::Impl::htmlNormalBaliseColor = baliseStr;
+//        break;
+//    case MessageType::warning:
+//        QtLogger::Impl::htmlWarningBaliseColor = baliseStr;
+//        break;
+//    case MessageType::error:
+//        QtLogger::Impl::htmlErrorBaliseColor = baliseStr;
+//        break;
+//    case MessageType::unknow:
+//        QtLogger::Impl::htmlUnknowBaliseColor = baliseStr;
+//        break;
+//    }
+//}
 
 QString QtLogger::to_html_line(QtLogger::MessageType type, QStringView text, bool addTimestamp){
 

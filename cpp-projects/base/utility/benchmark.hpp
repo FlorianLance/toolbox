@@ -49,6 +49,8 @@ namespace tool {
 
         Bench();
 
+        static void disable_display();
+
         static void reset();
         static void check();
         static void start(std::string_view id, bool display = false);

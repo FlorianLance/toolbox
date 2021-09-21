@@ -27,11 +27,16 @@
 #pragma once
 
 // std
-#include <array>
 #include <unordered_set>
 #include <unordered_map>
 
+// base
+#include "utility/tuple_array.hpp"
+
 namespace tool::ex{
+
+using namespace std::literals::string_view_literals;
+
 
 struct RowId{int v;};
 struct UiElementKey{int v;};
@@ -77,37 +82,40 @@ public :
     constexpr int operator()() const {
         return m_id;
     }    
-    constexpr const char* type_name() const;
 
-    static constexpr const char *get_name(IdKey::Type c) {
-        for (auto& p : typeMapping) {
-            if (c == std::get<0>(p)) {
-                return std::get<1>(p);
-            }
-        }
-        return "";
+
+    using TypeStr = std::string_view;
+    using TType = std::tuple<Type, TypeStr>;
+
+
+    constexpr TypeStr type_name() const;
+    static constexpr TypeStr to_string(IdKey::Type t) {
+        return types.at<0,1>(t);
     }
 
     static void reset();
 
 private:
 
-    static constexpr std::array<std::pair<Type,const char*>,static_cast<size_t>(Type::SizeEnum)> typeMapping ={{
-        // type                    // type_str
-        {Type::UiItemArgument,     "UI item argument"},
-        {Type::Action,             "Action"},
-        {Type::Component,          "Component"},
-        {Type::Condition,          "Condition"},
-        {Type::Config,             "Config"},
-        {Type::Connection,         "Connection"},
-        {Type::Element,            "Element"},
-        {Type::Interval,           "Interval"},
-        {Type::Timeline,           "Timeline"},
-        {Type::ButtonElement,      "ButtonElement"},
-        {Type::Connector,          "Connector"},
-        {Type::Resource,           "Resource"},
-        {Type::Set,                "Set"},
+
+    static constexpr TupleArray<Type::SizeEnum,TType> types ={{
+        TType
+        {Type::UiItemArgument,     "UI item argument"sv},
+        {Type::Action,             "Action"sv},
+        {Type::Component,          "Component"sv},
+        {Type::Condition,          "Condition"sv},
+        {Type::Config,             "Config"sv},
+        {Type::Connection,         "Connection"sv},
+        {Type::Element,            "Element"sv},
+        {Type::Interval,           "Interval"sv},
+        {Type::Timeline,           "Timeline"sv},
+        {Type::ButtonElement,      "ButtonElement"sv},
+        {Type::Connector,          "Connector"sv},
+        {Type::Resource,           "Resource"sv},
+        {Type::Set,                "Set"sv},
+
     }};
+
 
     int &current_id(){
         return currentId[m_type];

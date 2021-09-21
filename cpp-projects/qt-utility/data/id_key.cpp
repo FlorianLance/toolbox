@@ -29,6 +29,9 @@
 // std
 #include <iostream>
 
+// local
+#include <qt_logger.hpp>
+
 using namespace tool::ex;
 
 IdKey::IdKey(IdKey::Type type, int id) : m_type(type){
@@ -45,7 +48,7 @@ IdKey::IdKey(IdKey::Type type, int id) : m_type(type){
     auto &set = current_set();
     if(set.count(m_id) != 0){
         if(m_type != Type::UiItemArgument && m_type != Type::Element && m_type != Type::Interval){// && m_type) != Type::Connector){
-            std::cerr << "Id of type " << type_name() << " already exists: " << m_id << "\n";
+            QtLogger::error(QSL("Id of type ") % from_view(type_name()) % QSL(" already exists: ") % QString::number(m_id));
         }
     }else{
         set.insert(m_id);
@@ -55,17 +58,16 @@ IdKey::IdKey(IdKey::Type type, int id) : m_type(type){
 void IdKey::reset(){
 
     currentId.clear();
-    for (auto& p : typeMapping) {
+    for (auto& p : types.data) {
         currentId[std::get<0>(p)] = 0;
     }
 
     keys.clear();
-    for (auto& p : typeMapping) {
+    for (auto& p : types.data) {
         keys[std::get<0>(p)] = {};
     }
 }
 
-
-constexpr const char *IdKey::type_name() const {
-    return get_name(m_type);
+constexpr IdKey::TypeStr IdKey::type_name() const {
+    return to_string(m_type);
 }

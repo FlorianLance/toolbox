@@ -31,13 +31,19 @@ public:
     void setWidth(unsigned int w) { _width = w; }
 
     unsigned int entryHeight() const { return _entryHeight; }
-    void setEntryHeight(unsigned int h) { _entryHeight = h; }
+    void setEntryHeight(unsigned int h) {
+        _entryHeight = h;
+        update_step();
+    }
 
-    unsigned int entryWidth() const { return _entryWidth; }
-    void setEntryWidth(unsigned int w) { _entryWidth = w; }
+    constexpr unsigned int entryWidth() const noexcept { return _entryWidth;}
+    constexpr void setEntryWidth(unsigned int w) noexcept {_entryWidth = w;}
 
-    unsigned int spacing() const { return _spacing; }
-    void setSpacing(unsigned int s) { _spacing = s; }
+    constexpr unsigned int spacing() const  noexcept{ return _spacing; }
+    constexpr void setSpacing(unsigned int s) noexcept {
+        _spacing = s;
+        update_step();
+    }
 
     bool hovered() const { return _hovered; }
     void setHovered(unsigned int h) { _hovered = h; }
@@ -82,6 +88,11 @@ public:
 
 private:
 
+    constexpr void update_step() noexcept{
+        _step = _entryHeight + _spacing;
+        _halfStep = _step/2;
+    }
+
     unsigned int captionHeight() const;
     unsigned int captionWidth() const;
     unsigned int portWidth(PortType portType) const;
@@ -99,6 +110,8 @@ private:
     mutable unsigned int _outputPortWidth;
     mutable unsigned int _entryHeight;
     unsigned int _spacing;
+    unsigned int _step;
+    unsigned int _halfStep;
 
     bool _hovered;
 
