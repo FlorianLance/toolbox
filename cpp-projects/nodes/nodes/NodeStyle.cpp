@@ -112,5 +112,7 @@ void NodeStyle::loadJsonFromByteArray(QByteArray const &byteArray){
     NODE_STYLE_READ_FLOAT(obj, HoveredPenWidth);
     NODE_STYLE_READ_FLOAT(obj, ConnectionPointDiameter);
 
+    ellipseSize = ConnectionPointDiameter * 0.4;
+
     NODE_STYLE_READ_FLOAT(obj, Opacity);
 }

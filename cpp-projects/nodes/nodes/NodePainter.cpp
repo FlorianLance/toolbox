@@ -160,16 +160,15 @@ void NodePainter::drawFilledConnectionPoints(QPainter * painter,NodeGeometry con
 
     NodeStyle const& nodeStyle       = model->nodeStyle();
     auto const     & connectionStyle = StyleCollection::connectionStyle();
-    auto diameter = nodeStyle.ConnectionPointDiameter;
 
     for(PortType portType: {PortType::Out, PortType::In}){
-        size_t n = state.getEntries(portType).size();
-        for (size_t i = 0; i < n; ++i){
-            QPointF p = geom.portScenePosition(i, portType);
-            if (!state.getEntries(portType)[i].empty()){
-                auto const & dataType = model->dataType(portType, i);
+
+        for (size_t ii = 0; ii < state.getEntries(portType).size(); ++ii){
+
+            if (!state.getEntries(portType)[ii].empty()){
+
                 if (connectionStyle.useDataDefinedColors()){
-                    QColor const c = connectionStyle.normalColor(dataType.id);
+                    QColor const c = connectionStyle.normalColor(model->dataType(portType, ii).id);
                     painter->setPen(c);
                     painter->setBrush(c);
                 }else{
@@ -177,9 +176,10 @@ void NodePainter::drawFilledConnectionPoints(QPainter * painter,NodeGeometry con
                     painter->setBrush(nodeStyle.FilledConnectionPointColor);
                 }
 
-                painter->drawEllipse(p,
-                diameter * 0.4,
-                diameter * 0.4);
+                painter->drawEllipse(
+                    geom.portScenePosition(ii, portType),
+                    nodeStyle.ellipseSize, nodeStyle.ellipseSize
+                );
             }
         }
     }

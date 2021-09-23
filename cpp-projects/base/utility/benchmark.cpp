@@ -214,20 +214,20 @@ std::int64_t Bench::compute_total_time(BenchUnit unit, std::string_view id){
     return time;
 }
 
-std::vector<std::pair<std::string_view, int64_t>> Bench::all_total_times(BenchUnit unit, std::int64_t minTime, bool sort){
+std::vector<std::tuple<std::string_view, int64_t, size_t>> Bench::all_total_times(BenchUnit unit, std::int64_t minTime, bool sort){
 
-    std::vector<std::pair<std::string_view, int64_t>> times;
+    std::vector<std::tuple<std::string_view, int64_t, size_t>> times;
     times.reserve(Bench::Impl::order.size());
     for(auto &id : Bench::Impl::order){
-        std::int64_t time = compute_total_time(unit, id);
+        std::int64_t time = compute_total_time(unit, id);        
         if(time > minTime){
-            times.emplace_back(id, time);
+            times.emplace_back(id, time, Bench::Impl::times[id].callsCount);
         }
     }
 
     // sort by time
-    auto sortInfo = [](const std::pair<std::string_view, int64_t> &lhs, const std::pair<std::string_view, int64_t> &rhs){
-        return lhs.second< rhs.second;
+    auto sortInfo = [](const std::tuple<std::string_view, int64_t, size_t> &lhs, const std::tuple<std::string_view, int64_t, size_t> &rhs){
+        return std::get<1>(lhs) < std::get<1>(rhs);
     };
     if(sort){
         std::sort(std::begin(times), std::end(times), sortInfo);
@@ -245,15 +245,15 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
     if(totalTimes.size() > 0){
         flux << "\n[BENCH START] ############### \n";
         for(const auto &totalTime : totalTimes){
-            auto id = totalTime.first;
+            auto id = std::get<0>(totalTime);
             const auto &timeI = Bench::Impl::times[id];
             flux << std::format("[ID:{}][L:{}][T:{} {}][C:{}][U:{} {}]\n",
                 id,
                 timeI.level,
-                totalTime.second,
+                std::get<1>(totalTime),
                 unit_to_str(unit),
                 timeI.callsCount,
-                (totalTime.second/timeI.callsCount),
+                (std::get<1>(totalTime)/timeI.callsCount),
                 unit_to_str(unit)
             );
         }

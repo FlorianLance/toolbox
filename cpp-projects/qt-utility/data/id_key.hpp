@@ -142,5 +142,13 @@ public:
          return std::hash<int>{}(k.v);
     }
 };
+
+template<>
+class hash<tool::ex::ComponentKey>{
+public:
+    size_t operator()(tool::ex::ComponentKey const& k) const{
+         return std::hash<int>{}(k.v);
+    }
+};
 }
 

@@ -136,9 +136,9 @@ QPointF NodeGeometry::portScenePosition(PortIndex index,PortType portType,QTrans
     if(portType == PortType::Out){
         res = t.map(QPointF(_width + cpd, totalHeight));
     }else if(portType == PortType::In){
-        res =  t.map(QPointF(-cpd, totalHeight));
+        res = t.map(QPointF(-cpd, totalHeight));
     }else{
-        res =t.map(QPointF());
+        res = t.map(QPointF());
     }
     tool::Bench::stop();
     return res;

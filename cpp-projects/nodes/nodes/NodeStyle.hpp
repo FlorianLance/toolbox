@@ -47,6 +47,7 @@ public:
     float HoveredPenWidth;
 
     float ConnectionPointDiameter;
+    double ellipseSize;
 
     float Opacity;
 };

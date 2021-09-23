@@ -65,7 +65,7 @@ namespace tool {
         static size_t calls_count(BenchId id);
 
         static std::int64_t compute_total_time(BenchUnit unit, BenchId id);
-        static std::vector<std::pair<std::string_view, std::int64_t>> all_total_times(BenchUnit unit, std::int64_t minTime = -1, bool sort = false);
+        static std::vector<std::tuple<std::string_view, int64_t, size_t>> all_total_times(BenchUnit unit, std::int64_t minTime = -1, bool sort = false);
 
     private:
 
