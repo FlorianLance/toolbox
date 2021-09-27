@@ -33,8 +33,6 @@
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
-// #include <boost/thread/tss.hpp>
-//#include <mutex>
 //#include <thread>
 
 using namespace tool;
@@ -58,6 +56,8 @@ struct Bench::Impl{
     static inline std::vector<std::unique_ptr<std::string>> idStrs;
     static inline std::unordered_set<std::string_view> idStrsView;
 
+    // static inline std::thread::id initThreadId = std::this_thread::get_id();
+
     // TODO thread id (make if thread-safe)
 //    struct I{
 //    static inline std::unordered_map<BenchId,TimesInfo> times = {};
@@ -75,6 +75,7 @@ struct Bench::Impl{
 };
 
 Bench::Bench() : m_p(std::make_unique<Impl>()){
+
 }
 
 void Bench::disable_display(){
@@ -103,15 +104,19 @@ void Bench::check(){
 
 void Bench::start(std::string_view id, bool display){
 
-//    std::thread::id tId = std::this_thread::get_id();
+//    if(auto idT = std::this_thread::get_id(); idT != Impl::initThreadId){
+//        std::stringstream ss;
+//        ss << idT;
+//         std::cerr << std::format("[Bench::Start call with id [{}] from another thread {}]\n", id, ss.str());
+//    }
 
     using namespace std::chrono;
-    if(id.size() == 0){
+    if(id.size() == 0 && Impl::displayEnabled){
         std::cerr << std::format("Bench::Error: empty id\n");
         return;
     }
 
-    if(display){
+    if(display && Impl::displayEnabled){
         std::cout << std::format("[Bench::Start{}]\n", id);
     }
 
@@ -131,7 +136,9 @@ void Bench::start(std::string_view id, bool display){
 
     // check if already running
     if(Bench::Impl::times[*idV].started){
-        std::cerr << std::format("Error with id {}, already started\n", id);
+        if(Impl::displayEnabled){
+            std::cerr << std::format("Error with id {}, already started\n", id);
+        }
         return;
     }
 
@@ -156,7 +163,9 @@ void Bench::stop(std::string_view id){
     }
 
     if(Bench::Impl::times.count(id) == 0){
-        std::cerr << std::format("Bench::Error: cannot stop id [{}] \n.", id);
+        if(Bench::Impl::displayEnabled){
+            std::cerr << std::format("Bench::Error: cannot stop id [{}] \n.", id);
+        }
         return;
     }
 
@@ -166,7 +175,9 @@ void Bench::stop(std::string_view id){
     if(Bench::Impl::currentLevel > 0){
         --Bench::Impl::currentLevel;
     }else{
-        std::cerr << "Bench::Error: Invalid level.\n";
+        if(Bench::Impl::displayEnabled){
+            std::cerr << "Bench::Error: Invalid level.\n";
+        }
         Bench::Impl::currentLevel = 0;
     }
 }
