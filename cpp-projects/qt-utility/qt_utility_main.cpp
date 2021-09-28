@@ -38,6 +38,10 @@
 #include "qt_logger.hpp"
 
 
+#include <QFontMetrics>
+#include <QHeaderView>
+#include "widgets/tree_view_w.hpp"
+
 using namespace tool;
 
 void display_lines();
@@ -58,9 +62,52 @@ int main(int argc, char *argv[]){
 
     });
 
-
     QtLogger::message(QSL("Qt-utility"));
 
+
+    // test
+
+    auto treeWidget = new tool::ui::TestTreeView(nullptr);
+//    QTreeWidget *treeWidget = new QTreeWidget();
+    treeWidget->populate();
+
+    treeWidget->show();
+
+//    // Main torrent list
+//    QStringList headers;
+//    headers << "Torrent" << "Peers/Seeds" << "Progress"
+//            << "Down rate"<< "Up rate" << "Status";
+
+
+//    testView->setItemDelegate(new TestViewDelegate(nullptr));
+//    testView->setHeaderLabels(headers);
+//    testView->setSelectionBehavior(QAbstractItemView::SelectRows);
+//    testView->setAlternatingRowColors(true);
+//    testView->setRootIsDecorated(false);
+//    testView->show();
+
+//    // Set header resize modes and initial section sizes
+//    QFontMetrics fm = QApplication::fontMetrics();
+//    QHeaderView *header = testView->header();
+//    header->resizeSection(0, fm.horizontalAdvance("typical-name-for-a-torrent.torrent"));
+//    header->resizeSection(1, fm.horizontalAdvance(headers.at(1) + "  "));
+//    header->resizeSection(2, fm.horizontalAdvance(headers.at(2) + "  "));
+//    header->resizeSection(3, qMax(fm.horizontalAdvance(headers.at(3) + "  "), fm.horizontalAdvance(" 1234.0 KB/s ")));
+//    header->resizeSection(4, qMax(fm.horizontalAdvance(headers.at(4) + "  "), fm.horizontalAdvance(" 1234.0 KB/s ")));
+//    header->resizeSection(5, qMax(fm.horizontalAdvance(headers.at(5) + "  "), fm.horizontalAdvance("Downloading  ")));
+
+//    QTreeWidgetItem *item = new QTreeWidgetItem(testView);
+//    item->setText(0, "test");
+//    item->setToolTip(0, "tooltip");
+//    item->setText(1, ("0/0"));
+//    item->setText(2, "0");
+//    item->setText(3, "0.0 KB/s");
+//    item->setText(4, "0.0 KB/s");
+//    item->setText(5, ("Idle"));
+//    item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+//    item->setTextAlignment(1, Qt::AlignHCenter);
+
+    // end test
     qDebug() << "test";
 
     return a.exec();

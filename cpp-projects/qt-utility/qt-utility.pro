@@ -120,6 +120,7 @@ HEADERS += \
     widgets/rich_text_edit.hpp \
     widgets/sfmlqt_gl_widget.hpp \
     widgets/text_widget_highlighter.hpp \
+    widgets/tree_view_w.hpp \
     wrapper/qt_gl_wrapper.hpp \
     # ex_widgets
     ex_widgets/ex_base_w.hpp \
@@ -189,6 +190,7 @@ SOURCES += \
     ex_widgets/ex_transformation_w.cpp \
     ex_widgets/ex_vector2d_w.cpp \
     ex_widgets/ex_vector3d_w.cpp \
+    widgets/tree_view_w.cpp
 
 RESOURCES += \
     $$TOOLBOX_CPP_RESOURCES_DIR"/resources.qrc" \
