@@ -17,7 +17,7 @@ nPorts(PortType portType) const
 }
 
 
-NodeDataType
+const NodeDataType &
 MathOperationDataModel::
 dataType(PortType, PortIndex) const
 {

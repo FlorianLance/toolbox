@@ -18,10 +18,19 @@ public:
   virtual
   ~DivisionModel() {}
 
+  static const inline QString dividend = QStringLiteral("Dividend");
+  static const inline QString divisor = QStringLiteral("Divisor");
+  static const inline QString result = QStringLiteral("Result");
+  static const inline QString empty = QStringLiteral("");
+
+  static const inline QString m_caption = QStringLiteral("Division");
+  static const inline QString m_name = QStringLiteral("Division");
+
+
 public:
-  QString
-  caption() const override
-  { return QStringLiteral("Division"); }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
+
 
   bool
   portCaptionVisible(PortType portType, PortIndex portIndex) const override
@@ -30,31 +39,28 @@ public:
     return true;
   }
 
-  QString
+  const QString &
   portCaption(PortType portType, PortIndex portIndex) const override
   {
     switch (portType)
     {
       case PortType::In:
         if (portIndex == 0)
-          return QStringLiteral("Dividend");
+          return dividend;
         else if (portIndex == 1)
-          return QStringLiteral("Divisor");
+          return divisor;
 
         break;
 
       case PortType::Out:
-        return QStringLiteral("Result");
+        return result;
 
       default:
         break;
     }
-    return QString();
+    return empty;
   }
 
-  QString
-  name() const override
-  { return QStringLiteral("Division"); }
 
 private:
 

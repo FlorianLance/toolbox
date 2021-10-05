@@ -112,7 +112,7 @@ private:
 
     template<typename ModelType>
     typename std::enable_if< !HasStaticMethodName<ModelType>::value>::type registerModelImpl(RegistryItemCreator creator, QString const &category ){
-        const QString name = creator()->name();
+        const QString &name = creator()->name();
         if (_registeredItemCreators.count(name) == 0){
             _registeredItemCreators[name] = std::move(creator);
             _categories.insert(category);

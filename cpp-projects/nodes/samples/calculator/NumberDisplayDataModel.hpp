@@ -26,26 +26,27 @@ public:
   virtual
   ~NumberDisplayDataModel() {}
 
+  static const inline QString m_caption = QStringLiteral("Result");
+  static const inline QString m_name = QStringLiteral("Result");
+
+
 public:
 
-  QString
-  caption() const override
-  { return QStringLiteral("Result"); }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
+
 
   bool
   captionVisible() const override
   { return false; }
 
-  QString
-  name() const override
-  { return QStringLiteral("Result"); }
 
 public:
 
   unsigned int
   nPorts(PortType portType) const override;
 
-  NodeDataType
+  const NodeDataType&
   dataType(PortType portType,
            PortIndex portIndex) const override;
 

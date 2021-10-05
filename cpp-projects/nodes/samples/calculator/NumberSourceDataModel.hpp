@@ -29,19 +29,17 @@ public:
   virtual
   ~NumberSourceDataModel() {}
 
-public:
+  static const inline QString m_caption = QStringLiteral("Number Source");
+  static const inline QString m_name = QStringLiteral("NumberSource");
 
-  QString
-  caption() const override
-  { return QStringLiteral("Number Source"); }
+public:
 
   bool
   captionVisible() const override
   { return false; }
 
-  QString
-  name() const override
-  { return QStringLiteral("NumberSource"); }
+  const QString &caption() const override{return m_caption;}
+  const QString &name() const override{return m_name;}
 
 public:
 
@@ -56,7 +54,7 @@ public:
   unsigned int
   nPorts(PortType portType) const override;
 
-  NodeDataType
+  const NodeDataType&
   dataType(PortType portType, PortIndex portIndex) const override;
 
   std::shared_ptr<NodeData>

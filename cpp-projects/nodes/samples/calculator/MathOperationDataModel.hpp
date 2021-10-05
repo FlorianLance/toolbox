@@ -33,7 +33,7 @@ public:
   unsigned int
   nPorts(PortType portType) const override;
 
-  NodeDataType
+  const NodeDataType&
   dataType(PortType portType,
            PortIndex portIndex) const override;
 

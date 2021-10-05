@@ -83,7 +83,7 @@ eventFilter(QObject *object, QEvent *event)
 }
 
 
-NodeDataType
+const NodeDataType&
 ImageLoaderModel::
 dataType(PortType, PortIndex) const
 {

@@ -18,15 +18,18 @@ public:
   virtual
   ~AdditionModel() {}
 
+  static const inline QString m_caption = QStringLiteral("Addition");
+  static const inline QString m_name = QStringLiteral("Addition");
+
+
 public:
 
-  QString
-  caption() const override
-  { return QStringLiteral("Addition"); }
 
-  QString
-  name() const override
-  { return QStringLiteral("Addition"); }
+
+  const QString &caption() const override{return m_caption;}
+  const QString &name() const override{return m_name;}
+
+
 
 private:
 

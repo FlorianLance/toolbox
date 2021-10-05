@@ -17,6 +17,7 @@ NumberSourceDataModel()
           this, &NumberSourceDataModel::onTextEdited);
 
   _lineEdit->setText("0.0");
+
 }
 
 
@@ -100,7 +101,7 @@ onTextEdited(QString const &string)
 }
 
 
-NodeDataType
+const NodeDataType&
 NumberSourceDataModel::
 dataType(PortType, PortIndex) const
 {

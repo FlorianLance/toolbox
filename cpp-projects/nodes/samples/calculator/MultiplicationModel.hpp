@@ -18,15 +18,16 @@ public:
   virtual
   ~MultiplicationModel() {}
 
+  static const inline QString m_caption = QStringLiteral("Multiplication");
+  static const inline QString m_name = QStringLiteral("Multiplication");
+
+
 public:
 
-  QString
-  caption() const override
-  { return QStringLiteral("Multiplication"); }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
 
-  QString
-  name() const override
-  { return QStringLiteral("Multiplication"); }
+
 
 private:
 

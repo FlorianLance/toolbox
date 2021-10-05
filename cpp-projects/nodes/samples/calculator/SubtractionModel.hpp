@@ -18,11 +18,20 @@ public:
   virtual
   ~SubtractionModel() {}
 
+  static const inline QString minuend = QStringLiteral("Minuend");
+  static const inline QString subtrahend = QStringLiteral("Subtrahend");
+  static const inline QString result = QStringLiteral("Result");
+  static const inline QString empty = QStringLiteral("");
+  
+  static const inline QString m_caption = QStringLiteral("Subtraction");
+  static const inline QString m_name = QStringLiteral("Subtraction");
+
+
 public:
 
-  QString
-  caption() const override
-  { return QStringLiteral("Subtraction"); }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
+
 
   virtual bool
   portCaptionVisible(PortType portType, PortIndex portIndex) const override
@@ -31,31 +40,26 @@ public:
     return true;
   }
 
-  virtual QString
+  virtual const QString &
   portCaption(PortType portType, PortIndex portIndex) const override
   {
     switch (portType)
     {
       case PortType::In:
         if (portIndex == 0)
-          return QStringLiteral("Minuend");
+          return minuend;
         else if (portIndex == 1)
-          return QStringLiteral("Subtrahend");
-
+          return subtrahend;
         break;
-
       case PortType::Out:
-        return QStringLiteral("Result");
+        return result;
 
       default:
         break;
     }
-    return QString();
+    return empty;
   }
 
-  QString
-  name() const override
-  { return QStringLiteral("Subtraction"); }
 
 private:
 

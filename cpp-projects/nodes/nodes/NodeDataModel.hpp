@@ -34,19 +34,19 @@ public:
     virtual ~NodeDataModel() = default;
 
     /// Caption is used in GUI
-    virtual QString caption() const = 0;
+    virtual const QString &caption() const = 0;
 
     /// It is possible to hide caption in GUI
     virtual bool captionVisible() const { return true; }
 
     /// Port caption is used in GUI to label individual ports
-    virtual QString portCaption(PortType, PortIndex) const { return QString(); }
+    virtual const QString &portCaption(PortType, PortIndex) const { return defaultPortCaption; }
 
     /// It is possible to hide port caption in GUI
     virtual bool portCaptionVisible(PortType, PortIndex) const { return false; }
 
     /// Name makes this model unique
-    virtual QString name() const = 0;
+    virtual const QString &name() const = 0;
 
 public:
 
@@ -55,7 +55,7 @@ public:
 public:
 
     virtual unsigned int nPorts(PortType portType) const = 0;
-    virtual NodeDataType dataType(PortType portType, PortIndex portIndex) const = 0;
+    virtual const NodeDataType &dataType(PortType portType, PortIndex portIndex) const = 0;
 
 public:
 
@@ -101,8 +101,9 @@ Q_SIGNALS:
     void computingFinished();
     void embeddedWidgetSizeUpdated();
 
+protected:
+    static const inline QString defaultPortCaption = QStringLiteral("default");
 private:
-
     NodeStyle _nodeStyle;
 };
 }

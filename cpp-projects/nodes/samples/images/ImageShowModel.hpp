@@ -27,15 +27,15 @@ public:
   virtual
   ~ImageShowModel() {}
 
+  static const inline QString m_caption = QStringLiteral("Image Display");
+  static const inline QString m_name = QStringLiteral("ImageShowModel");
+
+
 public:
 
-  QString
-  caption() const override
-  { return QString("Image Display"); }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
 
-  QString
-  name() const override
-  { return QString("ImageShowModel"); }
 
 public:
 
@@ -46,7 +46,7 @@ public:
   unsigned int
   nPorts(PortType portType) const override;
 
-  NodeDataType
+  const NodeDataType&
   dataType(PortType portType, PortIndex portIndex) const override;
 
   std::shared_ptr<NodeData>

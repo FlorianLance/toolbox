@@ -50,17 +50,19 @@ void NodePainter::paint(QPainter* painter, Node & node, FlowScene const& scene){
     drawModelName(painter, geom, state, model);
     drawEntryLabels(painter, geom, state, model);
     tool::Bench::stop();
+
     tool::Bench::start("NodePainter::paint4");
     drawResizeRect(painter, geom, model);
     drawValidationRect(painter, geom, model, graphicsObject);
     tool::Bench::stop();
-    tool::Bench::start("NodePainter::paint5");
 
+    tool::Bench::start("NodePainter::paint5");
     /// call custom painter
     if (auto painterDelegate = model->painterDelegate()){
         painterDelegate->paint(painter, geom, model);
     }
     tool::Bench::stop();
+
     tool::Bench::stop();
 }
 
@@ -200,7 +202,7 @@ void NodePainter::drawModelName(QPainter * painter,NodeGeometry const & geom,Nod
         return;
     }
 
-    QString const &name = model->caption();
+    const QString &name = model->caption();
 
     QFont f = painter->font();
 
@@ -224,7 +226,7 @@ void NodePainter::drawModelName(QPainter * painter,NodeGeometry const & geom,Nod
     tool::Bench::stop();
 }
 
-void NodePainter::drawEntryLabels(QPainter * painter,NodeGeometry const & geom,NodeState const & state,NodeDataModel const * model){
+void NodePainter::drawEntryLabels(QPainter * painter,NodeGeometry const & geom,NodeState const & state, NodeDataModel const * model){
 
     tool::Bench::start("NodePainter::drawModelName");
 
@@ -244,28 +246,16 @@ void NodePainter::drawEntryLabels(QPainter * painter,NodeGeometry const & geom,N
                 painter->setPen(nodeStyle.FontColor);
             }
 
-            QString s;
-            if (model->portCaptionVisible(portType, i)){
-                s = model->portCaption(portType, i);
-            }else{
-                s = model->dataType(portType, i).name;
-            }
+            const QString &s = model->portCaptionVisible(portType, i) ?
+                model->portCaption(portType, i) : model->dataType(portType, i).name;
 
-            auto rect = metrics.boundingRect(s);
-
+            const auto rect = metrics.boundingRect(s);
             p.setY(p.y() + rect.height() / 4.0);
 
-            switch (portType){
-                case PortType::In:
+            if(portType == PortType::In){
                 p.setX(5.0);
-                break;
-
-                case PortType::Out:
+            }else if(portType == PortType::Out){
                 p.setX(geom.width() - 5.0 - rect.width());
-                break;
-
-                default:
-                break;
             }
 
             painter->drawText(p, s);

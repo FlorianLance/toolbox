@@ -19,10 +19,9 @@ public:
     : _number(number)
   {}
 
-  NodeDataType type() const override
+  const NodeDataType &type() const override
   {
-    return NodeDataType {"integer",
-                         "Integer"};
+      return m_type;
   }
 
   int number() const
@@ -33,5 +32,6 @@ public:
 
 private:
 
+    static const inline NodeDataType m_type = {"integer", "Integer"};
   int _number;
 };

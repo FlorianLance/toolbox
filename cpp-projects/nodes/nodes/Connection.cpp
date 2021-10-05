@@ -84,7 +84,7 @@ QJsonObject Connection::save() const{
         if (_converter){
             auto getTypeJson = [this](PortType type){
                 QJsonObject typeJson;
-                NodeDataType nodeType = this->dataType(type);
+                const NodeDataType &nodeType = this->dataType(type);
                 typeJson["id"] = nodeType.id;
                 typeJson["name"] = nodeType.name;
 
@@ -282,7 +282,7 @@ void Connection::clearNode(PortType portType){
 }
 
 
-NodeDataType Connection::dataType(PortType portType) const{
+const NodeDataType &Connection::dataType(PortType portType) const{
 
     if (_inNode && _outNode){
 

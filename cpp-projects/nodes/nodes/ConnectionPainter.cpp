@@ -177,8 +177,9 @@ static void drawNormalLine(QPainter * painter, Connection const & connection){
     if (connectionStyle.useDataDefinedColors()){
 
         using QtNodes::PortType;
-        auto dataTypeOut = connection.dataType(PortType::Out);
-        auto dataTypeIn = connection.dataType(PortType::In);
+        using QtNodes::NodeDataType;
+        const NodeDataType &dataTypeOut = connection.dataType(PortType::Out);
+        const NodeDataType &dataTypeIn = connection.dataType(PortType::In);
 
         gradientColor = (dataTypeOut.id != dataTypeIn.id);
         normalColorOut  = connectionStyle.normalColor(dataTypeOut.id);

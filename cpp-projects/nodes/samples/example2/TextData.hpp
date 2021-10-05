@@ -17,12 +17,15 @@ public:
     : _text(text)
   {}
 
-  NodeDataType type() const override
-  { return NodeDataType {"text", "Text"}; }
+  const NodeDataType &type() const override
+  {
+      return m_type;
+  }
+
 
   QString text() const { return _text; }
 
 private:
-
+static const inline NodeDataType m_type = {"text", "Text"};
   QString _text;
 };

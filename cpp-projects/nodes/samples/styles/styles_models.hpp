@@ -19,10 +19,11 @@ using QtNodes::NodeValidationState;
 class StyleMyNodeData : public NodeData
 {
 public:
-
-  NodeDataType
-  type() const override
-  { return NodeDataType {"MyNodeData", "My Node Data"}; }
+    const NodeDataType &type() const override
+    {
+        return m_type;
+    }
+  static const inline NodeDataType m_type = {"MyNodeData", "My Node Data"};
 };
 
 //------------------------------------------------------------------------------
@@ -38,19 +39,15 @@ public:
   virtual
   ~StyleMyDataModel() {}
 
+  static const inline QString m_caption = QStringLiteral("My Data Model");
+  static const inline QString m_name = QStringLiteral("MyDataModel");
+
+
 public:
 
-  QString
-  caption() const override
-  {
-    return QString("My Data Model");
-  }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
 
-  QString
-  name() const override
-  {
-    return QString("MyDataModel");
-  }
 
 public:
 
@@ -72,7 +69,7 @@ public:
     return 3;
   }
 
-  NodeDataType
+  const NodeDataType&
   dataType(PortType, PortIndex) const override
   {
     return StyleMyNodeData().type();

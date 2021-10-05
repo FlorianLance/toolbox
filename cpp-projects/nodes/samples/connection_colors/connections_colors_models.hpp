@@ -19,24 +19,24 @@ class MyNodeData : public NodeData
 {
 public:
 
-  NodeDataType
-  type() const override
-  {
-    return NodeDataType {"MyNodeData",
-                         "My Node Data"};
-  }
+    const NodeDataType &type() const override
+    {
+        return m_type;
+    }
+
+  static const inline NodeDataType m_type = {"MyNodeData", "My Node Data"};
 };
 
 class SimpleNodeData : public NodeData
 {
 public:
 
-  NodeDataType
-  type() const override
-  {
-    return NodeDataType {"SimpleData",
-                         "Simple Data"};
-  }
+    const NodeDataType &type() const override
+    {
+        return m_type;
+    }
+
+  static const inline NodeDataType m_type = {"SimpleData", "Simple Data"};
 };
 
 //------------------------------------------------------------------------------
@@ -52,17 +52,15 @@ public:
   virtual
   ~NaiveDataModel() {}
 
+  static const inline QString m_caption = QStringLiteral("Naive Data Model");
+  static const inline QString m_name = QStringLiteral("NaiveDataModel");
+
+
 public:
 
-  QString
-  caption() const override
-  {
-    return QString("Naive Data Model");
-  }
+    const QString &caption() const override{return m_caption;}
+    const QString &name() const override{return m_name;}
 
-  QString
-  name() const override
-  { return QString("NaiveDataModel"); }
 
 public:
 
@@ -87,7 +85,7 @@ public:
     return result;
   }
 
-  NodeDataType
+  const NodeDataType &
   dataType(PortType portType,
            PortIndex portIndex) const override
   {
@@ -117,7 +115,7 @@ public:
         break;
     }
     // FIXME: control may reach end of non-void function [-Wreturn-type]
-    return NodeDataType();
+    return NodeData::defaultType;
   }
 
   std::shared_ptr<NodeData>

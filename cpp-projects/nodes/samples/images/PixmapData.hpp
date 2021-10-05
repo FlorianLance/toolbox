@@ -19,17 +19,17 @@ public:
     : _pixmap(pixmap)
   {}
 
-  NodeDataType
-  type() const override
-  {
-    //       id      name
-    return {"pixmap", "P"};
-  }
 
+  const NodeDataType &type() const override
+  {
+      return m_type;
+  }
   QPixmap
   pixmap() const { return _pixmap; }
 
 private:
+
+static const inline NodeDataType m_type = {"pixmap", "P"};
 
   QPixmap _pixmap;
 };

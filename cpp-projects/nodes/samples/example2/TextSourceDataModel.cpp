@@ -42,7 +42,7 @@ onTextEdited(QString const &string)
 }
 
 
-NodeDataType
+const NodeDataType&
 TextSourceDataModel::
 dataType(PortType, PortIndex) const
 {

@@ -262,15 +262,11 @@ unsigned int NodeGeometry::portWidth(PortType portType) const{
     unsigned width = 0;
     for (auto i = 0ul; i < _dataModel->nPorts(portType); ++i){
 
-        QString name;
-        if (_dataModel->portCaptionVisible(portType, i)){
-            name = _dataModel->portCaption(portType, i);
-        }else{
-            name = _dataModel->dataType(portType, i).name;
-        }
+        const QString &name =  _dataModel->portCaptionVisible(portType, i) ?
+            _dataModel->portCaption(portType, i) : _dataModel->dataType(portType, i).name;
 
-        width = std::max(unsigned(_fontMetrics.width(name)),
-        width);
+//        width = std::max(unsigned(_fontMetrics.width(name)), width);
+        width = std::max(static_cast<unsigned>(_fontMetrics.boundingRect(name).width()), width);
     }
 
     return width;

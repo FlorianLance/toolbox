@@ -39,7 +39,7 @@ nPorts(PortType portType) const
 }
 
 
-NodeDataType
+const NodeDataType &
 ModuloModel::
 dataType(PortType, PortIndex) const
 {

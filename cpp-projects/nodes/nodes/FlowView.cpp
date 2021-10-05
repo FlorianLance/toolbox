@@ -269,6 +269,8 @@ void FlowView::mousePressEvent(QMouseEvent *event){
 
 void FlowView::mouseMoveEvent(QMouseEvent *event) {
 
+    tool::Bench::start("FlowView::mouseMoveEvent");
+
     QGraphicsView::mouseMoveEvent(event);
     if (scene()->mouseGrabberItem() == nullptr && event->buttons() == Qt::LeftButton){
         // Make sure shift is not being pressed
@@ -277,15 +279,15 @@ void FlowView::mouseMoveEvent(QMouseEvent *event) {
             setSceneRect(sceneRect().translated(difference.x(), difference.y()));
         }
     }
+
+    tool::Bench::stop();
 }
 
 void FlowView::drawBackground(QPainter* painter, const QRectF& r){
 
-    tool::Bench::start("FlowView::drawBackground1");
+    tool::Bench::start("FlowView::drawBackground");
     QGraphicsView::drawBackground(painter, r);
-    tool::Bench::stop();
 
-    tool::Bench::start("FlowView::drawBackground2");
     const QRect   windowRect = rect();
     const QPointF tl = mapToScene(windowRect.topLeft());
     const QPointF br = mapToScene(windowRect.bottomRight());

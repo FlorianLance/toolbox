@@ -19,10 +19,9 @@ public:
     : _number(number)
   {}
 
-  NodeDataType type() const override
+  const NodeDataType &type() const override
   {
-    return NodeDataType {"decimal",
-                         "Decimal"};
+      return m_type;
   }
 
   double number() const
@@ -31,7 +30,9 @@ public:
   QString numberAsText() const
   { return QString::number(_number, 'f'); }
 
+
 private:
 
+static const inline NodeDataType m_type = {"decimal", "Decimal"};
   double _number;
 };

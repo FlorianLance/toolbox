@@ -33,7 +33,7 @@ nPorts(PortType portType) const
 }
 
 
-NodeDataType
+const NodeDataType &
 NumberDisplayDataModel::
 dataType(PortType, PortIndex) const
 {

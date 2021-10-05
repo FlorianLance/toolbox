@@ -100,8 +100,10 @@ void ConnectionGraphicsObject::lock(bool locked){
 }
 
 void ConnectionGraphicsObject::paint(QPainter* painter,QStyleOptionGraphicsItem const* option,QWidget*){
+    tool::Bench::start("ConnectionGraphicsObject::paint");
     painter->setClipRect(option->exposedRect);
     ConnectionPainter::paint(painter, _connection);
+    tool::Bench::stop();
 }
 
 void ConnectionGraphicsObject:: mousePressEvent(QGraphicsSceneMouseEvent* event){

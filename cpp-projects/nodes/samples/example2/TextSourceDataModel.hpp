@@ -26,20 +26,23 @@ public:
   virtual
   ~TextSourceDataModel() {}
 
+  static const inline QString m_caption = QStringLiteral("Text Source");
+  static const inline QString m_name = QStringLiteral("TextSourceDataModel");
+
+
+
 public:
 
-  QString
-  caption() const override
-  { return QString("Text Source"); }
 
+    const QString &caption() const override{return m_caption;}
   bool
   captionVisible() const override { return false; }
 
-  static QString
+  static const QString&
   Name()
-  { return QString("TextSourceDataModel"); }
+  { return m_name; }
 
-  QString
+  const QString&
   name() const override
   { return TextSourceDataModel::Name(); }
 
@@ -48,7 +51,7 @@ public:
   unsigned int
   nPorts(PortType portType) const override;
 
-  NodeDataType
+  const NodeDataType&
   dataType(PortType portType, PortIndex portIndex) const override;
 
   std::shared_ptr<NodeData>

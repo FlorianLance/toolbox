@@ -31,7 +31,7 @@ nPorts(PortType portType) const
 }
 
 
-NodeDataType
+const NodeDataType&
 TextDisplayDataModel::
 dataType(PortType, PortIndex) const
 {

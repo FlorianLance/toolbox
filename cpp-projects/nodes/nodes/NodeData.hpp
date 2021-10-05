@@ -25,6 +25,10 @@ public:
     }
 
     /// Type for inner use
-    virtual NodeDataType type() const = 0;
+    virtual const NodeDataType &type() const = 0;
+    static const inline NodeDataType defaultType = {"", ""};
+
+protected:
+    NodeDataType m_nodeDatatype;
 };
 }

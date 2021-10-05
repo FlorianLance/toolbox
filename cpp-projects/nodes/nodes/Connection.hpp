@@ -86,7 +86,7 @@ public:
 
     void clearNode(PortType portType);
 
-    NodeDataType dataType(PortType portType) const;
+    const NodeDataType &dataType(PortType portType) const;
 
     void setTypeConverter(TypeConverter converter);
 
