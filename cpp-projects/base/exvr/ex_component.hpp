@@ -201,53 +201,53 @@ public:
     }
 
     // callbacks
-    static bool is_initialized(int key){
+    bool is_initialized(int key){
         if(isInitializedCB){
             return (*isInitializedCB)(key);
         }
         return false;
     }
 
-    static bool is_visible(int key){
+    bool is_visible(int key){
         if(isVisibleCB){
             return (*isVisibleCB)(key);
         }
         return false;
     }
 
-    static bool is_updating(int key){
+    bool is_updating(int key){
         if(isUpdatingCB){
             return (*isUpdatingCB)(key);
         }
         return false;
     }
 
-    static bool is_closed(int key){
+    bool is_closed(int key){
         if(isClosedCB){
             return (*isClosedCB)(key);
         }
         return false;
     }
 
-    static void next(){
+    void next(){
         if(nextCB){
             (*nextCB)();
         }
     }
 
-    static void previous(){
+    void previous(){
         if(previousCB){
             (*previousCB)();
         }
     }
 
-    static void close(int key){
+    void close(int key){
         if(closeCB){
             (*closeCB)(key);
         }
     }
 
-    static void log_warning(std::string warningMessage){
+    void log_warning(std::string warningMessage){
         if(logWarningCB){
             (*logWarningCB)(warningMessage.c_str());
         }else{
@@ -255,7 +255,7 @@ public:
         }
     }
 
-    static void log_error(std::string errorMessage){
+    void log_error(std::string errorMessage){
         if(logErrorCB){
             (*logErrorCB)(errorMessage.c_str());
         }else{
@@ -263,7 +263,7 @@ public:
         }
     }
 
-    static void log(std::string message){
+    void log(std::string message){
         if(logCB){
             (*logCB)(message.c_str());
         }else{
@@ -271,81 +271,81 @@ public:
         }
     }
 
-    static void stack_trace_log(std::string stackTraceMessage){
+    void stack_trace_log(std::string stackTraceMessage){
         if(strackTraceCB){
             (*strackTraceCB)(stackTraceMessage.c_str());
         }
     }
 
 
-    static long ellapsed_time_exp_ms(){
+    long ellapsed_time_exp_ms(){
         if(ellapsedTimeExpMsCB){
             return (*ellapsedTimeExpMsCB)();
         }
         return 0;
     }
 
-    static long ellapsed_time_routine_ms(){
+    long ellapsed_time_routine_ms(){
         if(ellapsedTimeRoutineMsCB){
             return (*ellapsedTimeRoutineMsCB)();
         }
         return 0;
     }
 
-    static int component_key(std::string componentName){
+    int component_key(std::string componentName){
         if(getCB){
             return  (*getCB)(componentName.c_str());
         }
         return -1;
     }
 
-    static void signal_bool(int key, int index, bool value){
+    void signal_bool(int key, int index, bool value){
         if(signalBoolCB){
             (*signalBoolCB)(key, index, value ? 1 : 0);
         }
     }
-    static void signal_int(int key, int index, int value){
+    void signal_int(int key, int index, int value){
         if(signalIntCB){
             (*signalIntCB)(key, index, value);
         }
     }
-    static void signal_float(int key, int index, float value){
+    void signal_float(int key, int index, float value){
         if(signalFloatCB){
             (*signalFloatCB)(key, index, value);
         }
     }
-    static void signal_double(int key, int index, double value){
+    void signal_double(int key, int index, double value){
         if(signalDoubleCB){
             (*signalDoubleCB)(key, index, value);
         }
     }
-    static void signal_string(int key, int index, std::string value){
+    void signal_string(int key, int index, std::string value){
         if(signalStringCB){
             (*signalStringCB)(key, index, value.c_str());
         }
     }
 
 
-    inline static std::unique_ptr<StrackTraceCB> strackTraceCB = nullptr;
-    inline static std::unique_ptr<LogCB> logCB = nullptr;
-    inline static std::unique_ptr<LogWarningCB> logWarningCB = nullptr;
-    inline static std::unique_ptr<LogErrorCB> logErrorCB= nullptr;
-    inline static std::unique_ptr<EllapsedTimeExpMsCB> ellapsedTimeExpMsCB= nullptr;
-    inline static std::unique_ptr<EllapsedTimeRoutineMsCB> ellapsedTimeRoutineMsCB= nullptr;
-    inline static std::unique_ptr<GetCB> getCB= nullptr;
-    inline static std::unique_ptr<IsInitializedCB> isInitializedCB= nullptr;
-    inline static std::unique_ptr<IsVisibleCB> isVisibleCB= nullptr;
-    inline static std::unique_ptr<IsUpdatingCB> isUpdatingCB= nullptr;
-    inline static std::unique_ptr<IsClosedCB> isClosedCB= nullptr;
-    inline static std::unique_ptr<NextCB> nextCB= nullptr;
-    inline static std::unique_ptr<PreviousCB> previousCB= nullptr;
-    inline static std::unique_ptr<CloseCB> closeCB= nullptr;
+    std::unique_ptr<StrackTraceCB> strackTraceCB = nullptr;
+    std::unique_ptr<LogCB> logCB = nullptr;
+    std::unique_ptr<LogWarningCB> logWarningCB = nullptr;
+    std::unique_ptr<LogErrorCB> logErrorCB= nullptr;
+    std::unique_ptr<EllapsedTimeExpMsCB> ellapsedTimeExpMsCB= nullptr;
+    std::unique_ptr<EllapsedTimeRoutineMsCB> ellapsedTimeRoutineMsCB= nullptr;
+    std::unique_ptr<GetCB> getCB= nullptr;
+    std::unique_ptr<IsInitializedCB> isInitializedCB= nullptr;
+    std::unique_ptr<IsVisibleCB> isVisibleCB= nullptr;
+    std::unique_ptr<IsUpdatingCB> isUpdatingCB= nullptr;
+    std::unique_ptr<IsClosedCB> isClosedCB= nullptr;
+    std::unique_ptr<NextCB> nextCB= nullptr;
+    std::unique_ptr<PreviousCB> previousCB= nullptr;
+    std::unique_ptr<CloseCB> closeCB= nullptr;
 
-    inline static std::unique_ptr<SignalBoolCB> signalBoolCB= nullptr;
-    inline static std::unique_ptr<SignalIntCB> signalIntCB= nullptr;
-    inline static std::unique_ptr<SignalFloatCB> signalFloatCB= nullptr;
-    inline static std::unique_ptr<SignalDoubleCB> signalDoubleCB= nullptr;
-    inline static std::unique_ptr<SignalStringCB> signalStringCB= nullptr;
+    std::unique_ptr<SignalBoolCB> signalBoolCB= nullptr;
+    std::unique_ptr<SignalIntCB> signalIntCB= nullptr;
+    std::unique_ptr<SignalFloatCB> signalFloatCB= nullptr;
+    std::unique_ptr<SignalDoubleCB> signalDoubleCB= nullptr;
+    std::unique_ptr<SignalStringCB> signalStringCB= nullptr;
 
 private:
 
