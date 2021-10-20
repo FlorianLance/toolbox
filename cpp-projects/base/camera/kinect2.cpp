@@ -606,6 +606,7 @@ std::optional<Frame> Kinect2::get_kinect_data() {
     auto copiedFrame = m_p->processedFrame->copy_frame();
     Bench::stop();
     Bench::stop();
+
     return std::move(copiedFrame);
 }
 

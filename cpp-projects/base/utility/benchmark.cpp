@@ -33,67 +33,80 @@
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
-//#include <thread>
+#include <mutex>
+#include <algorithm>
 
 using namespace tool;
 using namespace std::chrono;
 
+struct TimesInfo{
+    size_t callsCount = 0;
+    bool started = false;
+    int level = 0;
+    std::vector<steady_clock::time_point> startTime;
+    std::vector<steady_clock::time_point> stopTime;
+};
+
+struct I{
+    std::unordered_map<BenchId,TimesInfo> times = {};
+    std::vector<BenchId> stack = {};
+    std::vector<BenchId> order  = {};
+    int currentLevel = 0;
+    std::vector<std::unique_ptr<std::string>> idStrs;
+    std::unordered_set<std::string_view> idStrsView;
+    std::thread::id tId;
+    std::string tIdStr;
+};
+
 struct Bench::Impl{
 
-    struct TimesInfo{
-        size_t callsCount = 0;
-        bool started = false;
-        int level = 0;
-        std::vector<std::chrono::steady_clock::time_point> startTime;
-        std::vector<std::chrono::steady_clock::time_point> stopTime;
-    };
 
-    static inline bool displayEnabled = true;
-    static inline std::unordered_map<BenchId,TimesInfo> times = {};
-    static inline std::stack<BenchId> stack  = {};
-    static inline std::vector<BenchId> order  = {};
-    static inline int currentLevel = 0;
-    static inline std::vector<std::unique_ptr<std::string>> idStrs;
-    static inline std::unordered_set<std::string_view> idStrsView;
+    static inline std::atomic_bool displayEnabled = true;
+    static inline std::unordered_map<std::thread::id, I> tData = {};
+    static inline std::mutex lock;
 
-    // static inline std::thread::id initThreadId = std::this_thread::get_id();
-
-    // TODO thread id (make if thread-safe)
-//    struct I{
-//    static inline std::unordered_map<BenchId,TimesInfo> times = {};
-//    static inline std::stack<BenchId> stack  = {};
-//    static inline std::vector<BenchId> order  = {};
-//    static inline int currentLevel = 0;
-//    static inline std::vector<std::unique_ptr<std::string>> idStrs;
-//    static inline std::unordered_set<std::string_view> idStrsView;
-//    };
-
-//    std::unordered_map<std::thread::id, I> tData;
-//    static inline std::mutex lock;
+    static void check_thread_id(std::thread::id tId){
+        if(Impl::tData.count(tId)==0){
+            {
+                const std::lock_guard<std::mutex> g(Impl::lock);
+                Impl::tData[tId] = {};
+                Impl::tData[tId].tId = tId;
+            }
+            std::stringstream ss;
+            ss << tId;
+            Impl::tData[tId].tIdStr = ss.str();
+            std::cout << std::format("[Bench::First start call from thread {}]\n", Impl::tData[tId].tIdStr);
+        }
+    }
 
     Impl(){}
 };
 
 Bench::Bench() : m_p(std::make_unique<Impl>()){
-
 }
 
 void Bench::disable_display(){
-    Bench::Impl::displayEnabled = false;
+    Impl::displayEnabled = false;
 }
 
 void Bench::reset(){
 
-    Bench::Impl::times.clear();
-    Bench::Impl::stack = std::stack<std::string_view>();
-    Bench::Impl::order.clear();
-    Bench::Impl::currentLevel = 0;
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
+    Impl::tData[tId].times.clear();
+    Impl::tData[tId].stack.clear();
+    Impl::tData[tId].order.clear();
+    Impl::tData[tId].currentLevel = 0;
 }
 
 void Bench::check(){
 
-    for(auto &id : Bench::Impl::order){
-        const auto &t = Bench::Impl::times[id];
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
+    for(auto &id : Impl::tData[tId].order){
+        const auto &t = Impl::tData[tId].times[id];
         if(t.startTime.size() != t.stopTime.size()){
             std::cerr << std::format("Bench::Error: Id [{}] has not been stopped, (started:{}, stopped:{}).\n",
                 id, t.startTime.size(), t.stopTime.size()
@@ -104,13 +117,11 @@ void Bench::check(){
 
 void Bench::start(std::string_view id, bool display){
 
-//    if(auto idT = std::this_thread::get_id(); idT != Impl::initThreadId){
-//        std::stringstream ss;
-//        ss << idT;
-//         std::cerr << std::format("[Bench::Start call with id [{}] from another thread {}]\n", id, ss.str());
-//    }
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+    auto &d = Impl::tData[tId];
 
-    using namespace std::chrono;
+
     if(id.size() == 0 && Impl::displayEnabled){
         std::cerr << std::format("Bench::Error: empty id\n");
         return;
@@ -120,70 +131,81 @@ void Bench::start(std::string_view id, bool display){
         std::cout << std::format("[Bench::Start{}]\n", id);
     }
 
-    auto idV = Bench::Impl::idStrsView.find(id);
-    if (idV == Bench::Impl::idStrsView.end()) {
+    auto idV = d.idStrsView.find(id);
+    if (idV == d.idStrsView.end()) {
         auto str = std::make_unique<std::string>(id);
-        Impl::idStrsView.insert(*str);
-        Impl::idStrs.emplace_back(std::move(str));
-        idV = Bench::Impl::idStrsView.find(id);
+        d.idStrsView.insert(*str);
+        d.idStrs.emplace_back(std::move(str));
+        idV = d.idStrsView.find(id);
     }
 
-    bool exists = Bench::Impl::times.count(*idV) != 0;
+    bool exists = d.times.count(*idV) != 0;
     if(!exists){
-        Bench::Impl::order.emplace_back(*idV);
-        Bench::Impl::times[*idV] = {};
+        d.order.emplace_back(*idV);
+        d.times[*idV] = {};
     }
 
     // check if already running
-    if(Bench::Impl::times[*idV].started){
+    if(d.times[*idV].started){
         if(Impl::displayEnabled){
             std::cerr << std::format("Error with id {}, already started\n", id);
         }
         return;
     }
 
-    Bench::Impl::times[*idV].started = true;
-    Bench::Impl::times[*idV].callsCount++;
-    Bench::Impl::times[*idV].startTime.emplace_back(high_resolution_clock::now());
-    Bench::Impl::times[*idV].level = Bench::Impl::currentLevel;
-    Bench::Impl::stack.emplace(*idV);
-    ++Bench::Impl::currentLevel;
+    d.times[*idV].started = true;
+    d.times[*idV].callsCount++;
+    d.times[*idV].startTime.emplace_back(high_resolution_clock::now());
+    d.times[*idV].level = d.currentLevel;
+    d.stack.push_back(*idV);
+    ++d.currentLevel;
 }
 
 void Bench::stop(std::string_view id){
 
-    using namespace std::chrono;
-    if(Bench::Impl::stack.size() == 0){
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+    auto &d = Impl::tData[tId];
+
+    if(d.stack.size() == 0){
         return;
     }
 
     if(id.length() == 0){
-        id = Bench::Impl::stack.top();
-        Bench::Impl::stack.pop();
+        id = d.stack[d.stack.size()-1];
+        d.stack.pop_back();
+    }else{
+        auto it = std::find(d.stack.begin(), d.stack.end(), id);
+        if(it != d.stack.end()){
+            d.stack.erase(std::remove(d.stack.begin(), d.stack.end(), id), d.stack.end());
+        }else{
+            std::cerr << std::format("Bench::Error: cannot stop id [{}], no element in stack. \n.", id);
+            return;
+        }
     }
 
-    if(Bench::Impl::times.count(id) == 0){
-        if(Bench::Impl::displayEnabled){
+    if(d.times.count(id) == 0){
+        if(Impl::displayEnabled){
             std::cerr << std::format("Bench::Error: cannot stop id [{}] \n.", id);
         }
         return;
     }
 
-    Bench::Impl::times[id].stopTime.emplace_back(high_resolution_clock::now());
-    Bench::Impl::times[id].started = false;
+    d.times[id].stopTime.emplace_back(high_resolution_clock::now());
+    d.times[id].started = false;
 
-    if(Bench::Impl::currentLevel > 0){
-        --Bench::Impl::currentLevel;
+    if(d.currentLevel > 0){
+        --d.currentLevel;
     }else{
-        if(Bench::Impl::displayEnabled){
+        if(Impl::displayEnabled){
             std::cerr << "Bench::Error: Invalid level.\n";
         }
-        Bench::Impl::currentLevel = 0;
+        d.currentLevel = 0;
     }
 }
 
 void Bench::display(BenchUnit unit, int64_t minTime, bool sort){
-    if(Bench::Impl::displayEnabled){
+    if(Impl::displayEnabled){
         std::cout << to_string(unit, minTime, sort);
     }
 }
@@ -201,7 +223,10 @@ constexpr std::string_view Bench::unit_to_str(BenchUnit unit){
 
 std::int64_t Bench::compute_total_time(BenchUnit unit, std::string_view id){
 
-    const auto &t = Bench::Impl::times[id];
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
+    const auto &t = Impl::tData[tId].times[id];
 
     std::int64_t total = 0;
     for(size_t ii = 0; ii < std::min(t.startTime.size(),t.stopTime.size()); ++ii){
@@ -227,12 +252,15 @@ std::int64_t Bench::compute_total_time(BenchUnit unit, std::string_view id){
 
 std::vector<std::tuple<std::string_view, int64_t, size_t>> Bench::all_total_times(BenchUnit unit, std::int64_t minTime, bool sort){
 
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
     std::vector<std::tuple<std::string_view, int64_t, size_t>> times;
-    times.reserve(Bench::Impl::order.size());
-    for(auto &id : Bench::Impl::order){
+    times.reserve(Impl::tData[tId].order.size());
+    for(auto &id : Impl::tData[tId].order){
         std::int64_t time = compute_total_time(unit, id);        
         if(time > minTime){
-            times.emplace_back(id, time, Bench::Impl::times[id].callsCount);
+            times.emplace_back(id, time, Impl::tData[tId].times[id].callsCount);
         }
     }
 
@@ -249,7 +277,8 @@ std::vector<std::tuple<std::string_view, int64_t, size_t>> Bench::all_total_time
 
 std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
 
-    using namespace std::chrono;
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
 
     auto totalTimes = all_total_times(unit, minTime, sort);
     std::ostringstream flux;
@@ -257,7 +286,7 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
         flux << "\n[BENCH START] ############### \n";
         for(const auto &totalTime : totalTimes){
             auto id = std::get<0>(totalTime);
-            const auto &timeI = Bench::Impl::times[id];
+            const auto &timeI = Impl::tData[tId].times[id];
             flux << std::format("[ID:{}][L:{}][T:{} {}][C:{}][U:{} {}]\n",
                 id,
                 timeI.level,
@@ -274,14 +303,26 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
 }
 
 bool Bench::is_started(BenchId id){
-    return Bench::Impl::times[id].started;
+
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
+    return Impl::tData[tId].times[id].started;
 }
 
 int Bench::level(BenchId id){
-    return Bench::Impl::times[id].level;
+
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
+    return Impl::tData[tId].times[id].level;
 }
 
 size_t Bench::calls_count(BenchId id){
-    return Bench::Impl::times[id].callsCount;
+
+    auto tId = std::this_thread::get_id();
+    Impl::check_thread_id(tId);
+
+    return Impl::tData[tId].times[id].callsCount;
 }
 

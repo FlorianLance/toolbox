@@ -31,6 +31,7 @@
 #include <string_view>
 #include <vector>
 #include <memory>
+#include <thread>
 
 namespace tool {
 
@@ -49,7 +50,7 @@ namespace tool {
 
         Bench();
 
-        static void disable_display();
+        static void disable_display();       
 
 //        static void init();
         static void reset();
