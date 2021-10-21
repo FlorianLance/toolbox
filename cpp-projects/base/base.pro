@@ -152,6 +152,7 @@ HEADERS += \
     utility/joypad_utility.hpp \
     utility/logger.hpp \
     utility/mouse_utility.hpp \
+    utility/thread_utility.hpp \
     utility/tuple_array.hpp \
     utility/utility.hpp \
     utility/view.hpp \

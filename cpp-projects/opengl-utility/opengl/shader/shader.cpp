@@ -30,8 +30,10 @@
 #include <sstream>
 #include <type_traits>
 #include <filesystem>
+#include <format>
 
 // base
+#include "utility/logger.hpp"
 #include "utility/string_utility.hpp"
 
 using namespace tool;
@@ -62,7 +64,7 @@ std::unordered_map<std::string, Shader::Type> Shader::extensions = {
 
 void ShaderProgram::use() {
     if(m_id <= 0 || !m_linked){
-        std::cerr << "Shader has not been linked.\n";
+        Logger::error("Shader has not been linked.\n");
         return;
     }
     glUseProgram(m_id);
@@ -86,7 +88,7 @@ bool ShaderProgram::check_uniform_type(const char *name, UniformType type) const
     if(uniforms.at(name).first.v == type.v){
         return true;
     }
-    std::cerr << "Invalid value for " << name << " uniform " << get_name(uniforms.at(name).first.v) << " instead of " << get_name(type.v) << ".\n";
+    Logger::error(std::format("Invalid value for {} uniform {} instead of {}.\n", name, get_name(uniforms.at(name).first.v), get_name(type.v)));
     return false;
 }
 
@@ -263,16 +265,14 @@ bool ShaderProgram::set_uniform(const char *name, const std_v1<Mat4f> &values, b
     return false;
 }
 
-
-
 void ShaderProgram::set_model_matrix(const Mat4d &model){
-    set_uniform("ModelMatrix",      model.conv<float>());
+    set_uniform(MM,  model.conv<float>());
 }
 
 void ShaderProgram::set_camera_matrices_uniforms(const graphics::CameraMatrices &cameraM){
-    set_uniform("ModelViewMatrix",  cameraM.mv.conv<float>());
-    set_uniform("NormalMatrix",     cameraM.normal.conv<float>());
-    set_uniform("MVP",              cameraM.mvp.conv<float>());
+    set_uniform(MVM, cameraM.mv.conv<float>());
+    set_uniform(NM,  cameraM.normal.conv<float>());
+    set_uniform(MVP, cameraM.mvp.conv<float>());
 }
 
 void ShaderProgram::debug_display(){
@@ -313,17 +313,14 @@ std::string ShaderProgram::loaded_files_names_to_str() const{
     return filesStr;
 }
 
-
-
 bool ShaderProgram::link(){
-
 
     if(m_linked){
         return true;
     }
 
     if(m_id <= 0){
-        std::cerr << "Program has not been compiled.\n";
+        Logger::error("Program has not been compiled.\n");
         return false;
     }
 
@@ -334,7 +331,7 @@ bool ShaderProgram::link(){
 
     if(status == GL_FALSE) {
         glGetProgramInfoLog(m_id, 512, nullptr, m_infoLog);
-        std::cerr << "Program link failed.\n" << m_infoLog;
+        Logger::error(std::format("Program link failed: {}\n", m_infoLog));
         return m_linked = false;
     }
 
@@ -405,7 +402,7 @@ void ShaderProgram::find_uniforms_location(){
     glGetProgramInterfaceiv(m_id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
     GLenum propertiesUniforms[] = {GL_NAME_LENGTH, GL_TYPE, GL_LOCATION, GL_BLOCK_INDEX, GL_OFFSET, GL_ARRAY_STRIDE};
 
-     std::cout << "NUM UNIFORMS " << numUniforms << "\n";
+    // std::cout << "NUM UNIFORMS " << numUniforms << "\n";
     for(GLuint ii = 0; ii < static_cast<GLuint>(numUniforms); ++ii){
 
         // get properties
@@ -495,7 +492,7 @@ bool ShaderProgram::load_from_files(const std_v1<std::string> &shadersPaths){
 
         // check if exists
         if(!fs::exists(path)){
-            std::cerr << "Shader path " << path << " doesn't exists.\n";
+            Logger::error(std::format("Shader path {} doesn't exists.\n", path.string()));
             return false;
         }
 
@@ -504,19 +501,19 @@ bool ShaderProgram::load_from_files(const std_v1<std::string> &shadersPaths){
         if(auto id = ext.find("."); id != std::string::npos){
             ext.erase(ext.begin(), ext.begin() + id);
         }else{
-            std::cerr << "Invalid shader file name.\n";
+            Logger::error("Invalid shader file name.\n");
             return false;
         }
 
         if(Shader::extensions.count(ext) == 0){
-            std::cerr << "Extension " << ext << " of shader file " << path << " is not valid.\n";
+            Logger::error(std::format("Extension {} of shader file {} is not valid.\n", ext, path.string()));
             return false;
         }       
 
         // open file
         std::ifstream shaderFile(path, std::ios::in);
         if(!shaderFile.is_open()){
-            std::cerr << "Cannot open shader file " << path << "\n";
+            Logger::error(std::format("Cannot open shader file {} \n", path.string()));
             return false;
         }
 
@@ -537,14 +534,13 @@ bool ShaderProgram::load_from_files(const std_v1<std::string> &shadersPaths){
     return load_from_source_code(shadersCode);
 }
 
-
 bool ShaderProgram::load_from_source_code(const std_v1<std::pair<Shader::Type, std::string>> &shadersSourceCode){
 
     std_v1<GLuint> shaders;
     for(const auto &shaderSourceCode : shadersSourceCode){
         GLuint shader;
         if(!init_shader(shader, shaderSourceCode.first, shaderSourceCode.second.c_str())){
-            std::cerr << "Cannot load shader source code : " << shaderSourceCode.second <<  " of type: " << Shader::get_name(shaderSourceCode.first) << "\n";
+            Logger::error(std::format("Cannot load shader source code : {} of type: {}.\n", shaderSourceCode.second, Shader::get_name(shaderSourceCode.first)));
             return false;
         }
         shaders.emplace_back(shader);
@@ -552,8 +548,6 @@ bool ShaderProgram::load_from_source_code(const std_v1<std::pair<Shader::Type, s
 
     return init_shader_program(shaders);
 }
-
-
 
 bool ShaderProgram::init_shader(GLuint &shader, Shader::Type shaderType, const char *sourceCode){
 
@@ -568,13 +562,12 @@ bool ShaderProgram::init_shader(GLuint &shader, Shader::Type shaderType, const c
 
     if(status == GL_FALSE){
         glGetShaderInfoLog(shader, 512, nullptr, m_infoLog);
-        std::cerr << "Shader compilation failed: \n" << m_infoLog << "\n";
+        Logger::error(std::format("Shader compilation failed: {} \n", m_infoLog));
         return false;
     }
 
     return true;
 }
-
 
 bool ShaderProgram::init_shader_program(std_v1<GLuint> shaders){
 

@@ -37,6 +37,7 @@ namespace tool {
 
     using namespace std::literals::string_view_literals;
     using BenchId = std::string_view;
+    using OTID = std::optional<std::thread::id>;
 
     enum class BenchUnit{
         milliseconds, microseconds, nanoseconds
@@ -50,26 +51,26 @@ namespace tool {
 
         Bench();
 
-        static void disable_display();       
+        static void disable_display();
 
-//        static void init();
-        static void reset();
-        static void check();
-        static void start(std::string_view id, bool display = false);
-        static void stop(std::string_view id = ""sv);
-        static void display(BenchUnit unit = BenchUnit::milliseconds, std::int64_t minTime = -1, bool sort = false);
+        static void clear(OTID otId = std::nullopt);
+        static void reset(OTID otId = std::nullopt);
+        static void check(OTID otId = std::nullopt);
+        static void start(BenchId id, bool display = false, OTID otId = std::nullopt);
+        static void stop(BenchId id = ""sv, OTID otId = std::nullopt);
+        static void display(BenchUnit unit = BenchUnit::milliseconds, std::int64_t minTime = -1, bool sort = false, OTID otId = std::nullopt);
+        static std::string to_string(BenchUnit unit, std::int64_t minTime, bool sort, OTID otId = std::nullopt);
 
-        static constexpr std::string_view unit_to_str(BenchUnit unit);
-        static std::string to_string(BenchUnit unit, std::int64_t minTime, bool sort);
+        static bool is_started(BenchId id, OTID otId = std::nullopt);
+        static int level(BenchId id, OTID otId = std::nullopt);
+        static size_t calls_count(BenchId id, OTID otId = std::nullopt);
 
-        static bool is_started(BenchId id);
-        static int level(BenchId id);
-        static size_t calls_count(BenchId id);
-
-        static std::int64_t compute_total_time(BenchUnit unit, BenchId id);
-        static std::vector<std::tuple<std::string_view, int64_t, size_t>> all_total_times(BenchUnit unit, std::int64_t minTime = -1, bool sort = false);
+        static std::int64_t compute_total_time(BenchUnit unit, BenchId id, OTID otId = std::nullopt);
+        static std::vector<std::tuple<BenchId, int64_t, size_t>> all_total_times(BenchUnit unit, std::int64_t minTime = -1, bool sort = false, OTID otId = std::nullopt);
 
     private:
+
+        static constexpr std::string_view unit_to_str(BenchUnit unit);
 
         struct Impl;
         std::unique_ptr<Impl> m_p = nullptr;

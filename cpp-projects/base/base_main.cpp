@@ -79,51 +79,84 @@ void kinect4_test(){
     if(!kinect.open(0)){
         return;
     }
+
     std::cout << "main thread id : " << std::this_thread::get_id() << "\n";
     std::cout << "kinect opened : " << kinect.is_opened() << "\n";
 
-
-    std::cout << "start camera\n";
     K4::Config config;
-    config.mode = K4::Mode::Cloud_640x576;
+    config.mode = K4::Mode::Only_color_1280x720;
+
+
+//    k4a_device_configuration_t config = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
+//    config.color_format    = static_cast<k4a_image_format_t>(ImageFormat::BGRA32);
+//    config.color_resolution= static_cast<k4a_color_resolution_t>(ColorResolution::R720P);
+//    config.depth_mode      = static_cast<k4a_depth_mode_t>(DepthMode::OFF);
+////    config.camera_fps      = static_cast<k4a_fps_t>(Framerate::F30);
+
+
+//    k4a_device_configuration_t config = kinect.generate_config(
+//        ImageFormat::BGRA32,
+//        ColorResolution::R720P,
+//        DepthMode::OFF,
+//        Framerate::F30
+//    );
     kinect.start_cameras(config);
 
+
     // store frames
-    std::vector<std::shared_ptr<CompressedDataFrame>> frames;
+    std::vector<std::shared_ptr<CompressedDataFrame>> compressedFrames;
     kinect.new_compressed_data_frame_signal.connect([&](std::shared_ptr<CompressedDataFrame> frame){
-        std::cout << "receive frame\n";
-        frames.emplace_back(std::move(frame));
+        std::cout << "receive compressed frame\n";
+        compressedFrames.emplace_back(frame);
     });
 
-    kinect.start_reading();
-
+    std::vector<std::shared_ptr<DisplayDataFrame>> displayFrames;
+    kinect.new_display_frame_signal.connect([&](std::shared_ptr<DisplayDataFrame> frame){
+        std::cout << "receive display frame\n";
+        displayFrames.emplace_back(frame);
+    });
 
     Parameters p;
-    p.sendCompressedDataFrame   = true;
-    p.sendDisplayCloud          = true;
+    p.sendCompressedDataFrame   = false;
+    p.sendDisplayCloud          = false;
     p.sendDisplayColorFrame     = true;
-    p.sendDisplayDepthFrame     = true;
-    p.sendDisplayInfraredFrame  = true;
-    p.filterDepthWithColor = false;
+    p.sendDisplayDepthFrame     = false;
+    p.sendDisplayInfraredFrame  = false;
+    p.filterDepthWithColor      = false;
     kinect.set_parameters(p);
 
-
-    //    std::vector<std::shared_ptr<camera::K4ColoredCloud>> clouds;
-    //    kinect.new_cloud_signal.connect([&](std::shared_ptr<camera::K4ColoredCloud> cloud){
-    //        clouds.emplace_back(std::move(cloud));
-    //    });
-
+    std::cout << "start reading\n";
+    kinect.start_reading();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1500));
     kinect.stop_reading();
     kinect.close();
 
+    size_t idFrame = 0;
+    for(const auto &frame : displayFrames){
+
+        std::string pathColor = "./display_color_" + std::to_string(idFrame) + ".png";
+        auto &cf = frame->colorFrame;
+
+        tool::graphics::Texture texColor;
+        std::cout << cf.width << " " << cf.height << " " << cf.pixels.size() << "\n";
+        texColor.copy_2d_data(
+            cf.width,
+            cf.height,
+            cf.pixels
+        );
+
+        texColor.write_2d_image_file_data(pathColor);
+
+        ++idFrame;
+    }
+
     return;
 
-    size_t idFrame = 0;
+    idFrame = 0;
     tjhandle m_jpegUncompressor = tjInitDecompress();
     tool::camera::IntegersEncoder depthCompressor;
-    for(const auto &frame : frames){
+    for(const auto &frame : compressedFrames){
 
         std::cout <<"start processing: " <<  idFrame << "\n";
 
@@ -214,9 +247,7 @@ void kinect4_test(){
     tool::Bench::display();
 }
 
-
-int main(){
-
+void bench_test(){
 
     {
         const auto t1 = "t1"sv;
@@ -267,18 +298,25 @@ int main(){
         std::cout << "Message from logger: " << messsage << "\n";
     });
 
-//    Logger::message("Test formated log message", true);
-//    Logger::message("Test log message", false);
+    //    Logger::message("Test formated log message", true);
+    //    Logger::message("Test log message", false);
 
 
-//    Logger::warning("Test log warning");
+    //    Logger::warning("Test log warning");
 
-//    kinect4_test();
+    //    kinect4_test();
 
     tool::Bench::display();
     tool::Bench::reset();
 
     tool::Bench::stop();
+}
+
+
+int main(){
+
+    kinect4_test();
+
 
     std::cout << "base-lib end\n";
     return 0;

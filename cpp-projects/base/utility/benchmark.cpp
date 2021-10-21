@@ -33,7 +33,7 @@
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
-#include <mutex>
+#include <shared_mutex>
 #include <algorithm>
 
 using namespace tool;
@@ -47,13 +47,14 @@ struct TimesInfo{
     std::vector<steady_clock::time_point> stopTime;
 };
 
-struct I{
+struct ThreadInfos{
     std::unordered_map<BenchId,TimesInfo> times = {};
     std::vector<BenchId> stack = {};
     std::vector<BenchId> order  = {};
     int currentLevel = 0;
     std::vector<std::unique_ptr<std::string>> idStrs;
     std::unordered_set<std::string_view> idStrsView;
+    // thread
     std::thread::id tId;
     std::string tIdStr;
 };
@@ -62,13 +63,44 @@ struct Bench::Impl{
 
 
     static inline std::atomic_bool displayEnabled = true;
-    static inline std::unordered_map<std::thread::id, I> tData = {};
-    static inline std::mutex lock;
+    static inline std::unordered_map<std::thread::id, ThreadInfos> tData = {};
+    static inline std::shared_mutex lock;
 
-    static void check_thread_id(std::thread::id tId){
-        if(Impl::tData.count(tId)==0){
+//    std::shared_mutex write; //use boost's or c++14
+
+//    // One write, no reads.
+//    void write_fun()
+//    {
+//        std::lock_guard<std::shared_mutex> lock(write);
+//        // DO WRITE
+//    }
+
+//    // Multiple reads, no write
+//    void read_fun()
+//    {
+//        std::shared_lock<std::shared_mutex> lock(write);
+//        // do read
+//    }
+
+    static std::thread::id check_thread_id(OTID otId){
+
+        std::thread::id tId;
+        if(!otId.has_value()){
+            tId = std::this_thread::get_id();
+        }else{
+            tId = otId.value();
+        }
+
+        // add new thread data
+        bool addId = false;
+        {
+            const std::shared_lock<std::shared_mutex> g(Impl::lock);
+            addId = Impl::tData.count(tId)==0;
+        }
+
+        if(addId){
             {
-                const std::lock_guard<std::mutex> g(Impl::lock);
+                const std::lock_guard<std::shared_mutex> g(Impl::lock);
                 Impl::tData[tId] = {};
                 Impl::tData[tId].tId = tId;
             }
@@ -77,6 +109,7 @@ struct Bench::Impl{
             Impl::tData[tId].tIdStr = ss.str();
             std::cout << std::format("[Bench::First start call from thread {}]\n", Impl::tData[tId].tIdStr);
         }
+        return tId;
     }
 
     Impl(){}
@@ -89,24 +122,28 @@ void Bench::disable_display(){
     Impl::displayEnabled = false;
 }
 
-void Bench::reset(){
-
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-
-    Impl::tData[tId].times.clear();
-    Impl::tData[tId].stack.clear();
-    Impl::tData[tId].order.clear();
-    Impl::tData[tId].currentLevel = 0;
+void Bench::clear(OTID otId){
+    auto tId = Impl::check_thread_id(otId);
+    auto &d = Impl::tData[tId];
+    d.idStrs.clear();
+    d.idStrsView.clear();
+    reset(tId);
 }
 
-void Bench::check(){
+void Bench::reset(OTID otId){
 
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
+    d.times.clear();
+    d.stack.clear();
+    d.order.clear();
+    d.currentLevel = 0;
+}
 
-    for(auto &id : Impl::tData[tId].order){
-        const auto &t = Impl::tData[tId].times[id];
+void Bench::check(OTID otId){
+
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
+    for(auto &id : d.order){
+        const auto &t = d.times[id];
         if(t.startTime.size() != t.stopTime.size()){
             std::cerr << std::format("Bench::Error: Id [{}] has not been stopped, (started:{}, stopped:{}).\n",
                 id, t.startTime.size(), t.stopTime.size()
@@ -115,13 +152,9 @@ void Bench::check(){
     }
 }
 
-void Bench::start(std::string_view id, bool display){
+void Bench::start(BenchId id, bool display, OTID otId){
 
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-    auto &d = Impl::tData[tId];
-
-
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
     if(id.size() == 0 && Impl::displayEnabled){
         std::cerr << std::format("Bench::Error: empty id\n");
         return;
@@ -161,12 +194,9 @@ void Bench::start(std::string_view id, bool display){
     ++d.currentLevel;
 }
 
-void Bench::stop(std::string_view id){
+void Bench::stop(BenchId id, OTID otId){
 
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-    auto &d = Impl::tData[tId];
-
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
     if(d.stack.size() == 0){
         return;
     }
@@ -204,9 +234,9 @@ void Bench::stop(std::string_view id){
     }
 }
 
-void Bench::display(BenchUnit unit, int64_t minTime, bool sort){
+void Bench::display(BenchUnit unit, int64_t minTime, bool sort, OTID otId){
     if(Impl::displayEnabled){
-        std::cout << to_string(unit, minTime, sort);
+        std::cout << to_string(unit, minTime, sort, otId);
     }
 }
 
@@ -221,12 +251,10 @@ constexpr std::string_view Bench::unit_to_str(BenchUnit unit){
     }
 }
 
-std::int64_t Bench::compute_total_time(BenchUnit unit, std::string_view id){
+std::int64_t Bench::compute_total_time(BenchUnit unit, BenchId id, OTID otId){
 
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-
-    const auto &t = Impl::tData[tId].times[id];
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
+    const auto &t = d.times[id];
 
     std::int64_t total = 0;
     for(size_t ii = 0; ii < std::min(t.startTime.size(),t.stopTime.size()); ++ii){
@@ -250,22 +278,21 @@ std::int64_t Bench::compute_total_time(BenchUnit unit, std::string_view id){
     return time;
 }
 
-std::vector<std::tuple<std::string_view, int64_t, size_t>> Bench::all_total_times(BenchUnit unit, std::int64_t minTime, bool sort){
+std::vector<std::tuple<BenchId, int64_t, size_t>> Bench::all_total_times(BenchUnit unit, std::int64_t minTime, bool sort, OTID otId){
 
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
 
-    std::vector<std::tuple<std::string_view, int64_t, size_t>> times;
-    times.reserve(Impl::tData[tId].order.size());
-    for(auto &id : Impl::tData[tId].order){
+    std::vector<std::tuple<BenchId, int64_t, size_t>> times;
+    times.reserve(d.order.size());
+    for(auto &id : d.order){
         std::int64_t time = compute_total_time(unit, id);        
         if(time > minTime){
-            times.emplace_back(id, time, Impl::tData[tId].times[id].callsCount);
+            times.emplace_back(id, time, d.times[id].callsCount);
         }
     }
 
     // sort by time
-    auto sortInfo = [](const std::tuple<std::string_view, int64_t, size_t> &lhs, const std::tuple<std::string_view, int64_t, size_t> &rhs){
+    auto sortInfo = [](const std::tuple<BenchId, int64_t, size_t> &lhs, const std::tuple<BenchId, int64_t, size_t> &rhs){
         return std::get<1>(lhs) < std::get<1>(rhs);
     };
     if(sort){
@@ -275,10 +302,9 @@ std::vector<std::tuple<std::string_view, int64_t, size_t>> Bench::all_total_time
     return times;
 }
 
-std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
+std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort, OTID otId){
 
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
+    auto &d = Impl::tData[Impl::check_thread_id(otId)];
 
     auto totalTimes = all_total_times(unit, minTime, sort);
     std::ostringstream flux;
@@ -286,7 +312,7 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
         flux << "\n[BENCH START] ############### \n";
         for(const auto &totalTime : totalTimes){
             auto id = std::get<0>(totalTime);
-            const auto &timeI = Impl::tData[tId].times[id];
+            const auto &timeI = d.times[id];
             flux << std::format("[ID:{}][L:{}][T:{} {}][C:{}][U:{} {}]\n",
                 id,
                 timeI.level,
@@ -302,27 +328,15 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort){
     return flux.str();
 }
 
-bool Bench::is_started(BenchId id){
-
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-
-    return Impl::tData[tId].times[id].started;
+bool Bench::is_started(BenchId id, OTID otId){
+    return Impl::tData[Impl::check_thread_id(otId)].times[id].started;
 }
 
-int Bench::level(BenchId id){
-
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-
-    return Impl::tData[tId].times[id].level;
+int Bench::level(BenchId id, OTID otId){
+    return Impl::tData[Impl::check_thread_id(otId)].times[id].level;
 }
 
-size_t Bench::calls_count(BenchId id){
-
-    auto tId = std::this_thread::get_id();
-    Impl::check_thread_id(tId);
-
-    return Impl::tData[tId].times[id].callsCount;
+size_t Bench::calls_count(BenchId id, OTID otId){
+    return Impl::tData[Impl::check_thread_id(otId)].times[id].callsCount;
 }
 

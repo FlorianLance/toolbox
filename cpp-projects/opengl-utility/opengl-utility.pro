@@ -73,6 +73,8 @@ INCLUDEPATH += \
     $$ASSIMP_INCLUDES\
     # glm
     $$GLM_INCLUDES\
+    # signals
+    $$SIGNALS_INCLUDES \
 
 
 ####################################### LIBRAIRIES

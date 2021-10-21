@@ -99,6 +99,8 @@ void BaseSfmlGlWindow::start(){
     bool running = true;
     while(running){
 
+        Bench::start("main_loop");
+
         currentFrame = std::chrono::high_resolution_clock::now();
 
         sf::Event event;
@@ -167,6 +169,9 @@ void BaseSfmlGlWindow::start(){
         if((timePerFrame-frameDuration).count() > 0){
             std::this_thread::sleep_for(timePerFrame-frameDuration);
         }
+
+        Bench::stop();
+        Bench::display();
     }
 
     ImGui::SFML::Shutdown();

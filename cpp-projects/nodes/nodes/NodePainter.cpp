@@ -38,14 +38,13 @@ void NodePainter::paint(QPainter* painter, Node & node, FlowScene const& scene){
 
     //--------------------------------------------
     NodeDataModel const * model = node.nodeDataModel();
+
     tool::Bench::start("NodePainter::paint2");
-
     drawNodeRect(painter, geom, model, graphicsObject);
-
-
     drawConnectionPoints(painter, geom, state, model, scene);
     drawFilledConnectionPoints(painter, geom, state, model);
     tool::Bench::stop();
+
     tool::Bench::start("NodePainter::paint3");
     drawModelName(painter, geom, state, model);
     drawEntryLabels(painter, geom, state, model);
@@ -73,7 +72,7 @@ void NodePainter::drawNodeRect(QPainter* painter,NodeGeometry const& geom, NodeD
 
     NodeStyle const& nodeStyle = model->nodeStyle();
 
-    auto color = graphicsObject.isSelected() ? nodeStyle.SelectedBoundaryColor : nodeStyle.NormalBoundaryColor;
+    const auto &color = graphicsObject.isSelected() ? nodeStyle.SelectedBoundaryColor : nodeStyle.NormalBoundaryColor;
     if (geom.hovered()){
         QPen p(color, nodeStyle.HoveredPenWidth);
         painter->setPen(p);

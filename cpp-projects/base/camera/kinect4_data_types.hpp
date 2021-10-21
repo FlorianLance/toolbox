@@ -115,27 +115,28 @@ namespace tool::camera::K4{
     using CR  = ColorResolution;
     using DM  = DepthMode;
     using FPS = Framerate;
+    using CloudEnabled = bool;
 
     using TMode = std::tuple<
-        Mode,                             ImageFormat,   ColorResolution,   DepthMode,          Framerate>;
+        Mode,                             ImageFormat,   ColorResolution,   DepthMode,          Framerate, CloudEnabled>;
     static constexpr TupleArray<Mode::SizeEnum, TMode> modes = {{
         // cloud
-        TMode{Mode::Cloud_320x288,        IF::YUY2,      CR::R720P,         DM::NFOV_2X2BINNED, FPS::F30},
-        TMode{Mode::Cloud_640x576,        IF::YUY2,      CR::R720P,         DM::NFOV_UNBINNED,  FPS::F30},
-        TMode{Mode::Cloud_512x512,        IF::YUY2,      CR::R720P,         DM::WFOV_2X2BINNED, FPS::F30},
-        TMode{Mode::Cloud_1024x1024,      IF::YUY2,      CR::R720P,         DM::WFOV_UNBINNED,  FPS::F15},
+        TMode{Mode::Cloud_320x288,        IF::YUY2,      CR::R720P,         DM::NFOV_2X2BINNED, FPS::F30, true},
+        TMode{Mode::Cloud_640x576,        IF::YUY2,      CR::R720P,         DM::NFOV_UNBINNED,  FPS::F30, true},
+        TMode{Mode::Cloud_512x512,        IF::YUY2,      CR::R720P,         DM::WFOV_2X2BINNED, FPS::F30, true},
+        TMode{Mode::Cloud_1024x1024,      IF::YUY2,      CR::R720P,         DM::WFOV_UNBINNED,  FPS::F15, true},
         // frame
-        TMode{Mode::Full_frame_320x288,   IF::YUY2,      CR::R720P,         DM::NFOV_2X2BINNED, FPS::F30},
-        TMode{Mode::Full_frame_640x576,   IF::YUY2,      CR::R720P,         DM::NFOV_UNBINNED,  FPS::F30},
-        TMode{Mode::Full_frame_512x512,   IF::YUY2,      CR::R720P,         DM::WFOV_2X2BINNED, FPS::F30},
-        TMode{Mode::Full_frame_1024x1024, IF::YUY2,      CR::R720P,         DM::WFOV_UNBINNED,  FPS::F15},
+        TMode{Mode::Full_frame_320x288,   IF::YUY2,      CR::R720P,         DM::NFOV_2X2BINNED, FPS::F30, true},
+        TMode{Mode::Full_frame_640x576,   IF::YUY2,      CR::R720P,         DM::NFOV_UNBINNED,  FPS::F30, true},
+        TMode{Mode::Full_frame_512x512,   IF::YUY2,      CR::R720P,         DM::WFOV_2X2BINNED, FPS::F30, true},
+        TMode{Mode::Full_frame_1024x1024, IF::YUY2,      CR::R720P,         DM::WFOV_UNBINNED,  FPS::F15, true},
         // only color
-        TMode{Mode::Only_color_1280x720,  IF::BGRA32,    CR::R720P,         DM::OFF,            FPS::F30},
-        TMode{Mode::Only_color_1920x1080, IF::BGRA32,    CR::R1080P,        DM::OFF,            FPS::F30},
-        TMode{Mode::Only_color_2560x1440, IF::BGRA32,    CR::R1440P,        DM::OFF,            FPS::F30},
-        TMode{Mode::Only_color_2048x1536, IF::BGRA32,    CR::R1536P,        DM::OFF,            FPS::F30},
-        TMode{Mode::Only_color_3840x2160, IF::BGRA32,    CR::R2160P,        DM::OFF,            FPS::F30},
-        TMode{Mode::Only_color_4096x3072, IF::BGRA32,    CR::R3072P,        DM::OFF,            FPS::F15},
+        TMode{Mode::Only_color_1280x720,  IF::BGRA32,    CR::R720P,         DM::OFF,            FPS::F30, false},
+        TMode{Mode::Only_color_1920x1080, IF::BGRA32,    CR::R1080P,        DM::OFF,            FPS::F30, false},
+        TMode{Mode::Only_color_2560x1440, IF::BGRA32,    CR::R1440P,        DM::OFF,            FPS::F30, false},
+        TMode{Mode::Only_color_2048x1536, IF::BGRA32,    CR::R1536P,        DM::OFF,            FPS::F30, false},
+        TMode{Mode::Only_color_3840x2160, IF::BGRA32,    CR::R2160P,        DM::OFF,            FPS::F30, false},
+        TMode{Mode::Only_color_4096x3072, IF::BGRA32,    CR::R3072P,        DM::OFF,            FPS::F15, false},
     }};
 
 
@@ -206,17 +207,9 @@ namespace tool::camera::K4{
         bool sendDisplayCloud           = false;
     };
 
-    struct PixelsFrame{
-        size_t width;
-        size_t height;
-        std::vector<geo::Pt3f> pixels;
-    };
 
-    struct ColoredCloud{
-        size_t validVerticesCount = 0;
-        std::vector<geo::Pt3f> vertices;
-        std::vector<geo::Pt3f> colors;
-    };
+
+
 
     struct CompressedDataFrame{
         size_t colorWidth;
@@ -227,12 +220,24 @@ namespace tool::camera::K4{
         std::vector<std::uint32_t> compressedDepthBuffer;
     };
 
-    struct DisplayData{
+    struct PixelsFrame{
+        size_t width;
+        size_t height;
+        std::vector<geo::Pt3f> pixels;
+    };
+
+    struct ColoredCloudFrame{
+        size_t validVerticesCount = 0;
+        std::vector<geo::Pt3f> vertices;
+        std::vector<geo::Pt3f> colors;
+    };
+
+    struct DisplayDataFrame{
         std::mutex lock;
         PixelsFrame colorFrame;
         PixelsFrame depthFrame;
         PixelsFrame infraredFrame;
-        ColoredCloud cloud;
+        ColoredCloudFrame cloud;
     };
 
     struct FrameReadingTimings{

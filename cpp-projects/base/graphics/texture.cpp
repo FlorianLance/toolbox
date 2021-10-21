@@ -48,7 +48,7 @@ void Texture::copy_2d_data(int width, int height, int nbChannels, unsigned char 
     m_sizes = {width, height, 1};
     m_nbChannels = nbChannels;
     m_hdr = false;
-    std::copy(data, data + width*height*nbChannels, std::begin(m_data));
+    std::copy(data, data + width*height*m_nbChannels, std::begin(m_data));
 }
 
 void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<unsigned char> &data){
@@ -71,9 +71,25 @@ void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<f
     m_nbChannels = nbChannels;
     m_hdr = true;
 
-    m_data.resize(static_cast<size_t>(width*height*nbChannels)*4);
+    m_data.resize(static_cast<size_t>(width*height*m_nbChannels)*4);
     std::copy(std::begin(data), std::end(data), reinterpret_cast<float*>(m_data.data()));
 }
+
+void Texture::copy_2d_data(int width, int height, const std_v1<geo::Pt3<float>> &data){
+
+    if(data.size() != static_cast<size_t>(width*height)){
+        std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";
+        return;
+    }
+
+    m_sizes = {width, height, 1};
+    m_nbChannels = 3;
+    m_hdr = true;
+
+    m_data.resize(static_cast<size_t>(width*height*m_nbChannels)*4);
+    std::copy(std::begin(data), std::end(data), reinterpret_cast<geo::Pt3<float>*>(m_data.data()));
+}
+
 
 bool Texture::load_2d_image_file_data(const std::string &pathTexture, bool flip, int targetNbChannels){
 

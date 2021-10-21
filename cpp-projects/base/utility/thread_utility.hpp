@@ -26,75 +26,20 @@
 
 #pragma once
 
+#include <atomic>
 
-// signals
-#include "lsignal.h"
+namespace tool {
 
-// kinect4
-#include <k4a/k4atypes.h>
-
-// local
-#include "kinect4_data_types.hpp"
-
-namespace tool::camera {
-
-class Kinect4 {
-
+/*
+* An std::atomic_flag-based spin-lock.
+* Meets the Lockable concept.
+* Therefore, usable with std::lock_guard.
+*/
+class SpinLock{
+    std::atomic_flag m_flag = ATOMIC_FLAG_INIT;
 public:
-
-    static k4a_device_configuration_t generate_config(const K4::Config &config);
-
-    static k4a_device_configuration_t generate_config(
-        K4::ImageFormat colFormat,
-        K4::ColorResolution colResolution,
-        K4::DepthMode depthMode = K4::DepthMode::NFOV_UNBINNED,
-        K4::Framerate fps = K4::Framerate::F30,
-        bool synchronizeColorAndDepth = true,
-        int delayBetweenColorAndDepthUsec = 0,
-        K4::SynchronisationMode synchMode = K4::SynchronisationMode::Standalone,
-        int subordinateDelayUsec = 0,
-        bool disableLED = false);
-
-    Kinect4();
-    ~Kinect4();
-
-    // devices
-    bool open(uint32_t deviceId);
-    void close();
-
-    // getters
-    bool is_opened() const;
-    bool is_reading_frames()const;
-
-    // cameras
-    bool start_cameras(const K4::Config &config);
-    bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
-    void stop_cameras();
-
-    // reading
-    void start_reading();
-    void stop_reading();
-
-    // settings
-    void set_parameters(const K4::Parameters &parameters);
-
-// signals
-    lsignal::signal<void(std::shared_ptr<K4::DisplayDataFrame> cloud)> new_display_frame_signal;
-
-    lsignal::signal<void(std::shared_ptr<K4::CompressedDataFrame> frame)> new_compressed_data_frame_signal;
-    lsignal::signal<void(K4::FrameReadingTimings times)> new_times_signal;
-
-private:
-
-    void read_frames();
-    void read_frames2();
-    void filter_depth_image(const K4::Parameters &p);
-    void process_display_data();
-
-private:
-
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+    inline void lock()     noexcept {   while(m_flag.test_and_set(std::memory_order_acquire)); }
+    inline void unlock()   noexcept {         m_flag.clear(std::memory_order_release);         }
+    inline bool try_lock() noexcept { return !m_flag.test_and_set(std::memory_order_acquire);  }
 };
 }
-

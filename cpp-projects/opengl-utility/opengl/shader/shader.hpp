@@ -150,6 +150,11 @@ private:
     GLuint m_id = 0;
     char m_infoLog[512];
     std_v1<std::string> m_loadedShadersFileNames;
+
+    static constexpr const char* MVM = "ModelViewMatrix";
+    static constexpr const char* MM  = "ModelMatrix";
+    static constexpr const char* NM  = "NormalMatrix";
+    static constexpr const char* MVP = "MVP";
 };
 
 }

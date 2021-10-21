@@ -135,7 +135,14 @@ void NodeGraphicsObject::lock(bool locked){
 void NodeGraphicsObject::paint(QPainter * painter,QStyleOptionGraphicsItem const* option,QWidget* ){
 
     tool::Bench::start("NodeGraphicsObject::paint");
-    painter->setClipRect(option->exposedRect);    
+    painter->setClipRect(option->exposedRect);
+
+//    auto font = painter->font();
+//    QFontMetrics fontMetrics(font);
+//    QFont boldFont = font;
+//    boldFont.setBold(true);
+//    QFontMetrics boldFontMetrics(boldFont);
+
     NodePainter::paint(painter, _node, _scene);
     tool::Bench::stop();
 }

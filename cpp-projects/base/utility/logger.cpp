@@ -136,7 +136,7 @@ void Logger::no_file_init(bool doFormat){
 void Logger::message(std::string_view message, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::logger == nullptr){
-        std::cerr << "Logger not initialized.\n";
+        std::cout << message;
         return;
     }
 
@@ -153,7 +153,7 @@ void Logger::message(std::string_view message, bool htmlFormat, bool triggersSig
 void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::logger == nullptr){
-        std::cerr << "Logger not initialized.\n";
+        std::cerr << error;
         return;
     }
 
@@ -170,7 +170,7 @@ void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal,
 void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::logger == nullptr){
-        std::cerr << "Logger not initialized.\n";
+        std::cerr << warning;
         return;
     }
 
