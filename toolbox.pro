@@ -31,11 +31,11 @@ TEMPLATE = subdirs
 
 SUBDIRS = \
 	cpp-projects/base\
-        cpp-projects/opengl-utility\
-        cpp-projects/3d-engine\
-        cpp-projects/qt-utility\
-        cpp-projects/nodes\
-        cpp-projects/tool-test\
-        cpp-projects/demos\
+#        cpp-projects/opengl-utility\
+#        cpp-projects/3d-engine\
+#        cpp-projects/qt-utility\
+#        cpp-projects/nodes\
+#        cpp-projects/tool-test\
+#        cpp-projects/demos\
 
 CONFIG += ordered

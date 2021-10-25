@@ -266,6 +266,7 @@ void Kinect4::start_reading(){
 
     if(i->frameReaderT == nullptr){
 //        i->frameReaderT = std::make_unique<std::thread>(&Kinect4::read_frames, this);
+        Logger::message("start reading frames\n");
         i->frameReaderT = std::make_unique<std::thread>(&Kinect4::read_frames2, this);
     }else{
         Logger::error("Reading thread already started.\n");
@@ -557,27 +558,15 @@ void Kinect4::read_frames(){
 
 void Kinect4::read_frames2(){
 
+    const int32_t timeoutMs = 1000;
+
     if(!is_opened() || i->readFramesFromCameras){
         Logger::error("[Kinect4] Cannot start reading frames.\n");
         return;
     }
 
-    i->readFramesFromCameras = true;
-
-    const int32_t timeoutMs = 1000;
-
     // init compressor
     tjhandle m_jpegCompressor = tjInitCompress();
-
-    const auto colorDims    = k4a::GetColorDimensions(i->k4aConfig.color_resolution);
-    const size_t colorWidth  = std::get<0>(colorDims);
-    const size_t colorHeight = std::get<1>(colorDims);
-    const size_t colorSize   = colorWidth*colorHeight;
-
-    const auto depthDims     = k4a::GetDepthDimensions(i->k4aConfig.depth_mode);
-    const size_t depthWidth  = std::get<0>(depthDims);
-    const size_t depthHeight = std::get<1>(depthDims);
-    const size_t depthSize   = depthWidth*depthHeight;
 
     // init capture
     k4a::capture capture;
@@ -585,62 +574,55 @@ void Kinect4::read_frames2(){
     // init transform
     i->transformation = k4a::transformation(i->calibration);
 
+    // retrieve colors dimensions
+    const auto colorDims    = k4a::GetColorDimensions(i->k4aConfig.color_resolution);
+    const size_t colorWidth  = std::get<0>(colorDims);
+    const size_t colorHeight = std::get<1>(colorDims);
+    const size_t colorSize   = colorWidth*colorHeight;
+
     // indices
     i->indicesColors1D.resize(colorSize);
     std::iota(std::begin(i->indicesColors1D), std::end(i->indicesColors1D), 0);
 
-    // init bgra image
+    // init images
+    // # capture
+    k4a::image capturedColorImage;
+    std::optional<k4a::image> capturedDepthImage    = std::nullopt;
+    std::optional<k4a::image> capturedInfraredImage = std::nullopt;
+    // # processing
+    std::optional<k4a::image> depthSizedColorImage = std::nullopt;
     k4a::image bgraColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
         colorWidth,
         colorHeight,
         static_cast<int32_t>(colorWidth * 4 * sizeof(uint8_t))
     );
 
-    k4a::image resizedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
-        depthWidth,
-        depthHeight,
-        static_cast<int32_t>(depthWidth * 4 * sizeof(uint8_t))
-    );
 
+    if(i->k4aConfig.depth_mode != K4A_DEPTH_MODE_OFF){
+
+        // retrieve depth dimensions
+        const auto depthDims     = k4a::GetDepthDimensions(i->k4aConfig.depth_mode);
+        const size_t depthWidth  = std::get<0>(depthDims);
+        const size_t depthHeight = std::get<1>(depthDims);
+        // const size_t depthSize   = depthWidth*depthHeight;
+
+        // init resized color image
+        depthSizedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
+            depthWidth,
+            depthHeight,
+            static_cast<int32_t>(depthWidth * 4 * sizeof(uint8_t))
+        );
+    }
 
     // init frames
     auto f1 = std::make_shared<DisplayDataFrame>();
     auto f2 = std::make_shared<DisplayDataFrame>();
-//    f1->depthFrame = PixelsFrame{
-//        colorWidth, colorHeight, std::vector<geo::Pt3f>(colorSize, geo::Pt3f{})
-//    };
-//    f1->colorFrame = PixelsFrame{
-//        colorWidth, colorHeight, std::vector<geo::Pt3f>(colorSize, geo::Pt3f{})
-//    };
-//    f1->infraredFrame = PixelsFrame{
-//        colorWidth, colorHeight, std::vector<geo::Pt3f>(colorSize, geo::Pt3f{})
-//    };
-//    f1->cloud = ColoredCloud{
-//        0,
-//        std::vector<geo::Pt3f>(colorSize, geo::Pt3f{}),
-//        std::vector<geo::Pt3f>(colorSize, geo::Pt3f{}),
-//    };
 
 
-//    f2->depthFrame = PixelsFrame{
-//        colorWidth, colorHeight, std::vector<geo::Pt3f>(colorSize, geo::Pt3f{})
-//    };
-//    f2->colorFrame = PixelsFrame{
-//        colorWidth, colorHeight, std::vector<geo::Pt3f>(colorSize, geo::Pt3f{})
-//    };
-//    f2->infraredFrame = PixelsFrame{
-//        colorWidth, colorHeight, std::vector<geo::Pt3f>(colorSize, geo::Pt3f{})
-//    };
-//    f2->cloud = ColoredCloud{
-//        0,
-//        std::vector<geo::Pt3f>(colorSize, geo::Pt3f{}),
-//        std::vector<geo::Pt3f>(colorSize, geo::Pt3f{}),
-//    };
-
-
+    i->readFramesFromCameras = true;
     while(i->readFramesFromCameras){
 
-        Logger::message("read frame");
+        Logger::message("read frame\n");
 
         i->parametersM.lock();
         const auto p = i->parameters;
@@ -662,14 +644,40 @@ void Kinect4::read_frames2(){
         i->times.afterCaptureTS = nanoseconds_since_epoch();
 
         // get a color image
-        i->colorImage = capture.get_color_image();
+        capturedColorImage = capture.get_color_image();
         if (!i->colorImage.is_valid()){
             Logger::error("Failed to get color image from capture\n");
             continue;
         }
         i->times.getColorTS = i->colorImage.get_system_timestamp();
 
-        // convert color image and applt yuy2 filtering
+        // get a depth image
+        if(depth_mode(i->config.mode) != DepthMode::OFF){
+
+            capturedDepthImage = capture.get_depth_image();
+            if (!capturedDepthImage->is_valid()){
+                Logger::error("Failed to get depth image from capture\n");
+                tool::Bench::stop();
+                continue;
+            }
+            i->times.getDepthTS = i->depthImage.get_system_timestamp();
+
+            // resize color image to fit depth
+            i->transformation.color_image_to_depth_camera(capturedDepthImage.value(), capturedColorImage, &depthSizedColorImage.value());
+
+
+            // apply color filtering to depth
+            // ...
+
+            // apply depth filtering
+            // ...
+
+        }else{
+            depthSizedColorImage = i->colorImage;
+        }
+
+
+        // convert color image and apply yuy2 filtering
         if(image_format(i->config.mode) == ImageFormat::YUY2){
 
             Logger::message("convert yuy2\n");
@@ -738,38 +746,17 @@ void Kinect4::read_frames2(){
         }
 
         Logger::message(std::format("F {} {} ", bgraColorImage.get_width_pixels(),    bgraColorImage.get_height_pixels()));
-        Logger::message(std::format("R {} {} ", resizedColorImage.get_width_pixels(), resizedColorImage.get_height_pixels()));
-
-        if(depth_mode(i->config.mode) != DepthMode::OFF){
-            // get a depth image
-            i->depthImage = capture.get_depth_image();
-            if (!i->depthImage.is_valid()){
-                Logger::error("Failed to get depth image from capture\n");
-                tool::Bench::stop();
-                continue;
-            }
-            i->times.getDepthTS = i->depthImage.get_system_timestamp();
-
-            // resize color image to fit depth
-            i->transformation.color_image_to_depth_camera(i->depthImage, bgraColorImage, &resizedColorImage);
-
-
-            // apply color filtering to depth
-            // ...
-
-            // apply depth filtering
-            // ...
-
-        }else{
-            resizedColorImage = i->colorImage;
+        if(depthSizedColorImage.has_value()){
+            Logger::message(std::format("R {} {} ", depthSizedColorImage->get_width_pixels(), depthSizedColorImage->get_height_pixels()));
         }
+
+
 
 
 //        i->transformation.depth_image_to_color_camera(i->depthImage, &i->resizedDepthImage);
 
 //        i->transformation.depth_image_to_point_cloud(i->depthImage, K4A_CALIBRATION_TYPE_COLOR, &i->pointCloudImage);
 
-        Logger::message("write_display_data_frame\n");
         i->write_display_data_frame(p,
             bgraColorImage, i->depthImage, i->pointCloudImage,
             f1
@@ -777,6 +764,10 @@ void Kinect4::read_frames2(){
 
         new_display_frame_signal(f1);
         std::swap(f1, f2);
+
+
+
+
 
 //        if(i->config.mode == Mode::Cloud_640x576 ||){
 

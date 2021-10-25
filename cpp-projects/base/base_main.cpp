@@ -84,7 +84,12 @@ void kinect4_test(){
     std::cout << "kinect opened : " << kinect.is_opened() << "\n";
 
     K4::Config config;
-    config.mode = K4::Mode::Only_color_1280x720;
+//    config.mode = K4::Mode::Only_color_1280x720; // works
+//    config.mode = K4::Mode::Only_color_1920x1080; // works
+//    config.mode = K4::Mode::Only_color_2048x1536; // works
+    config.mode = K4::Mode::Only_color_2560x1440;
+    config.synchronizeColorAndDepth = true;
+    config.delayBetweenColorAndDepthUsec = 0;
 
 
 //    k4a_device_configuration_t config = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
@@ -128,10 +133,16 @@ void kinect4_test(){
     std::cout << "start reading\n";
     kinect.start_reading();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    std::cout << "sleep\n";
+    std::this_thread::sleep_for(std::chrono::milliseconds(7000));
+
+    std::cout << "stop reading\n";
     kinect.stop_reading();
+
+    std::cout << "close\n";
     kinect.close();
 
+    std::cout << "save frames\n";
     size_t idFrame = 0;
     for(const auto &frame : displayFrames){
 
@@ -151,6 +162,7 @@ void kinect4_test(){
         ++idFrame;
     }
 
+    std::cout << "end\n";
     return;
 
     idFrame = 0;
