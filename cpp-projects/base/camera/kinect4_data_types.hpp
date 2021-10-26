@@ -111,34 +111,37 @@ namespace tool::camera::K4{
         SizeEnum
     };
 
+    using M   = Mode;
     using IF  = ImageFormat;
     using CR  = ColorResolution;
     using DM  = DepthMode;
     using FPS = Framerate;
-    using CloudEnabled = bool;
+    using CE = bool;
+    using ME = bool;
+    using IE = bool;
 
     using TMode = std::tuple<
-        Mode,                             ImageFormat,   ColorResolution,   DepthMode,          Framerate, CloudEnabled>;
+        Mode,                     IF,         CR,         DM,                 FPS,      CE,    ME,    IE>;
     static constexpr TupleArray<Mode::SizeEnum, TMode> modes = {{
         // cloud
-        TMode{Mode::Cloud_320x288,        IF::YUY2,      CR::R720P,         DM::NFOV_2X2BINNED, FPS::F30, true},
-        TMode{Mode::Cloud_640x576,        IF::YUY2,      CR::R720P,         DM::NFOV_UNBINNED,  FPS::F30, true},
-        TMode{Mode::Cloud_512x512,        IF::YUY2,      CR::R720P,         DM::WFOV_2X2BINNED, FPS::F30, true},
-        TMode{Mode::Cloud_1024x1024,      IF::YUY2,      CR::R720P,         DM::WFOV_UNBINNED,  FPS::F15, true},
+        TMode
+        {M::Cloud_320x288,        IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, true,  false, false},
+        {M::Cloud_640x576,        IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, true,  false, false},
+        {M::Cloud_512x512,        IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, true,  false, false},
+        {M::Cloud_1024x1024,      IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, true,  false, false},
         // frame
-        TMode{Mode::Full_frame_320x288,   IF::YUY2,      CR::R720P,         DM::NFOV_2X2BINNED, FPS::F30, true},
-        TMode{Mode::Full_frame_640x576,   IF::YUY2,      CR::R720P,         DM::NFOV_UNBINNED,  FPS::F30, true},
-        TMode{Mode::Full_frame_512x512,   IF::YUY2,      CR::R720P,         DM::WFOV_2X2BINNED, FPS::F30, true},
-        TMode{Mode::Full_frame_1024x1024, IF::YUY2,      CR::R720P,         DM::WFOV_UNBINNED,  FPS::F15, true},
+        {M::Full_frame_320x288,   IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, false, false, true},
+        {M::Full_frame_640x576,   IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, false, false, true},
+        {M::Full_frame_512x512,   IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, false, false, true},
+        {M::Full_frame_1024x1024, IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, false, false, true},
         // only color
-        TMode{Mode::Only_color_1280x720,  IF::BGRA32,    CR::R720P,         DM::OFF,            FPS::F30, false},
-        TMode{Mode::Only_color_1920x1080, IF::BGRA32,    CR::R1080P,        DM::OFF,            FPS::F30, false},
-        TMode{Mode::Only_color_2560x1440, IF::BGRA32,    CR::R1440P,        DM::OFF,            FPS::F30, false},
-        TMode{Mode::Only_color_2048x1536, IF::BGRA32,    CR::R1536P,        DM::OFF,            FPS::F30, false},
-        TMode{Mode::Only_color_3840x2160, IF::BGRA32,    CR::R2160P,        DM::OFF,            FPS::F30, false},
-        TMode{Mode::Only_color_4096x3072, IF::BGRA32,    CR::R3072P,        DM::OFF,            FPS::F15, false},
+        {M::Only_color_1280x720,  IF::YUY2,   CR::R720P,  DM::OFF,            FPS::F30, false, false, false},
+        {M::Only_color_1920x1080, IF::BGRA32, CR::R1080P, DM::OFF,            FPS::F30, false, false, false},
+        {M::Only_color_2560x1440, IF::BGRA32, CR::R1440P, DM::OFF,            FPS::F30, false, false, false},
+        {M::Only_color_2048x1536, IF::BGRA32, CR::R1536P, DM::OFF,            FPS::F30, false, false, false},
+        {M::Only_color_3840x2160, IF::BGRA32, CR::R2160P, DM::OFF,            FPS::F30, false, false, false},
+        {M::Only_color_4096x3072, IF::BGRA32, CR::R3072P, DM::OFF,            FPS::F15, false, false, false},
     }};
-
 
     [[maybe_unused]] static constexpr ImageFormat image_format(Mode m) {
         return modes.at<0,1>(m);
@@ -151,6 +154,15 @@ namespace tool::camera::K4{
     }
     [[maybe_unused]] static constexpr Framerate framerate(Mode m) {
         return modes.at<0,4>(m);
+    }
+    [[maybe_unused]] static constexpr bool has_cloud(Mode m) {
+        return modes.at<0,5>(m);
+    }
+    [[maybe_unused]] static constexpr bool has_mesh(Mode m) {
+        return modes.at<0,6>(m);
+    }
+    [[maybe_unused]] static constexpr bool has_infrared(Mode m) {
+        return modes.at<0,7>(m);
     }
 
     struct Config{
@@ -207,10 +219,7 @@ namespace tool::camera::K4{
         bool sendDisplayCloud           = false;
     };
 
-
-
-
-
+    // compressed data (to be sended throught network)
     struct CompressedDataFrame{
         size_t colorWidth;
         size_t colorHeight;
@@ -218,20 +227,26 @@ namespace tool::camera::K4{
         size_t depthWidth;
         size_t depthHeight;
         std::vector<std::uint32_t> compressedDepthBuffer;
+        size_t infraWidth;
+        size_t infraHeight;
+        std::vector<std::uint32_t> compressedInfraBuffer;
     };
 
+    // image display data (color,depth,infrared)
     struct PixelsFrame{
         size_t width;
         size_t height;
         std::vector<geo::Pt3f> pixels;
     };
 
+    // colored cloud diplay data
     struct ColoredCloudFrame{
         size_t validVerticesCount = 0;
         std::vector<geo::Pt3f> vertices;
         std::vector<geo::Pt3f> colors;
     };
 
+    // display data frame (to be displayed in a client)
     struct DisplayDataFrame{
         std::mutex lock;
         PixelsFrame colorFrame;
@@ -239,6 +254,7 @@ namespace tool::camera::K4{
         PixelsFrame infraredFrame;
         ColoredCloudFrame cloud;
     };
+
 
     struct FrameReadingTimings{
         std::chrono::nanoseconds startFrameReadingTS;
@@ -256,12 +272,6 @@ namespace tool::camera::K4{
         std::chrono::nanoseconds endFrameReadingTS;
     };
 
-
-
-    struct color_point_t{
-        int16_t xyz[3];
-        uint8_t rgb[3];
-    };
 }
 
 

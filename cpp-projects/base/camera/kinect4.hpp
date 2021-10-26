@@ -80,16 +80,9 @@ public:
 
 // signals
     lsignal::signal<void(std::shared_ptr<K4::DisplayDataFrame> cloud)> new_display_frame_signal;
-
     lsignal::signal<void(std::shared_ptr<K4::CompressedDataFrame> frame)> new_compressed_data_frame_signal;
     lsignal::signal<void(K4::FrameReadingTimings times)> new_times_signal;
 
-private:
-
-    void read_frames();
-    void read_frames2();
-    void filter_depth_image(const K4::Parameters &p);
-    void process_display_data();
 
 private:
 

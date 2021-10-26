@@ -26,6 +26,7 @@
 // std
 #include <iostream>
 #include <filesystem>
+#include <ostream>
 
 // kinect4
 #include <k4a/k4a.hpp>
@@ -74,132 +75,137 @@ void kinect4_test(){
     using namespace camera;
     using namespace camera::K4;
 
-    std::cout << "open kinect\n";
+
+    Logger::message("Create kinect4\n");
     Kinect4 kinect;
+
+    Logger::message("Open kinect4\n");
     if(!kinect.open(0)){
         return;
     }
 
-    std::cout << "main thread id : " << std::this_thread::get_id() << "\n";
-    std::cout << "kinect opened : " << kinect.is_opened() << "\n";
+    std::cout << "Main thread id id " << std::this_thread::get_id() << "\n";
 
     K4::Config config;
 //    config.mode = K4::Mode::Only_color_1280x720; // works
 //    config.mode = K4::Mode::Only_color_1920x1080; // works
 //    config.mode = K4::Mode::Only_color_2048x1536; // works
-    config.mode = K4::Mode::Only_color_2560x1440;
-    config.synchronizeColorAndDepth = true;
-    config.delayBetweenColorAndDepthUsec = 0;
-
-
-//    k4a_device_configuration_t config = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
-//    config.color_format    = static_cast<k4a_image_format_t>(ImageFormat::BGRA32);
-//    config.color_resolution= static_cast<k4a_color_resolution_t>(ColorResolution::R720P);
-//    config.depth_mode      = static_cast<k4a_depth_mode_t>(DepthMode::OFF);
-////    config.camera_fps      = static_cast<k4a_fps_t>(Framerate::F30);
-
-
-//    k4a_device_configuration_t config = kinect.generate_config(
-//        ImageFormat::BGRA32,
-//        ColorResolution::R720P,
-//        DepthMode::OFF,
-//        Framerate::F30
-//    );
+    config.mode = K4::Mode::Full_frame_1024x1024;
     kinect.start_cameras(config);
 
-
-    // store frames
-    std::vector<std::shared_ptr<CompressedDataFrame>> compressedFrames;
-    kinect.new_compressed_data_frame_signal.connect([&](std::shared_ptr<CompressedDataFrame> frame){
-        std::cout << "receive compressed frame\n";
-        compressedFrames.emplace_back(frame);
-    });
-
+    // stored frames
     std::vector<std::shared_ptr<DisplayDataFrame>> displayFrames;
+    std::vector<std::shared_ptr<CompressedDataFrame>> compressedFrames;
+
+    // connections
+    kinect.new_compressed_data_frame_signal.connect([&](std::shared_ptr<CompressedDataFrame> frame){
+        std::cout << "receive compressed frame from thread id " << std::this_thread::get_id() << "\n";
+//        Logger::message(std::format("receive compressed frame from thread id {}\n", std::this_thread::get_id()));
+        compressedFrames.emplace_back(frame);
+    });   
     kinect.new_display_frame_signal.connect([&](std::shared_ptr<DisplayDataFrame> frame){
-        std::cout << "receive display frame\n";
+        std::cout << "receive display frame from thread id " << std::this_thread::get_id() << "\n";
+//        Logger::message(std::format("receive display frame from thread id {}\n", std::this_thread::get_id()));
         displayFrames.emplace_back(frame);
     });
 
+    // parameters
     Parameters p;
-    p.sendCompressedDataFrame   = false;
-    p.sendDisplayCloud          = false;
+    p.sendCompressedDataFrame   = true;
+    p.sendDisplayCloud          = true;
     p.sendDisplayColorFrame     = true;
-    p.sendDisplayDepthFrame     = false;
-    p.sendDisplayInfraredFrame  = false;
+    p.sendDisplayDepthFrame     = true;
+    p.sendDisplayInfraredFrame  = true;
     p.filterDepthWithColor      = false;
+    p.jpegCompressionRate       = 80;
     kinect.set_parameters(p);
 
-    std::cout << "start reading\n";
+    Logger::message("Start reading.\n");
     kinect.start_reading();
 
-    std::cout << "sleep\n";
-    std::this_thread::sleep_for(std::chrono::milliseconds(7000));
+    Logger::message("Sleep...\n");
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    std::cout << "stop reading\n";
+    Logger::message("Stop reading.\n");
     kinect.stop_reading();
 
-    std::cout << "close\n";
+    Logger::message("Close.\n");
     kinect.close();
 
-    std::cout << "save frames\n";
+    Logger::message("Save display frames.\n");
     size_t idFrame = 0;
     for(const auto &frame : displayFrames){
 
-        std::string pathColor = "./display_color_" + std::to_string(idFrame) + ".png";
-        auto &cf = frame->colorFrame;
+        BenchGuard g("save frame");
 
+        std::string pathColor = "./display_color_" + std::to_string(idFrame) + ".png";
+        std::string pathDepth = "./display_depth_" + std::to_string(idFrame) + ".png";
+        std::string pathInfra = "./display_infra_" + std::to_string(idFrame) + ".png";
+
+        auto &cf = frame->colorFrame;
         tool::graphics::Texture texColor;
-        std::cout << cf.width << " " << cf.height << " " << cf.pixels.size() << "\n";
         texColor.copy_2d_data(
             cf.width,
             cf.height,
             cf.pixels
         );
+        if(!texColor.write_2d_image_file_data(pathColor)){
+            std::cerr << "fail color\n";
+        }
 
-        texColor.write_2d_image_file_data(pathColor);
+        auto &df = frame->depthFrame;
+        tool::graphics::Texture texDepth;
+        texDepth.copy_2d_data(
+            df.width,
+            df.height,
+            df.pixels
+        );
+        if(!texDepth.write_2d_image_file_data(pathDepth)){
+            std::cerr << "fail depth\n";
+        }
+
+        auto &irf = frame->infraredFrame;
+        tool::graphics::Texture texInfra;
+        texInfra.copy_2d_data(
+            irf.width,
+            irf.height,
+            irf.pixels
+        );
+        if(!texInfra.write_2d_image_file_data(pathInfra)){
+            std::cerr << "fail infra\n";
+        }
 
         ++idFrame;
     }
 
-    std::cout << "end\n";
-    return;
-
+    Logger::message("Save uncompressed frames.\n");
     idFrame = 0;
-    tjhandle m_jpegUncompressor = tjInitDecompress();
+    tjhandle jpegUncompressor = tjInitDecompress();
     tool::camera::IntegersEncoder depthCompressor;
     for(const auto &frame : compressedFrames){
 
-        std::cout <<"start processing: " <<  idFrame << "\n";
+        BenchGuard g("save uncompressed frame");
+
+        std::string pathColor = "./uncompressed_color_" + std::to_string(idFrame) + ".png";
+        std::string pathDepth = "./uncompressed_depth_" + std::to_string(idFrame) + ".png";
 
         std::vector<std::uint8_t> uncompressedColorData;
         uncompressedColorData.resize(frame->colorWidth * frame->colorHeight*4);
 
         const int decompressStatus = tjDecompress2(
-            m_jpegUncompressor,
+            jpegUncompressor,
             frame->compressedColorBuffer.data(),
             static_cast<unsigned long>(frame->compressedColorBuffer.size()),
             uncompressedColorData.data(),
             frame->colorWidth,
             0, // pitch
             frame->colorHeight,
-            TJPF_BGRA,
-            TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE
-            );
-        std::cout << "uncompress: " << decompressStatus << "\n";
-        std::string pathColor = "./uncompressed_color_" + std::to_string(idFrame) + ".png";
-        std::string pathDepth = "./uncompressed_depth_" + std::to_string(idFrame) + ".png";
-
-        std_v1<unsigned char> data;
-        data.resize(uncompressedColorData.size());
-
-        auto buffer = uncompressedColorData.data();
-        for(size_t ii = 0; ii < uncompressedColorData.size()/4; ++ii){
-            const size_t id = ii*4;
-            data[id+0] = buffer[id+2];
-            data[id+1] = buffer[id+1];
-            data[id+2] = buffer[id+0];
-            data[id+3] = buffer[id+3];
+            TJPF_RGBA,
+            TJFLAG_FASTDCT// | TJFLAG_FASTUPSAMPLE
+        );
+        if(decompressStatus == -1){
+            std::cerr << "Error uncompress jpeg\n";
+            break;
         }
 
         tool::graphics::Texture texColor;
@@ -207,9 +213,8 @@ void kinect4_test(){
             frame->colorWidth,
             frame->colorHeight,
             4,
-            data
+            uncompressedColorData.data()
         );
-
         texColor.write_2d_image_file_data(pathColor);
 
         // depth
@@ -222,32 +227,33 @@ void kinect4_test(){
             originalSize= depthCompressor.decode(
                 frame->compressedDepthBuffer.data(),
                 frame->compressedDepthBuffer.size(),
-                //            reinterpret_cast<std::uint32_t*>(depthI.get_buffer()),
                 reinterpret_cast<std::uint32_t*>(depthData.data()),
                 (frame->depthWidth*frame->depthHeight)/2
-                );
+            );
         }catch(std::exception e){
-            std::cout << "error " << e.what() << "\n";
+            std::cout << "Error uncompress depth " << e.what() << "\n";
         }
-
-        std::cout << "o size: " << originalSize << " " << frame->depthWidth << " " << frame->depthHeight << " " << frame->depthWidth*frame->depthHeight << "\n";
 
         k4a::image depthI = k4a::image::create(
             K4A_IMAGE_FORMAT_DEPTH16,
             frame->depthWidth,
             frame->depthHeight,
             frame->depthWidth * 2
-            );
+        );
         std::copy(
             depthData.begin(),
             depthData.end(),
-            reinterpret_cast<std::uint16_t*>(depthI.get_buffer()));
+            reinterpret_cast<std::uint16_t*>(depthI.get_buffer())
+        );
 
-        // camera::Kinect4::write_depth_image(pathDepth, depthI);
+//         camera::Kinect4::write_depth_image(pathDepth, depthI);
 
-
-        ++idFrame;
+        idFrame++;
     }
+    tjDestroy(jpegUncompressor);
+
+
+
 
     //    size_t idCloud = 0;
     //    for(const auto &cloud : clouds){
@@ -256,7 +262,6 @@ void kinect4_test(){
     //        tool::io::save_cloud<float>(pathCloud, cloud->vertices.data(), cloud->colors.data(), cloud->vertices.size());
     //    }
 
-    tool::Bench::display();
 }
 
 void bench_test(){
@@ -310,27 +315,30 @@ void bench_test(){
         std::cout << "Message from logger: " << messsage << "\n";
     });
 
-    //    Logger::message("Test formated log message", true);
-    //    Logger::message("Test log message", false);
-
-
-    //    Logger::warning("Test log warning");
-
-    //    kinect4_test();
-
-    tool::Bench::display();
-    tool::Bench::reset();
-
     tool::Bench::stop();
 }
 
 
 int main(){
 
+    Logger::message("base-lib start\n");
+
+    tool::Bench::reset();
+    tool::Bench::start("kinect4_test");
+    Logger::message("kinect4_test\n");
     kinect4_test();
+    tool::Bench::stop();
+    tool::Bench::display();
 
+//    tool::Bench::reset();
+//    tool::Bench::start("bench_test");
+//    Logger::message("bench_test\n");
+//    bench_test();
+//    tool::Bench::stop();
+//    tool::Bench::display();
 
-    std::cout << "base-lib end\n";
+    Logger::message("base-lib end\n");
+
     return 0;
 }
 

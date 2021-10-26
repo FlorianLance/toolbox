@@ -36,6 +36,9 @@
 #include <shared_mutex>
 #include <algorithm>
 
+// local
+#include "logger.hpp"
+
 using namespace tool;
 using namespace std::chrono;
 
@@ -107,7 +110,7 @@ struct Bench::Impl{
             std::stringstream ss;
             ss << tId;
             Impl::tData[tId].tIdStr = ss.str();
-            std::cout << std::format("[Bench::First start call from thread {}]\n", Impl::tData[tId].tIdStr);
+            Logger::message(std::format("[Bench::First start call from thread {}]\n", Impl::tData[tId].tIdStr));
         }
         return tId;
     }
@@ -145,23 +148,23 @@ void Bench::check(OTID otId){
     for(auto &id : d.order){
         const auto &t = d.times[id];
         if(t.startTime.size() != t.stopTime.size()){
-            std::cerr << std::format("Bench::Error: Id [{}] has not been stopped, (started:{}, stopped:{}).\n",
+            Logger::error(std::format("Bench::Error: Id [{}] has not been stopped, (started:{}, stopped:{}).\n",
                 id, t.startTime.size(), t.stopTime.size()
-            );
+            ));
         }
     }
 }
 
-void Bench::start(BenchId id, bool display, OTID otId){
+BenchId Bench::start(BenchId id, bool display, OTID otId){
 
     auto &d = Impl::tData[Impl::check_thread_id(otId)];
     if(id.size() == 0 && Impl::displayEnabled){
-        std::cerr << std::format("Bench::Error: empty id\n");
-        return;
+        Logger::message(std::format("Bench::Error: empty id\n"));
+        return {};
     }
 
     if(display && Impl::displayEnabled){
-        std::cout << std::format("[Bench::Start{}]\n", id);
+        Logger::message(std::format("[Bench::Start{}]\n", id));
     }
 
     auto idV = d.idStrsView.find(id);
@@ -181,9 +184,9 @@ void Bench::start(BenchId id, bool display, OTID otId){
     // check if already running
     if(d.times[*idV].started){
         if(Impl::displayEnabled){
-            std::cerr << std::format("Error with id {}, already started\n", id);
+            Logger::error(std::format("Error with id {}, already started\n", id));
         }
-        return;
+        return *idV;
     }
 
     d.times[*idV].started = true;
@@ -192,6 +195,7 @@ void Bench::start(BenchId id, bool display, OTID otId){
     d.times[*idV].level = d.currentLevel;
     d.stack.push_back(*idV);
     ++d.currentLevel;
+    return *idV;
 }
 
 void Bench::stop(BenchId id, OTID otId){
@@ -209,14 +213,14 @@ void Bench::stop(BenchId id, OTID otId){
         if(it != d.stack.end()){
             d.stack.erase(std::remove(d.stack.begin(), d.stack.end(), id), d.stack.end());
         }else{
-            std::cerr << std::format("Bench::Error: cannot stop id [{}], no element in stack. \n.", id);
+            Logger::error(std::format("Bench::Error: cannot stop id [{}], no element in stack. \n.", id));
             return;
         }
     }
 
     if(d.times.count(id) == 0){
         if(Impl::displayEnabled){
-            std::cerr << std::format("Bench::Error: cannot stop id [{}] \n.", id);
+            Logger::error(std::format("Bench::Error: cannot stop id [{}] \n.", id));
         }
         return;
     }
@@ -228,7 +232,7 @@ void Bench::stop(BenchId id, OTID otId){
         --d.currentLevel;
     }else{
         if(Impl::displayEnabled){
-            std::cerr << "Bench::Error: Invalid level.\n";
+            Logger::error("Bench::Error: Invalid level.\n");
         }
         d.currentLevel = 0;
     }
@@ -306,10 +310,11 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort, OTID ot
 
     auto &d = Impl::tData[Impl::check_thread_id(otId)];
 
+
     auto totalTimes = all_total_times(unit, minTime, sort);
     std::ostringstream flux;
     if(totalTimes.size() > 0){
-        flux << "\n[BENCH START] ############### \n";
+        flux << std::format("\n[BENCH ############### START] [Thread: {}] \n", d.tIdStr);
         for(const auto &totalTime : totalTimes){
             auto id = std::get<0>(totalTime);
             const auto &timeI = d.times[id];
@@ -323,7 +328,7 @@ std::string Bench::to_string(BenchUnit unit, int64_t minTime, bool sort, OTID ot
                 unit_to_str(unit)
             );
         }
-        flux << "[BENCH END] ############### \n\n";
+        flux << "[BENCH ############### END]  \n\n";
     }
     return flux.str();
 }
@@ -340,3 +345,10 @@ size_t Bench::calls_count(BenchId id, OTID otId){
     return Impl::tData[Impl::check_thread_id(otId)].times[id].callsCount;
 }
 
+BenchGuard::BenchGuard(BenchId id, bool display){
+    this->id = Bench::start(id, display);
+}
+
+BenchGuard::~BenchGuard(){
+    Bench::stop(id);
+}
