@@ -155,12 +155,12 @@ void Bench::check(OTID otId){
     }
 }
 
-BenchId Bench::start(BenchId id, bool display, OTID otId){
+void Bench::start(BenchId id, bool display, OTID otId){
 
     auto &d = Impl::tData[Impl::check_thread_id(otId)];
     if(id.size() == 0 && Impl::displayEnabled){
         Logger::message(std::format("Bench::Error: empty id\n"));
-        return {};
+        return;
     }
 
     if(display && Impl::displayEnabled){
@@ -186,7 +186,7 @@ BenchId Bench::start(BenchId id, bool display, OTID otId){
         if(Impl::displayEnabled){
             Logger::error(std::format("Error with id {}, already started\n", id));
         }
-        return *idV;
+        return;
     }
 
     d.times[*idV].started = true;
@@ -195,7 +195,6 @@ BenchId Bench::start(BenchId id, bool display, OTID otId){
     d.times[*idV].level = d.currentLevel;
     d.stack.push_back(*idV);
     ++d.currentLevel;
-    return *idV;
 }
 
 void Bench::stop(BenchId id, OTID otId){
@@ -346,9 +345,11 @@ size_t Bench::calls_count(BenchId id, OTID otId){
 }
 
 BenchGuard::BenchGuard(BenchId id, bool display){
-    this->id = Bench::start(id, display);
+//    this->id =
+    Bench::start(id, display);
 }
 
 BenchGuard::~BenchGuard(){
-    Bench::stop(id);
+//    Bench::stop(id);
+    Bench::stop();
 }

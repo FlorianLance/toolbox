@@ -56,7 +56,7 @@ namespace tool {
         static void clear(OTID otId = std::nullopt);
         static void reset(OTID otId = std::nullopt);
         static void check(OTID otId = std::nullopt);
-        static BenchId start(BenchId id, bool display = false, OTID otId = std::nullopt);
+        static void start(BenchId id, bool display = false, OTID otId = std::nullopt);
         static void stop(BenchId id = ""sv, OTID otId = std::nullopt);
         static void display(BenchUnit unit = BenchUnit::milliseconds, std::int64_t minTime = -1, bool sort = false, OTID otId = std::nullopt);
         static std::string to_string(BenchUnit unit, std::int64_t minTime, bool sort, OTID otId = std::nullopt);
@@ -78,7 +78,7 @@ namespace tool {
 
     struct BenchGuard{
 
-        std::string_view id;
+//        std::string_view id;
 
         BenchGuard() = delete;
         BenchGuard(BenchId id, bool display = false);

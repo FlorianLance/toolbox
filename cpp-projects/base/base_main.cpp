@@ -41,6 +41,7 @@
 #include "data/integers_encoder.hpp"
 #include "graphics/texture.hpp"
 #include "utility/benchmark.hpp"
+#include "utility/files.hpp"
 
 using namespace tool;
 
@@ -90,7 +91,7 @@ void kinect4_test(){
 //    config.mode = K4::Mode::Only_color_1280x720; // works
 //    config.mode = K4::Mode::Only_color_1920x1080; // works
 //    config.mode = K4::Mode::Only_color_2048x1536; // works
-    config.mode = K4::Mode::Full_frame_1024x1024;
+    config.mode = K4::Mode::Cloud_1024x1024;
     kinect.start_cameras(config);
 
     // stored frames
@@ -115,7 +116,7 @@ void kinect4_test(){
     p.sendDisplayCloud          = true;
     p.sendDisplayColorFrame     = true;
     p.sendDisplayDepthFrame     = true;
-    p.sendDisplayInfraredFrame  = true;
+    p.sendDisplayInfraredFrame  = false;
     p.filterDepthWithColor      = false;
     p.jpegCompressionRate       = 80;
     kinect.set_parameters(p);
@@ -141,6 +142,7 @@ void kinect4_test(){
         std::string pathColor = "./display_color_" + std::to_string(idFrame) + ".png";
         std::string pathDepth = "./display_depth_" + std::to_string(idFrame) + ".png";
         std::string pathInfra = "./display_infra_" + std::to_string(idFrame) + ".png";
+        std::string pathCloud = "./display_cloud_" + std::to_string(idFrame) + ".obj";
 
         auto &cf = frame->colorFrame;
         tool::graphics::Texture texColor;
@@ -150,7 +152,7 @@ void kinect4_test(){
             cf.pixels
         );
         if(!texColor.write_2d_image_file_data(pathColor)){
-            std::cerr << "fail color\n";
+            Logger::error("Faild color.\n");
         }
 
         auto &df = frame->depthFrame;
@@ -161,7 +163,7 @@ void kinect4_test(){
             df.pixels
         );
         if(!texDepth.write_2d_image_file_data(pathDepth)){
-            std::cerr << "fail depth\n";
+            Logger::error("Faild depth.\n");
         }
 
         auto &irf = frame->infraredFrame;
@@ -172,8 +174,14 @@ void kinect4_test(){
             irf.pixels
         );
         if(!texInfra.write_2d_image_file_data(pathInfra)){
-            std::cerr << "fail infra\n";
+            Logger::error("Faild infra.\n");
         }
+
+        auto &cloudF = frame->cloud;
+        if(!tool::files::save_cloud(pathCloud, cloudF.vertices.data(), cloudF.colors.data(), cloudF.validVerticesCount)){
+            Logger::error("Faild cloud.\n");
+        }
+
 
         ++idFrame;
     }

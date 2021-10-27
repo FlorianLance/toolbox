@@ -248,7 +248,6 @@ namespace tool::camera::K4{
 
     // display data frame (to be displayed in a client)
     struct DisplayDataFrame{
-        std::mutex lock;
         PixelsFrame colorFrame;
         PixelsFrame depthFrame;
         PixelsFrame infraredFrame;
