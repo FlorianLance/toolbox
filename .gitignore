@@ -16,6 +16,8 @@ cpp-projects/_build/bin/**/*.pdb
 cpp-projects/_build/bin/**/*.exp
 cpp-projects/_build/bin/**/*logs.html
 cpp-projects/_build/bin/**/meshes*
+cpp-projects/_build/bin/base/*.png
+cpp-projects/_build/bin/base/*.obj
 
 ## temp
 cpp-projects/_build/temp/**/*.obj

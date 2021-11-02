@@ -211,6 +211,7 @@ struct Texture{
 
     void copy_2d_data(int width, int height, int nbChannels, unsigned char *data);
     void copy_2d_data(int width, int height, int nbChannels, const std_v1<unsigned char> &data);
+    void copy_2d_data(int width, int height, const std_v1<geo::Pt3<unsigned char>> &data);
     void copy_2d_data(int width, int height, int nbChannels, const std_v1<float> &data);
     void copy_2d_data(int width, int height, const std_v1<geo::Pt3<float>> &data);
 

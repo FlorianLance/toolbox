@@ -62,6 +62,20 @@ void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<u
     m_data = data;
 }
 
+void Texture::copy_2d_data(int width, int height, const std_v1<geo::Pt3<unsigned char> > &data){
+
+    if(data.size() != static_cast<size_t>(width*height)){
+        std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";
+        return;
+    }
+    m_sizes = {width, height, 1};
+    m_nbChannels = 3;
+    m_hdr = false;
+
+    m_data.resize(static_cast<size_t>(width*height*m_nbChannels)*4);
+    std::copy(std::begin(data), std::end(data), m_data.data());
+}
+
 void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<float> &data){
     if(data.size() != static_cast<size_t>(width*height*nbChannels)){
         std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";

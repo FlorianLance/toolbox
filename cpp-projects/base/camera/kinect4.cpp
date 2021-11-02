@@ -9,11 +9,8 @@
 #include "kinect4.hpp"
 
 // std
-#include <fstream>
-#include <sstream>
 #include <thread>
 #include <execution>
-#include <limits>
 #include <format>
 
 // turbojpg
@@ -23,13 +20,16 @@
 #include <k4a/k4a.hpp>
 
 // local
-#include "geometry/matrix3.hpp"
-#include "graphics/texture.hpp"
+// # kinect4
+#include "k4a/k4astaticimageproperties.h"
+// # utility
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
+#include "utility/vector_utility.hpp"
+// # geometry
+#include "geometry/point4.hpp"
+// # data
 #include "data/integers_encoder.hpp"
-#include "k4a/k4astaticimageproperties.h"
-
 
 using namespace tool;
 using namespace tool::geo;
@@ -74,8 +74,12 @@ struct Kinect4::Impl{
     unsigned char *tjCompressedImage = nullptr;
 
     // display frames
-    std::shared_ptr<DisplayDataFrame> f1 = nullptr;
-    std::shared_ptr<DisplayDataFrame> f2 = nullptr;
+    size_t currentDisplayFramesId = 0;
+    std::vector<std::shared_ptr<DisplayDataFrame>> displayFrames;
+
+    // compressed frames
+    size_t currentCompressedFrame = 0;
+    std::vector<std::shared_ptr<CompressedDataFrame>> compressedFrames;
 
     // thread/lockers
     std::mutex parametersM; /**< mutex for reading parameters at beginning of a new frame in thread function */
@@ -87,7 +91,7 @@ struct Kinect4::Impl{
         std::optional<k4a::image> depthImage,
         std::optional<k4a::image> infraredImage);
 
-    std::shared_ptr<DisplayDataFrame> generate_display_data_frame(const Parameters &p,
+    void update_display_data_frame(DisplayDataFrame *d, const Parameters &p,
         std::optional<k4a::image> color,
         std::optional<k4a::image> depth,
         std::optional<k4a::image> infra,
@@ -399,15 +403,22 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
     std::optional<k4a::image> depthSizedColorImage = std::nullopt;
 
 
+    size_t colorWidth  = 0;
+    size_t colorHeight = 0;
+    size_t colorSize   = 0;
+    size_t depthWidth = 0;
+    size_t depthHeight = 0;
+    size_t depthSize = 0;
+
     const auto colorResolution = color_resolution(mode);
     const auto imageFormat  = image_format(mode);
     if(colorResolution != ColorResolution::OFF){
 
         // retrieve colors dimensions
         const auto colorDims     = k4a::GetColorDimensions(static_cast<k4a_color_resolution_t>(colorResolution));
-        const size_t colorWidth  = std::get<0>(colorDims);
-        const size_t colorHeight = std::get<1>(colorDims);
-        const size_t colorSize   = colorWidth*colorHeight;
+        colorWidth  = std::get<0>(colorDims);
+        colorHeight = std::get<1>(colorDims);
+        colorSize   = colorWidth*colorHeight;
 
         if(imageFormat == ImageFormat::YUY2){
             convertedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
@@ -420,6 +431,10 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         // set color indices
         indicesColors1D.resize(colorSize);
         std::iota(std::begin(indicesColors1D), std::end(indicesColors1D), 0);
+
+
+
+        Logger::message(std::format("colorFrame {} {} \n", colorWidth, colorHeight));
     }
 
     const auto depthMode = depth_mode(mode);
@@ -427,9 +442,9 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
         // retrieve depth dimensions
         const auto depthDims     = k4a::GetDepthDimensions(static_cast<k4a_depth_mode_t>(depth_mode(mode)));
-        const size_t depthWidth  = std::get<0>(depthDims);
-        const size_t depthHeight = std::get<1>(depthDims);
-        const size_t depthSize   = depthWidth*depthHeight;
+        depthWidth  = std::get<0>(depthDims);
+        depthHeight = std::get<1>(depthDims);
+        depthSize   = depthWidth*depthHeight;
 
         // init resized color image
         if(colorResolution != ColorResolution::OFF){
@@ -462,13 +477,54 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
                 static_cast<int32_t>(depthWidth * 3 * sizeof(int16_t))
             );
         }
+
+        Logger::message(std::format("depth {} {} \n", depthWidth, depthHeight));
+    }
+
+    // init display frames
+    displayFrames.resize(10);
+    currentDisplayFramesId = 0;
+    for(auto &frame : displayFrames){
+
+        frame = std::make_shared<DisplayDataFrame>();
+
+        if(depthSize > 0){
+            frame->depthFrame.width  = depthWidth;
+            frame->depthFrame.height = depthHeight;
+            frame->depthFrame.pixels.resize(depthSize);
+
+            if(has_infrared(mode)){
+                frame->infraredFrame.width  = depthWidth;
+                frame->infraredFrame.height = depthHeight;
+                frame->infraredFrame.pixels.resize(depthSize);
+            }
+
+            if(has_cloud(mode)){
+                frame->cloud.vertices.resize(depthSize);
+                frame->cloud.colors.resize(depthSize);
+                frame->cloud.validVerticesCount = 0;
+            }
+        }
+
+        if(color_resolution(mode) != K4::ColorResolution::OFF){
+            if(mode == K4::Mode::Cloud_1024x1024 || mode == K4::Mode::Full_frame_1024x1024){
+                frame->colorFrame.width  = depthWidth;
+                frame->colorFrame.height = depthHeight;
+                frame->colorFrame.pixels.resize(depthSize);
+            }else{
+
+                frame->colorFrame.width  = colorWidth;
+                frame->colorFrame.height = colorHeight;
+                frame->colorFrame.pixels.resize(colorSize);
+            }
+        }
     }
 
     // start loop
     readFramesFromCameras = true;
     while(readFramesFromCameras){
 
-        tool::Bench::reset();
+        //tool::Bench::reset();
 
         parametersM.lock();
         const auto p = parameters;
@@ -504,9 +560,9 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             if (!colorImage->is_valid()){
                  Logger::error("Failed to get color image from capture\n");
                 continue;
-            }
-            times.getColorTS = colorImage->get_system_timestamp();
+            }            
         }
+        times.getColorTS = nanoseconds_since_epoch();//colorImage->get_system_timestamp();
 
         // get a depth image
         if(depthMode != DepthMode::OFF){
@@ -518,9 +574,9 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             if (!depthImage->is_valid()){
                 Logger::error("Failed to get depth image from capture\n");
                 continue;
-            }
-            times.getDepthTS = depthImage->get_system_timestamp();
+            }            
         }
+        times.getDepthTS = nanoseconds_since_epoch();//depthImage->get_system_timestamp();
 
         // get an infrared image
         if(has_infrared(mode)){
@@ -532,9 +588,9 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             if (!infraredImage->is_valid()){
                 Logger::error("Failed to get infrared image from capture\n");
                 continue;
-            }
-            times.getInfraTS = infraredImage->get_system_timestamp();
+            }            
         }
+        times.getInfraTS = nanoseconds_since_epoch();//infraredImage->get_system_timestamp();
 
         // get temperature
         temperature = capture.get_temperature_c();
@@ -618,8 +674,9 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
                 // ... not managed
             }else if(imageFormat == ImageFormat::BGRA32){
                 // nothing to do
-            }
+            }           
         }
+        times.convertColorTS = nanoseconds_since_epoch();
 
         // resize color image to fit depth
         if(colorImage.has_value() && depthImage.has_value()){
@@ -631,36 +688,25 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
                 &depthSizedColorImage.value());
 
             colorImage = depthSizedColorImage;
-            Bench::stop();
+            Bench::stop();            
         }
+        times.resizeColorTS = nanoseconds_since_epoch();
 
         // filter depth image
         if(depthImage.has_value()){
             Bench::start("[Kinect4] Filter depth");
             filter_depth_image(p, depthImage.value(), colorImage, infraredImage);
-            Bench::stop();
+            Bench::stop();            
         }
+        times.depthFilteringTS = nanoseconds_since_epoch();
 
         // generate cloud from depth image
         if(has_cloud(mode) && pointCloudImage.has_value()){
             Bench::start("[Kinect4] Transformation depth_image_to_point_cloud");
             transformation.depth_image_to_point_cloud(depthImage.value(), K4A_CALIBRATION_TYPE_DEPTH, &pointCloudImage.value());
-            Bench::stop();
+            Bench::stop();            
         }
-
-        // display info
-        if(colorImage.has_value()){
-            Logger::message(std::format("C {} {}\n", colorImage->get_width_pixels(),    colorImage->get_height_pixels()));
-        }
-        if(depthImage.has_value()){
-            Logger::message(std::format("D {} {}\n", depthImage->get_width_pixels(),    depthImage->get_height_pixels()));
-        }
-        if(infraredImage.has_value()){
-            Logger::message(std::format("I {} {}\n", infraredImage->get_width_pixels(), infraredImage->get_height_pixels()));
-        }
-        if(pointCloudImage.has_value()){
-            Logger::message(std::format("P {} {}\n", pointCloudImage->get_width_pixels(), pointCloudImage->get_height_pixels()));
-        }
+        times.cloudGenerationTS = nanoseconds_since_epoch();
 
 
         // compressed frame
@@ -676,24 +722,29 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
                 kinect4->new_compressed_data_frame_signal(compressedFrame);
             }            
         }
+        times.compressFrameTS = nanoseconds_since_epoch();
 
         // display frame        
         if(p.sendDisplayColorFrame || p.sendDisplayDepthFrame || p.sendDisplayInfraredFrame || p.sendDisplayCloud){
 
             // write frame
             tool::Bench::start("[Kinect4] Write display data frame");
-            auto displayFrame = generate_display_data_frame(p, colorImage, depthImage, infraredImage, pointCloudImage);
+            auto currDisplayFrame = displayFrames[currentDisplayFramesId++];
+            currentDisplayFramesId = currentDisplayFramesId%displayFrames.size();
+            update_display_data_frame(currDisplayFrame.get(), p, colorImage, depthImage, infraredImage, pointCloudImage);
             tool::Bench::stop();
 
-            // send frame
-            if(displayFrame != nullptr){
-                kinect4->new_display_frame_signal(displayFrame);
-            }
+            kinect4->new_display_frame_signal(currDisplayFrame);
         }
+        times.displayFrameTS    = nanoseconds_since_epoch();
+        times.endFrameReadingTS = nanoseconds_since_epoch();
 
-        tool::Bench::display(BenchUnit::milliseconds, 0, true);
+        kinect4->new_times_signal(times);
+        //tool::Bench::display(BenchUnit::milliseconds, 0, true);
     }
     readFramesFromCameras = false;
+
+    //tool::Bench::display(BenchUnit::milliseconds, 0, true);
 }
 
 void Kinect4::Impl::filter_depth_image(const Parameters &p,
@@ -704,6 +755,7 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p,
     geo::Pt4<uint8_t>* colorBuffer = colorImage.has_value() ? reinterpret_cast<geo::Pt4<uint8_t>*>(colorImage.value().get_buffer()) : nullptr;
     uint16_t* infraredBuffer = infraredImage.has_value() ? reinterpret_cast<uint16_t*>(infraredImage.value().get_buffer()) : nullptr;
 
+    validDepthValues = 0;
     for_each(std::execution::par_unseq, std::begin(indicesDepths3D), std::end(indicesDepths3D), [&](const Pt3<size_t> &dIndex){
 
         const size_t id = dIndex.x();
@@ -770,6 +822,7 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
     std::optional<k4a::image> colorImage, std::optional<k4a::image> depthImage, std::optional<k4a::image> infraredImage){
 
     auto frame = std::make_shared<CompressedDataFrame>();
+    frame->calibration = calibration;
 
     if(colorImage.has_value()){
 
@@ -778,13 +831,13 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
         frame->colorHeight = colorImage->get_height_pixels();
 
         const int jpegQuality = parameters.jpegCompressionRate;
-        Logger::message(std::format("jpeg compression {} {} {}\n", frame->colorWidth, frame->colorHeight, colorImage->get_size()));
+        // Logger::message(std::format("jpeg compression {} {} {}\n", frame->colorWidth, frame->colorHeight, colorImage->get_size()));
 
         long unsigned int jpegColorSize = 0;
 
         if(tjCompressedImage == nullptr){
             tjCompressedImage = tjAlloc(frame->colorHeight*frame->colorWidth*4);
-            Logger::message(std::format("alloc {}\n", frame->colorHeight*frame->colorWidth*4));
+            // Logger::message(std::format("alloc {}\n", frame->colorHeight*frame->colorWidth*4));
         }
 
         int ret = tjCompress2(jpegCompressor,
@@ -831,7 +884,7 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
         if(frame->compressedDepthBuffer.size() != sizeDepthCompressed){
             frame->compressedDepthBuffer.resize(sizeDepthCompressed);
         }
-        Logger::message(std::format("size compressed {} {}\n", depthSize, sizeDepthCompressed));
+        // Logger::message(std::format("size compressed {} {}\n", depthSize, sizeDepthCompressed));
 
     }
 
@@ -844,13 +897,11 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
 
 
 
-std::shared_ptr<DisplayDataFrame> Kinect4::Impl::generate_display_data_frame(const Parameters &p,
+void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Parameters &p,
     std::optional<k4a::image> color,
     std::optional<k4a::image> depth,
     std::optional<k4a::image> infra,
     std::optional<k4a::image> cloud){
-
-    auto frame = std::make_shared<DisplayDataFrame>();
 
     // init depth frame
     float min=0.f,max =0.f,diff = 0.f;
@@ -871,12 +922,7 @@ std::shared_ptr<DisplayDataFrame> Kinect4::Impl::generate_display_data_frame(con
     };
 
     // send color frame
-    if(p.sendDisplayColorFrame){
-
-        if(!color.has_value()){
-            // ...
-            return nullptr;
-        }
+    if(p.sendDisplayColorFrame && color.has_value()){
 
         tool::Bench::start("[Kinect4] sendDisplayColorFrame");
 
@@ -889,10 +935,8 @@ std::shared_ptr<DisplayDataFrame> Kinect4::Impl::generate_display_data_frame(con
             height = color->get_height_pixels();
         }
 
-        const size_t size = width * height;
-        frame->colorFrame.width  = width;
-        frame->colorFrame.height = height;
-        frame->colorFrame.pixels.resize(size);
+        d->colorFrame.width  = width;
+        d->colorFrame.height = height;
 
         auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(color->get_buffer());
         std::vector<size_t> *ids;
@@ -903,37 +947,32 @@ std::shared_ptr<DisplayDataFrame> Kinect4::Impl::generate_display_data_frame(con
         }
 
         for_each(std::execution::par_unseq, std::begin(*ids), std::end(*ids), [&](size_t id){
-            frame->colorFrame.pixels[id] = geo::Pt3f{
-                static_cast<float>(colorBuffer[id].z()),
-                static_cast<float>(colorBuffer[id].y()),
-                static_cast<float>(colorBuffer[id].x())
-            }/255.f;
+            d->colorFrame.pixels[id] = {
+                colorBuffer[id].z(),
+                colorBuffer[id].y(),
+                colorBuffer[id].x()
+            };
         });
 
         tool::Bench::stop();
     }
 
     // send depth frame
-    if(p.sendDisplayDepthFrame){
-
-        if(!depth.has_value()){
-            // ...
-            return nullptr;
-        }
+    if(p.sendDisplayDepthFrame && depth.has_value()){
 
         tool::Bench::start("[Kinect4] sendDisplayDepthFrame");
 
         const size_t width = depth->get_width_pixels();
         const size_t height = depth->get_height_pixels();
         const size_t size = width * height;
-        frame->depthFrame.width  = width;
-        frame->depthFrame.height = height;
-        frame->depthFrame.pixels.resize(size);
+        d->depthFrame.width  = width;
+        d->depthFrame.height = height;
+//        frame->depthFrame.pixels.resize(size);
 
         auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
 
         // find min/max
-        const auto [pmin, pmax] = std::minmax_element(depthBuffer, depthBuffer + frame->depthFrame.pixels.size());
+        const auto [pmin, pmax] = std::minmax_element(depthBuffer, depthBuffer + size);
         min = static_cast<float>(*pmin);
         max = static_cast<float>(*pmax);
         diff = max-min;
@@ -944,33 +983,34 @@ std::shared_ptr<DisplayDataFrame> Kinect4::Impl::generate_display_data_frame(con
             float intPart;
             float decPart = std::modf((vF*(depthGradient.size()-1)), &intPart);
             size_t idG = static_cast<size_t>(intPart);
-            frame->depthFrame.pixels[id] = depthGradient[idG]*(1.f-decPart) + depthGradient[idG+1]*decPart;
+
+            auto col = depthGradient[idG]*(1.f-decPart) + depthGradient[idG+1]*decPart;
+            d->depthFrame.pixels[id] = {
+                static_cast<std::uint8_t>(255*col.x()),
+                static_cast<std::uint8_t>(255*col.y()),
+                static_cast<std::uint8_t>(255*col.z())
+            };
         });
 
         tool::Bench::stop();
     }
 
     // send infrared frame
-    if(p.sendDisplayInfraredFrame){
-
-        if(!infra.has_value()){
-            // ...
-            return nullptr;
-        }
+    if(p.sendDisplayInfraredFrame && infra.has_value()){
 
         tool::Bench::start("[Kinect4] sendDisplayInfraredFrame");
 
         const size_t width = infra->get_width_pixels();
         const size_t height = infra->get_height_pixels();
         const size_t size = width * height;
-        frame->infraredFrame.width  = width;
-        frame->infraredFrame.height = height;
-        frame->infraredFrame.pixels.resize(size);
+        d->infraredFrame.width  = width;
+        d->infraredFrame.height = height;
+        //frame->infraredFrame.pixels.resize(size);
 
         auto infraBuffer = reinterpret_cast<const uint16_t*>(infra->get_buffer());
 
         // find min/max
-        const auto [pmin, pmax] = std::minmax_element(infraBuffer, infraBuffer + frame->infraredFrame.pixels.size());
+        const auto [pmin, pmax] = std::minmax_element(infraBuffer, infraBuffer + size);
         min = static_cast<float>(*pmin);
         max = static_cast<float>(*pmax);
         diff = max-min;
@@ -981,47 +1021,49 @@ std::shared_ptr<DisplayDataFrame> Kinect4::Impl::generate_display_data_frame(con
             float intPart;
             float decPart = std::modf((vF*(infraGradient.size()-1)), &intPart);
             size_t idG = static_cast<size_t>(intPart);
-            frame->infraredFrame.pixels[id] = infraGradient[idG]*(1.f-decPart) + infraGradient[idG+1]*decPart;
+
+            auto col = infraGradient[idG]*(1.f-decPart) + infraGradient[idG+1]*decPart;
+            d->infraredFrame.pixels[id] = {
+                static_cast<std::uint8_t>(255*col.x()),
+                static_cast<std::uint8_t>(255*col.y()),
+                static_cast<std::uint8_t>(255*col.z())
+            };
         });
 
         tool::Bench::stop();
     }
 
-    if(p.sendDisplayCloud){
-
-        if(!cloud.has_value() || !color.has_value()){
-            // ...
-            return nullptr;
-        }
+    if(p.sendDisplayCloud && cloud.has_value() && color.has_value() && depth.has_value()){
 
         auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(cloud->get_buffer());
         auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(color->get_buffer());
+        auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
 
-        const size_t width = cloud->get_width_pixels();
-        const size_t height = cloud->get_height_pixels();
-        const size_t size = width * height;
-        frame->cloud.vertices.resize(size);
-        frame->cloud.colors.resize(size);
+        //frame->cloud.vertices.resize(validDepthValues);
+        //frame->cloud.colors.resize(validDepthValues);
+        d->cloud.validVerticesCount = validDepthValues;
 
-        for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
+        size_t idV = 0;
+        for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
 
-            frame->cloud.vertices[id]= geo::Pt3f{
+            if(depthBuffer[id] == invalid_depth_value){
+                return;
+            }
+
+            d->cloud.vertices[idV]= geo::Pt3f{
                 static_cast<float>(-cloudBuffer[id].x()),
                 static_cast<float>(-cloudBuffer[id].y()),
-                static_cast<float>(-cloudBuffer[id].z())
+                static_cast<float>( cloudBuffer[id].z())
             }*0.01f;
-            frame->cloud.colors[id] = geo::Pt3f{
+            d->cloud.colors[idV] = geo::Pt3f{
                 static_cast<float>(colorBuffer[id].z()),
                 static_cast<float>(colorBuffer[id].y()),
                 static_cast<float>(colorBuffer[id].x())
             }/255.f;
 
+            ++idV;
         });
-
-        frame->cloud.validVerticesCount = size;
     }
-
-    return frame;
 }
 
 

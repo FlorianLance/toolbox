@@ -125,10 +125,10 @@ namespace tool::camera::K4{
     static constexpr TupleArray<Mode::SizeEnum, TMode> modes = {{
         // cloud
         TMode
-        {M::Cloud_320x288,        IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, true,  false, false},
-        {M::Cloud_640x576,        IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, true,  false, false},
-        {M::Cloud_512x512,        IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, true,  false, false},
-        {M::Cloud_1024x1024,      IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, true,  false, false},
+        {M::Cloud_320x288,        IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, true,  false, true},
+        {M::Cloud_640x576,        IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, true,  false, true},
+        {M::Cloud_512x512,        IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, true,  false, true},
+        {M::Cloud_1024x1024,      IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, true,  false, true},
         // frame
         {M::Full_frame_320x288,   IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, false, false, true},
         {M::Full_frame_640x576,   IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, false, false, true},
@@ -221,6 +221,9 @@ namespace tool::camera::K4{
 
     // compressed data (to be sended throught network)
     struct CompressedDataFrame{
+
+        k4a_calibration_t calibration;
+
         size_t colorWidth;
         size_t colorHeight;
         std::vector<std::uint8_t> compressedColorBuffer;
@@ -234,8 +237,14 @@ namespace tool::camera::K4{
 
     // image display data (color,depth,infrared)
     struct PixelsFrame{
-        size_t width;
-        size_t height;
+        size_t width = 0;
+        size_t height = 0;
+        std::vector<geo::Pt3<std::uint8_t>> pixels;
+    };
+
+    struct PixelsHRFrame{
+        size_t width = 0;
+        size_t height = 0;
         std::vector<geo::Pt3f> pixels;
     };
 
@@ -258,16 +267,20 @@ namespace tool::camera::K4{
     struct FrameReadingTimings{
         std::chrono::nanoseconds startFrameReadingTS;
         std::chrono::nanoseconds afterCaptureTS;
+
         std::chrono::nanoseconds getColorTS;
         std::chrono::nanoseconds getDepthTS;
         std::chrono::nanoseconds getInfraTS;
-        std::chrono::nanoseconds afterGetImagesTS;
-        std::chrono::nanoseconds afterUncompressTS;
-        std::chrono::nanoseconds afterTransformTS;
-        std::chrono::nanoseconds afterFilteringTS;
-        std::chrono::nanoseconds afterSendingCompressedTS;
-        std::chrono::nanoseconds afterProcessingDisplayDataTS;
-        std::chrono::nanoseconds afterGeneratingDisplayDataTS;
+
+        std::chrono::nanoseconds convertColorTS;
+        std::chrono::nanoseconds resizeColorTS;
+
+        std::chrono::nanoseconds depthFilteringTS;
+        std::chrono::nanoseconds cloudGenerationTS;
+
+        std::chrono::nanoseconds compressFrameTS;
+        std::chrono::nanoseconds displayFrameTS;
+
         std::chrono::nanoseconds endFrameReadingTS;
     };
 

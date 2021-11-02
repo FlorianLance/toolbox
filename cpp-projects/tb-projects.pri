@@ -6,7 +6,7 @@
 # lib
 ## base
 #BASE_TARGET          = "app" # debug
-BASE_TARGET          = "app"
+BASE_TARGET          = "lib"
 ## opengl-utility
 #OPENGL_UTILITY_TARGET = "app" # debug
 OPENGL_UTILITY_TARGET = "lib"
