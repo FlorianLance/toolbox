@@ -73,7 +73,7 @@ void Texture::copy_2d_data(int width, int height, const std_v1<geo::Pt3<unsigned
     m_hdr = false;
 
     m_data.resize(static_cast<size_t>(width*height*m_nbChannels)*4);
-    std::copy(std::begin(data), std::end(data), m_data.data());
+    std::copy(std::begin(data), std::end(data), reinterpret_cast<geo::Pt3<unsigned char>*>(m_data.data()));
 }
 
 void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<float> &data){
