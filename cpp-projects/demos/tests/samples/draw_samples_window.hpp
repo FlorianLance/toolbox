@@ -41,9 +41,13 @@ protected:
     // imgui
     ImPlotContext *imPlotContext = nullptr;
 
+    // drawers
+    int currentDrawer = 0;
+    std::vector<std::string> drawersName;
+
     // samples
-    int currentDemo = 0;
-    std::vector<std::string> demosName;
-    std::map<std::string, std::unique_ptr<Sample>> samples;
+    int currentSample = 0;
+    std::vector<std::string> samplesName;
+    std::vector<std::tuple<std::string, std::unique_ptr<Sample>>> samples;
 };
 }

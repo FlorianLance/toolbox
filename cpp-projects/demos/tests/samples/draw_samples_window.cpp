@@ -19,15 +19,11 @@ using namespace tool::graphics;
 
 bool DrawSampleWindow::init_shaders(){
 
-    std::vector<Shader::Type> VS_FS         = {Shader::Type::vertex,Shader::Type::fragment};
-    std::vector<Shader::Type> VS_FS_GS      = {Shader::Type::vertex,Shader::Type::fragment, Shader::Type::geometry};
-    std::vector<Shader::Type> VS_FS_TES_TCS = {Shader::Type::vertex,Shader::Type::fragment, Shader::Type::tess_eval, Shader::Type::tess_control};
+    const std::vector<Shader::Type> VS_FS         = {Shader::Type::vertex,Shader::Type::fragment};
+    const std::vector<Shader::Type> VS_FS_GS      = {Shader::Type::vertex,Shader::Type::fragment, Shader::Type::geometry};
+    const std::vector<Shader::Type> VS_FS_TES_TCS = {Shader::Type::vertex,Shader::Type::fragment, Shader::Type::tess_eval, Shader::Type::tess_control};
 
-    //    std_v1<std::pair<std::string, std::vector<Shader::Type>*>> shadersNames={
-    //        {"ch4/pbr",&VS_FS}
-    //    };
-
-    std_v1<std::pair<std::string, std::vector<Shader::Type>*>> shadersNames={
+    std_v1<std::pair<std::string, const std::vector<Shader::Type>*>> shadersNames={
         {"others/unicolor",&VS_FS},{"others/skybox",&VS_FS},{"others/screen-quad",&VS_FS}, // ch1
         {"ch2/1",&VS_FS}, // ch2
         {"ch3/diffuse",&VS_FS},{"ch3/phong",&VS_FS},{"ch3/twoside",&VS_FS},{"ch3/flat",&VS_FS},{"ch3/discard",&VS_FS}, // ch3
@@ -208,28 +204,27 @@ bool DrawSampleWindow::init_models(){
                 {"storm",   mesh + "/storm/source/Storm_Ani.fbx"},
             });
 
-
-        //        loaded = loaded && modelsM.add_model("crysis",  mesh + "crysis-nano-suit-2/scene.fbx");
-        //        loaded = loaded && modelsM.add_model("storm",   mesh + "storm-ani/source/Storm_Ani.fbx");
-        //        loaded = loaded && modelsM.add_model("pig",     mesh + "pig_triangulated.obj");
-        //        loaded = loaded && modelsM.add_model("dragon",  mesh + "dragon.obj");
-        //        loaded = loaded && modelsM.add_model("ogre",    mesh + "bs_ears.obj");
-        //        loaded = loaded && modelsM.add_model("spot",    mesh + "spot_triangulated.obj");
-        //        loaded = loaded && modelsM.add_model("fox",     mesh + "low-poly-fox-by-pixelmannen-animated/source/animations.FBX");
-        //        loaded = loaded && modelsM.add_model("bob",     mesh + "bob/boblampclean.md5mesh");
-        //        loaded = loaded && modelsM.add_model("bdragon", mesh + "assimp/bdragon/source/bdragon.fbx");
-        //        loaded = loaded && modelsM.add_model("alex",    mesh + "alex/alex_breahting_idle.fbx");
-
         Bench::stop();
         Bench::display();
     }
 
-    //    loaded = loaded && modelsM.add_model2("lord", mesh + "assimp/lord-inquisitor-servo-skull/source/lord.fbx");
-    //    loaded = loaded && modelsM.add_model2("phoenix", mesh + "assimp/phoenix-bird/source/fly.fbx");
-    //    loaded = loaded && modelsM.add_model2("ruby", mesh + "assimp/ruby-rose/source/rubyAnimated002.fbx");
-    //    loaded = loaded && modelsM.add_model2("sci", mesh + "assimp/sci-fi-girl-v02-walkcycle-test/source/girl_walkcycle_test01.fbx");
-    //    loaded = loaded && modelsM.add_model2("wolf", mesh + "assimp/wolf-with-animations/source/wolf.fbx"); // BAD FBX
-    //    loaded = loaded && modelsM.add_model("bob",  mesh + "low-poly-fox-by-pixelmannen-animated/source/animations.FBX");
+    // loaded = loaded && modelsM.add_model("crysis",  mesh + "crysis-nano-suit-2/scene.fbx");
+    // loaded = loaded && modelsM.add_model("storm",   mesh + "storm-ani/source/Storm_Ani.fbx");
+    // loaded = loaded && modelsM.add_model("pig",     mesh + "pig_triangulated.obj");
+    // loaded = loaded && modelsM.add_model("dragon",  mesh + "dragon.obj");
+    // loaded = loaded && modelsM.add_model("ogre",    mesh + "bs_ears.obj");
+    // loaded = loaded && modelsM.add_model("spot",    mesh + "spot_triangulated.obj");
+    // loaded = loaded && modelsM.add_model("fox",     mesh + "low-poly-fox-by-pixelmannen-animated/source/animations.FBX");
+    // loaded = loaded && modelsM.add_model("bob",     mesh + "bob/boblampclean.md5mesh");
+    // loaded = loaded && modelsM.add_model("bdragon", mesh + "assimp/bdragon/source/bdragon.fbx");
+    // loaded = loaded && modelsM.add_model("alex",    mesh + "alex/alex_breahting_idle.fbx");
+
+    // loaded = loaded && modelsM.add_model2("lord", mesh + "assimp/lord-inquisitor-servo-skull/source/lord.fbx");
+    // loaded = loaded && modelsM.add_model2("phoenix", mesh + "assimp/phoenix-bird/source/fly.fbx");
+    // loaded = loaded && modelsM.add_model2("ruby", mesh + "assimp/ruby-rose/source/rubyAnimated002.fbx");
+    // loaded = loaded && modelsM.add_model2("sci", mesh + "assimp/sci-fi-girl-v02-walkcycle-test/source/girl_walkcycle_test01.fbx");
+    // loaded = loaded && modelsM.add_model2("wolf", mesh + "assimp/wolf-with-animations/source/wolf.fbx"); // BAD FBX
+    // loaded = loaded && modelsM.add_model("bob",  mesh + "low-poly-fox-by-pixelmannen-animated/source/animations.FBX");
 
     return loaded;
 }
@@ -242,31 +237,33 @@ bool DrawSampleWindow::init_drawers(){
     auto tm = &Managers::textures;
     auto mm = &Managers::models;
 
-    // # procedural
+    std::vector<std::tuple<std::string, std::shared_ptr<gl::Drawer>>> drawers;
+
+    // # procedural    
     { // ## plane
-        auto plane = std::make_shared<gl::PlaneDrawer>();
+        auto plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(10,10);
-        drawerAdded &= dm->add_drawer("notext-plane-10x10-drawer", plane);
+        drawers.push_back({"notext-plane-10x10-drawer", plane});
 
-        plane = std::make_shared<gl::PlaneDrawer>();
+        plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(20,10);
-        drawerAdded &= dm->add_drawer("notext-plane-20x10-drawer", plane);
+        drawers.push_back({"notext-plane-20x10-drawer", plane});
 
-        plane = std::make_shared<gl::PlaneDrawer>();
+        plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(40,40);
-        drawerAdded &= dm->add_drawer("notext-plane-40x40-drawer", plane);
+        drawers.push_back({"notext-plane-40x40-drawer", plane});
 
-        plane = std::make_shared<gl::PlaneDrawer>();
+        plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("cement")});
-        drawerAdded &= dm->add_drawer("floor-drawer", plane);
+        drawers.push_back({"floor-drawer", plane});
 
         plane = std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("me_textile")});
-        drawerAdded &= dm->add_drawer("grid-floor-drawer", plane);
+        drawers.push_back({"grid-floor-drawer", plane});
 
         plane = std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("mybrick-color"), tm->id("mybrick-normal"), tm->id("mybrick-height")});
-        drawerAdded &= dm->add_drawer("multi-tex-plane-drawer", plane);
+        drawers.push_back({"multi-tex-plane-drawer", plane});
     }
 
     { // ## points
@@ -276,87 +273,99 @@ bool DrawSampleWindow::init_drawers(){
     { // ## torus
         auto torus = std::make_shared<gl::TorusDrawer>();
         torus->init();
-        drawerAdded &= dm->add_drawer("torus-drawer", torus);
+        drawers.push_back({"torus-drawer", torus});
     }
 
     { // cube
         auto cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {});
-        drawerAdded &= dm->add_drawer("cube-drawer", cube);
+        cube->scaleHint = 0.2f;
+        drawers.push_back({"cube-drawer", cube});
 
         cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("brick")});
-        drawerAdded &= dm->add_drawer("brick-cube-drawer", cube);
+        cube->scaleHint = 0.2f;
+        drawers.push_back({"brick-cube-drawer", cube});
 
-        cube = std::make_shared<gl::CubeDrawer>();
+        cube= std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("brick"), tm->id("moss")});
-        drawerAdded &= dm->add_drawer("brick-moss-cube-drawer", cube);
+        cube->scaleHint = 0.2f;
+        drawers.push_back({"brick-moss-cube-drawer", cube});
 
         cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("cement"), tm->id("moss")});
-        drawerAdded &= dm->add_drawer("cement-moss-cube-drawer", cube);
+        cube->scaleHint = 0.2f;
+        drawers.push_back({"cement-moss-cube-drawer", cube});
     }
 
-    auto screenQuad  = std::make_shared<gl::FullscreenQuadDrawer>();
-    screenQuad->init();
-    drawerAdded &= dm->add_drawer("screen-quad-drawer", screenQuad);
 
-    auto teapot = std::make_shared<gl::TeapotDrawer>();
+
+    auto screenQuad = std::make_shared<gl::FullscreenQuadDrawer>();
+    screenQuad->init();
+    drawers.push_back({"screen-quad-drawer", screenQuad});
+
+    auto teapot =std::make_shared<gl::TeapotDrawer>();
     teapot->init();
-    drawerAdded &= dm->add_drawer("teapot-drawer", teapot);
+    drawers.push_back({"teapot-drawer", teapot});
 
     auto sphere = std::make_shared<gl::SphereDrawer>();
     sphere->init(1.f, 20, 20);
-    drawerAdded &= dm->add_drawer("sphere-drawer", sphere);
+    drawers.push_back({"sphere-drawer", sphere});
 
     auto axes = std::make_shared<gl::AxesDrawer>();
     axes->init();
-    drawerAdded &= dm->add_drawer("axes-drawer", axes);
+    drawers.push_back({"axes-drawer", axes});
 
     auto frustum = std::make_shared<gl::FrustumDrawer>();
     frustum->init();
-    drawerAdded &= dm->add_drawer("frustum-drawer", frustum);
+    drawers.push_back({"frustum-drawer", frustum});
 
     auto skybowDrawer = std::make_shared<gl::SkyboxDrawer>();
     skybowDrawer->init(tm->id("grace"));
-    drawerAdded &= dm->add_drawer("skybox", skybowDrawer);
+    drawers.push_back({"skybox-drawer", skybowDrawer});
 
     // # loaded models
     auto model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("spot"),{tm->get_texture_info("spot_texture",{})});
-    drawerAdded &= dm->add_drawer("spot-drawer", model);
+    drawers.push_back({"spot-drawer", model});
 
+    model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("spot"),{});
-    drawerAdded &= dm->add_drawer("notext-spot-drawer", model);
+    drawers.push_back({"notext-spot-drawer", model});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("ogre"),{tm->get_texture_info("ogre_diffuse",{}), tm->get_texture_info("ogre_normalmap",{})});
-    drawerAdded &= dm->add_drawer("ogre-drawer", model);
+    drawers.push_back({"ogre-drawer", model});
 
-    model = std::make_shared<tool::gl::ModelDrawer>();
+    model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("pig"));
-    drawerAdded &= dm->add_drawer("pig-drawer", model);
+    drawers.push_back({"pig-drawer", model});
 
-    model = std::make_shared<tool::gl::ModelDrawer>();
+    model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("dragon"));
-    drawerAdded &= dm->add_drawer("dragon-drawer", model);
+    drawers.push_back({"dragon-drawer", model});
 
-    model = std::make_shared<tool::gl::ModelDrawer>();
+    model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("crysis"));
-    drawerAdded &= dm->add_drawer("crysis-drawer", model);
+    drawers.push_back({"crysis-drawer", model});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("alex"));
-    drawerAdded &= dm->add_drawer("alex-drawer", model);
+    drawers.push_back({"alex-drawer", model});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("storm"));
     model->update_animation(mm->get_model_ptr("storm")->animations[0].name, 0.f);
-    drawerAdded &= dm->add_drawer("storm-drawer", model);
+    drawers.push_back({"storm-drawer", model});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("rabbit"));
-    drawerAdded &= dm->add_drawer("rabbit-drawer", model);
+    drawers.push_back({"rabbit-drawer", model});
+
+    for(auto &drawer : drawers){
+        drawersName.push_back(std::get<0>(drawer));
+        drawerAdded &= dm->add_drawer(std::get<0>(drawer), std::get<1>(drawer));
+    }
 
     if(!drawerAdded){
         std::cerr << "[DrawSamples] Drawer not generated.\n";
@@ -367,53 +376,51 @@ bool DrawSampleWindow::init_drawers(){
 bool DrawSampleWindow::init_samples(){
 
     // ch3
-    samples["ch3Diffuse"]                   = std::make_unique<Ch3Diffuse>(&m_camera);
-    samples["ch3TwoSide"]                   = std::make_unique<Ch3TwoSide>(&m_camera);
-    samples["ch3Flat"]                      = std::make_unique<Ch3Flat>(&m_camera);
-    samples["ch3Discard"]                   = std::make_unique<Ch3Discard>(&m_camera);
-    samples["ch3Phong"]                     = std::make_unique<Ch3Phong>(&m_camera);
+    samples.emplace_back(std::make_tuple("ch3Diffuse", std::make_unique<Ch3Diffuse>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch3TwoSide",  std::make_unique<Ch3TwoSide>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch3Flat",     std::make_unique<Ch3Flat>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch3Discard", std::make_unique<Ch3Discard>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch3Phong",   std::make_unique<Ch3Phong>(&m_camera)));
     // ch4
-    samples["ch4PhongDirectionnalLight"]    = std::make_unique<Ch4PhongDirectionnalLight>(&m_camera);
-    samples["ch4PhongMultiLights"]          = std::make_unique<Ch4PhongMultiLights>(&m_camera);
-    samples["ch4PhongPerFragment"]          = std::make_unique<Ch4PhongPerFragment>(&m_camera);
-    samples["ch4Cartoon"]                   = std::make_unique<Ch4Cartoon>(&m_camera);
-    samples["ch4BlinnPhong"]                = std::make_unique<Ch4BlinnPhong>(&m_camera);
-    samples["ch4PBR"]                       = std::make_unique<Ch4PBR>(&m_camera);
+    samples.emplace_back(std::make_tuple("ch4PhongDirectionnalLight",  std::make_unique<Ch4PhongDirectionnalLight>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch4PhongMultiLights",  std::make_unique<Ch4PhongMultiLights>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch4PhongPerFragment",  std::make_unique<Ch4PhongPerFragment>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch4BlinnPhong",  std::make_unique<Ch4BlinnPhong>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch4Cartoon",  std::make_unique<Ch4Cartoon>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch4PBR",  std::make_unique<Ch4PBR>(&m_camera)));
     // ch5
-    samples["ch5SceneTexture"]              = std::make_unique<Ch5SceneTexture>(&m_camera);
-    samples["ch5SceneMutliTexture"]         = std::make_unique<Ch5SceneMutliTexture>(&m_camera);
-    samples["ch5DiscardPixels"]             = std::make_unique<Ch5DiscardPixels>(&m_camera);
-    samples["ch5NormalMap"]                 = std::make_unique<Ch5NormalMap>(&m_camera);
-    samples["ch5ParallaxMapping"]           = std::make_unique<Ch5ParallaxMapping>(&m_camera);
-    samples["ch5SteepParallaxMapping"]      = std::make_unique<Ch5SteepParallaxMapping>(&m_camera);
-    samples["ch5ReflectCubeMap"]            = std::make_unique<Ch5ReflectCubeMap>(&m_camera);
-    samples["ch5RefractCubeMap"]            = std::make_unique<Ch5RefractCubeMap>(&m_camera);
-    samples["ch5ProjectTexture"]            = std::make_unique<Ch5ProjectTexture>(&m_camera);
-    samples["ch5DiffuseImageBasedLighting"] = std::make_unique<Ch5DiffuseImageBasedLighting>(&m_camera);
-    samples["ch5SamplerObject"]             = std::make_unique<Ch5SamplerObject>(&m_camera);
-    samples["ch5RenderToTexture"]           = std::make_unique<Ch5RenderToTexture>(&m_camera);
-    samples["ch6EdgeDetectionFilter"]       = std::make_unique<Ch6EdgeDetectionFilter>(&m_camera);
-    samples["ch6GaussianFilter"]            = std::make_unique<Ch6GaussianFilter>(&m_camera);
-    samples["ch6HdrLightingToneMapping"]    = std::make_unique<Ch6HdrLightingToneMapping>(&m_camera);
-    samples["ch6HdrBloom"]                  = std::make_unique<Ch6HdrBloom>(&m_camera);
-    samples["ch6Deferred"]                  = std::make_unique<Ch6Deferred>(&m_camera);
-    samples["ch6SSAO"]                      = std::make_unique<Ch6SSAO>(&m_camera);
-    samples["ch6OIT"]                       = std::make_unique<Ch6OIT>(&m_camera);
-    samples["ch7BezCurve"]                  = std::make_unique<Ch7BezCurve>(&m_camera);
-    samples["ch7ShadeWire"]                 = std::make_unique<Ch7ShadeWire>(&m_camera);
-    samples["ch7ScenePointSprite"]          = std::make_unique<Ch7ScenePointSprite>(&m_camera);
-    samples["ch7Silhouette"]                = std::make_unique<Ch7Silhouette>(&m_camera);
-    samples["ch8ShadowMap"]                 = std::make_unique<Ch8ShadowMap>(&m_camera);
-    samples["ch8ShadowMap2"]                = std::make_unique<Ch8ShadowMap2>(&m_camera);
+    samples.emplace_back(std::make_tuple("ch5DiscardPixels",  std::make_unique<Ch5DiscardPixels>(&m_camera)));
 
-    demosName.reserve(samples.size());
-    for(const auto &sample : samples){
-        demosName.emplace_back(sample.first);
-    }
+    samples.emplace_back(std::make_tuple("ch5SceneTexture",  std::make_unique<Ch5SceneTexture>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5SceneMutliTexture",  std::make_unique<Ch5SceneMutliTexture>(&m_camera)));
 
-    for(auto &sample : samples){
-        std::cout << "init: " << sample.first << "\n";
-        sample.second->init();
+    samples.emplace_back(std::make_tuple("ch5NormalMap",  std::make_unique<Ch5NormalMap>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5ParallaxMapping",  std::make_unique<Ch5ParallaxMapping>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5SteepParallaxMapping",  std::make_unique<Ch5SteepParallaxMapping>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5ReflectCubeMap",  std::make_unique<Ch5ReflectCubeMap>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5RefractCubeMap",  std::make_unique<Ch5RefractCubeMap>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5ProjectTexture",  std::make_unique<Ch5ProjectTexture>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5DiffuseImageBasedLighting",  std::make_unique<Ch5DiffuseImageBasedLighting>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5SamplerObject",  std::make_unique<Ch5SamplerObject>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch5RenderToTexture",  std::make_unique<Ch5RenderToTexture>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6EdgeDetectionFilter",  std::make_unique<Ch6EdgeDetectionFilter>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6GaussianFilter",  std::make_unique<Ch6GaussianFilter>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6HdrLightingToneMapping",  std::make_unique<Ch6HdrLightingToneMapping>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6HdrBloom",  std::make_unique<Ch6HdrBloom>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6Deferred",  std::make_unique<Ch6Deferred>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6SSAO",  std::make_unique<Ch6SSAO>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch6OIT",  std::make_unique<Ch6OIT>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch7BezCurve",  std::make_unique<Ch7BezCurve>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch7ShadeWire",  std::make_unique<Ch7ShadeWire>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch7ScenePointSprite",  std::make_unique<Ch7ScenePointSprite>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch7Silhouette",  std::make_unique<Ch7Silhouette>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch8ShadowMap",  std::make_unique<Ch8ShadowMap>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch8ShadowMap2",  std::make_unique<Ch8ShadowMap2>(&m_camera)));
+
+    for(auto &demo : samples){
+        std::cout << "init: " << std::get<0>(demo) << "\n";
+        std::get<1>(demo)->init();
+        samplesName.push_back(std::get<0>(demo));
     }
 
     return true;
@@ -475,66 +482,27 @@ void DrawSampleWindow::update_gl(){
 
     gl::FBO::unbind();
 
-    if(samples.count(demosName[currentDemo]) != 0){
-        samples[demosName[currentDemo]]->draw();
+    if(currentSample < static_cast<int>(samples.size()) && currentDrawer < static_cast<int>(drawersName.size())){
+        std::get<1>(samples[currentSample])->draw(Managers::drawers.get_drawer_ptr(drawersName[currentDrawer]));
     }
 }
 
 void DrawSampleWindow::post_update(){
 
-    const auto elapsedSeconds = elapsed_secondes();
-
-    // update lights
-    float lightRotationSpeed = 1.5f;
-    float deltaT = elapsedSeconds * lightRotationSpeed;
-    auto ray= 20.f;
-    Sample::alpha = deltaT;
-    auto x = ray * cos(Sample::alpha);
-    auto z = ray * sin(Sample::alpha);
-    if(Sample::moveLight){
-        geo::Pt3f offset = {0,5.f,0.f};
-        Sample::mobileLightPos1 = geo::Pt4f{offset + geo::Pt3f{x,0,z}, 1.f};
-        offset = {0,4.f,1.f};
-        Sample::mobileLightPos2 = geo::Pt4f{offset + geo::Pt3f{-x,0,z}, 1.f};
-    }
-
-    auto mm = &Managers::models;
-    auto dm = &Managers::drawers;
-
-    // update animations
-    if(auto model = mm->get_model("storm").lock()){
-        if(auto drawer = dynamic_cast<gl::ModelDrawer*>(dm->get_drawer_ptr("storm-drawer")); drawer != nullptr){
-            drawer->update_animation(model->animations[0].name, elapsedSeconds);
-        }
-    }
-
     // update current sample
-    if(samples.count(demosName[currentDemo]) != 0){
-        samples[demosName[currentDemo]]->update(elapsedSeconds);
+    if(currentSample < static_cast<int>(samples.size())){
+        std::get<1>(samples[currentSample])->update(elapsed_secondes());
     }
 }
 
 void DrawSampleWindow::update_imgui(){
 
-    ImGui::Combo("Current sample:", &currentDemo, demosName);
-    ImGui::Checkbox("Move lights:", &Sample::moveLight);
-
-    if(samples.count(demosName[currentDemo]) != 0){
-        samples[demosName[currentDemo]]->update_imgui();
+    ImGui::Combo("Drawer", &currentDrawer, drawersName);
+    ImGui::Combo("Sample", &currentSample, samplesName);
+    if(currentSample < static_cast<int>(samples.size())){
+        std::get<1>(samples[currentSample])->update_imgui();
     }
 
-    if (ImGui::CollapsingHeader("Coords")){
-        ImGui::SliderFloat("scale", &graphics::Sample::scale, 0.01f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("x", &graphics::Sample::x, -10.0f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("y", &graphics::Sample::y, -10.0f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("z", &graphics::Sample::z, -10.0f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("x1", &graphics::Sample::x1, -10.0f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("y1", &graphics::Sample::y1, -10.0f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("z1", &graphics::Sample::z1, -10.0f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat("rx", &graphics::Sample::rx, -360.0f, 360.f, "ratio = %.2f");
-        ImGui::SliderFloat("ry", &graphics::Sample::ry, -360.0f, 360.f, "ratio = %.2f");
-        ImGui::SliderFloat("rz", &graphics::Sample::rz, -360.0f, 360.f, "ratio = %.2f");
-    }
 
     //    if (ImGui::CollapsingHeader("Scatter Plots")) { // crash
     //        srand(0);
@@ -577,7 +545,7 @@ void DrawSampleWindow::update_imgui(){
 
 void DrawSampleWindow::resize_windows(){
     // resize current sample
-    if(samples.count(demosName[currentDemo]) != 0){
-        samples[demosName[currentDemo]]->update_screen_size();
+    if(currentSample < static_cast<int>(samples.size())){
+        std::get<1>(samples[currentSample])->update_screen_size();
     }
 }

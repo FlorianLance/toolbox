@@ -94,7 +94,7 @@ protected:
     // camera
     virtual void update_camera_with_mouse_button_event(sf::Event mouseButtonEvent);
     virtual void update_camera_with_keyboardpress_event(sf::Event keyPressEvent);
-    virtual void update_camerate_with_mouse_scroll_event(sf::Event mouseScrollEvent);
+    virtual void update_camera_with_mouse_scroll_event(sf::Event mouseScrollEvent);
     virtual void update_camera_with_mouse_moved_event(sf::Event mouseMovedEvent);
 
 private:

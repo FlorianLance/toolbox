@@ -31,32 +31,32 @@ uniform int id = 0;
 
 const float PI = 3.1415926535897932384626433832795;
 float ggxDistribution( float nDotH ) {
-    float alpha2 = materials[id].Rough * materials[id].Rough * materials[id].Rough * materials[id].Rough;
+    float alpha2 = materials[id%5].Rough * materials[id%5].Rough * materials[id%5].Rough * materials[id%5].Rough;
     float d = (nDotH * nDotH) * (alpha2 - 1) + 1;
     return alpha2 / (PI * d * d);
 }
 
 float geomSmith( float dotProd ) {
-    float k = (materials[id].Rough + 1.0) * (materials[id].Rough + 1.0) / 8.0;
+    float k = (materials[id%5].Rough + 1.0) * (materials[id%5].Rough + 1.0) / 8.0;
     float denom = dotProd * (1 - k) + k;
     return 1.0 / denom;
 }
 
 vec3 schlickFresnel( float lDotH ) {
     vec3 f0 = vec3(0.04);
-//    if( materials[id].Metal  > 0.5) {
-//        f0 = materials[id].Color.rgb;
+//    if( materials[id%5].Metal  > 0.5) {
+//        f0 = materials[id%5].Color.rgb;
 //    }
-    f0 = materials[id].Metal * materials[id].Color.rgb;
+    f0 = materials[id%5].Metal * materials[id%5].Color.rgb;
     return f0 + (1 - f0) * pow(1.0 - lDotH, 5);
 }
 
 vec3 microfacetModel( int lightIdx, vec3 position, vec3 n ) {
     vec3 diffuseBrdf = vec3(0.0);  // Metallic
-//    if( materials[id].Metal  < 0.5) {
-//        diffuseBrdf = materials[id].Color.rgb;
+//    if( materials[id%5].Metal  < 0.5) {
+//        diffuseBrdf = materials[id%5].Color.rgb;
 //    }
-    diffuseBrdf = (1 - materials[id].Metal) * materials[id].Color.rgb;
+    diffuseBrdf = (1 - materials[id%5].Metal) * materials[id%5].Color.rgb;
 
     vec3 l = vec3(0.0),
     lightI = lights[lightIdx].La;

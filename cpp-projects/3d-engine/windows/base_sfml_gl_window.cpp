@@ -213,19 +213,27 @@ void BaseSfmlGlWindow::base_resize_windows(sf::Event::SizeEvent size){
 }
 
 void BaseSfmlGlWindow::mouse_button_event(sf::Event mouseButtonEvent){
-    update_camera_with_mouse_button_event(mouseButtonEvent);
+    if(!imguiHover){
+        update_camera_with_mouse_button_event(mouseButtonEvent);
+    }
 }
 
 void BaseSfmlGlWindow::mouse_moved_event(sf::Event mouseMovedEvent){
-    update_camera_with_mouse_moved_event(mouseMovedEvent);
+    if(!imguiHover){
+        update_camera_with_mouse_moved_event(mouseMovedEvent);
+    }
 }
 
 void BaseSfmlGlWindow::mouse_scroll_event(sf::Event mouseScrollEvent){
-    update_camerate_with_mouse_scroll_event(mouseScrollEvent);
+    if(!imguiHover){
+        update_camera_with_mouse_scroll_event(mouseScrollEvent);
+    }
 }
 
 void BaseSfmlGlWindow::keyboard_keypress_event(sf::Event keyPressEvent){
-    update_camera_with_keyboardpress_event(keyPressEvent);
+    if(!imguiHover){
+        update_camera_with_keyboardpress_event(keyPressEvent);
+    }
 }
 
 void BaseSfmlGlWindow::update_camera_with_mouse_button_event(sf::Event mouseButtonEvent){
@@ -299,15 +307,12 @@ void BaseSfmlGlWindow::update_camera_with_keyboardpress_event(sf::Event keyPress
     }
 }
 
-void BaseSfmlGlWindow::update_camerate_with_mouse_scroll_event(sf::Event mouseScrollEvent){
+void BaseSfmlGlWindow::update_camera_with_mouse_scroll_event(sf::Event mouseScrollEvent){
+
     m_camera.move_front(static_cast<double>(mouseScrollEvent.mouseWheelScroll.delta) *0.05);
 }
 
 void BaseSfmlGlWindow::update_camera_with_mouse_moved_event(sf::Event mouseMovedEvent){
-
-    if(imguiHover){
-        return;
-    }
 
     if(lastX < 0.){
         lastX = mouseMovedEvent.mouseMove.x;

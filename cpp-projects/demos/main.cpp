@@ -34,8 +34,8 @@
 int main(int argc, char *argv[]){
 
     std::cout << "path ; " << std::filesystem::current_path().string() << "\n";
-     tool::graphics::BiopacControlWindow scene("Biopac controller", tool::geo::Pt2<unsigned int>{1600,1200});
-//    tool::graphics::DrawSampleWindow scene("Samples", tool::geo::Pt2<unsigned int>{1600,1200});
+//     tool::graphics::BiopacControlWindow scene("Biopac controller", tool::geo::Pt2<unsigned int>{1600,1200});
+    tool::graphics::DrawSampleWindow scene("Samples", tool::geo::Pt2<unsigned int>{1600,1200});
     scene.init();
     scene.start();
 

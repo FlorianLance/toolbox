@@ -40,6 +40,9 @@ namespace tool::gl {
 class Drawer{
 
 public:
+
+    float scaleHint = 1;
+
     virtual void draw(gl::ShaderProgram *shader = nullptr){
         static_cast<void>(shader);
         if(drawableObject != nullptr){

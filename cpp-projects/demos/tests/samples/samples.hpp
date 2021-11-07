@@ -83,15 +83,15 @@ struct Sample{
         texturesM(&Managers::textures),
         modelsM(&Managers::models),
         drawersM(&Managers::drawers)
-    {
-
-    }
+    {}
 
     virtual void init(){}
     virtual void update_screen_size(){}
-    virtual void update(float elapsedSeconds){static_cast<void>(elapsedSeconds);}    
-    virtual void draw(){}
-    virtual void update_imgui(){}
+    virtual void update(float elapsedSeconds);    
+    virtual void draw(gl::Drawer *drawer = nullptr);
+    virtual void update_imgui();
+
+    void draw_nb(gl::ShaderProgram *shader, gl::Drawer *drawer);
 
     void update_matrices();
     void update_matrices(geo::Mat4d view, geo::Mat4d proj);
@@ -105,6 +105,15 @@ struct Sample{
 
 public:
 
+    // gui parameters
+    static inline bool drawFloor  = true;
+    static inline bool drawSkybox = true;
+    static inline bool drawLights = true;
+
+    static inline geo::Vec3f light1A = {0.4f, 0.4f, 0.4f};
+    static inline geo::Vec3f light1D = {1.0f, 1.0f, 1.0f};
+    static inline geo::Vec3f light1S = {1.0f, 1.0f, 1.0f};
+
     static inline float alpha = 0.f;
 
     // lights
@@ -114,6 +123,8 @@ public:
     static inline geo::Pt4f mobileLightPos2 = geo::Pt4f(4.0f, 4.0f, 4.0f, 1.0f);
 
     static inline float gamma = 2.2f;
+
+    geo::Pt3<int> nb = {1,1,1};
 
     static inline float x = 0.f;
     static inline float y = 0.f;
@@ -136,6 +147,9 @@ protected:
     CameraMatrices camM;
     geo::Mat4d model;
 
+    geo::Pt3f modelPos;
+    geo::Pt3f modelRot;
+
     // managers
     ShadersManager  *shadersM   = nullptr;
     TexturesManager *texturesM  = nullptr;
@@ -143,98 +157,106 @@ protected:
     DrawersManager  *drawersM   = nullptr;
 
     // UBO
-    graphics::LightInfo lInfo;
+    graphics::LightInfo lInfo = {
+        {},
+        {0.4f, 0.4f, 0.4f},
+        {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f}
+    };
     gl::LightUBO lightUBO;
-    graphics::MaterialInfo mInfo;
+    graphics::MaterialInfo mInfo = {
+        {0.5f, 0.5f, 0.5f},
+        {0.5f, 0.5f, 0.5f},
+        {0.8f, 0.8f, 0.8f},
+        10.0f
+    };
     gl::MaterialUBO materialUBO;
 };
 
-struct Ch3Phong : public Sample{
-    Ch3Phong(Camera *cam) : Sample(cam){}
-    void init() final override{}
-    void draw() final override;
-};
-
+// ############################################## CH3
 struct Ch3Diffuse : public Sample{
     Ch3Diffuse(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer) final override;
     void update_imgui() final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
-
-struct Ch3TwoSide : public Sample{
-    Ch3TwoSide(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw() final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
-
-
 struct Ch3Flat : public Sample{
     Ch3Flat(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
-
 struct Ch3Discard : public Sample{
     Ch3Discard(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
 private:
     gl::ShaderProgram *shader = nullptr;
+    float discardV = 0.2f;
 };
-
-struct Ch4PhongMultiLights : public Sample{
-    Ch4PhongMultiLights(Camera *cam) : Sample(cam){}
+struct Ch3TwoSide : public Sample{
+    Ch3TwoSide(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
-
+struct Ch3Phong : public Sample{
+    Ch3Phong(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
+// ############################################## CH4
 struct Ch4PhongDirectionnalLight : public Sample{
     Ch4PhongDirectionnalLight(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
-
-struct Ch4PhongPerFragment : public Sample{
-    Ch4PhongPerFragment(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw() final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
-
-struct Ch4Cartoon : public Sample{
-    Ch4Cartoon(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw() final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
-
 struct Ch4BlinnPhong : public Sample{
     Ch4BlinnPhong(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
-
+struct Ch4Cartoon : public Sample{
+    Ch4Cartoon(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+    int levels = 5;
+};
+struct Ch4PhongMultiLights : public Sample{
+    Ch4PhongMultiLights(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
+struct Ch4PhongPerFragment : public Sample{
+    Ch4PhongPerFragment(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
 struct Ch4PBR : public Sample{
     Ch4PBR(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
+    gl::ShaderProgram *shader = nullptr;
     float rough = 0.5f;
     float metal = 0.f;
     std_v1<Light2> lights;
@@ -242,22 +264,34 @@ private:
     gl::UBO lightsB;
     gl::UBO materialsB;
 };
-
-
+// ############################################## CH5
 struct Ch5DiscardPixels : public Sample{
     Ch5DiscardPixels(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float decayFactor = 0.f;
     gl::ShaderProgram *shader = nullptr;
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct Ch5ProjectTexture : public Sample{
     Ch5ProjectTexture(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
@@ -266,7 +300,7 @@ private:
 struct Ch5SceneTexture : public Sample{
     Ch5SceneTexture(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 
@@ -275,7 +309,7 @@ private:
 struct Ch5SceneMutliTexture : public Sample{
     Ch5SceneMutliTexture(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
@@ -284,7 +318,7 @@ private:
 struct Ch5NormalMap : public Sample{
     Ch5NormalMap(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
@@ -292,7 +326,7 @@ private:
 struct Ch5ParallaxMapping : public Sample{
     Ch5ParallaxMapping(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
@@ -300,7 +334,7 @@ private:
 struct Ch5SteepParallaxMapping : public Sample{
     Ch5SteepParallaxMapping(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float bumpScale = 0.03f;
@@ -309,7 +343,7 @@ private:
 
 struct Ch5RefractCubeMap : public Sample{
     Ch5RefractCubeMap(Camera *cam) : Sample(cam){}
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float reflectFactor = 0.1f;
@@ -318,14 +352,14 @@ private:
 
 struct Ch5ReflectCubeMap : public Sample{
     Ch5ReflectCubeMap(Camera *cam) : Sample(cam){}
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 public:
     float reflectFactor = 0.1f;
 };
 
 struct Ch5DiffuseImageBasedLighting : public Sample{
     Ch5DiffuseImageBasedLighting(Camera *cam) : Sample(cam){}
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float reflectFactor = 0.1f;
@@ -336,7 +370,7 @@ private:
 struct Ch5SamplerObject : public Sample{
     Ch5SamplerObject(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::Sampler linearSampler;
     gl::Sampler nearestSampler;
@@ -346,10 +380,8 @@ struct Ch5RenderToTexture: public Sample{
     Ch5RenderToTexture(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
-    void update(float elapsedSeconds)final override{
-        angle = (elapsedSeconds * 10.f);
-    }
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update(float elapsedSeconds)final override;
 public:
     float angle = 0.f;
 private:
@@ -363,7 +395,7 @@ struct Ch6EdgeDetectionFilter: public Sample{
     Ch6EdgeDetectionFilter(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float edgeThreshold = 0.05f;
@@ -377,7 +409,7 @@ struct Ch6GaussianFilter : public Sample{
     Ch6GaussianFilter(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float sigma2 = 4.0f;
@@ -394,7 +426,7 @@ struct Ch6HdrLightingToneMapping : public Sample{
     Ch6HdrLightingToneMapping(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     bool doToneMap = true;
@@ -410,7 +442,7 @@ struct Ch6HdrBloom : public Sample{
     Ch6HdrBloom(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float luminanceThreshold = 1.7f;
@@ -438,7 +470,7 @@ struct Ch6Deferred : public Sample{
     Ch6Deferred(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;    
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::FBO deferredFBO;
     gl::RBO depthBuf;
@@ -454,7 +486,7 @@ struct Ch6SSAO : public Sample{
     Ch6SSAO(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float radius = 0.55f;
@@ -479,7 +511,7 @@ struct Ch6OIT : public Sample{
     Ch6OIT(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 public:
     float angle, tPrev, rotSpeed;
 private:
@@ -494,7 +526,7 @@ private:
 struct Ch7BezCurve : public Sample{
     Ch7BezCurve(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     int numSegments = 50;
@@ -508,7 +540,7 @@ struct Ch7ShadeWire : public Sample{
     Ch7ShadeWire(Camera *cam) : Sample(cam){}
     void init() final override;
     void update_screen_size() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float lineWidth = 0.75f;
@@ -518,7 +550,7 @@ private:
 struct Ch7ScenePointSprite : public Sample{
     Ch7ScenePointSprite(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
     float sizeSprite = 0.15f;
@@ -531,7 +563,7 @@ private:
 struct Ch7Silhouette : public Sample{
     Ch7Silhouette(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     gl::ShaderProgram *shader = nullptr;
 };
@@ -539,7 +571,7 @@ private:
 struct Ch8ShadowMap : public Sample{
     Ch8ShadowMap(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
 private:
     void spit_out_depth_buffer();
     void draw_scene();
@@ -559,7 +591,7 @@ private:
 struct Ch8ShadowMap2 : public Sample{
     Ch8ShadowMap2(Camera *cam) : Sample(cam){}
     void init() final override;
-    void draw() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
     void render_scene(gl::ShaderProgram *shader);
     void update_imgui() final override;
 private:

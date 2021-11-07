@@ -17,7 +17,7 @@ layout (binding = 1) uniform MaterialInfo {
   float Shininess;    // Specular shininess factor
 } Material;
 
-const int levels = 5;
+uniform int levels = 5;
 const float scaleFactor = 1.0 / levels;
 
 layout( location = 0 ) out vec4 FragColor;
