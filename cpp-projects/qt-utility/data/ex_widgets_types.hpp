@@ -46,7 +46,7 @@ namespace tool::ex {
 
     using TUiType = std::tuple<
         UiType,                 Name,                    Tooltip,                          Generative>;
-    static constexpr TupleArray<31, TUiType> uiTypes{{
+    static constexpr TupleArray<32, TUiType> uiTypes{{
         TUiType
         {UiT::Resource,         "Resource"sv,            "get_resource"sv,                 true},
         {UiT::ResourcesList,    "Resources list"sv,      "get_resource_list"sv,            true},
@@ -79,6 +79,7 @@ namespace tool::ex {
         {UiT::Camera_position,  "Camera position"sv,     "string"sv,                       false},
         {UiT::Tab,              "Tab"sv,                 "string"sv,                       false},
         {UiT::NonUI,            "No UI"sv,               ""sv,                             false},
+        {UiT::Time,             "Time"sv,                ""sv,                             false}
     }};
 
     constexpr std::optional<UiType> get_ui_type(Name name) {
