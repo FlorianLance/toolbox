@@ -79,6 +79,11 @@ void Texture2D::init_hdr_render(GLsizei width, GLsizei height, int nbChannels){
     TBO::init_data_float_32_bits(width, height, 1, nbChannels);
 }
 
+void Texture2D::init_image_8ui(GLsizei width, GLsizei height, int nbChannels){
+    TBO::generate();
+    TBO::init_data_unsigned_8_bits(width, height, 1, nbChannels);
+}
+
 void Texture2D::init_image_32ui(GLsizei width, GLsizei height, int nbChannels){
     TBO::generate();
     TBO::init_data_unsigned_32_bits(width, height, 1, nbChannels);
@@ -89,10 +94,13 @@ void Texture2D::init_image_32f(GLsizei width, GLsizei height, int nbChannels){
     TBO::init_data_float_32_bits(width, height, 1, nbChannels);
 }
 
+void Texture2D::update_image_8ui(GLubyte *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset){
+    TBO::update_data_unsigned_8_bits(data, width, height, 1, xOffset, yOffset, 0);
+}
+
 void Texture2D::update_image_32ui(GLuint *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset){
     TBO::update_data_unsigned_32_bits(data, width, height, 1, xOffset, yOffset, 0);
 }
-
 
 void Texture2D::update_image_32f(GLfloat *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset){
     TBO::update_data_float_32_bits(data, width, height, 1, xOffset, yOffset, 0);

@@ -83,6 +83,7 @@ void ExCodeEditorW::update_from_arg(const Arg &arg){
 //            qDebug() << "ExCodeEditorW Invalid genrator.";
 //        }
     }else{
+
         w->setPlainText(arg.to_string_value());
     }
 

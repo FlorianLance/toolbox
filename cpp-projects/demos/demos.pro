@@ -72,6 +72,7 @@ INCLUDEPATH += \
     $$ASSIMP_INCLUDES\
     $$GLM_INCLUDES\    
     $$BIOPAC_INCLUDES\
+    $$SIGNALS_INCLUDES\
 
 ####################################### LIBRAIRIES
 

@@ -12,7 +12,7 @@ uniform struct LightInfo{
 } lights[5];
 
 
-layout (binding = 1) uniform MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
   vec3 Ka;            // Ambient reflectivity
   vec3 Kd;            // Diffuse reflectivity
   vec3 Ks;            // Specular reflectivity

@@ -15,17 +15,17 @@ class DrawSampleWindow : public BaseSfmlGlWindow{
 
 public:
 
-    DrawSampleWindow(std::string title, geo::Pt2<unsigned int> size, std::optional<sf::ContextSettings> context = std::nullopt) :
-          BaseSfmlGlWindow(title, size, context){}
+    DrawSampleWindow(std::string title, geo::Pt2<unsigned int> size, std::optional<sf::ContextSettings> context = std::nullopt);
 
 private:
 
+    void update() override;
+
     // gl
     bool initialize_gl() override;
-    void update_gl() override;
-    void post_update() override;
+    void draw_gl() override;    
     // imgui
-    void update_imgui() override;
+    void draw_imgui() override;
     // # window
     void resize_windows() override;
 

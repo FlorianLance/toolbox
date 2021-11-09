@@ -151,6 +151,7 @@ protected:
     void load_data_float_16_bits(GLfloat *data, GLsizei width, GLsizei height, GLsizei depth, int nbChannels);
     void load_data_float_32_bits(GLfloat *data, GLsizei width, GLsizei height, GLsizei depth, int nbChannels);
     // update
+    void update_data_unsigned_8_bits(GLubyte *data, GLsizei width, GLsizei height, GLsizei depth, GLint xOffset, GLint yOffset, GLint zOffset);
     void update_data_unsigned_32_bits(GLuint *data, GLsizei width, GLsizei height, GLsizei depth, GLint xOffset, GLint yOffset, GLint zOffset);
     void update_data_float_32_bits(GLfloat *data, GLsizei width, GLsizei height, GLsizei depth, GLint xOffset, GLint yOffset, GLint zOffset);
 

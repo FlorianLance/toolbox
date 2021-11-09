@@ -152,7 +152,7 @@ void ModelDrawer::init(const std::weak_ptr<graphics::Model<float>> &model){
             auto modelDrawer = std::make_unique<ModelDrawer>();
             modelDrawer->init(modelChild);
             children.emplace_back(std::move(modelDrawer));
-        }
+        }                
     }
 }
 

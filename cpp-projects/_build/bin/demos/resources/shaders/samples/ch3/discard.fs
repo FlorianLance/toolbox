@@ -5,11 +5,11 @@ in vec2 TexCoord;
 layout( location = 0 ) out vec4 FragColor;
 
 uniform float discardV = 0.2;
+uniform float scaleV = 15.0;
 
 void main() {    
 
-    const float scale = 15.0;
-    bvec2 toDiscard = greaterThan(fract(TexCoord * scale), vec2(discardV,discardV));
+    bvec2 toDiscard = greaterThan(fract(TexCoord * scaleV), vec2(discardV,discardV));
 
     if(all(toDiscard)){
         discard;

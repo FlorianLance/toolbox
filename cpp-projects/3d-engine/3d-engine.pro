@@ -63,17 +63,17 @@ CONFIG -= qt
 
 ####################################### INCLUDES
 INCLUDEPATH += \
-    # thirdparty
-    $$GLEW_INCLUDES\
-    $$SFML_INCLUDES\
-    $$ASSIMP_INCLUDES\
     # base
     $$BASE_INCLUDES\
     # opengl-utility
     $$OPENGL_UTILITY_INCLUDES\
     # local
     $$3D_ENGINE_INCLUDES"/imgui"\
-
+    # thirdparty
+    $$GLEW_INCLUDES\
+    $$SFML_INCLUDES\
+    $$ASSIMP_INCLUDES\
+    $$SIGNALS_INCLUDES\
 
 ####################################### LIBRAIRIES
 

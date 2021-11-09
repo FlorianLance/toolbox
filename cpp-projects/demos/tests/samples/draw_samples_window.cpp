@@ -13,9 +13,17 @@
 // local
 #include "imgui/imgui_utility.hpp"
 #include "shaders_tests.hpp"
+#include "utility/logger.hpp"
 
 using namespace tool::gl;
 using namespace tool::graphics;
+
+DrawSampleWindow::DrawSampleWindow(std::string title, geo::Pt2<unsigned int> size, std::optional<sf::ContextSettings> context) :
+      BaseSfmlGlWindow(title, size, context){
+
+    Logger::init("./", "draw_sample.html");
+}
+
 
 bool DrawSampleWindow::init_shaders(){
 
@@ -75,13 +83,12 @@ bool DrawSampleWindow::init_shaders(){
             }
         }
 
-        std::cout << shaderName.first << "\n";
         if(!Managers::shaders.add_shader(shaderName.first, paths)){
-            std::cerr << "Fail to load all shaders.\n";
+            Logger::error("Fail to load all shaders.\n");
             Managers::shaders.unbind();
             return false;
         }
-        std::cout << "Shader: " << shaderName.first << " loaded. \n";
+        Logger::message(std::format("Shader [{}] loaded.\n", shaderName.first));
     }
 
     Managers::shaders.add_shader("colored-cloud", std::move(gl::ColoredCloudShader()));
@@ -125,25 +132,25 @@ bool DrawSampleWindow::init_textures(){
         {"hardwood_diffuse",  "hardwood2_diffuse.jpg"},
     };
 
-    std::cout << "# Load textures from path " << path << "\n";
+    Logger::message(std::format("# Load textures from path [{}].\n", path));
     if(!Managers::textures.load_textures_from_directory(path, texturesInfo)){
         return false;
     }
 
     // cubemaps
-    std::cout << "# Load cubemaps\n";
+    Logger::message("# Load cubemaps\n");
     bool loaded = true;
     loaded &= Managers::textures.load_cube_map(path + "/pisa/pisa_", {"posx.png","negx.png","posy.png","negy.png","posz.png","negz.png"},  "pisa", false);
     loaded &= Managers::textures.load_cube_map(path + "/grace/grace_",{"posx.hdr","negx.hdr","posy.hdr","negy.hdr","posz.hdr","negz.hdr"}, "grace", false);
     loaded &= Managers::textures.load_cube_map(path + "/grace-diffuse/grace-diffuse_",{"posx.hdr","negx.hdr","posy.hdr","negy.hdr","posz.hdr","negz.hdr"}, "grace-diffuse", false);
     if(!loaded){
-        std::cerr << "Error during cubemaps loading.\n";
+        Logger::error("Error during cubemaps loading.\n");
         return false;
     }
 
     // tbo
     // # texture 2d
-    std::cout << "# Generate texture 2d TBO\n";
+    Logger::message("# Generate texture 2d TBO\n");
     loaded = true;
     loaded &= Managers::textures.generate_texture2d_tbo("me_textile",      "me_textile");
     loaded &= Managers::textures.generate_texture2d_tbo("cement",          "cement");
@@ -159,21 +166,21 @@ bool DrawSampleWindow::init_textures(){
     loaded &= Managers::textures.generate_texture2d_tbo("flower",          "flower");
 
     if(!loaded){
-        std::cerr << "Error during texture 2d TBO generation.\n";
+        Logger::error("Error during texture 2d TBO generation.\n");
         return false;
     }
     // # cubemaps
-    std::cout << "# Generate cubemaps TBO\n";
+    Logger::message("# Generate cubemaps TBO\n");
     loaded = true;
     loaded &= Managers::textures.generate_cubemap_tbo("grace-diffuse", "grace-diffuse");
     loaded &= Managers::textures.generate_cubemap_tbo("grace", "grace");
     if(!loaded){
-        std::cerr << "Error during cubemap TBO generation.\n";
+        Logger::error("Error during cubemap TBO generation.\n");
         return false;
     }
 
     // others
-    std::cout << "# Other\n";
+    Logger::message("# Other\n");
     loaded &= Managers::textures.generate_texture2d_tbo("flower-projected",  "flower");
 
     return true;
@@ -237,33 +244,33 @@ bool DrawSampleWindow::init_drawers(){
     auto tm = &Managers::textures;
     auto mm = &Managers::models;
 
-    std::vector<std::tuple<std::string, std::shared_ptr<gl::Drawer>>> drawers;
+    std::vector<std::tuple<std::string, std::shared_ptr<gl::Drawer>, bool>> drawers;
 
     // # procedural    
     { // ## plane
         auto plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(10,10);
-        drawers.push_back({"notext-plane-10x10-drawer", plane});
+        drawers.push_back({"notext-plane-10x10-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(20,10);
-        drawers.push_back({"notext-plane-20x10-drawer", plane});
+        drawers.push_back({"notext-plane-20x10-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(40,40);
-        drawers.push_back({"notext-plane-40x40-drawer", plane});
+        drawers.push_back({"notext-plane-40x40-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("cement")});
-        drawers.push_back({"floor-drawer", plane});
+        drawers.push_back({"floor-drawer", plane, false});
 
         plane = std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("me_textile")});
-        drawers.push_back({"grid-floor-drawer", plane});
+        drawers.push_back({"grid-floor-drawer", plane, false});
 
         plane = std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("mybrick-color"), tm->id("mybrick-normal"), tm->id("mybrick-height")});
-        drawers.push_back({"multi-tex-plane-drawer", plane});
+        drawers.push_back({"multi-tex-plane-drawer", plane, false});
     }
 
     { // ## points
@@ -273,102 +280,112 @@ bool DrawSampleWindow::init_drawers(){
     { // ## torus
         auto torus = std::make_shared<gl::TorusDrawer>();
         torus->init();
-        drawers.push_back({"torus-drawer", torus});
+        torus->scaleHint = 0.5f;
+        drawers.push_back({"torus-drawer", torus, true});
     }
 
     { // cube
         auto cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {});
-        cube->scaleHint = 0.2f;
-        drawers.push_back({"cube-drawer", cube});
+        cube->scaleHint = 0.3f;
+        drawers.push_back({"cube-drawer", cube, true});
 
         cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("brick")});
-        cube->scaleHint = 0.2f;
-        drawers.push_back({"brick-cube-drawer", cube});
+        cube->scaleHint = 0.3f;
+        drawers.push_back({"brick-cube-drawer", cube, false});
 
         cube= std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("brick"), tm->id("moss")});
-        cube->scaleHint = 0.2f;
-        drawers.push_back({"brick-moss-cube-drawer", cube});
+        cube->scaleHint = 0.3f;
+        drawers.push_back({"brick-moss-cube-drawer", cube, false});
 
         cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("cement"), tm->id("moss")});
-        cube->scaleHint = 0.2f;
-        drawers.push_back({"cement-moss-cube-drawer", cube});
+        cube->scaleHint = 0.3f;
+        drawers.push_back({"cement-moss-cube-drawer", cube, false});
     }
 
 
 
     auto screenQuad = std::make_shared<gl::FullscreenQuadDrawer>();
     screenQuad->init();
-    drawers.push_back({"screen-quad-drawer", screenQuad});
+    drawers.push_back({"screen-quad-drawer", screenQuad, false});
 
     auto teapot =std::make_shared<gl::TeapotDrawer>();
     teapot->init();
-    drawers.push_back({"teapot-drawer", teapot});
+    teapot->scaleHint = 0.3f;
+    drawers.push_back({"teapot-drawer", teapot, true});
 
     auto sphere = std::make_shared<gl::SphereDrawer>();
     sphere->init(1.f, 20, 20);
-    drawers.push_back({"sphere-drawer", sphere});
+    sphere->scaleHint = 0.7f;
+    drawers.push_back({"sphere-drawer", sphere, true});
 
     auto axes = std::make_shared<gl::AxesDrawer>();
     axes->init();
-    drawers.push_back({"axes-drawer", axes});
+    drawers.push_back({"axes-drawer", axes, false});
 
     auto frustum = std::make_shared<gl::FrustumDrawer>();
     frustum->init();
-    drawers.push_back({"frustum-drawer", frustum});
+    drawers.push_back({"frustum-drawer", frustum, false});
 
     auto skybowDrawer = std::make_shared<gl::SkyboxDrawer>();
     skybowDrawer->init(tm->id("grace"));
-    drawers.push_back({"skybox-drawer", skybowDrawer});
+    drawers.push_back({"skybox-drawer", skybowDrawer, false});
 
     // # loaded models
     auto model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("spot"),{tm->get_texture_info("spot_texture",{})});
-    drawers.push_back({"spot-drawer", model});
+    drawers.push_back({"spot-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("spot"),{});
-    drawers.push_back({"notext-spot-drawer", model});
+    drawers.push_back({"notext-spot-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("ogre"),{tm->get_texture_info("ogre_diffuse",{}), tm->get_texture_info("ogre_normalmap",{})});
-    drawers.push_back({"ogre-drawer", model});
+    drawers.push_back({"ogre-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("pig"));
-    drawers.push_back({"pig-drawer", model});
+    drawers.push_back({"pig-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("dragon"));
-    drawers.push_back({"dragon-drawer", model});
+    model->scaleHint = 2.f;
+    drawers.push_back({"dragon-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("crysis"));
-    drawers.push_back({"crysis-drawer", model});
+    model->scaleHint = 0.1f;
+    drawers.push_back({"crysis-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("alex"));
-    drawers.push_back({"alex-drawer", model});
+    model->scaleHint = 0.01f;
+    drawers.push_back({"alex-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("storm"));
+    model->scaleHint = 0.01f;
     model->update_animation(mm->get_model_ptr("storm")->animations[0].name, 0.f);
-    drawers.push_back({"storm-drawer", model});
+    drawers.push_back({"storm-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("rabbit"));
-    drawers.push_back({"rabbit-drawer", model});
+    model->scaleHint = 3.f;
+    drawers.push_back({"rabbit-drawer", model, true});
 
     for(auto &drawer : drawers){
-        drawersName.push_back(std::get<0>(drawer));
+        if(std::get<2>(drawer)){
+            drawersName.push_back(std::get<0>(drawer));
+        }
         drawerAdded &= dm->add_drawer(std::get<0>(drawer), std::get<1>(drawer));
     }
 
     if(!drawerAdded){
-        std::cerr << "[DrawSamples] Drawer not generated.\n";
+        Logger::error("[DrawSamples] Drawer not generated.\n");
     }
     return true;
 }
@@ -390,7 +407,6 @@ bool DrawSampleWindow::init_samples(){
     samples.emplace_back(std::make_tuple("ch4PBR",  std::make_unique<Ch4PBR>(&m_camera)));
     // ch5
     samples.emplace_back(std::make_tuple("ch5DiscardPixels",  std::make_unique<Ch5DiscardPixels>(&m_camera)));
-
     samples.emplace_back(std::make_tuple("ch5SceneTexture",  std::make_unique<Ch5SceneTexture>(&m_camera)));
     samples.emplace_back(std::make_tuple("ch5SceneMutliTexture",  std::make_unique<Ch5SceneMutliTexture>(&m_camera)));
 
@@ -418,13 +434,14 @@ bool DrawSampleWindow::init_samples(){
     samples.emplace_back(std::make_tuple("ch8ShadowMap2",  std::make_unique<Ch8ShadowMap2>(&m_camera)));
 
     for(auto &demo : samples){
-        std::cout << "init: " << std::get<0>(demo) << "\n";
+        Logger::message(std::format("Init sample {}\n", std::get<0>(demo)));
         std::get<1>(demo)->init();
         samplesName.push_back(std::get<0>(demo));
     }
 
     return true;
 }
+
 
 
 bool DrawSampleWindow::initialize_gl(){
@@ -437,19 +454,19 @@ bool DrawSampleWindow::initialize_gl(){
     imPlotContext = ImPlot::CreateContext();
 
     // models
-    std::cout << "Init models\n";
+    Logger::message("Init models\n");
     if(!init_models()){
         return m_glInitialized = false;
     }
 
     // textures
-    std::cout << "Init textures\n";
+    Logger::message("Init textures\n");
     if(!init_textures()){
         return m_glInitialized = false;
     }
 
     // shaders
-    std::cout << "Init shaders\n";
+    Logger::message("Init shaders\n");
     if(!init_shaders()){
         return m_glInitialized = false;
     }
@@ -469,7 +486,7 @@ bool DrawSampleWindow::initialize_gl(){
     return m_glInitialized = true;
 }
 
-void DrawSampleWindow::update_gl(){
+void DrawSampleWindow::draw_gl(){
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
@@ -487,7 +504,7 @@ void DrawSampleWindow::update_gl(){
     }
 }
 
-void DrawSampleWindow::post_update(){
+void DrawSampleWindow::update(){
 
     // update current sample
     if(currentSample < static_cast<int>(samples.size())){
@@ -495,7 +512,8 @@ void DrawSampleWindow::post_update(){
     }
 }
 
-void DrawSampleWindow::update_imgui(){
+
+void DrawSampleWindow::draw_imgui(){
 
     ImGui::Combo("Drawer", &currentDrawer, drawersName);
     ImGui::Combo("Sample", &currentSample, samplesName);

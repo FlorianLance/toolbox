@@ -103,11 +103,10 @@ void BaseSfmlGlWindow::start(){
 
         currentFrame = std::chrono::high_resolution_clock::now();
 
+        // retrieve sfml events
         sf::Event event;
         while (m_scene.pollEvent(event)){
-
             ImGui::SFML::ProcessEvent(event);
-
             switch (event.type) {
             case sf::Event::Closed:
                 running = false;
@@ -138,31 +137,47 @@ void BaseSfmlGlWindow::start(){
             }
         }
 
+        // update
         pre_update();
+        update();
+        post_update();
 
-        // clean buffers
         m_scene.clear(sf::Color::White);
 
-        // set gl states for drawing sfml/imgui
-        m_scene.pushGLStates();
-        update_sfml();
-        m_scene.popGLStates();
-
         // draw opengl
-        update_gl();
+        draw_gl();
 
-        // set gl states for drawing sfml/imgui
+        // ubind vao after drawing opengl
         VAO::unbind();
-        m_scene.pushGLStates();
 
-        // draw gui
-        base_update_imgui();
+        // store gl states
+        m_scene.pushGLStates();
+        {
+            // update sfml
+            ImGui::SFML::Update(m_scene, deltaClock.restart());
+
+            { // imgui
+
+                ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
+                draw_imgui();
+                // auto io = ImGui::GetIO();
+                imguiHover = ImGui::IsAnyItemHovered() ||
+                             ImGui::IsWindowHovered()  ||
+                             ImGui::IsAnyItemFocused() ||
+                             ImGui::IsAnyItemActive();
+
+                ImGui::End();
+                ImGui::EndFrame();
+            }
+
+            // render sfml scene
+            draw_sfml();
+            ImGui::SFML::Render(m_scene);
+            m_scene.display();
+        }
+        // restore gl states
         m_scene.popGLStates();
 
-        // display scene
-        m_scene.display();
-
-        post_update();
 
         // sleep for fps
         frameDuration = std::chrono::high_resolution_clock::now()-currentFrame;
@@ -171,7 +186,7 @@ void BaseSfmlGlWindow::start(){
         }
 
         Bench::stop();
-        Bench::display();
+        // Bench::display();
     }
 
     ImGui::SFML::Shutdown();
@@ -191,20 +206,6 @@ bool BaseSfmlGlWindow::init_sfml_window(){
     return true;
 }
 
-void BaseSfmlGlWindow::base_update_imgui(){
-
-    ImGui::SFML::Update(m_scene, deltaClock.restart());
-
-    update_imgui();
-
-    imguiHover = ImGui::IsAnyItemHovered() ||
-            ImGui::IsWindowHovered()  ||
-            ImGui::IsAnyItemFocused() ||
-            ImGui::IsAnyItemActive();
-
-    ImGui::SFML::Render(m_scene);
-}
-
 void BaseSfmlGlWindow::base_resize_windows(sf::Event::SizeEvent size){
     m_screen = graphics::Screen{size.width,size.height};
     m_camera.update_projection();
@@ -213,18 +214,21 @@ void BaseSfmlGlWindow::base_resize_windows(sf::Event::SizeEvent size){
 }
 
 void BaseSfmlGlWindow::mouse_button_event(sf::Event mouseButtonEvent){
+
     if(!imguiHover){
         update_camera_with_mouse_button_event(mouseButtonEvent);
     }
 }
 
 void BaseSfmlGlWindow::mouse_moved_event(sf::Event mouseMovedEvent){
+
     if(!imguiHover){
         update_camera_with_mouse_moved_event(mouseMovedEvent);
     }
 }
 
 void BaseSfmlGlWindow::mouse_scroll_event(sf::Event mouseScrollEvent){
+
     if(!imguiHover){
         update_camera_with_mouse_scroll_event(mouseScrollEvent);
     }

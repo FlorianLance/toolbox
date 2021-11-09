@@ -52,7 +52,7 @@ void Texture::copy_2d_data(int width, int height, int nbChannels, unsigned char 
 }
 
 void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<unsigned char> &data){
-    if(data.size() != static_cast<size_t>(width*height*nbChannels)){
+    if(data.size() < static_cast<size_t>(width*height*nbChannels)){
         std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";
         return;
     }
@@ -64,7 +64,7 @@ void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<u
 
 void Texture::copy_2d_data(int width, int height, const std_v1<geo::Pt3<unsigned char> > &data){
 
-    if(data.size() != static_cast<size_t>(width*height)){
+    if(data.size() < static_cast<size_t>(width*height)){
         std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";
         return;
     }
@@ -77,7 +77,7 @@ void Texture::copy_2d_data(int width, int height, const std_v1<geo::Pt3<unsigned
 }
 
 void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<float> &data){
-    if(data.size() != static_cast<size_t>(width*height*nbChannels)){
+    if(data.size() < static_cast<size_t>(width*height*nbChannels)){
         std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";
         return;
     }
@@ -91,7 +91,7 @@ void Texture::copy_2d_data(int width, int height, int nbChannels, const std_v1<f
 
 void Texture::copy_2d_data(int width, int height, const std_v1<geo::Pt3<float>> &data){
 
-    if(data.size() != static_cast<size_t>(width*height)){
+    if(data.size() < static_cast<size_t>(width*height)){
         std::cerr << "[Texture2D] Cannot copy data to texture, invalid array size.\n";
         return;
     }

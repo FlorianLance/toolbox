@@ -26,6 +26,8 @@ using attachment = tool::gl::FrameBufferAttachment;
 
 void Sample::update(float elapsedSeconds){
 
+    this->elapsedSeconds = elapsedSeconds;
+
     // update lights positions
     float lightRotationSpeed = 1.5f;
     float deltaT = elapsedSeconds * lightRotationSpeed;
@@ -41,19 +43,10 @@ void Sample::update(float elapsedSeconds){
         offset = {0,4.f,1.f};
         mobileLightPos2 = geo::Pt4f{offset + geo::Pt3f{-x,0,z}, 1.f};
     }
-
-
-    // update animations
-    if(auto model = modelsM->get_model("storm").lock()){
-        if(auto drawer = dynamic_cast<gl::ModelDrawer*>(drawersM->get_drawer_ptr("storm-drawer")); drawer != nullptr){
-            drawer->update_animation(model->animations[0].name, elapsedSeconds);
-        }
-    }
 }
 
 
 void Sample::draw(tool::gl::Drawer *drawer){
-    static_cast<void>(drawer);
 
     if(drawLights){
         draw_lights();
@@ -63,6 +56,25 @@ void Sample::draw(tool::gl::Drawer *drawer){
     }
     if(drawFloor){
         //  draw_floor();
+    }
+
+    // update animation of current drawer
+    nbAnimations = 0;
+    if(auto modelDrawer = dynamic_cast<gl::ModelDrawer*>(drawer)){
+        if(auto model = modelDrawer->model()){
+
+            nbAnimations = static_cast<int>(model->animations.size());
+
+            if(idAnimation < nbAnimations){
+
+                durationAnimation = model->animations[idAnimation].duration;
+
+                modelDrawer->update_animation(
+                    model->animations[idAnimation].name,
+                    stopAnimation ? timeAnimation : elapsedSeconds
+                );
+            }
+        }
     }
 }
 
@@ -89,6 +101,11 @@ void Sample::update_imgui(){
         ImGui::SliderFloat3("Position", modelPos.v.data(), -10.f, 10.f, "ratio = %.2f");
         ImGui::SliderFloat3("Rotation", modelRot.v.data(), -360.f, 360.f, "ratio = %.1f");
         ImGui::SliderFloat("Scale", &scale, 0.01f, 5.f, "ratio = %.2f");
+
+        ImGui::Text("Animation:");
+        ImGui::SliderInt("id", &idAnimation, 0, nbAnimations);
+        ImGui::Checkbox("Stop animation", &stopAnimation);
+        ImGui::SliderFloat("Time animation", &timeAnimation, 0.f, durationAnimation, "ratio = %.2f");
     }
 }
 
@@ -101,9 +118,10 @@ void Sample::draw_nb(gl::ShaderProgram *shader, tool::gl::Drawer *drawer){
             for(int kk = 0; kk < nb.z(); ++kk){
                 model = Mat4d::transform2({s,s,s}, modelRot.conv<double>(),
                             {p.x() + 1.f*(ii-nb.x()/2), p.y() + 1.f*(jj-nb.y()/2), p.z() + 1.f*(kk-nb.z()/2)});
+                shader->set_model_matrix(model);
                 update_matrices();
                 shader->set_camera_matrices_uniforms(camM);
-                drawer->draw();
+                drawer->draw(shader);
             }
         }
     }
@@ -221,7 +239,7 @@ void Ch3Diffuse::init(){
 
 void Ch3Diffuse::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
     shader->set_uniform("LightPosition", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
@@ -246,7 +264,7 @@ void Ch3Flat::init(){
 
 void Ch3Flat::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
 
@@ -271,7 +289,7 @@ void Ch3Discard::init(){
 
 void Ch3Discard::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
 
@@ -283,6 +301,7 @@ void Ch3Discard::draw(tool::gl::Drawer *drawer){
     materialUBO.bind(1);
 
     shader->set_uniform("discardV", discardV);
+    shader->set_uniform("scaleV", scaleV);
 
     draw_nb(shader,drawer);
 }
@@ -290,7 +309,8 @@ void Ch3Discard::draw(tool::gl::Drawer *drawer){
 void Ch3Discard::update_imgui(){
     Sample::update_imgui();
     ImGui::Text("Current:");
-    ImGui::SliderFloat("discard value:", &discardV, 0.f, 1.f, "ratio = %.3f");
+    ImGui::SliderFloat("discard value:", &discardV, 0.f, 1.f, "r = %.3f");
+    ImGui::SliderFloat("scale value:", &scaleV, 0.f, 100.f, "v = %.2f");
 }
 
 
@@ -304,7 +324,7 @@ void Ch3TwoSide::init(){
 
 void Ch3TwoSide::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
 
@@ -321,24 +341,28 @@ void Ch3TwoSide::draw(tool::gl::Drawer *drawer){
 
 void Ch3Phong::init(){
     shader = shadersM->get_ptr("ch3/phong");
+    lightUBO.generate();
+    lightUBO.set_data_space_from_shader(shader);
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
 }
 
 void Ch3Phong::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     draw_lights();
     draw_skybox();
 
     shader->use();
 
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-    shader->set_uniform("Light.La", lInfo.La);
-    shader->set_uniform("Light.Ld", lInfo.Ld);
-    shader->set_uniform("Light.Ls", lInfo.Ls);
-    shader->set_uniform("Material.Ka", mInfo.Ka);
-    shader->set_uniform("Material.Ks", mInfo.Ks);
-    shader->set_uniform("Material.Shininess", mInfo.Shininess);
+    lInfo.Position = camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>();
+
+    lightUBO.update(lInfo);
+    lightUBO.bind(0);
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(1);
 
     draw_nb(shader,drawer);
 }
@@ -351,15 +375,15 @@ void Ch4PhongDirectionnalLight::init(){
 
 void Ch4PhongDirectionnalLight::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
     shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
     shader->set_uniform("Light.La", lInfo.La);
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(worldLight.conv<double>()).conv<float>()});
 
     materialUBO.update(mInfo);
-    materialUBO.bind(1);
+    materialUBO.bind(0);
 
     draw_nb(shader,drawer);
 }
@@ -367,19 +391,22 @@ void Ch4PhongDirectionnalLight::draw(tool::gl::Drawer *drawer){
 
 void Ch4BlinnPhong::init(){
     shader = shadersM->get_ptr("ch4/blinn-phong");
+    lightUBO.generate();
+    lightUBO.set_data_space_from_shader(shader);
     materialUBO.generate();
     materialUBO.set_data_space_from_shader(shader);
 }
 
 void Ch4BlinnPhong::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
 
-    shader->set_uniform("Light.L",  Vec3f{0.f,0.8f,0.8f});
-    shader->set_uniform("Light.La", lInfo.La);
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    lInfo.Position = camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>();
+
+    lightUBO.update(lInfo);
+    lightUBO.bind(0);
 
     materialUBO.update(mInfo);
     materialUBO.bind(1);
@@ -390,13 +417,14 @@ void Ch4BlinnPhong::draw(tool::gl::Drawer *drawer){
 
 void Ch4Cartoon::init(){
     shader = shadersM->get_ptr("ch4/cartoon");
+
     materialUBO.generate();
     materialUBO.set_data_space_from_shader(shader);
 }
 
 void Ch4Cartoon::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
 
@@ -406,7 +434,7 @@ void Ch4Cartoon::draw(tool::gl::Drawer *drawer){
     shader->set_uniform("levels", levels);
 
     materialUBO.update(mInfo);
-    materialUBO.bind(1);
+    materialUBO.bind(0);
 
     draw_nb(shader,drawer);
 }
@@ -426,7 +454,7 @@ void Ch4PhongMultiLights::init(){
 
 void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     std_v1<Pt4f> lPos ={
         Pt4f{camera->view().multiply_point({5.0,5.0,2.0,1.0}).conv<float>()},
@@ -461,7 +489,7 @@ void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
     }
 
     materialUBO.update(mInfo);
-    materialUBO.bind(1);
+    materialUBO.bind(0);
 
     draw_nb(shader, drawer);
 }
@@ -469,13 +497,14 @@ void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
 
 void Ch4PhongPerFragment::init(){
     shader = shadersM->get_ptr("ch4/phong-per-fragment");
+
     materialUBO.generate();
     materialUBO.set_data_space_from_shader(shader);
 }
 
 void Ch4PhongPerFragment::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
     shader->set_uniform("Light.L",  Vec3f{0.f,0.8f,0.8f});
@@ -483,7 +512,7 @@ void Ch4PhongPerFragment::draw(tool::gl::Drawer *drawer){
     shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
 
     materialUBO.update(mInfo);
-    materialUBO.bind(1);
+    materialUBO.bind(0);
 
     draw_nb(shader,drawer);
 }
@@ -493,17 +522,8 @@ void Ch4PBR::init(){
 
     shader = shadersM->get_ptr("ch4/pbr");
 
-    //    materials.resize(10);
-    auto gold = MaterialPbr(Pt4f(1, 0.71f, 0.29f,1.f),           0.50f,0.f);
-    auto copper = MaterialPbr(Pt4f(0.95f, 0.64f, 0.54f,1.f),       0.50f,0.f);
-    auto aluminium = MaterialPbr(Pt4f(0.91f, 0.92f, 0.92f,1.f),       0.50f,0.f);
-    auto titanium = MaterialPbr(Pt4f(0.542f, 0.497f, 0.449f,1.f),    0.50f,0.f);
-    auto silver = MaterialPbr(Pt4f(0.95f, 0.93f, 0.88f,1.f),       0.50f,0.f);
-
-    materials = {gold,copper,aluminium,titanium,silver};
     materialsB.generate();
-    materialsB.set_data_storage(materials.size()*sizeof(MaterialPbr), materials.data(), GL_DYNAMIC_STORAGE_BIT);
-    //    materialsB.load_data(reinterpret_cast<GLubyte*>(materials.data()), materials.size()*sizeof(MaterialPbr));
+    materialsB.set_data_storage(1*sizeof(MaterialPbr), &mPbrInfo, GL_DYNAMIC_STORAGE_BIT);
 
     lights.resize(3);
     lights[0].La = Vec3f{45.0f,45.0f,45.0f};
@@ -512,12 +532,11 @@ void Ch4PBR::init(){
 
     lightsB.generate();
     lightsB.set_data_storage(lights.size()*sizeof(Light2), lights.data(), GL_DYNAMIC_STORAGE_BIT);
-    //    lightsB.load_data(reinterpret_cast<GLubyte*>(lights.data()), lights.size()*sizeof(Light2));
 }
 
 void Ch4PBR::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw();
+    Sample::draw(drawer);
 
     shader->use();
     lights[0].Position = camera->view().conv<float>().multiply_point(mobileLightPos1);
@@ -526,11 +545,7 @@ void Ch4PBR::draw(tool::gl::Drawer *drawer){
     lightsB.update_data(lights.data(), lights.size()*sizeof(Light2));
     lightsB.bind(0);
 
-    for(size_t ii = 0; ii < materials.size(); ++ii){
-        materials[ii].rough = rough;
-        materials[ii].metal = metal;
-    }
-    materialsB.update_data(materials.data(), materials.size()*sizeof(MaterialPbr));
+    materialsB.update_data(&mPbrInfo, 1*sizeof(MaterialPbr));
     materialsB.bind(1);
 
     draw_nb(shader, drawer);
@@ -539,8 +554,9 @@ void Ch4PBR::draw(tool::gl::Drawer *drawer){
 void Ch4PBR::update_imgui(){
     Sample::update_imgui();
     ImGui::Text("Current:");
-    ImGui::SliderFloat("PBR rough", &rough, 0.0f, 1.00f, "ratio = %.3f");
-    ImGui::SliderFloat("PBR metal", &metal, 0.0f, 1.00f, "ratio = %.3f");
+    ImGui::SliderFloat4("PBR color", mPbrInfo.color.v.data(), 0.0f, 1.00f, "ratio = %.3f");
+    ImGui::SliderFloat("PBR rough", &mPbrInfo.rough, 0.0f, 1.00f, "ratio = %.3f");
+    ImGui::SliderFloat("PBR metal", &mPbrInfo.metal, 0.0f, 1.00f, "ratio = %.3f");
 }
 
 
@@ -554,19 +570,15 @@ void Ch5DiscardPixels::draw(tool::gl::Drawer *){
 
     Sample::draw();
 
-    model = Mat4d::transform({0.2,0.2,0.2},Vec3d{0.,0.,0.},{2,2,6.});
-    update_matrices();
-
     shader->use();
     shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
     shader->set_uniform("Light.La", lInfo.La);
     shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
     shader->set_uniform("ModelViewMatrix",   camM.mv.conv<float>());
     shader->set_uniform("decay_factor",      decayFactor);
-    shader->set_camera_matrices_uniforms(camM);
 
     materialUBO.update(mInfo);
-    materialUBO.bind(1);
+    materialUBO.bind(0);
 
     draw_nb(shader,drawersM->get_drawer_ptr("cement-moss-cube-drawer"));
 }
@@ -576,6 +588,163 @@ void Ch5DiscardPixels::update_imgui(){
     ImGui::Text("Current:");
     ImGui::SliderFloat("Decay", &decayFactor, 0.0f, 1.00f, "ratio = %.3f");
 }
+
+void Ch5SceneTexture::init(){
+    shader = shadersM->get_ptr("ch5/scene-texture");
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+}
+
+void Ch5SceneTexture::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(0);
+
+    draw_nb(shader,drawer);
+}
+
+void Ch5SceneMutliTexture::init(){
+    shader = shadersM->get_ptr("ch5/scene-multi-textures");
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+}
+
+void Ch5SceneMutliTexture::draw(tool::gl::Drawer *){
+
+    Sample::draw();
+
+    shader->use();
+
+    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(0);
+
+    draw_nb(shader,drawersM->get_drawer_ptr("brick-moss-cube-drawer"));
+
+}
+void Ch5NormalMap::init(){
+
+    shader = shadersM->get_ptr("ch5/normal-map");
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+}
+
+void Ch5NormalMap::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    shader->set_uniform("animate", nbAnimations > 0);
+    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(0);
+
+    draw_nb(shader,drawer);
+}
+
+void Ch5ParallaxMapping::init(){
+    shader = shadersM->get_ptr("ch5/parallax-mapping");
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+}
+
+void Ch5ParallaxMapping::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+    shader->set_uniform("showHeightMap", showHeightMap);
+    shader->set_uniform("bumpFactor", bumpFactor);
+    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(0);
+
+    draw_nb(shader,drawersM->get_drawer_ptr("multi-tex-plane-drawer"));
+}
+
+void Ch5ParallaxMapping::update_imgui(){
+    Sample::update_imgui();
+    ImGui::Text("Current:");
+    ImGui::Checkbox("Show heightmap", &showHeightMap);
+    ImGui::SliderFloat("Bump factor", &bumpFactor, 0.0f, 1.f, "ratio = %.3f");
+}
+
+void Ch5SteepParallaxMapping::init(){
+    shader = shadersM->get_ptr("ch5/steep-parallax-mapping");
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+}
+
+void Ch5SteepParallaxMapping::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    shader->set_uniform("bumpScale", bumpScale);
+
+    materialUBO.bind(0);
+    materialUBO.update(mInfo);
+
+    draw_nb(shader,drawersM->get_drawer_ptr("multi-tex-plane-drawer"));
+}
+
+void Ch5SteepParallaxMapping::update_imgui(){
+    Sample::update_imgui();
+    ImGui::Text("Current:");
+    ImGui::SliderFloat("Bumpscale", &bumpScale, 0.001f, 0.20f, "ratio = %.3f");
+}
+
+void Ch5ReflectCubeMap::init(){
+    shader = shadersM->get_ptr("ch5/reflect-cubemap");
+}
+
+void Ch5ReflectCubeMap::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    shader->set_uniform("WorldCameraPosition", camera->position().conv<float>());
+    shader->set_uniform("MaterialColor", matColor);
+    shader->set_uniform("ReflectFactor", reflectFactor);
+    shader->set_model_matrix(model);
+    shader->set_camera_matrices_uniforms(camM);
+
+    draw_nb(shader, drawer);
+}
+
+void Ch5ReflectCubeMap::update_imgui(){
+    Sample::update_imgui();
+    ImGui::Text("Current:");
+    ImGui::SliderFloat("Reflect factor", &reflectFactor, 0.0f, 1.f, "ratio = %.3f");
+    ImGui::SliderFloat4("Mat color", matColor.v.data(), 0.0, 1.0f, "ratio = %.2f");
+}
+
+
+
+
+
 
 void Ch6HdrLightingToneMapping::init(){
     update_screen_size();
@@ -1671,123 +1840,10 @@ void Ch5RefractCubeMap::update_imgui(){
     ImGui::SliderFloat("reflect factor", &reflectFactor, 0.0f, 1.00f, "ratio = %.3f");
 }
 
-void Ch5ReflectCubeMap::draw(tool::gl::Drawer *drawer){
-    if(auto shader = shadersM->get_ptr("ch5/reflect-cubemap"); shader != nullptr){
 
-        model = Mat4d::transform({1.,1.,1.},Vec3d{-90.,0.,0.},{0,-1.,3.});
-        update_matrices();
 
-        shader->use();
-        shader->set_uniform("WorldCameraPosition", camera->position().conv<float>());
-        shader->set_uniform("MaterialColor", Pt4f{0.5f, 0.5f, 0.5f, 1.0f});
-        shader->set_uniform("ReflectFactor", reflectFactor);
-        shader->set_model_matrix(model);
-        shader->set_camera_matrices_uniforms(camM);
 
-        if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
-            drawer->draw(shader);
-        }
-    }
-}
 
-void Ch5SteepParallaxMapping::init(){
-    shader = shadersM->get_ptr("ch5/steep-parallax-mapping");
-    materialUBO.generate();
-    materialUBO.set_data_space_from_shader(shader);
-}
-
-void Ch5SteepParallaxMapping::draw(tool::gl::Drawer *drawer){
-
-    model = Mat4d::transform({0.5,0.5,0.5},Vec3d{90.,0.,0.},{4,1,10.});
-    update_matrices();
-
-    shader->use();
-    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-    shader->set_uniform("bumpScale", bumpScale);
-    shader->set_camera_matrices_uniforms(camM);
-
-    mInfo.Ka = {0.8f, 0.8f, 0.8f};
-    mInfo.Kd = {0.2f, 0.2f, 0.2f};
-    mInfo.Ks = {0.3f, 0.3f, 0.3f};
-    mInfo.Shininess = 10.f;
-
-    materialUBO.bind(1);
-    materialUBO.update(mInfo);
-
-    if(auto drawer = drawersM->get_drawer_ptr("multi-tex-plane-drawer"); drawer != nullptr){
-        drawer->draw(shader);
-    }
-
-}
-
-void Ch5SteepParallaxMapping::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::SliderFloat("Bumpscale", &bumpScale, 0.001f, 0.10f, "ratio = %.3f");
-}
-
-void Ch5ParallaxMapping::init(){
-    shader = shadersM->get_ptr("ch5/parallax-mapping");
-    materialUBO.generate();
-    materialUBO.set_data_space_from_shader(shader);
-}
-
-void Ch5ParallaxMapping::draw(tool::gl::Drawer *drawer){
-
-    materialUBO.bind(1);
-
-    model = Mat4d::transform({0.5,0.5,0.5},Vec3d{90.,0.,0.},{0,1,10.});
-    update_matrices();
-
-    shader->use();
-    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-    shader->set_camera_matrices_uniforms(camM);
-
-    mInfo.Ka = {0.8f, 0.8f, 0.8f};
-    mInfo.Kd = {0.2f, 0.2f, 0.2f};
-    mInfo.Ks = {0.3f, 0.3f, 0.3f};
-    mInfo.Shininess = 100.f;
-    materialUBO.update(mInfo);
-
-    if(auto drawer = drawersM->get_drawer_ptr("multi-tex-plane-drawer"); drawer != nullptr){
-        drawer->draw(shader);
-    }
-
-}
-
-void Ch5NormalMap::init(){
-
-    shader = shadersM->get_ptr("ch5/normal-map");
-    materialUBO.generate();
-    materialUBO.set_data_space_from_shader(shader);
-}
-
-void Ch5NormalMap::draw(tool::gl::Drawer *drawer){
-
-    mInfo.Ka = {0.8f, 0.8f, 0.8f};
-    mInfo.Kd = {0.2f, 0.2f, 0.2f};
-    mInfo.Ks = {0.2f, 0.2f, 0.2f};
-
-    materialUBO.bind(1);
-    materialUBO.update(mInfo);
-
-    model = Mat4d::transform({0.01,0.01,0.01},Vec3d{0.,180.,0.},{2,1,7.});
-    update_matrices();
-
-    shader->use();
-    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-    shader->set_camera_matrices_uniforms(camM);
-
-    if(auto drawer = drawersM->get_drawer_ptr("storm-drawer"); drawer != nullptr){
-        drawer->draw(shader);
-    }
-}
 
 void Ch6Deferred::init(){
 
@@ -1970,60 +2026,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
     }
 }
 
-void Ch5SceneMutliTexture::init(){
-    shader = shadersM->get_ptr("ch5/scene-multi-textures");
-    materialUBO.generate();
-    materialUBO.set_data_space_from_shader(shader);
-}
 
-void Ch5SceneMutliTexture::draw(tool::gl::Drawer *){
-
-    materialUBO.bind(1);
-
-    model = Mat4d::transform({0.2,0.2,0.2},Vec3d{0.,0.,0.},{-1,0,6.});
-    update_matrices();
-
-    shader->use();
-    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-    shader->set_camera_matrices_uniforms(camM);
-
-    mInfo.Ka = {0.8f, 0.8f, 0.8f};
-    mInfo.Kd = {0.2f, 0.2f, 0.2f};
-    mInfo.Ks = {0.2f, 0.2f, 0.2f};
-    materialUBO.update(mInfo);
-
-    draw_nb(shader,drawersM->get_drawer_ptr("brick-moss-cube-drawer"));
-
-}
-
-void Ch5SceneTexture::init(){
-    shader = shadersM->get_ptr("ch5/scene-textures");
-    materialUBO.generate();
-    materialUBO.set_data_space_from_shader(shader);
-}
-
-void Ch5SceneTexture::draw(tool::gl::Drawer *){
-
-    shader->use();
-    materialUBO.bind(1);
-
-    model = Mat4d::transform({0.3,0.3,0.3},Vec3d{0.,180.,0.},{3,1,9.});
-    update_matrices();
-
-    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.La", Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-    shader->set_camera_matrices_uniforms(camM);
-
-    mInfo.Ka = {0.8f, 0.8f, 0.8f};
-    mInfo.Kd = {0.2f, 0.2f, 0.2f};
-    mInfo.Ks = {0.2f, 0.2f, 0.2f};
-    materialUBO.update(mInfo);
-
-    draw_nb(shader,drawersM->get_drawer_ptr("crysis-drawer"));
-}
 
 
 void Ch6SSAO::init(){

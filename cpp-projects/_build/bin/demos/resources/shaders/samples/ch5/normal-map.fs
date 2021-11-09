@@ -1,12 +1,8 @@
-#version 430
+#version 440
 
 in vec3 LightDir;
 in vec2 TexCoord;
 in vec3 ViewDir;
-
-//in vec4 Weights2;
-//in vec3 PosL2;
-in vec3 TCol;
 
 
 layout(binding=0) uniform sampler2D ColorTex;
@@ -16,9 +12,9 @@ uniform struct LightInfo {
     vec4 Position;  // Light position in cam. coords.
     vec3 L;         // D,S intensity
     vec3 La;        // Amb intensity
-} Light ;
+} Light;
 
-layout (binding = 1) uniform MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
     vec3 Ka;            // Ambient reflectivity
     vec3 Kd;            // Diffuse reflectivity
     vec3 Ks;            // Specular reflectivity
@@ -47,31 +43,9 @@ vec3 blinnPhong( vec3 n ) {
 }
 
 
-
 void main() {
     // Lookup the normal from the normal map
-   // vec3 normal = 2.0 * texture( NormalMapTex, TexCoord ).xyz - 1.0;
-  //  FragColor = vec4( blinnPhong(normal), 1.0 );
-
     vec3 norm = texture(NormalMapTex, TexCoord).xyz;
     norm.xy = 2.0 * norm.xy - 1.0;
     FragColor = vec4( blinnPhong(norm), 1.0 );
-//    FragColor = vec4( TCol, 1.0 );
-
-//    FragColor = vec4( Weights2.x, 0., 0., 1.0 );
-//    FragColor = vec4( 0, Weights2.y, 0., 1.0 );
-//    FragColor = vec4( 0, 0, Weights2.w, 1.0 );
-
-//    float total = Weights2.x+Weights2.y+Weights2.z+Weights2.w;
-//    if(total > 0.9){
-//        FragColor = vec4(1 , 0, 0, 1.0 );
-//    }else if(total > 0.5){
-//        FragColor = vec4(0 , 1, 0, 1.0 );
-//    }else {
-//        FragColor = vec4(0 , 0, 1, 1.0 );
-//    }
-//    FragColor = vec4( 1, 0, 0, 1.0 );
-//    FragColor = vec4( PosL2.xyz, 1.0 );
-
-
 }

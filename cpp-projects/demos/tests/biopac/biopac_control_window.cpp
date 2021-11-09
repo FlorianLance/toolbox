@@ -21,7 +21,7 @@ void BiopacControlWindow::post_update(){
 
 }
 
-void BiopacControlWindow::update_imgui(){
+void BiopacControlWindow::draw_imgui(){
 
     auto serial = std::string(std::begin(serialBuffer), std::end(serialBuffer));
     serial.erase(std::remove(serial.begin(), serial.end(), ' '), serial.end());

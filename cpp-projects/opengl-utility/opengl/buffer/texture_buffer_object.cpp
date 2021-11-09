@@ -346,6 +346,11 @@ void TBO::load_data_float_32_bits(GLfloat *data, GLsizei width, GLsizei height, 
     gl_texture_sub_image(data, level, m_width, m_height, m_depth, 0, 0, 0);
 }
 
+void TBO::update_data_unsigned_8_bits(GLubyte *data, GLsizei width, GLsizei height, GLsizei depth, GLint xOffset, GLint yOffset, GLint zOffset){
+    GLint level = 0;
+    gl_texture_sub_image(data, level, width, height, depth, xOffset, yOffset, zOffset);
+}
+
 void TBO::update_data_unsigned_32_bits(GLuint *data, GLsizei width, GLsizei height, GLsizei depth, GLint xOffset, GLint yOffset, GLint zOffset){
     GLint level = 0;
     gl_texture_sub_image(data, level, width, height, depth, xOffset, yOffset, zOffset);
@@ -506,8 +511,8 @@ void TBO::gl_texture_sub_image_2d(void *data, GLint level, GLsizei width, GLsize
         level,              // GLint level
         xOffset,            // GLint xoffset
         yOffset,            // GLint yoffset
-        width,            // GLsizei width
-        height,           // GLsizei height
+        width,              // GLsizei width
+        height,             // GLsizei height
         m_format,           // GLenum format
         m_type,             // GLenum type
         data                // const void *pixels

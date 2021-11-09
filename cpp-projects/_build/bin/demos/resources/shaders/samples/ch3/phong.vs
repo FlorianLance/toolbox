@@ -5,8 +5,7 @@ layout (location = 1) in vec3 VertexNormal;
 
 out vec3 LightIntensity;
 
-//layout (binding = 0) uniform LightInfo {
-uniform struct LightInfo {
+layout (binding = 0) uniform LightInfo {
   vec4 Position; // Light position in eye coords.
   vec3 La;       // Ambient light intensity
   vec3 Ld;       // Diffuse light intensity
@@ -14,8 +13,7 @@ uniform struct LightInfo {
 } Light;
 
 
-//layout (binding = 1) uniform MaterialInfo {
-uniform struct MaterialInfo {
+layout (binding = 1) uniform MaterialInfo {
     vec3 Ka;            // Ambient reflectivity
     vec3 Kd;            // Diffuse reflectivity
     vec3 Ks;            // Specular reflectivity

@@ -197,6 +197,13 @@ public:
     void draw_adjacency(gl::ShaderProgram *shader = nullptr) override;
     void update_animation(const std::string &animationName, float time);
 
+    graphics::Model<float> *model(){
+        if(auto m = modelP.lock()){
+            return m.get();
+        }
+        return nullptr;
+    }
+
 private:
 
     void set_bones_uniform(graphics::Model<float> *model, gl::ShaderProgram *shader);

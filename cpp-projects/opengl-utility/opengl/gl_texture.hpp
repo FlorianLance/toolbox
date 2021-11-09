@@ -45,6 +45,9 @@ public:
     void init_render(GLsizei width, GLsizei height, int nbChannels = 3);
     void init_hdr_render(GLsizei width, GLsizei height, int nbChannels = 3);
 
+    void init_image_8ui(GLsizei width, GLsizei height, int nbChannels);
+    void update_image_8ui(GLubyte *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset);
+
     void init_image_32ui(GLsizei width, GLsizei height, int nbChannels);
     void update_image_32ui(GLuint *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset);
 

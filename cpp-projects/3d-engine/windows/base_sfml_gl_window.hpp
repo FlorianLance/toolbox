@@ -77,11 +77,14 @@ protected:
     // resize
     virtual void resize_windows(){}
 
+    // draw
+    virtual void draw_gl(){}
+    virtual void draw_sfml(){}
+    virtual void draw_imgui(){}
+
     // update
     virtual void pre_update(){}
-    virtual void update_gl(){}
-    virtual void update_sfml(){}
-    virtual void update_imgui(){}
+    virtual void update(){}
     virtual void post_update(){}
 
     // events
@@ -100,7 +103,6 @@ protected:
 private:
 
     bool init_sfml_window();
-    void base_update_imgui();
     void base_resize_windows(sf::Event::SizeEvent size);
 
 protected:
@@ -111,6 +113,7 @@ protected:
 
     // window
     std::string m_title = "Base SFML GL window";
+    std::string m_imguiWindowTitle = "Default";
     graphics::Screen m_screen;
 
     // camera

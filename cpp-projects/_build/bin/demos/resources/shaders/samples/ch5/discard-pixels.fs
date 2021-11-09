@@ -13,7 +13,7 @@ uniform struct LightInfo{
     vec3 L;        // Diffuse and Specular light intensity
 } Light;
 
-layout (binding = 1) uniform MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
     vec3 Ka;            // Ambient reflectivity
     vec3 Kd;            // Diffuse reflectivity
     vec3 Ks;            // Specular reflectivity

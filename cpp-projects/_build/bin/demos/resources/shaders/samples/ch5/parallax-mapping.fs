@@ -8,13 +8,16 @@ layout(binding=0) uniform sampler2D ColorTex;
 layout(binding=1) uniform sampler2D NormalMapTex;
 layout(binding=2) uniform sampler2D HeightMapTex;
 
+uniform bool showHeightMap = false;
+uniform float bumpFactor = 0.015;
+
 uniform struct LightInfo {
     vec4 Position;  // Light position in cam. coords.
     vec3 L;         // D,S intensity
     vec3 La;        // Amb intensity
 } Light ;
 
-layout (binding = 1) uniform MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
     vec3 Ka;            // Ambient reflectivity
     vec3 Kd;            // Diffuse reflectivity
     vec3 Ks;            // Specular reflectivity
@@ -28,7 +31,7 @@ vec3 blinnPhong( ) {
     vec3 v = normalize(ViewDir);
     vec3 s = normalize( LightDir );
 
-    const float bumpFactor = 0.015;
+
     float height = 1 - texture(HeightMapTex, TexCoord).r;
     vec2 delta = vec2(v.x, v.y) * height * bumpFactor / v.z;
     vec2 tc = TexCoord.xy - delta;
@@ -52,9 +55,11 @@ vec3 blinnPhong( ) {
 }
 
 void main() {
-    vec3 c = blinnPhong();
-//    c = pow(c, vec3(1.0/2.2));
-    FragColor = vec4( c, 1.0 );
-//    FragColor = vec4(texture(HeightMapTex, TexCoord ));
-//    FragColor = vec4(texture(ColorTex, TexCoord ));
+
+    if(showHeightMap){
+        FragColor = vec4(texture(HeightMapTex, TexCoord ));
+    }else{
+        FragColor = vec4(blinnPhong(), 1.0 );
+    }
+
 }

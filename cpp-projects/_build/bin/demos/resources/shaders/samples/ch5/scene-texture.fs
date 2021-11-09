@@ -4,7 +4,7 @@ in vec3 Position;
 in vec3 Normal;
 in vec2 TexCoord;
 
-layout (binding=0) uniform sampler2D Tex1;
+layout (binding=0) uniform sampler2D ColorTex;
 
 uniform struct LightInfo{
     vec4 Position; // Light position in eye coords.
@@ -13,7 +13,7 @@ uniform struct LightInfo{
 } Light;
 
 
-layout (binding = 1) uniform MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
     vec3 Ka;            // Ambient reflectivity
     vec3 Kd;            // Diffuse reflectivity
     vec3 Ks;            // Specular reflectivity
@@ -25,7 +25,7 @@ layout( location = 0 ) out vec4 FragColor;
 
 vec3 blinnphong(vec3 position, vec3 n ) {
 
-    vec3 texColor = texture(Tex1, TexCoord).rgb;
+    vec3 texColor = texture(ColorTex, TexCoord).rgb;
     vec3 ambient = Light.La * Material.Ka * texColor;
 
     vec3 s = normalize(Light.Position.xyz - position);

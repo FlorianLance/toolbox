@@ -30,7 +30,7 @@ private:
     bool initialize_gl() override;
     void post_update() override;
     // imgui
-    void update_imgui() override;
+    void draw_imgui() override;
 
 
 protected:

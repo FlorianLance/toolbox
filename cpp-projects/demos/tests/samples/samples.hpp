@@ -22,6 +22,7 @@
 
 namespace tool::graphics {
 
+// std140
 struct Light2{
     geo::Vec4f Position; // Light position in cam coords
     geo::Vec3f La;
@@ -32,9 +33,10 @@ struct Light2{
     float padding3;
 };
 
+// std140
 struct MaterialPbr{
 
-    MaterialPbr(geo::Pt4f c, float r, bool m) : color(c), rough(r), metal(m){
+    MaterialPbr(geo::Pt4f c, float r, float m) : color(c), rough(r), metal(m){
     }
 
     geo::Pt4f color;                        // 0
@@ -42,8 +44,8 @@ struct MaterialPbr{
     float metal;                            // 16
     float padding1;                         // 20
     float padding2;                         // 24
-    //    float padding3;                         // 28
-    //    float padding4;                         // 32
+    // float padding3;                      // 28
+    // float padding4;                      // 32
 };
 
 
@@ -105,50 +107,74 @@ struct Sample{
 
 public:
 
+    // ## TODO: remove
+    static inline float alpha = 0.f;
+    static inline float gamma = 2.2f;
+    static inline float x = 0.f;
+    static inline float y = 0.f;
+    static inline float z = 0.f;
+    static inline float x1 = 0.f;
+    static inline float y1 = 0.f;
+    static inline float z1 = 1.f;
+    static inline float rx = 0.f;
+    static inline float ry = 0.f;
+    static inline float rz = 0.f;
+    // ##
+
+
+protected:
+
+    float elapsedSeconds = 0.f;
+
     // gui parameters
     static inline bool drawFloor  = true;
     static inline bool drawSkybox = true;
     static inline bool drawLights = true;
-
-    static inline geo::Vec3f light1A = {0.4f, 0.4f, 0.4f};
-    static inline geo::Vec3f light1D = {1.0f, 1.0f, 1.0f};
-    static inline geo::Vec3f light1S = {1.0f, 1.0f, 1.0f};
-
-    static inline float alpha = 0.f;
-
-    // lights
     static inline bool moveLight = true;
+    static inline geo::Pt3f modelPos = {0.f,0.f, 2.f};
+    static inline geo::Pt3f modelRot = {};
+    static inline float scale = 1.f;
+    static inline geo::Pt3<int> nb = {1,1,1};
     static inline geo::Pt4f worldLight{0.f,10.f,0.f,1.0f};
     static inline geo::Pt4f mobileLightPos1 = geo::Pt4f(5.0f, 5.0f, 5.0f, 1.0f);
     static inline geo::Pt4f mobileLightPos2 = geo::Pt4f(4.0f, 4.0f, 4.0f, 1.0f);
+    static inline int idAnimation = 0;
+    static inline int nbAnimations = 0;
+    static inline bool stopAnimation = false;
+    static inline float timeAnimation = 0.f;
+    static inline float durationAnimation = 10.f;
 
-    static inline float gamma = 2.2f;
+    static inline graphics::LightInfo lInfo = {
+        {},
+        {0.4f, 0.4f, 0.4f},
+        {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f}
+    };
 
-    geo::Pt3<int> nb = {1,1,1};
+    static inline graphics::MaterialInfo mInfo = {
+        {0.5f, 0.5f, 0.5f},
+        {0.5f, 0.5f, 0.5f},
+        {0.8f, 0.8f, 0.8f},
+        10.0f
+    };
 
-    static inline float x = 0.f;
-    static inline float y = 0.f;
-    static inline float z = 0.f;
+    static inline graphics::MaterialPbr mPbrInfo = {
+        {1.f, 0.71f, 0.29f,1.f},
+        0.50f,
+        0.f
+    };
 
-    static inline float x1 = 0.f;
-    static inline float y1 = 0.f;
-    static inline float z1 = 1.f;
+//    auto gold = MaterialPbr(Pt4f(1, 0.71f, 0.29f,1.f),           0.50f,0.f);
+//    auto copper = MaterialPbr(Pt4f(0.95f, 0.64f, 0.54f,1.f),       0.50f,0.f);
+//    auto aluminium = MaterialPbr(Pt4f(0.91f, 0.92f, 0.92f,1.f),       0.50f,0.f);
+//    auto titanium = MaterialPbr(Pt4f(0.542f, 0.497f, 0.449f,1.f),    0.50f,0.f);
+//    auto silver = MaterialPbr(Pt4f(0.95f, 0.93f, 0.88f,1.f),       0.50f,0.f);
 
-    static inline float rx = 0.f;
-    static inline float ry = 0.f;
-    static inline float rz = 0.f;
-    static inline float scale = 1.f;
-
-
-protected:
 
     // camera / transform
     Camera *camera = nullptr;
     CameraMatrices camM;
     geo::Mat4d model;
-
-    geo::Pt3f modelPos;
-    geo::Pt3f modelRot;
 
     // managers
     ShadersManager  *shadersM   = nullptr;
@@ -157,19 +183,7 @@ protected:
     DrawersManager  *drawersM   = nullptr;
 
     // UBO
-    graphics::LightInfo lInfo = {
-        {},
-        {0.4f, 0.4f, 0.4f},
-        {1.0f, 1.0f, 1.0f},
-        {1.0f, 1.0f, 1.0f}
-    };
     gl::LightUBO lightUBO;
-    graphics::MaterialInfo mInfo = {
-        {0.5f, 0.5f, 0.5f},
-        {0.5f, 0.5f, 0.5f},
-        {0.8f, 0.8f, 0.8f},
-        10.0f
-    };
     gl::MaterialUBO materialUBO;
 };
 
@@ -197,6 +211,7 @@ struct Ch3Discard : public Sample{
 private:
     gl::ShaderProgram *shader = nullptr;
     float discardV = 0.2f;
+    float scaleV = 15.f;
 };
 struct Ch3TwoSide : public Sample{
     Ch3TwoSide(Camera *cam) : Sample(cam){}
@@ -220,6 +235,20 @@ struct Ch4PhongDirectionnalLight : public Sample{
 private:
     gl::ShaderProgram *shader = nullptr;
 };
+struct Ch4PhongMultiLights : public Sample{
+    Ch4PhongMultiLights(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
+struct Ch4PhongPerFragment : public Sample{
+    Ch4PhongPerFragment(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
 struct Ch4BlinnPhong : public Sample{
     Ch4BlinnPhong(Camera *cam) : Sample(cam){}
     void init() final override;
@@ -236,20 +265,6 @@ private:
     gl::ShaderProgram *shader = nullptr;
     int levels = 5;
 };
-struct Ch4PhongMultiLights : public Sample{
-    Ch4PhongMultiLights(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
-struct Ch4PhongPerFragment : public Sample{
-    Ch4PhongPerFragment(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
 struct Ch4PBR : public Sample{
     Ch4PBR(Camera *cam) : Sample(cam){}
     void init() final override;
@@ -257,10 +272,7 @@ struct Ch4PBR : public Sample{
     void update_imgui() final override;
 private:
     gl::ShaderProgram *shader = nullptr;
-    float rough = 0.5f;
-    float metal = 0.f;
     std_v1<Light2> lights;
-    std_v1<MaterialPbr> materials;
     gl::UBO lightsB;
     gl::UBO materialsB;
 };
@@ -274,10 +286,56 @@ private:
     float decayFactor = 0.f;
     gl::ShaderProgram *shader = nullptr;
 };
-
-
-
-
+struct Ch5SceneTexture : public Sample{
+    Ch5SceneTexture(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
+struct Ch5SceneMutliTexture : public Sample{
+    Ch5SceneMutliTexture(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
+struct Ch5NormalMap : public Sample{
+    Ch5NormalMap(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+};
+struct Ch5ParallaxMapping : public Sample{
+    Ch5ParallaxMapping(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
+private:
+    gl::ShaderProgram *shader = nullptr;
+    bool showHeightMap = false;
+    float bumpFactor = 0.015f;
+};
+struct Ch5SteepParallaxMapping : public Sample{
+    Ch5SteepParallaxMapping(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
+private:
+    float bumpScale = 0.03f;
+    gl::ShaderProgram *shader = nullptr;
+};
+struct Ch5ReflectCubeMap : public Sample{
+    Ch5ReflectCubeMap(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
+private:
+    float reflectFactor = 0.1f;
+    geo::Pt4f matColor = {0.5f, 0.5f, 0.5f, 1.0f};
+    gl::ShaderProgram *shader = nullptr;
+};
 
 
 
@@ -297,49 +355,13 @@ private:
 };
 
 
-struct Ch5SceneTexture : public Sample{
-    Ch5SceneTexture(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-
-};
-
-struct Ch5SceneMutliTexture : public Sample{
-    Ch5SceneMutliTexture(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
 
 
-struct Ch5NormalMap : public Sample{
-    Ch5NormalMap(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
 
-struct Ch5ParallaxMapping : public Sample{
-    Ch5ParallaxMapping(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
-};
 
-struct Ch5SteepParallaxMapping : public Sample{
-    Ch5SteepParallaxMapping(Camera *cam) : Sample(cam){}
-    void init() final override;
-    void draw(gl::Drawer *drawer = nullptr) final override;
-    void update_imgui() final override;
-private:
-    float bumpScale = 0.03f;
-    gl::ShaderProgram *shader = nullptr;
-};
+
+
+
 
 struct Ch5RefractCubeMap : public Sample{
     Ch5RefractCubeMap(Camera *cam) : Sample(cam){}
@@ -350,12 +372,7 @@ private:
     float eta = 0.94f;
 };
 
-struct Ch5ReflectCubeMap : public Sample{
-    Ch5ReflectCubeMap(Camera *cam) : Sample(cam){}
-    void draw(gl::Drawer *drawer = nullptr) final override;
-public:
-    float reflectFactor = 0.1f;
-};
+
 
 struct Ch5DiffuseImageBasedLighting : public Sample{
     Ch5DiffuseImageBasedLighting(Camera *cam) : Sample(cam){}

@@ -76,7 +76,6 @@ INCLUDEPATH += \
     # signals
     $$SIGNALS_INCLUDES \
 
-
 ####################################### LIBRAIRIES
 LIBS += \
     # base    

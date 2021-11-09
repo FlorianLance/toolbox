@@ -7,6 +7,7 @@
 
 // base
 #include "files/assimp_loader.hpp"
+#include "utility/logger.hpp"
 
 using namespace tool;
 using namespace tool::graphics;
@@ -33,7 +34,8 @@ bool ModelsManager::add_models(std::vector<std::pair<Alias, Path> > aliasPaths, 
 
         if(!forceReload){
             if(aliasPerPath.count(ap.second) != 0){
-                std::cerr << "[ModelsM] Model with alias " << ap.first << " and path " << ap.second << " already loaded with alias " << aliasPerPath[ap.second] << ", loading canceled.\n";
+                Logger::error(std::format("[ModelsM] Model with alias {} and path {} already loaded with alias {}, loading canceled.\n",
+                        ap.first, ap.second, aliasPerPath[ap.second]));
                 continue;
             }
         }
@@ -59,12 +61,19 @@ bool ModelsManager::add_models(std::vector<std::pair<Alias, Path> > aliasPaths, 
 bool ModelsManager::add_model(std::string alias, const std::string &path){
 
     if(aliasPerPath.count(path) != 0){
-        std::cerr << "[ModelsM] Model with " << alias << " and path " << path << " already loaded with alias " << aliasPerPath[path] << ", loading canceled.\n";
+        Logger::error(std::format(
+            "[ModelsM] Model with alias {} and path {} already loaded with alias {}, loading canceled.\n",
+            alias, path, aliasPerPath[path])
+        );
         return false;
     }
 
     if(models.count(alias) != 0){
-        std::cerr << "[ModelsM] Model alias " << alias << " already used, it will be replaced by newly loaded model.\n";
+        Logger::error(std::format(
+            "[ModelsM] Model alias {} already used, it will be replaced by newly loaded model.\n",
+            alias)
+        );
+
     }
     if(auto model = files::AiLoader::load_model(path); model != nullptr){
         models[alias]  = model;

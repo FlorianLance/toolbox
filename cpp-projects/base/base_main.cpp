@@ -76,7 +76,7 @@ void kinect4_test(){
     using namespace camera;
     using namespace camera::K4;
 
-    bool saveDisplayFrames = false;
+    bool saveDisplayFrames = true;
     bool saveCompressedFrames = false;
 
 
@@ -100,6 +100,7 @@ void kinect4_test(){
 //    config.mode = K4::Mode::Only_color_1920x1080; // works
 //    config.mode = K4::Mode::Only_color_2048x1536; // works
     config.mode = K4::Mode::Cloud_640x576;
+//    config.mode = K4::Mode::Cloud_512x512;
     kinect.start_cameras(config);
 
     // stored frames
@@ -124,7 +125,7 @@ void kinect4_test(){
     p.sendDisplayCloud          = true;
     p.sendDisplayColorFrame     = true;
     p.sendDisplayDepthFrame     = true;
-    p.sendDisplayInfraredFrame  = false;
+    p.sendDisplayInfraredFrame  = true;
     p.filterDepthWithColor      = false;
     p.jpegCompressionRate       = 80;
     kinect.set_parameters(p);
@@ -133,7 +134,7 @@ void kinect4_test(){
     kinect.start_reading();
 
     Logger::message("Sleep...\n");
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     Logger::message("Stop reading.\n");
     kinect.stop_reading();
@@ -154,44 +155,57 @@ void kinect4_test(){
             std::string pathInfra = "./display_infra_" + std::to_string(idFrame) + ".png";
             std::string pathCloud = "./display_cloud_" + std::to_string(idFrame) + ".obj";
 
+
+
             auto &cf = frame->colorFrame;
-            tool::graphics::Texture texColor;
-            texColor.copy_2d_data(
-                cf.width,
-                cf.height,
-                cf.pixels
-            );
-            if(!texColor.write_2d_image_file_data(pathColor)){
-                Logger::error("Faild color.\n");
+            std::cout << "col: " << cf.width << " "<< cf.height << " " << cf.pixels.size() << "\n";
+            if(cf.width > 0){
+                tool::graphics::Texture texColor;
+                texColor.copy_2d_data(
+                    cf.width,
+                    cf.height,
+                    cf.pixels
+                );
+                if(!texColor.write_2d_image_file_data(pathColor)){
+                    Logger::error("Failed color.\n");
+                }
             }
 
             auto &df = frame->depthFrame;
-            tool::graphics::Texture texDepth;
-            texDepth.copy_2d_data(
-                df.width,
-                df.height,
-                df.pixels
-            );
-            if(!texDepth.write_2d_image_file_data(pathDepth)){
-                Logger::error("Faild depth.\n");
+            std::cout << "d: " << df.width << " "<< df.height << " " << df.pixels.size() << "\n";
+            if(df.width > 0){
+                tool::graphics::Texture texDepth;
+                texDepth.copy_2d_data(
+                    df.width,
+                    df.height,
+                    df.pixels
+                );
+                if(!texDepth.write_2d_image_file_data(pathDepth)){
+                    Logger::error("Failed depth.\n");
+                }
             }
 
             auto &irf = frame->infraredFrame;
-            tool::graphics::Texture texInfra;
-            texInfra.copy_2d_data(
-                irf.width,
-                irf.height,
-                irf.pixels
-            );
-            if(!texInfra.write_2d_image_file_data(pathInfra)){
-                Logger::error("Faild infra.\n");
+            std::cout << "r: " << irf.width << " "<< irf.height << " " << irf.pixels.size() << "\n";
+            if(irf.width > 0){
+                tool::graphics::Texture texInfra;
+                texInfra.copy_2d_data(
+                    irf.width,
+                    irf.height,
+                    irf.pixels
+                );
+                if(!texInfra.write_2d_image_file_data(pathInfra)){
+                    Logger::error("Failed infra.\n");
+                }
             }
 
             auto &cloudF = frame->cloud;
-            if(!tool::files::save_cloud(pathCloud, cloudF.vertices.data(), cloudF.colors.data(), cloudF.validVerticesCount)){
-                Logger::error("Faild cloud.\n");
+            std::cout << "c: " << cloudF.validVerticesCount << "\n";
+            if(cloudF.validVerticesCount > 0){
+                if(!tool::files::save_cloud(pathCloud, cloudF.vertices.data(), cloudF.colors.data(), cloudF.validVerticesCount)){
+                    Logger::error("Failed cloud.\n");
+                }
             }
-
 
             ++idFrame;
         }
