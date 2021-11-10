@@ -25,6 +25,21 @@ layout (binding = 0) uniform MaterialInfo {
 
 layout( location = 0 ) out vec4 FragColor;
 
+//vec3 blinnphong(vec3 n ) {
+//    vec3 texColor = texture(ColorTex, TexCoord).rgb;
+//    vec3 ambient = Light.La * Material.Ka *texColor;
+//    vec3 s = normalize(LightDir);
+//    float sDotN = max (dot(s,n), 0.0);
+//    vec3 diffuse = texColor * (Light.L * Material.Kd * sDotN);
+//    vec3 spec = vec3(0.0);
+//    if( sDotN > 0.0 ) {
+//        vec3 v = normalize(ViewDir);
+//        vec3 h = normalize(v+s);
+//        spec = Light.L * Material.Ks * pow( max( dot(h,n), 0.0 ), Material.Shininess );
+//    }
+//    return ambient + diffuse + spec;
+//}
+
 vec3 blinnPhong( vec3 n ) {
     vec3 texColor = texture(ColorTex, TexCoord).rgb;
 

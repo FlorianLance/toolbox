@@ -133,6 +133,7 @@ protected:
     static inline bool moveLight = true;
     static inline geo::Pt3f modelPos = {0.f,0.f, 2.f};
     static inline geo::Pt3f modelRot = {};
+    static inline geo::Pt3f skyboxRot = {};
     static inline float scale = 1.f;
     static inline geo::Pt3<int> nb = {1,1,1};
     static inline geo::Pt4f worldLight{0.f,10.f,0.f,1.0f};
@@ -162,6 +163,10 @@ protected:
         {1.f, 0.71f, 0.29f,1.f},
         0.50f,
         0.f
+    };
+
+    static inline graphics::RefractMaterialInfo rmInfo = {
+        0.1f, 0.94f
     };
 
 //    auto gold = MaterialPbr(Pt4f(1, 0.71f, 0.29f,1.f),           0.50f,0.f);
@@ -336,7 +341,16 @@ private:
     geo::Pt4f matColor = {0.5f, 0.5f, 0.5f, 1.0f};
     gl::ShaderProgram *shader = nullptr;
 };
-
+struct Ch5RefractCubeMap : public Sample{
+    Ch5RefractCubeMap(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
+private:
+    float reflectFactor = 0.1f;
+    float eta = 0.94f;
+    gl::ShaderProgram *shader = nullptr;
+};
 
 
 
@@ -363,14 +377,7 @@ private:
 
 
 
-struct Ch5RefractCubeMap : public Sample{
-    Ch5RefractCubeMap(Camera *cam) : Sample(cam){}
-    void draw(gl::Drawer *drawer = nullptr) final override;
-    void update_imgui() final override;
-private:
-    float reflectFactor = 0.1f;
-    float eta = 0.94f;
-};
+
 
 
 

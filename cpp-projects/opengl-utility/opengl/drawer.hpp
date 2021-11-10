@@ -147,7 +147,7 @@ public:
 // ## triangles
 class SkyboxDrawer : public Drawer{
 public:
-    void init(TextureName cubemap);
+    void init(std::optional<TextureName> cubemap);
 };
 
 class SphereDrawer : public Drawer{

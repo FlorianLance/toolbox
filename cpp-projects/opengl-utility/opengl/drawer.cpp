@@ -55,8 +55,10 @@ void PlaneDrawer::init(float xSize, float zSize, std_v1<TextureName> textures){
     drawableObject = std::make_unique<Plane>( static_cast<GLfloat>(xSize), static_cast<GLfloat>(zSize), 1, 1, GLfloat{10}, GLfloat{7});
 }
 
-void SkyboxDrawer::init(TextureName cubemap){
-    texturesNames.emplace_back(cubemap);
+void SkyboxDrawer::init(std::optional<TextureName> cubemap){
+    if(cubemap.has_value()){
+        texturesNames.emplace_back(cubemap.value());
+    }
     drawableObject = std::make_unique<Skybox>(100.f);
 }
 

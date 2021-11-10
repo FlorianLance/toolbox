@@ -51,9 +51,8 @@ void Sample::draw(tool::gl::Drawer *drawer){
     if(drawLights){
         draw_lights();
     }
-    if(drawSkybox){
-        draw_skybox();
-    }
+    draw_skybox();
+
     if(drawFloor){
         //  draw_floor();
     }
@@ -80,32 +79,37 @@ void Sample::draw(tool::gl::Drawer *drawer){
 
 void Sample::update_imgui(){
     if (ImGui::CollapsingHeader("Common parameters")){
-        ImGui::Checkbox("Move lights:", &moveLight);
-        ImGui::Checkbox("Draw floor:", &drawFloor);
-        ImGui::Checkbox("Draw draw skybox:", &drawSkybox);
-        ImGui::Checkbox("Draw lights:", &drawLights);
-        ImGui::Text("Lights:");
-        ImGui::SliderFloat3("Ambiant", lInfo.La.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("Diffuse", lInfo.Ld.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("Specular", lInfo.Ls.v.data(), 0.f, 1.f, "r = %.2f");
 
-        ImGui::Text("Material classic:");
-        ImGui::SliderFloat3("Coeff ambiant",  mInfo.Ka.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("Coeff diffuse",  mInfo.Kd.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("Coeff specular", mInfo.Ks.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat("Shininess",       &mInfo.Shininess, 0.f, 1000.f, "v = %.1f");
-        ImGui::Text("Material pbr:");
+        ImGui::Text("########### Misc:");
+        ImGui::Checkbox("Draw floor", &drawFloor);
 
-        ImGui::Text("Coords:");
-        ImGui::SliderInt3("Numbers", nb.v.data(), 1, 10);
-        ImGui::SliderFloat3("Position", modelPos.v.data(), -10.f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat3("Rotation", modelRot.v.data(), -360.f, 360.f, "ratio = %.1f");
-        ImGui::SliderFloat("Scale", &scale, 0.01f, 5.f, "ratio = %.2f");
+        ImGui::Text("########### Skybox:");
+        ImGui::Checkbox("SB-draw", &drawSkybox);
+        ImGui::SliderFloat3("SB-rotation", skyboxRot.v.data(), -360.f, 360.f, "ratio = %.1f");
 
-        ImGui::Text("Animation:");
-        ImGui::SliderInt("id", &idAnimation, 0, nbAnimations);
-        ImGui::Checkbox("Stop animation", &stopAnimation);
-        ImGui::SliderFloat("Time animation", &timeAnimation, 0.f, durationAnimation, "ratio = %.2f");
+        ImGui::Text("########### Lights:");
+        ImGui::Checkbox("L-move", &moveLight);
+        ImGui::Checkbox("L-draw", &drawLights);
+        ImGui::SliderFloat3("L-Ambiant", lInfo.La.v.data(), 0.f, 1.f, "r = %.2f");
+        ImGui::SliderFloat3("L-Diffuse", lInfo.Ld.v.data(), 0.f, 1.f, "r = %.2f");
+        ImGui::SliderFloat3("L-Specular", lInfo.Ls.v.data(), 0.f, 1.f, "r = %.2f");
+
+        ImGui::Text("########### Blinn-phong material:");
+        ImGui::SliderFloat3("BPM-Coeff ambiant",  mInfo.Ka.v.data(), 0.f, 1.f, "r = %.2f");
+        ImGui::SliderFloat3("BPM-Coeff diffuse",  mInfo.Kd.v.data(), 0.f, 1.f, "r = %.2f");
+        ImGui::SliderFloat3("BPM-Coeff specular", mInfo.Ks.v.data(), 0.f, 1.f, "r = %.2f");
+        ImGui::SliderFloat("BPM-Shininess",       &mInfo.Shininess, 0.f, 1000.f, "v = %.1f");
+
+        ImGui::Text("########### Model:");
+        ImGui::Text("### Coords:");
+        ImGui::SliderInt3("M-Numbers", nb.v.data(), 1, 10);
+        ImGui::SliderFloat3("M-Position", modelPos.v.data(), -10.f, 10.f, "ratio = %.2f");
+        ImGui::SliderFloat3("M-Rotation", modelRot.v.data(), -360.f, 360.f, "ratio = %.1f");
+        ImGui::SliderFloat("M-Scale", &scale, 0.01f, 5.f, "ratio = %.2f");
+        ImGui::Text("### Animation:");
+        ImGui::SliderInt("MA-id", &idAnimation, 0, nbAnimations);
+        ImGui::Checkbox("MA-Stop animation", &stopAnimation);
+        ImGui::SliderFloat("MA-Time animation", &timeAnimation, 0.f, durationAnimation, "ratio = %.2f");
     }
 }
 
@@ -218,17 +222,23 @@ void Sample::draw_lights(){
 
 void Sample::draw_skybox(){
 
+    if(!drawSkybox){
+        gl::TBO::unbind_textures(0,1);
+        return;
+    }
 
     if(auto shader = shadersM->get_ptr("others/skybox"); shader != nullptr){
 
-        model = Mat4d::transform({1.,1.,1.},Vec3d{0.,0.,0.},{0.,0.,0.});
+        model = Mat4d::transform({1.,1.,1.},skyboxRot.conv<double>(),{0.,0.,0.});
         update_matrices();
 
         shader->use();
         shader->set_camera_matrices_uniforms(camM);
 
+        gl::TBO::bind_textures({texturesM->id("grace")},0);
+
         if(auto drawer = drawersM->get_drawer_ptr("skybox-drawer"); drawer != nullptr){
-            drawer->draw();
+            drawer->draw();            
         }
     }
 }
@@ -350,9 +360,6 @@ void Ch3Phong::init(){
 void Ch3Phong::draw(tool::gl::Drawer *drawer){
 
     Sample::draw(drawer);
-
-    draw_lights();
-    draw_skybox();
 
     shader->use();
 
@@ -740,6 +747,33 @@ void Ch5ReflectCubeMap::update_imgui(){
     ImGui::SliderFloat("Reflect factor", &reflectFactor, 0.0f, 1.f, "ratio = %.3f");
     ImGui::SliderFloat4("Mat color", matColor.v.data(), 0.0, 1.0f, "ratio = %.2f");
 }
+
+void Ch5RefractCubeMap::init(){
+    shader = shadersM->get_ptr("ch5/refract-cubemap");
+}
+
+void Ch5RefractCubeMap::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    shader->set_uniform("WorldCameraPosition", camera->position().conv<float>());
+    shader->set_uniform("Material.Eta", rmInfo.eta);
+    shader->set_uniform("Material.ReflectionFactor", rmInfo.reflectionFactor);
+
+    draw_nb(shader, drawer);
+}
+
+void Ch5RefractCubeMap::update_imgui(){
+    Sample::update_imgui();
+    ImGui::Text("Current:");
+    ImGui::SliderFloat("refract Eta", &rmInfo.eta, 0.0f, 1.00f, "ratio = %.3f");
+    ImGui::SliderFloat("reflect factor", &rmInfo.reflectionFactor, 0.0f, 1.00f, "ratio = %.3f");
+}
+
+
+
 
 
 
@@ -1807,37 +1841,6 @@ void Ch5ProjectTexture::draw(tool::gl::Drawer *drawer){
         drawer->draw(shader);
     }
 
-}
-
-void Ch5RefractCubeMap::draw(tool::gl::Drawer *drawer){
-
-    if(auto shader = shadersM->get_ptr("ch5/refract-cubemap"); shader != nullptr){
-
-        model = Mat4d::transform({1.,1.,1.},Vec3d{-90.,0.,0.},{0,2.,3.});
-        update_matrices();
-
-        shader->use();
-        shader->set_uniform("WorldCameraPosition", camera->position().conv<float>());
-        shader->set_model_matrix(model);
-        shader->set_camera_matrices_uniforms(camM);
-
-        graphics::RefractMaterialInfo mInfo;
-        mInfo.eta = eta;
-        mInfo.reflectionFactor = reflectFactor;
-        shader->set_uniform("Material.Eta", mInfo.eta);
-        shader->set_uniform("Material.ReflectionFactor",mInfo.reflectionFactor);
-
-        if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
-            drawer->draw(shader);
-        }
-    }
-}
-
-void Ch5RefractCubeMap::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::SliderFloat("refract Eta", &eta, 0.0f, 1.00f, "ratio = %.3f");
-    ImGui::SliderFloat("reflect factor", &reflectFactor, 0.0f, 1.00f, "ratio = %.3f");
 }
 
 

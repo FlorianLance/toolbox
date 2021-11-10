@@ -88,17 +88,20 @@ protected:
     virtual void post_update(){}
 
     // events
-    virtual void mouse_button_event(sf::Event mouseButtonEvent);
-    virtual void mouse_moved_event(sf::Event mouseMovedEvent);
-    virtual void keyboard_keyrelease_event(sf::Event keyReleaseEvent){static_cast<void>(keyReleaseEvent);}
-    virtual void mouse_scroll_event(sf::Event mouseScrollEvent);
-    virtual void keyboard_keypress_event(sf::Event keyPressEvent);
+    // # mouse
+    virtual void mouse_button_pressed_event(sf::Event::MouseButtonEvent event);
+    virtual void mouse_button_released_event(sf::Event::MouseButtonEvent event);
+    virtual void mouse_moved_event(sf::Event::MouseMoveEvent event);
+    virtual void mouse_wheel_scroll_event(sf::Event::MouseWheelScrollEvent event);
+    // # key
+    virtual void keyboard_keypress_event(sf::Event::KeyEvent event);
+    virtual void keyboard_keyrelease_event(sf::Event::KeyEvent event){static_cast<void>(event);}
 
     // camera
-    virtual void update_camera_with_mouse_button_event(sf::Event mouseButtonEvent);
-    virtual void update_camera_with_keyboardpress_event(sf::Event keyPressEvent);
-    virtual void update_camera_with_mouse_scroll_event(sf::Event mouseScrollEvent);
-    virtual void update_camera_with_mouse_moved_event(sf::Event mouseMovedEvent);
+    virtual void update_camera_with_mouse_button_event(sf::Event::MouseButtonEvent event, bool pressed);
+    virtual void update_camera_with_keyboardpress_event(sf::Event::KeyEvent event);
+    virtual void update_camera_with_mouse_scroll_event(sf::Event::MouseWheelScrollEvent event);
+    virtual void update_camera_with_mouse_moved_event(sf::Event::MouseMoveEvent event);
 
 private:
 

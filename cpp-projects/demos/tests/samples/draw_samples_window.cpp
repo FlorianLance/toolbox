@@ -99,8 +99,9 @@ bool DrawSampleWindow::init_shaders(){
     //    shaderInit &= texturedNormalsMeshShader.init();
     Managers::shaders.unbind();
 
-    Managers::shaders.get_ptr("ch4/pbr")->debug_display();
-    Managers::shaders.get_ptr("ch5/discard-pixels")->debug_display();
+    // Managers::shaders.get_ptr("ch4/pbr")->debug_display();
+    // Managers::shaders.get_ptr("ch5/discard-pixels")->debug_display();
+    Managers::shaders.get_ptr("ch5/reflect-cubemap")->debug_display();
 
     return true;
 }
@@ -331,7 +332,7 @@ bool DrawSampleWindow::init_drawers(){
     drawers.push_back({"frustum-drawer", frustum, false});
 
     auto skybowDrawer = std::make_shared<gl::SkyboxDrawer>();
-    skybowDrawer->init(tm->id("grace"));
+    skybowDrawer->init({});
     drawers.push_back({"skybox-drawer", skybowDrawer, false});
 
     // # loaded models
@@ -377,8 +378,10 @@ bool DrawSampleWindow::init_drawers(){
     model->scaleHint = 3.f;
     drawers.push_back({"rabbit-drawer", model, true});
 
+//    size_t id = 0;
     for(auto &drawer : drawers){
         if(std::get<2>(drawer)){
+//            drawersName.push_back(std::format("[{}] {}", std::to_string(id++), std::get<0>(drawer)));
             drawersName.push_back(std::get<0>(drawer));
         }
         drawerAdded &= dm->add_drawer(std::get<0>(drawer), std::get<1>(drawer));
