@@ -23,6 +23,8 @@ void BiopacControlWindow::post_update(){
 
 void BiopacControlWindow::draw_imgui(){
 
+    ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
+
     auto serial = std::string(std::begin(serialBuffer), std::end(serialBuffer));
     serial.erase(std::remove(serial.begin(), serial.end(), ' '), serial.end());
 
@@ -147,5 +149,5 @@ void BiopacControlWindow::draw_imgui(){
     //            ImPlot::EndPlot();
     //        }
     //    }
-
+    ImGui::End();
 }

@@ -82,6 +82,8 @@ protected:
     virtual void draw_sfml(){}
     virtual void draw_imgui(){}
 
+    void check_hovering_imgui();
+
     // update
     virtual void pre_update(){}
     virtual void update(){}

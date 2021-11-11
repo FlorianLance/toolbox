@@ -245,33 +245,33 @@ bool DrawSampleWindow::init_drawers(){
     auto tm = &Managers::textures;
     auto mm = &Managers::models;
 
-    std::vector<std::tuple<std::string, std::shared_ptr<gl::Drawer>, bool>> drawers;
+    std::vector<std::tuple<std::string, std::shared_ptr<gl::Drawer>, bool>> drawersInfos;
 
     // # procedural    
     { // ## plane
         auto plane =  std::make_shared<gl::PlaneDrawer>();
-        plane->init(10,10);
-        drawers.push_back({"notext-plane-10x10-drawer", plane, false});
+        plane->init(10,10);                
+        drawersInfos.push_back({"notext-plane-10x10-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(20,10);
-        drawers.push_back({"notext-plane-20x10-drawer", plane, false});
+        drawersInfos.push_back({"notext-plane-20x10-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(40,40);
-        drawers.push_back({"notext-plane-40x40-drawer", plane, false});
+        drawersInfos.push_back({"notext-plane-40x40-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("cement")});
-        drawers.push_back({"floor-drawer", plane, false});
+        drawersInfos.push_back({"floor-drawer", plane, false});
 
         plane = std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("me_textile")});
-        drawers.push_back({"grid-floor-drawer", plane, false});
+        drawersInfos.push_back({"grid-floor-drawer", plane, false});
 
         plane = std::make_shared<gl::PlaneDrawer>();
         plane->init(8,8,{tm->id("mybrick-color"), tm->id("mybrick-normal"), tm->id("mybrick-height")});
-        drawers.push_back({"multi-tex-plane-drawer", plane, false});
+        drawersInfos.push_back({"multi-tex-plane-drawer", plane, false});
     }
 
     { // ## points
@@ -282,109 +282,105 @@ bool DrawSampleWindow::init_drawers(){
         auto torus = std::make_shared<gl::TorusDrawer>();
         torus->init();
         torus->scaleHint = 0.5f;
-        drawers.push_back({"torus-drawer", torus, true});
+        drawersInfos.push_back({"torus-drawer", torus, true});
     }
 
     { // cube
         auto cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {});
         cube->scaleHint = 0.3f;
-        drawers.push_back({"cube-drawer", cube, true});
+        drawersInfos.push_back({"cube-drawer", cube, true});
 
         cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("brick")});
         cube->scaleHint = 0.3f;
-        drawers.push_back({"brick-cube-drawer", cube, false});
+        drawersInfos.push_back({"brick-cube-drawer", cube, false});
 
         cube= std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("brick"), tm->id("moss")});
         cube->scaleHint = 0.3f;
-        drawers.push_back({"brick-moss-cube-drawer", cube, false});
+        drawersInfos.push_back({"brick-moss-cube-drawer", cube, false});
 
         cube = std::make_shared<gl::CubeDrawer>();
         cube->init(2.f, {tm->id("cement"), tm->id("moss")});
         cube->scaleHint = 0.3f;
-        drawers.push_back({"cement-moss-cube-drawer", cube, false});
+        drawersInfos.push_back({"cement-moss-cube-drawer", cube, false});
     }
-
-
 
     auto screenQuad = std::make_shared<gl::FullscreenQuadDrawer>();
     screenQuad->init();
-    drawers.push_back({"screen-quad-drawer", screenQuad, false});
+    drawersInfos.push_back({"screen-quad-drawer", screenQuad, false});
 
     auto teapot =std::make_shared<gl::TeapotDrawer>();
     teapot->init();
     teapot->scaleHint = 0.3f;
-    drawers.push_back({"teapot-drawer", teapot, true});
+    drawersInfos.push_back({"teapot-drawer", teapot, true});
 
     auto sphere = std::make_shared<gl::SphereDrawer>();
     sphere->init(1.f, 20, 20);
     sphere->scaleHint = 0.7f;
-    drawers.push_back({"sphere-drawer", sphere, true});
+    drawersInfos.push_back({"sphere-drawer", sphere, true});
 
     auto axes = std::make_shared<gl::AxesDrawer>();
     axes->init();
-    drawers.push_back({"axes-drawer", axes, false});
+    drawersInfos.push_back({"axes-drawer", axes, false});
 
     auto frustum = std::make_shared<gl::FrustumDrawer>();
     frustum->init();
-    drawers.push_back({"frustum-drawer", frustum, false});
+    drawersInfos.push_back({"frustum-drawer", frustum, false});
 
     auto skybowDrawer = std::make_shared<gl::SkyboxDrawer>();
     skybowDrawer->init({});
-    drawers.push_back({"skybox-drawer", skybowDrawer, false});
+    drawersInfos.push_back({"skybox-drawer", skybowDrawer, false});
 
     // # loaded models
     auto model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("spot"),{tm->get_texture_info("spot_texture",{})});
-    drawers.push_back({"spot-drawer", model, true});
+    drawersInfos.push_back({"spot-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("spot"),{});
-    drawers.push_back({"notext-spot-drawer", model, true});
+    drawersInfos.push_back({"notext-spot-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("ogre"),{tm->get_texture_info("ogre_diffuse",{}), tm->get_texture_info("ogre_normalmap",{})});
-    drawers.push_back({"ogre-drawer", model, true});
+    drawersInfos.push_back({"ogre-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("pig"));
-    drawers.push_back({"pig-drawer", model, true});
+    drawersInfos.push_back({"pig-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("dragon"));
     model->scaleHint = 2.f;
-    drawers.push_back({"dragon-drawer", model, true});
+    drawersInfos.push_back({"dragon-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("crysis"));
     model->scaleHint = 0.1f;
-    drawers.push_back({"crysis-drawer", model, true});
+    drawersInfos.push_back({"crysis-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("alex"));
     model->scaleHint = 0.01f;
-    drawers.push_back({"alex-drawer", model, true});
+    drawersInfos.push_back({"alex-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("storm"));
     model->scaleHint = 0.01f;
     model->update_animation(mm->get_model_ptr("storm")->animations[0].name, 0.f);
-    drawers.push_back({"storm-drawer", model, true});
+    drawersInfos.push_back({"storm-drawer", model, true});
 
     model = std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("rabbit"));
     model->scaleHint = 3.f;
-    drawers.push_back({"rabbit-drawer", model, true});
+    drawersInfos.push_back({"rabbit-drawer", model, true});
 
-//    size_t id = 0;
-    for(auto &drawer : drawers){
-        if(std::get<2>(drawer)){
-//            drawersName.push_back(std::format("[{}] {}", std::to_string(id++), std::get<0>(drawer)));
-            drawersName.push_back(std::get<0>(drawer));
+    for(auto &drawerInfo : drawersInfos){
+        if(std::get<2>(drawerInfo)){
+            drawersName.emplace_back(std::get<0>(drawerInfo));
         }
-        drawerAdded &= dm->add_drawer(std::get<0>(drawer), std::get<1>(drawer));
+        drawerAdded &= dm->add_drawer(std::get<0>(drawerInfo), std::get<1>(drawerInfo));
     }
 
     if(!drawerAdded){
@@ -392,6 +388,7 @@ bool DrawSampleWindow::init_drawers(){
     }
     return true;
 }
+
 
 bool DrawSampleWindow::init_samples(){
 
@@ -502,7 +499,7 @@ void DrawSampleWindow::draw_gl(){
 
     gl::FBO::unbind();
 
-    if(currentSample < static_cast<int>(samples.size()) && currentDrawer < static_cast<int>(drawersName.size())){
+    if(currentSample < samples.size()){
         std::get<1>(samples[currentSample])->draw(Managers::drawers.get_drawer_ptr(drawersName[currentDrawer]));
     }
 }
@@ -510,7 +507,7 @@ void DrawSampleWindow::draw_gl(){
 void DrawSampleWindow::update(){
 
     // update current sample
-    if(currentSample < static_cast<int>(samples.size())){
+    if(currentSample < samples.size()){
         std::get<1>(samples[currentSample])->update(elapsed_secondes());
     }
 }
@@ -518,12 +515,109 @@ void DrawSampleWindow::update(){
 
 void DrawSampleWindow::draw_imgui(){
 
-    ImGui::Combo("Drawer", &currentDrawer, drawersName);
-    ImGui::Combo("Sample", &currentSample, samplesName);
-    if(currentSample < static_cast<int>(samples.size())){
+    // menu bar
+    if (ImGui::BeginMainMenuBar()){
+
+        if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+        if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
+        if (ImGui::MenuItem("Close", "Ctrl+W"))  {  }
+
+        if (ImGui::BeginMenu("Developer")){
+            ImGui::MenuItem("Show demo window", nullptr, &m_showDemoWindow);
+            ImGui::MenuItem("Show metrics window", nullptr, &m_showMetricsWindow);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();        
+    }
+
+
+    // show demo
+    if (m_showDemoWindow){
+        ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
+        ImGui::ShowDemoWindow(&m_showDemoWindow);
+    }
+
+    // show metrics
+    if (m_showMetricsWindow){
+        ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
+        ImGui::ShowMetricsWindow(&m_showMetricsWindow);
+    }
+
+//    ImGuiWindowFlags settingsWindowsFlags =
+//        ImGuiWindowFlags_NoMove  |
+//        ImGuiWindowFlags_MenuBar |
+//        ImGuiWindowFlags_AlwaysAutoResize;
+
+
+    ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
+
+    ImGui::Text("Drawer");
+    ImGui::SameLine();
+
+    if(ImGui::BeginCombo("###Drawer", drawersName[currentDrawer].c_str())){
+        for(size_t ii = 0; ii < drawersName.size(); ++ii){
+
+            bool selected = ii == currentDrawer;
+            if (ImGui::Selectable(drawersName[ii].c_str(),selected)){
+                currentDrawer = ii;
+            }
+            if(selected){
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+
+    if(ImGui::Button("^###d^")){
+        if(currentDrawer > 0){
+            --currentDrawer;
+        }
+    }
+    ImGui::SameLine();
+
+    if(ImGui::Button("v###dv")){
+        if(currentDrawer < drawersName.size()-1){
+            ++currentDrawer;
+        }
+    }
+
+    ImGui::Text("Sample");
+    ImGui::SameLine();
+
+    if(ImGui::BeginCombo("###Sample", samplesName[currentSample].c_str())){
+        for(size_t ii = 0; ii < samplesName.size(); ++ii){
+
+            bool selected = ii == currentSample;
+            if (ImGui::Selectable(samplesName[ii].c_str(),selected)){
+                currentSample = ii;
+            }
+            if(selected){
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+
+    if(ImGui::Button("^###s^")){
+        if(currentSample > 0){
+            --currentSample;
+        }
+    }
+    ImGui::SameLine();
+
+    if(ImGui::Button("v###sv")){
+        if(currentSample < samplesName.size()-1){
+            ++currentSample;
+        }
+    }
+
+    if(currentSample < samples.size()){
         std::get<1>(samples[currentSample])->update_imgui();
     }
 
+    ImGui::End();
 
     //    if (ImGui::CollapsingHeader("Scatter Plots")) { // crash
     //        srand(0);

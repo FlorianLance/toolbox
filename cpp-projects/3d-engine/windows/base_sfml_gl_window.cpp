@@ -178,18 +178,16 @@ void BaseSfmlGlWindow::start(){
             // update sfml
             ImGui::SFML::Update(m_scene, deltaClock.restart());
 
-            { // imgui
+            // imgui
+            imguiHover = false;
+            draw_imgui();
+            check_hovering_imgui();
+            ImGui::EndFrame();
 
-                ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
-                draw_imgui();
-                // auto io = ImGui::GetIO();
-                imguiHover = ImGui::IsAnyItemHovered() ||
-                             ImGui::IsWindowHovered()  ||
-                             ImGui::IsAnyItemFocused() ||
-                             ImGui::IsAnyItemActive();
-
-                ImGui::End();
-                ImGui::EndFrame();
+            if(imguiHover){
+                mouseLeftClickPressed = false;
+                mouseRightClickPressed = false;
+                mouseMiddleClickPressed = false;
             }
 
             // render sfml scene
@@ -212,6 +210,11 @@ void BaseSfmlGlWindow::start(){
     }
 
     ImGui::SFML::Shutdown();
+}
+
+void BaseSfmlGlWindow::check_hovering_imgui(){
+    const auto &io = ImGui::GetIO();
+    imguiHover = io.WantCaptureMouse;
 }
 
 
@@ -338,7 +341,10 @@ void BaseSfmlGlWindow::update_camera_with_keyboardpress_event(sf::Event::KeyEven
 }
 
 void BaseSfmlGlWindow::update_camera_with_mouse_scroll_event(sf::Event::MouseWheelScrollEvent event){
-    m_camera.move_front(static_cast<double>(event.delta) *0.05);
+
+    if(event.wheel == 0){
+        m_camera.move_front(static_cast<double>(event.delta) *0.05);
+    }
 }
 
 void BaseSfmlGlWindow::update_camera_with_mouse_moved_event(sf::Event::MouseMoveEvent event){

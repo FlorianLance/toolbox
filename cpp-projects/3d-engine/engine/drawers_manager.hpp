@@ -36,17 +36,23 @@ namespace tool::graphics {
 
 class DrawersManager{
 
+    using Alias = std::string;
+
 public:
 
-    bool add_drawer(const std::string &drawerAlias, std::shared_ptr<gl::Drawer> drawer);;
+    bool add_drawer(const Alias &alias, std::shared_ptr<gl::Drawer> drawer);;
 
-    std::weak_ptr<gl::Drawer> get_drawer(std::string alias);
-    gl::Drawer *get_drawer_ptr(std::string alias);
+    std::weak_ptr<gl::Drawer> get_drawer(const Alias &alias) const;
+    gl::Drawer *get_drawer_ptr(const Alias &alias) const;
+    gl::Drawer *get_drawer_ptr(size_t id) const;
+    Alias get_alias(size_t id) const noexcept;
+    size_t get_id(const Alias &alias) const;
+
+    constexpr size_t count() const noexcept {return aliases.size();}
 
 private:
-
-    using Alias = std::string;
-    std::unordered_map<Alias, std::shared_ptr<gl::Drawer>> drawers;
+    std::vector<Alias> aliases;
+    std::unordered_map<Alias, std::tuple<size_t, std::shared_ptr<gl::Drawer>>> drawers;
 };
 }
 

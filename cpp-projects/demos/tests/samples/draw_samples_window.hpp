@@ -42,12 +42,15 @@ protected:
     ImPlotContext *imPlotContext = nullptr;
 
     // drawers
-    int currentDrawer = 0;
+    size_t currentDrawer = 0;
     std::vector<std::string> drawersName;
 
     // samples
-    int currentSample = 0;
+    size_t currentSample = 0;
     std::vector<std::string> samplesName;
     std::vector<std::tuple<std::string, std::unique_ptr<Sample>>> samples;
+
+    bool m_showDemoWindow = false;
+    bool m_showMetricsWindow = false;
 };
 }

@@ -104,6 +104,7 @@ HEADERS += \
     tests/biopac/biopac.hpp \
 
 SOURCES += \
+    imgui_demo.cpp \
     main.cpp \        
     ## samples
     tests/samples/draw_samples_window.cpp \
