@@ -866,8 +866,16 @@ void Frustum::set_perspective(float fovy, float ar, float nearDist, float farDis
 
     std::vector<GLfloat> vertices = {
         0,0,0,
-        dx, dy, -mNear, -dx, dy, -mNear, -dx, -dy, -mNear, dx, -dy, -mNear,
-        fdx, fdy, -mFar, -fdx, fdy, -mFar, -fdx, -fdy, -mFar, fdx, -fdy, -mFar
+        dx, dy, -mNear,
+
+        -dx, dy, -mNear,
+        -dx, -dy, -mNear,
+        dx, -dy, -mNear,
+
+        fdx, fdy, -mFar,
+        -fdx, fdy, -mFar,
+        -fdx, -fdy, -mFar,
+        fdx, -fdy, -mFar
     };
 
     std::vector<GLuint> indices = {

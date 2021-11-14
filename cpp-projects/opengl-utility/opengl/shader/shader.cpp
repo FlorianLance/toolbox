@@ -269,10 +269,11 @@ void ShaderProgram::set_model_matrix(const Mat4d &model){
     set_uniform(MM,  model.conv<float>());
 }
 
-void ShaderProgram::set_camera_matrices_uniforms(const graphics::CameraMatrices &cameraM){
-    set_uniform(MVM, cameraM.mv.conv<float>());
-    set_uniform(NM,  cameraM.normal.conv<float>());
-    set_uniform(MVP, cameraM.mvp.conv<float>());
+void ShaderProgram::set_camera_matrices_uniforms(const graphics::CameraMatrices &camM){
+    set_uniform(MVM, camM.mv.conv<float>());
+    set_uniform(NM,  camM.normal.conv<float>());
+    set_uniform(MVP, camM.mvp.conv<float>());
+    set_model_matrix(camM.m);
 }
 
 void ShaderProgram::debug_display(){

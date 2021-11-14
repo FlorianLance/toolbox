@@ -90,8 +90,12 @@ struct FBO{
         colorAttachments.resize(maxAttach);
     }
 
-    void bind(){
+    void bind() const{
         glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+    }
+
+    static void bind(const FBO &fbo){
+        fbo.bind();
     }
 
     static void unbind(){

@@ -15,7 +15,7 @@ uniform struct LightInfo {
   vec3 La; // Ambient
 } Lights[3];
 
-uniform struct MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
   vec3 Ka;
   vec3 Kd;            // Diffuse reflectivity
   vec3 Ks;
@@ -95,6 +95,8 @@ void pass2() {
 }
 
 void main() {
-  if( Pass == 1 ) pass1();
-  else if( Pass == 2) pass2();
+
+    vec3 n = normalize(Normal);
+    if( Pass == 1 ) pass1();
+    else if( Pass == 2) pass2();
 }

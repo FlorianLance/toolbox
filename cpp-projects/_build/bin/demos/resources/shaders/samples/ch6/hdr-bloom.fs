@@ -22,7 +22,7 @@ uniform struct LightInfo {
   vec3 La;  // Ambient
 } Lights[3];
 
-uniform struct MaterialInfo {
+layout (binding = 0) uniform MaterialInfo {
   vec3 Ka;            // Ambient reflectivity
   vec3 Kd;            // Diffuse reflectivity
   vec3 Ks;            // Specular reflectivity

@@ -10,7 +10,6 @@ out vec2 TexCoord;
 
 uniform mat4 ModelViewMatrix;
 uniform mat3 NormalMatrix;
-//uniform mat4 ProjectionMatrix;
 uniform mat4 MVP;
 
 void main()

@@ -82,7 +82,7 @@ protected:
     virtual void draw_sfml(){}
     virtual void draw_imgui(){}
 
-    void check_hovering_imgui();
+//    void check_hovering_imgui();
 
     // update
     virtual void pre_update(){}
@@ -111,7 +111,11 @@ private:
     void base_resize_windows(sf::Event::SizeEvent size);
 
 protected:
-    // opengl
+
+    // loop
+    bool running = false;
+
+    // opengl    
     bool m_glInitialized = false;
     sf::RenderWindow m_scene;
     sf::ContextSettings glContext;
@@ -140,7 +144,9 @@ protected:
     bool mouseRightClickPressed = false;
     bool mouseMiddleClickPressed = false;
     int lastX=-1, lastY=-1;
-    bool imguiHover = false;
+
+    bool imguiMouse = false;
+    bool imguiKeyboard = false;
 };
 
 

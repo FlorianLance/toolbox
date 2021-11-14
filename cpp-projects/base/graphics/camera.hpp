@@ -41,9 +41,56 @@ struct CameraMatrices{
     using Mat3 = geo::Mat3d;
     using Mat4 = geo::Mat4d;
 
-    Mat3 normal;
-    Mat4 mv;
-    Mat4 mvp;
+    Mat4 m;         // model matrix
+    Mat4 v;         // view matrix
+    Mat4 p;         // projection matrix
+
+    Mat3 normal;    // normal matrix
+    Mat4 mv;        // model*view matrix
+    Mat4 mvp;       // model*view*projection matrix
+
+    void update(){
+        mv     = m * v;
+        normal = normal_matrix(mv);
+        mvp    = mv * p;
+    }
+
+    void update_m(const Mat4 &model){
+        m = model;
+        update();
+    }
+
+    void update_v(const Mat4 &view){
+        v = view;
+        update();
+    }
+
+    void update_p(const Mat4 &proj){
+        p = proj;
+        update();
+    }
+
+    void update_vp(const Mat4 &view, const Mat4 &proj){
+        v = view;
+        p = proj;
+        update();
+    }
+
+    void update_mvp(const Mat4 &model, const Mat4 &view, const Mat4 &proj){
+        m = model;
+        v = view;
+        p = proj;
+        update();
+    }
+
+    static Mat3 normal_matrix(const Mat4 &modelView){
+        const auto &mv = modelView;
+        return {
+            mv.at(0,0),mv.at(0,1),mv.at(0,2),
+            mv.at(1,0),mv.at(1,1),mv.at(1,2),
+            mv.at(2,0),mv.at(2,1),mv.at(2,2),
+        };
+    }
 };
 
 class Camera{
@@ -87,10 +134,6 @@ public:
         return Mat4::LookAt(m_position, m_position+m_direction, m_up);
     }
 
-    Mat4 model_view(const Mat4 &model) const{
-        return model * m_view;
-    }
-
     static Mat3 normal(const Mat4 &modelView){
         const auto &mv = modelView;
         return {
@@ -100,20 +143,12 @@ public:
         };
     }
 
-    CameraMatrices compute_camera_matrices(const Mat4 &model) const{
-        CameraMatrices m;
-        m.mv     = model_view(model);
-        m.normal = normal(m.mv);
-        m.mvp    = m.mv * m_projection;
-        return m;
-    }
-
-    static CameraMatrices compute_camera_matrices(const Mat4 &model, const Mat4 &view, const Mat4& projection){
-        CameraMatrices m;
-        m.mv     = model * view;
-        m.normal = normal(m.mv);
-        m.mvp    = m.mv * projection;
-        return m;
+    CameraMatrices generate_camera_matrices(){
+        CameraMatrices camM;
+        camM.v      = m_view;
+        camM.p      = m_projection;
+        camM.update();
+        return camM;
     }
 
     constexpr Mat4 projection() const noexcept{

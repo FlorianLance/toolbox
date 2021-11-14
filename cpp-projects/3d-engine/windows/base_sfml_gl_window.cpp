@@ -96,8 +96,13 @@ void BaseSfmlGlWindow::start(){
 
     startL = std::chrono::high_resolution_clock::now();
 
-    bool running = true;
+    running = true;
     while(running){
+
+        const auto &io = ImGui::GetIO();
+        imguiMouse    = io.WantCaptureMouse;
+        imguiKeyboard = io.WantCaptureKeyboard;
+
 
         Bench::start("main_loop");
 
@@ -158,6 +163,16 @@ void BaseSfmlGlWindow::start(){
             // SensorChanged, < A sensor value changed (data in event.sensor)
         }
 
+        if(imguiMouse){
+            mouseLeftClickPressed   = false;
+            mouseRightClickPressed  = false;
+            mouseMiddleClickPressed = false;
+        }
+        if(imguiKeyboard){
+
+        }
+
+
 
         // update
         pre_update();
@@ -179,16 +194,9 @@ void BaseSfmlGlWindow::start(){
             ImGui::SFML::Update(m_scene, deltaClock.restart());
 
             // imgui
-            imguiHover = false;
+            imguiMouse = false;
             draw_imgui();
-            check_hovering_imgui();
             ImGui::EndFrame();
-
-            if(imguiHover){
-                mouseLeftClickPressed = false;
-                mouseRightClickPressed = false;
-                mouseMiddleClickPressed = false;
-            }
 
             // render sfml scene
             draw_sfml();
@@ -205,6 +213,9 @@ void BaseSfmlGlWindow::start(){
             std::this_thread::sleep_for(timePerFrame-frameDuration);
         }
 
+        auto fdms = std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration);
+        std::cout << fdms.count() << " ";
+
         Bench::stop();
         // Bench::display();
     }
@@ -212,10 +223,10 @@ void BaseSfmlGlWindow::start(){
     ImGui::SFML::Shutdown();
 }
 
-void BaseSfmlGlWindow::check_hovering_imgui(){
-    const auto &io = ImGui::GetIO();
-    imguiHover = io.WantCaptureMouse;
-}
+//void BaseSfmlGlWindow::check_hovering_imgui(){
+//    const auto &io = ImGui::GetIO();
+//    imguiHover = io.WantCaptureMouse;
+//}
 
 
 bool BaseSfmlGlWindow::init_sfml_window(){
@@ -240,26 +251,25 @@ void BaseSfmlGlWindow::base_resize_windows(sf::Event::SizeEvent size){
 }
 
 void BaseSfmlGlWindow::mouse_button_pressed_event(sf::Event::MouseButtonEvent event){
-    if(!imguiHover){
+    if(!imguiMouse){
         update_camera_with_mouse_button_event(event, true);
     }
 }
 
 void BaseSfmlGlWindow::mouse_button_released_event(sf::Event::MouseButtonEvent event){
-    if(!imguiHover){
+    if(!imguiMouse){
         update_camera_with_mouse_button_event(event, false);
     }
 }
 
 void BaseSfmlGlWindow::mouse_moved_event(sf::Event::MouseMoveEvent event){
-
-    if(!imguiHover){
+    if(!imguiMouse){
         update_camera_with_mouse_moved_event(event);
     }
 }
 
 void BaseSfmlGlWindow::mouse_wheel_scroll_event(sf::Event::MouseWheelScrollEvent event){
-    if(!imguiHover){ 
+    if(!imguiMouse){
         if(!mouseMiddleClickPressed){
             update_camera_with_mouse_scroll_event(event);
         }
@@ -267,7 +277,7 @@ void BaseSfmlGlWindow::mouse_wheel_scroll_event(sf::Event::MouseWheelScrollEvent
 }
 
 void BaseSfmlGlWindow::keyboard_keypress_event(sf::Event::KeyEvent event){
-    if(!imguiHover){
+    if(!imguiMouse && !imguiKeyboard){
         update_camera_with_keyboardpress_event(event);
     }
 }

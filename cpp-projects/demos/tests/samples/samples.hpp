@@ -85,34 +85,38 @@ struct Sample{
         texturesM(&Managers::textures),
         modelsM(&Managers::models),
         drawersM(&Managers::drawers)
-    {}
+    {
+
+    }
 
     virtual void init(){}
     virtual void update_screen_size(){}
     virtual void update(float elapsedSeconds);    
     virtual void draw(gl::Drawer *drawer = nullptr);
-    virtual void update_imgui();
+    virtual void parent_update_imgui();
+    virtual void update_imgui(){}
+
 
     void draw_nb(gl::ShaderProgram *shader, gl::Drawer *drawer);
 
     void update_matrices();
-    void update_matrices(geo::Mat4d view, geo::Mat4d proj);
-    void update_matrices(geo::Mat4d model, geo::Mat4d view, geo::Mat4d proj);
-    void update_matrices_with_identity();
+    void update_matrices_m(const geo::Mat4d &model = geo::Mat4d(true));
+    void update_matrices_p(const geo::Mat4d &proj);
+    void update_matrices_vp(const geo::Mat4d &view, const geo::Mat4d &proj);
+    void update_matrices_mvp(const geo::Mat4d &model, const geo::Mat4d &view, const geo::Mat4d &proj);
 
     void draw_screen_quad(gl::ShaderProgram *shader);
     void draw_floor();
     void draw_lights();
     void draw_skybox();
 
+    void draw_scene1(gl::ShaderProgram *shader);
+
 public:
 
     // ## TODO: remove
     static inline float alpha = 0.f;
-    static inline float gamma = 2.2f;
-    static inline float x = 0.f;
-    static inline float y = 0.f;
-    static inline float z = 0.f;
+    static inline geo::Pt3f xyz = {};
     static inline float x1 = 0.f;
     static inline float y1 = 0.f;
     static inline float z1 = 1.f;
@@ -145,6 +149,10 @@ protected:
     static inline float timeAnimation = 0.f;
     static inline float durationAnimation = 10.f;
 
+    static inline float camFov = 60.f;
+
+    static inline gl::TextureName skyboxT;
+
     static inline graphics::LightInfo lInfo = {
         {},
         {0.4f, 0.4f, 0.4f},
@@ -175,11 +183,9 @@ protected:
 //    auto titanium = MaterialPbr(Pt4f(0.542f, 0.497f, 0.449f,1.f),    0.50f,0.f);
 //    auto silver = MaterialPbr(Pt4f(0.95f, 0.93f, 0.88f,1.f),       0.50f,0.f);
 
-
     // camera / transform
     Camera *camera = nullptr;
     CameraMatrices camM;
-    geo::Mat4d model;
 
     // managers
     ShadersManager  *shadersM   = nullptr;
@@ -190,6 +196,9 @@ protected:
     // UBO
     gl::LightUBO lightUBO;
     gl::MaterialUBO materialUBO;
+
+    // shaders
+    gl::ShaderProgram *shader = nullptr;
 };
 
 // ############################################## CH3
@@ -197,16 +206,11 @@ struct Ch3Diffuse : public Sample{
     Ch3Diffuse(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer) final override;
-    void update_imgui() final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch3Flat : public Sample{
     Ch3Flat(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch3Discard : public Sample{
     Ch3Discard(Camera *cam) : Sample(cam){}
@@ -214,7 +218,6 @@ struct Ch3Discard : public Sample{
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
-    gl::ShaderProgram *shader = nullptr;
     float discardV = 0.2f;
     float scaleV = 15.f;
 };
@@ -222,44 +225,32 @@ struct Ch3TwoSide : public Sample{
     Ch3TwoSide(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch3Phong : public Sample{
     Ch3Phong(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 // ############################################## CH4
 struct Ch4PhongDirectionnalLight : public Sample{
     Ch4PhongDirectionnalLight(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch4PhongMultiLights : public Sample{
     Ch4PhongMultiLights(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch4PhongPerFragment : public Sample{
     Ch4PhongPerFragment(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch4BlinnPhong : public Sample{
     Ch4BlinnPhong(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch4Cartoon : public Sample{
     Ch4Cartoon(Camera *cam) : Sample(cam){}
@@ -267,7 +258,6 @@ struct Ch4Cartoon : public Sample{
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
-    gl::ShaderProgram *shader = nullptr;
     int levels = 5;
 };
 struct Ch4PBR : public Sample{
@@ -276,7 +266,6 @@ struct Ch4PBR : public Sample{
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
-    gl::ShaderProgram *shader = nullptr;
     std_v1<Light2> lights;
     gl::UBO lightsB;
     gl::UBO materialsB;
@@ -289,28 +278,21 @@ struct Ch5DiscardPixels : public Sample{
     void update_imgui() final override;
 private:
     float decayFactor = 0.f;
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch5SceneTexture : public Sample{
     Ch5SceneTexture(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch5SceneMutliTexture : public Sample{
     Ch5SceneMutliTexture(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch5NormalMap : public Sample{
     Ch5NormalMap(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
-private:
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch5ParallaxMapping : public Sample{
     Ch5ParallaxMapping(Camera *cam) : Sample(cam){}
@@ -318,7 +300,6 @@ struct Ch5ParallaxMapping : public Sample{
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
-    gl::ShaderProgram *shader = nullptr;
     bool showHeightMap = false;
     float bumpFactor = 0.015f;
 };
@@ -329,7 +310,6 @@ struct Ch5SteepParallaxMapping : public Sample{
     void update_imgui() final override;
 private:
     float bumpScale = 0.03f;
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch5ReflectCubeMap : public Sample{
     Ch5ReflectCubeMap(Camera *cam) : Sample(cam){}
@@ -339,7 +319,6 @@ struct Ch5ReflectCubeMap : public Sample{
 private:
     float reflectFactor = 0.1f;
     geo::Pt4f matColor = {0.5f, 0.5f, 0.5f, 1.0f};
-    gl::ShaderProgram *shader = nullptr;
 };
 struct Ch5RefractCubeMap : public Sample{
     Ch5RefractCubeMap(Camera *cam) : Sample(cam){}
@@ -349,40 +328,25 @@ struct Ch5RefractCubeMap : public Sample{
 private:
     float reflectFactor = 0.1f;
     float eta = 0.94f;
-    gl::ShaderProgram *shader = nullptr;
 };
-
-
-
-
-
-
-
-
-
 struct Ch5ProjectTexture : public Sample{
     Ch5ProjectTexture(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
 private:
-    gl::ShaderProgram *shader = nullptr;
+    float fov = 30.f;
+    float aspectRatio = 1.f;
+    float zNear = 0.2f;
+    float zFar = 1000.f;
+    geo::Pt3f projPos = {0.0f,3.0f,0.0f};
+    geo::Pt3f projRot = {-120.0f,0.0f,0.0f};
+    TextureOptions projOptions;
+    gl::ShaderProgram *solidP = nullptr;      
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 struct Ch5DiffuseImageBasedLighting : public Sample{
     Ch5DiffuseImageBasedLighting(Camera *cam) : Sample(cam){}
+    void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
@@ -390,14 +354,37 @@ private:
     float gamma = 2.2f;
 };
 
-
 struct Ch5SamplerObject : public Sample{
     Ch5SamplerObject(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
 private:
-    gl::Sampler linearSampler;
-    gl::Sampler nearestSampler;
+
+    gl::Sampler sampler1;
+    TextureOptions options1;
+
+    static inline std::vector<std::string> magFiltersStr = {
+        "nearest",
+        "linear"
+    };
+
+    static inline std::vector<std::string> minFiltersStr = {
+        "nearest",
+        "linear",
+        "nearest_mipmap_nearest",
+        "linear_mimmap_nearest",
+        "nearest_mipmap_linear",
+        "linear_mipmap_linear",
+    };
+
+    static inline std::vector<std::string> wrapModeStr = {
+        "clamp_to_edge",
+        "clamp_to_border",
+        "mirrored_repeat",
+        "repeat",
+        "mirror_clamp_to_edge"
+    };
 };
 
 struct Ch5RenderToTexture: public Sample{
@@ -406,13 +393,18 @@ struct Ch5RenderToTexture: public Sample{
     void update_screen_size() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update(float elapsedSeconds)final override;
+    void update_imgui() final override;
 public:
-    float angle = 0.f;
+    double angle = 0.;
 private:
     // render to texture GBO
     gl::FBO fboCh5RenderToTexture;
     gl::RBO depthBufCh5RenterToTexture;
     gl::Texture2D renderTexCh5RenderToTexture;
+
+    geo::Pt3f projModelPos = {0.16f, 0.32f, 3.f};
+    geo::Pt3f projModelRot = {205.f, -205.f, 274.f};
+    float projScale = 2.f;
 };
 
 struct Ch6EdgeDetectionFilter: public Sample{
@@ -422,6 +414,7 @@ struct Ch6EdgeDetectionFilter: public Sample{
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
+    bool enable = true;
     float edgeThreshold = 0.05f;
     // screen FBO
     gl::FBO screenFBO;
@@ -436,14 +429,16 @@ struct Ch6GaussianFilter : public Sample{
     void draw(gl::Drawer *drawer = nullptr) final override;
     void update_imgui() final override;
 private:
+    bool enable = true;
     float sigma2 = 4.0f;
+    std_v1<float> weights;
     // screen FBO
     gl::FBO screenFBO;
     gl::RBO screenDepthBuffer;
     gl::Texture2D screenRenderTexture;
     // intermediate FBO
     gl::FBO intermediateFBO;
-    gl::Texture2D intermediateRenderTexture;
+    gl::Texture2D intermediateRenderTexture;    
 };
 
 struct Ch6HdrLightingToneMapping : public Sample{
@@ -472,6 +467,8 @@ private:
     float luminanceThreshold = 1.7f;
     float exposure = 0.35f;
     float white = 0.928f;
+    float sigma = 25.0f;
+    float gamma = 2.2f;
     // hdr FBO
     gl::FBO hdrFBO;
     gl::RBO hdrDepthBuffer;
@@ -489,6 +486,28 @@ private:
     // texture data
     std::vector<GLfloat> texData;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 struct Ch6Deferred : public Sample{
     Ch6Deferred(Camera *cam) : Sample(cam){}

@@ -36,9 +36,9 @@ namespace tool::graphics {
 
 class DrawersManager{
 
-    using Alias = std::string;
-
 public:
+
+    using Alias = std::string;
 
     bool add_drawer(const Alias &alias, std::shared_ptr<gl::Drawer> drawer);;
 

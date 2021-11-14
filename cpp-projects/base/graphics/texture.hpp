@@ -130,7 +130,7 @@ enum class TextureMinFilter : std::int8_t{
                             // These can include items wrapped or repeated from other parts of a texture, depending on the values of GL_TEXTURE_WRAP_S and GL_TEXTURE_WRAP_T, and on the exact mapping.
     nearest_mipmap_nearest, // Chooses the mipmap that most closely matches the size of the pixel being textured and uses the GL_NEAREST criterion
                             // (the texture element closest to the specified texture coordinates) to produce a texture value.
-    lLinear_mimmap_nearest, // Chooses the mipmap that most closely matches the size of the pixel being textured and uses the GL_LINEAR criterion
+    linear_mimmap_nearest,  // Chooses the mipmap that most closely matches the size of the pixel being textured and uses the GL_LINEAR criterion
                             // (a weighted average of the four texture elements that are closest to the specified texture coordinates) to produce a texture value.
     nearest_mipmap_linear,  // Chooses the two mipmaps that most closely match the size of the pixel being textured and uses the GL_NEAREST criterion
                             // (the texture element closest to the specified texture coordinates ) to produce a texture value from each mipmap. The final texture value is a weighted average of those two values.

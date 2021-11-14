@@ -4,10 +4,12 @@
 // std
 #include <random>
 #include <algorithm>
+#include <execution>
 
 // imgui
 #include "imgui/imgui.h"
 #include "imgui-sfml/imgui-SFML.h"
+#include "imgui/imgui_utility.hpp"
 
 // base
 #include "utility/files.hpp"
@@ -25,6 +27,9 @@ using attachment = tool::gl::FrameBufferAttachment;
 
 
 void Sample::update(float elapsedSeconds){
+
+    camera->set_fov(camFov);
+    camM.update_vp(camera->view(),camera->projection());
 
     this->elapsedSeconds = elapsedSeconds;
 
@@ -77,40 +82,88 @@ void Sample::draw(tool::gl::Drawer *drawer){
     }
 }
 
-void Sample::update_imgui(){
-    if (ImGui::CollapsingHeader("Common parameters")){
+void Sample::parent_update_imgui(){
 
-        ImGui::Text("########### Misc:");
-        ImGui::Checkbox("Draw floor", &drawFloor);
+    // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
+    static ImGuiTabBarFlags tabBarFags =
+        ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_FittingPolicyDefault_;
 
-        ImGui::Text("########### Skybox:");
-        ImGui::Checkbox("SB-draw", &drawSkybox);
-        ImGui::SliderFloat3("SB-rotation", skyboxRot.v.data(), -360.f, 360.f, "ratio = %.1f");
+    const char* names[5] = { "Misc", "Lights", "Materials", "Model", "Current"};
 
-        ImGui::Text("########### Lights:");
-        ImGui::Checkbox("L-move", &moveLight);
-        ImGui::Checkbox("L-draw", &drawLights);
-        ImGui::SliderFloat3("L-Ambiant", lInfo.La.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("L-Diffuse", lInfo.Ld.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("L-Specular", lInfo.Ls.v.data(), 0.f, 1.f, "r = %.2f");
+    ImGuiColorEditFlags miscFlags;
 
-        ImGui::Text("########### Blinn-phong material:");
-        ImGui::SliderFloat3("BPM-Coeff ambiant",  mInfo.Ka.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("BPM-Coeff diffuse",  mInfo.Kd.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat3("BPM-Coeff specular", mInfo.Ks.v.data(), 0.f, 1.f, "r = %.2f");
-        ImGui::SliderFloat("BPM-Shininess",       &mInfo.Shininess, 0.f, 1000.f, "v = %.1f");
+    if (ImGui::BeginTabBar("Common", tabBarFags)){
 
-        ImGui::Text("########### Model:");
-        ImGui::Text("### Coords:");
-        ImGui::SliderInt3("M-Numbers", nb.v.data(), 1, 10);
-        ImGui::SliderFloat3("M-Position", modelPos.v.data(), -10.f, 10.f, "ratio = %.2f");
-        ImGui::SliderFloat3("M-Rotation", modelRot.v.data(), -360.f, 360.f, "ratio = %.1f");
-        ImGui::SliderFloat("M-Scale", &scale, 0.01f, 5.f, "ratio = %.2f");
-        ImGui::Text("### Animation:");
-        ImGui::SliderInt("MA-id", &idAnimation, 0, nbAnimations);
-        ImGui::Checkbox("MA-Stop animation", &stopAnimation);
-        ImGui::SliderFloat("MA-Time animation", &timeAnimation, 0.f, durationAnimation, "ratio = %.2f");
+        for (int n = 0; n < 5; n++)
+            if (ImGui::BeginTabItem(names[n], nullptr, ImGuiTabItemFlags_None)){
+                switch (n) {
+                case 0:
+                    ImGui::Text("########### Camera:");
+                    ImGui::SliderFloat("FOV###Camera1", &camFov, 10.f, 150.f, "v = %.1f");
+
+                    {
+                        auto p = camera->position().conv<float>();
+                        auto d = camera->direction().conv<float>();
+                        auto u = camera->up().conv<float>();
+                        if(ImGui::DragFloat3("Position###Camera2",p.v.data(), 0.1f, -100.f, 100.f)){
+                            camera->set_position(p.conv<double>());
+                        }
+                        if(ImGui::DragFloat3("Direction###Camera3",d.v.data(), 0.01f, -1.f, 1.f)){
+                            camera->set_direction(d.conv<double>(), u.conv<double>());
+                        }
+                        if(ImGui::DragFloat3("Up###Camera4",u.v.data(), 0.01f, -1.f, 1.f)){
+                            camera->set_up_vector(u.conv<double>());
+                        }
+                    }
+
+                    ImGui::Text("########### Misc:");
+                    ImGui::Checkbox("Draw floor###Floor1", &drawFloor);
+
+                    ImGui::Text("########### Skybox:");
+                    ImGui::Checkbox("Draw###Skybox1", &drawSkybox);
+                    ImGui::SameLine();
+                    ImGui::SliderFloat3("Rotation###Skybox2", skyboxRot.v.data(), -360.f, 360.f, "° = %.1f");
+
+                    break;
+                case 1:
+                    ImGui::Checkbox("Move###Lights1", &moveLight);
+                    ImGui::SameLine();
+                    ImGui::Checkbox("Draw###Lights2", &drawLights);
+
+                    ImGui::ColorEdit3("Ambiant###Lights3", lInfo.La.v.data(), miscFlags);
+                    ImGui::ColorEdit3("Diffuse###Lights4", lInfo.Ld.v.data(), miscFlags);
+                    ImGui::ColorEdit3("Specular###Lights5", lInfo.Ls.v.data(), miscFlags);
+                    break;
+                case 2:
+                    ImGui::Text("########### Blinn-phong:");
+                    ImGui::ColorEdit3("Ambiant###BPM1",  mInfo.Ka.v.data(), miscFlags);
+                    ImGui::ColorEdit3("Diffuse###BPM2",  mInfo.Kd.v.data(), miscFlags);
+                    ImGui::ColorEdit3("Specular###BPM3", mInfo.Ks.v.data(), miscFlags);
+                    ImGui::SliderFloat("Shininess###BPM4",  &mInfo.Shininess, 0.f, 1000.f, "v = %.1f");
+                    break;
+                case 3:
+                    ImGui::Text("### Coords:");
+                    ImGui::SliderInt3("Numbers###M1", nb.v.data(), 1, 10);
+                    ImGui::DragFloat3("Position###M2", modelPos.v.data(), 0.05f, -10.f, 10.f, "ratio = %.2f");
+                    ImGui::SliderFloat3("Rotation###M3", modelRot.v.data(), -360.f, 360.f, "ratio = %.1f");
+                    ImGui::SliderFloat("Scale###M4", &scale, 0.01f, 5.f, "ratio = %.2f");
+                    ImGui::Text("### Animation:");
+                    ImGui::SliderInt("Id###M5", &idAnimation, 0, nbAnimations);
+                    ImGui::Checkbox("Stop animation###M6", &stopAnimation);
+                    ImGui::SliderFloat("Time animation###M7", &timeAnimation, 0.f, durationAnimation, "ratio = %.2f");
+
+                    ImGui::DragFloat3("xyz###M8", xyz.v.data(), 0.05f, -10.f, 10.f, "ratio = %.2f");
+
+                    break;
+                case 4:
+                    update_imgui();
+                }
+                ImGui::EndTabItem();
+            }
+        ImGui::EndTabBar();
     }
+
+
 }
 
 void Sample::draw_nb(gl::ShaderProgram *shader, tool::gl::Drawer *drawer){
@@ -120,39 +173,42 @@ void Sample::draw_nb(gl::ShaderProgram *shader, tool::gl::Drawer *drawer){
     for(int ii = 0; ii < nb.x(); ++ii){
         for(int jj = 0; jj < nb.y(); ++jj){
             for(int kk = 0; kk < nb.z(); ++kk){
-                model = Mat4d::transform2({s,s,s}, modelRot.conv<double>(),
-                            {p.x() + 1.f*(ii-nb.x()/2), p.y() + 1.f*(jj-nb.y()/2), p.z() + 1.f*(kk-nb.z()/2)});
-                shader->set_model_matrix(model);
+
+                camM.m = Mat4d::transform2({s,s,s}, modelRot.conv<double>(),
+                    {p.x() + 1.f*(ii-nb.x()/2), p.y() + 1.f*(jj-nb.y()/2), p.z() + 1.f*(kk-nb.z()/2)});
                 update_matrices();
+
                 shader->set_camera_matrices_uniforms(camM);
                 drawer->draw(shader);
             }
         }
     }
 }
-
 void Sample::update_matrices(){
-    camM = camera->compute_camera_matrices(model);
+    camM.update();
 }
 
-void Sample::update_matrices(Mat4d view, Mat4d proj){
-    camM = Camera::compute_camera_matrices(model, view, proj);
+void Sample::update_matrices_m(const Mat4d &model){
+    camM.update_m(model);
 }
 
-void Sample::update_matrices(Mat4d model, Mat4d view, Mat4d proj){
-    this->model = model;
-    camM = Camera::compute_camera_matrices(model, view, proj);
+void Sample::update_matrices_p(const Mat4d &proj){
+    camM.update_p(proj);
 }
 
-void Sample::update_matrices_with_identity(){
-    model = geo::Mat4d(true);
-    update_matrices(geo::Mat4d(true), geo::Mat4d(true));
+void Sample::update_matrices_vp(const Mat4d &view, const Mat4d &proj){
+    camM.update_vp(view, proj);
+}
+
+void Sample::update_matrices_mvp(const Mat4d &model, const Mat4d &view, const Mat4d &proj){
+    camM.update_mvp(model, view, proj);
 }
 
 void Sample::draw_screen_quad(tool::gl::ShaderProgram *shader){
 
-    update_matrices_with_identity();
-    shader->set_camera_matrices_uniforms(camM);
+    CameraMatrices sqM;
+    sqM.update_mvp(geo::Mat4d(true),geo::Mat4d(true), geo::Mat4d(true));
+    shader->set_camera_matrices_uniforms(sqM);
 
     if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
         drawer->draw(shader);
@@ -169,7 +225,7 @@ void Sample::draw_floor(){
 
     if(auto shader = shadersM->get_ptr("ch5/scene-texture"); shader != nullptr){
 
-        model = Mat4d::transform({10.,10.,10.},Vec3d{0.,0.,0},{0.,-4.,0.});
+        camM.m = Mat4d::transform({10.,10.,10.},Vec3d{0.,0.,0},{0.,-4.,0.});
         update_matrices();
 
         shader->use();
@@ -196,24 +252,21 @@ void Sample::draw_lights(){
             shader->use();
             shader->set_uniform("unicolor", geo::Pt3f{1.f,1.f,0.f});
 
-            model = Mat4d::translate(Mat4d(true), Sample::worldLight.xyz().conv<double>());
-            model = Mat4d::scale(model, Vec3d{0.3,0.3,0.3});
+            camM.m = Mat4d::translate(Mat4d(true), Sample::worldLight.xyz().conv<double>());
+            camM.m = Mat4d::scale(camM.m, Vec3d{0.3,0.3,0.3});
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
             drawer->draw();
 
-            model = Mat4d::translate(Mat4d(true), Sample::mobileLightPos1.xyz().conv<double>());
-            model = Mat4d::scale(model, Vec3d{0.3,0.3,0.3});
+            camM.m = Mat4d::translate(Mat4d(true), Sample::mobileLightPos1.xyz().conv<double>());
+            camM.m = Mat4d::scale(camM.m, Vec3d{0.3,0.3,0.3});
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
             drawer->draw();
 
-            model = Mat4d::translate(Mat4d(true), Sample::mobileLightPos2.xyz().conv<double>());
-            model = Mat4d::scale(model, Vec3d{0.3,0.3,0.3});
+            camM.m = Mat4d::translate(Mat4d(true), Sample::mobileLightPos2.xyz().conv<double>());
+            camM.m = Mat4d::scale(camM.m, Vec3d{0.3,0.3,0.3});
             update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-            drawer->draw();
-
             shader->set_camera_matrices_uniforms(camM);
             drawer->draw();
         }
@@ -229,17 +282,84 @@ void Sample::draw_skybox(){
 
     if(auto shader = shadersM->get_ptr("others/skybox"); shader != nullptr){
 
-        model = Mat4d::transform({1.,1.,1.},skyboxRot.conv<double>(),{0.,0.,0.});
+        camM.m = Mat4d::transform({1.,1.,1.},skyboxRot.conv<double>(),{0.,0.,0.});
         update_matrices();
 
         shader->use();
         shader->set_camera_matrices_uniforms(camM);
 
-        gl::TBO::bind_textures({texturesM->id("grace")},0);
+        gl::TBO::bind_textures({texturesM->cube_map_id("grace")},0);
 
         if(auto drawer = drawersM->get_drawer_ptr("skybox-drawer"); drawer != nullptr){
             drawer->draw();            
         }
+    }
+}
+
+
+void Sample::draw_scene1(tool::gl::ShaderProgram *shader){
+
+    mInfo.Kd = {0.9f, 0.3f, 0.2f};
+    mInfo.Ks = {1.0f, 1.0f, 1.0f};
+    mInfo.Ka = {0.2f, 0.2f, 0.2f};
+    mInfo.Shininess = 100.0;
+    materialUBO.update(mInfo);
+
+    camM.m = Mat4d::transform2({1.0*scale,scale,scale}, modelRot.conv<double>(), modelPos.conv<double>());
+
+    // backdrop plane
+    CameraMatrices sCam;
+    sCam.v = camM.v;
+    sCam.p = camM.p;
+
+    sCam.m = Mat4d::rotate(camM.m, Vec3d{-1,0,0}, 90.);
+    sCam.update_m(Mat4d::translate(sCam.m, Vec3d{0,5,0}));
+    shader->set_camera_matrices_uniforms(sCam);
+
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    // bottom plane
+    sCam.update_m(Mat4d::translate(camM.m, Vec3d{0,-5,0}));
+    shader->set_camera_matrices_uniforms(sCam);
+
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    // top plane
+    sCam.m = Mat4d::translate(camM.m, Vec3d{0,5,0});
+    sCam.m = Mat4d::rotate(sCam.m, Vec3d{1,0,0}, 180.);
+    sCam.update();
+    shader->set_camera_matrices_uniforms(sCam);
+
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    // sphere
+    mInfo.Kd = {0.4f, 0.9f, 0.4f};
+    materialUBO.update(mInfo);
+
+    sCam.update_m(Mat4d::translate(camM.m, Vec3d{-3,-3,2.0}));
+    shader->set_camera_matrices_uniforms(sCam);
+
+    if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    // teapot
+    mInfo.Kd = {0.4f, 0.4f, 0.9f};
+    materialUBO.update(mInfo);
+
+    sCam.m = Mat4d::translate(camM.m, Vec3d{4,-5,1.5});
+    sCam.m = Mat4d::rotate(sCam.m, Vec3d{1,0,0}, -90.);
+    sCam.update();
+    shader->set_camera_matrices_uniforms(sCam);
+
+    if(auto drawer = drawersM->get_drawer_ptr("teapot-drawer"); drawer != nullptr){
+        drawer->draw(shader);
     }
 }
 
@@ -259,10 +379,6 @@ void Ch3Diffuse::draw(tool::gl::Drawer *drawer){
     draw_nb(shader, drawer);
 }
 
-
-void Ch3Diffuse::update_imgui(){
-    Sample::update_imgui();
-}
 
 void Ch3Flat::init(){
     shader = shadersM->get_ptr("ch3/flat");
@@ -317,8 +433,6 @@ void Ch3Discard::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch3Discard::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("discard value:", &discardV, 0.f, 1.f, "r = %.3f");
     ImGui::SliderFloat("scale value:", &scaleV, 0.f, 100.f, "v = %.2f");
 }
@@ -447,8 +561,6 @@ void Ch4Cartoon::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch4Cartoon::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderInt("Levels", &levels, 1, 20);
 }
 
@@ -559,8 +671,6 @@ void Ch4PBR::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch4PBR::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat4("PBR color", mPbrInfo.color.v.data(), 0.0f, 1.00f, "ratio = %.3f");
     ImGui::SliderFloat("PBR rough", &mPbrInfo.rough, 0.0f, 1.00f, "ratio = %.3f");
     ImGui::SliderFloat("PBR metal", &mPbrInfo.metal, 0.0f, 1.00f, "ratio = %.3f");
@@ -591,8 +701,6 @@ void Ch5DiscardPixels::draw(tool::gl::Drawer *){
 }
 
 void Ch5DiscardPixels::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("Decay", &decayFactor, 0.0f, 1.00f, "ratio = %.3f");
 }
 
@@ -688,8 +796,6 @@ void Ch5ParallaxMapping::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch5ParallaxMapping::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::Checkbox("Show heightmap", &showHeightMap);
     ImGui::SliderFloat("Bump factor", &bumpFactor, 0.0f, 1.f, "ratio = %.3f");
 }
@@ -717,8 +823,6 @@ void Ch5SteepParallaxMapping::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch5SteepParallaxMapping::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("Bumpscale", &bumpScale, 0.001f, 0.20f, "ratio = %.3f");
 }
 
@@ -735,15 +839,11 @@ void Ch5ReflectCubeMap::draw(tool::gl::Drawer *drawer){
     shader->set_uniform("WorldCameraPosition", camera->position().conv<float>());
     shader->set_uniform("MaterialColor", matColor);
     shader->set_uniform("ReflectFactor", reflectFactor);
-    shader->set_model_matrix(model);
-    shader->set_camera_matrices_uniforms(camM);
 
     draw_nb(shader, drawer);
 }
 
 void Ch5ReflectCubeMap::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("Reflect factor", &reflectFactor, 0.0f, 1.f, "ratio = %.3f");
     ImGui::SliderFloat4("Mat color", matColor.v.data(), 0.0, 1.0f, "ratio = %.2f");
 }
@@ -766,229 +866,377 @@ void Ch5RefractCubeMap::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch5RefractCubeMap::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("refract Eta", &rmInfo.eta, 0.0f, 1.00f, "ratio = %.3f");
     ImGui::SliderFloat("reflect factor", &rmInfo.reflectionFactor, 0.0f, 1.00f, "ratio = %.3f");
 }
 
+void Ch5ProjectTexture::init(){
+    shader = shadersM->get_ptr("ch5/projected-texture");
+    solidP = shadersM->get_ptr("others/unicolor");
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+
+    projOptions.wrapS = TextureWrapMode::clamp_to_border;
+    projOptions.wrapT = TextureWrapMode::clamp_to_border;
+}
+
+void Ch5ProjectTexture::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    auto frustumV =  Mat4d::transform2(Vec3d{1,1,1},projRot.conv<double>(),projPos.conv<double>());
+    auto frustumD =  drawersM->get_drawer_ptr("frustum-drawer");
+    if(!frustumD){
+        return;
+    }
+    auto frustum = dynamic_cast<gl::Frustum*>(frustumD->object());
+    frustum->set_perspective(fov, aspectRatio, zNear, zFar);
+    auto frustumP = frustum->projection_matrix().conv<double>();
+
+    solidP->use();
+    solidP->set_uniform("unicolor", Vec3f{1.0f,0.0f,0.0f});
+    solidP->set_uniform("MVP",((frustumV*camera->view())*camera->projection()).conv<float>());
+    frustumD->draw();
+
+    shader->use();
+    auto tr = Mat4d::translate(geo::Mat4d(true), Vec3d{0.5,0.5,0.5});
+    Mat4d bias = Mat4d::scale(tr, Vec3d{0.5,0.5,0.5});
+    shader->set_uniform("ProjectorMatrix", ((frustumV.inverse()*frustumP*bias).conv<float>()));
+
+    camM.m = Mat4d::transform2(Vec3d{1,1,1},{0.,0.,0},{0.,-0.75,0.});
+    update_matrices();
+
+    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(0);
+
+    shader->set_camera_matrices_uniforms(camM);
+
+    auto tbo = texturesM->texture_tbo("flower-projected");
+    tbo->set_texture_options(projOptions);
+    tbo->bind();
+
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-10x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    draw_nb(shader, drawer);
+}
+
+void Ch5ProjectTexture::update_imgui(){
+    ImGui::SliderFloat("FOV###CH5PT-2", &fov, 5.0f, 150.00f, "ratio = %.1f");
+    ImGui::SliderFloat("Aspect ratio###CH5PT-3", &aspectRatio, 0.0f, 5.00f, "ratio = %.3f");
+    ImGui::DragFloat("Near###CH5PT-4", &zNear, 0.1f,  0.0f, 100.00f, "ratio = %.1f");
+    ImGui::DragFloat("Far###CH5PT-5", &zFar, 0.1f, 0.0f, 100.00f, "ratio = %.1f");
+    ImGui::DragFloat3("Proj pos###CH5PT-6", projPos.v.data(), 0.05f, -50.0f, 50.00f, "ratio = %.2f");
+    ImGui::DragFloat3("Proj rot###CH5PT-7", projRot.v.data(), 1.f, -360.0f, 360.00f, "ratio = %.2f");
+}
+
+void Ch5DiffuseImageBasedLighting::init(){
+    shader = shadersM->get_ptr("ch5/diffuse-image-based-lighting");
+}
+
+void Ch5DiffuseImageBasedLighting::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+    gl::TBO::bind_textures({texturesM->cube_map_id("grace-diffuse"),texturesM->texture_id("spot_texture")});
+
+    shader->set_uniform("gamma",  gamma);
+    shader->set_uniform("CamPos", camera->position().conv<float>());
+
+    draw_nb(shader, drawersM->get_drawer_ptr("notext-spot-drawer"));
+}
+
+void Ch5DiffuseImageBasedLighting::update_imgui(){
+    ImGui::SliderFloat("gamma", &gamma, 0.0f, 10.00f, "ratio = %.3f");
+}
+
+void Ch5SamplerObject::init(){
+
+    // sampler objects
+    options1.magFilter = TextureMagFilter::linear;
+    options1.minFilter = TextureMinFilter::linear;
+    sampler1 = gl::Sampler(options1);
+
+    shader = shadersM->get_ptr("ch5/sampler-objects");
+}
+
+void Ch5SamplerObject::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    shader->set_uniform("Light.L", Vec3f{1.0f,1.0f, 1.0f});
+    shader->set_uniform("Light.La", lInfo.La);
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    shader->set_uniform("Material.Ks", mInfo.Ks);
+    shader->set_uniform("Material.Shininess", mInfo.Shininess);
+
+    camM.m = Mat4d::transform({0.3,0.3,0.3},{90.,0.,0.},{0.,0.,5.});
+    update_matrices();
+    shader->set_camera_matrices_uniforms(camM);
+
+    sampler1.bind(0);
+    if(auto drawer = drawersM->get_drawer_ptr("grid-floor-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    draw_nb(shader, drawer);
+
+    gl::Sampler::unbind();
+
+}
+
+void Ch5SamplerObject::update_imgui(){
+
+    auto &magf1 = options1.magFilter;
+    int id = static_cast<int>(magf1);
+    if(ImGui::Combo("magFilter###CH5SO-2", &id, magFiltersStr)){
+        magf1 = static_cast<TextureMagFilter>(id);
+        sampler1.initialize(options1);
+    }
+
+    auto &minf1 = options1.minFilter;
+    id = static_cast<int>(minf1);
+    if(ImGui::Combo("minFilter###CH5SO-3", &id, minFiltersStr)){
+        minf1 = static_cast<TextureMinFilter>(id);
+        sampler1.initialize(options1);
+    }
+
+    auto &wrapR1 = options1.wrapR;
+    id = static_cast<int>(wrapR1);
+    if(ImGui::Combo("wrapR###CH5SO-4", &id, wrapModeStr)){
+        wrapR1 = static_cast<TextureWrapMode>(id);
+        sampler1.initialize(options1);
+    }
+
+    auto &wrapS1 = options1.wrapS;
+    id = static_cast<int>(wrapS1);
+    if(ImGui::Combo("wrapS###CH5SO-5", &id, wrapModeStr)){
+        wrapS1 = static_cast<TextureWrapMode>(id);
+        sampler1.initialize(options1);
+    }
+
+    auto &wrapT1 = options1.wrapT;
+    id = static_cast<int>(wrapT1);
+    if(ImGui::Combo("wrapR###CH5SO-6", &id, wrapModeStr)){
+        wrapT1 = static_cast<TextureWrapMode>(id);
+        sampler1.initialize(options1);
+    }
+
+    ImGuiColorEditFlags miscFlags;
+    if(ImGui::ColorEdit4("borderColor###CH5SO-7", options1.borderColor.v.data(), miscFlags)){
+        sampler1.initialize(options1);
+    }    
+}
 
 
+void Ch5RenderToTexture::init(){
 
+    shader = shadersM->get_ptr("ch5/render-to-texture");
 
+    // Create the texture object
+    renderTexCh5RenderToTexture.init_render(512,512);
 
+    TextureOptions options;
+    options.minFilter = TextureMinFilter::linear;
+    options.magFilter = TextureMagFilter::linear;
+    renderTexCh5RenderToTexture.set_texture_options(options);
 
-
-
-void Ch6HdrLightingToneMapping::init(){
     update_screen_size();
 }
 
-void Ch6HdrLightingToneMapping::update_screen_size(){
-
-    int size = camera->screen()->size();
-    texData.resize(size*3);
+void Ch5RenderToTexture::update_screen_size(){
 
     // Generate and bind the framebuffer
-    hdrFBO.clean();
-    hdrFBO.generate();
-    hdrFBO.bind();
+    fboCh5RenderToTexture.generate();
+    fboCh5RenderToTexture.bind();
 
     // Create the depth buffer
-    hdrDepthBuffer.clean();
-    hdrDepthBuffer.generate();
-    hdrDepthBuffer.bind();
-    hdrDepthBuffer.set_data_storage(camera->screen()->width(),camera->screen()->height());
+    depthBufCh5RenterToTexture.generate();
+    depthBufCh5RenterToTexture.bind();
+    depthBufCh5RenterToTexture.set_data_storage();
 
-    // Create the  HDR texture object
-    hdrRenderTexture.clean();
-    hdrRenderTexture.init_hdr_render(camera->screen()->width(),camera->screen()->height(), 4);
+    // Bind the texture to the FBO
+    fboCh5RenderToTexture.attach_color0_texture(renderTexCh5RenderToTexture);
+
+    // Bind the depth buffer to the FBO
+    fboCh5RenderToTexture.attach_depth_buffer(depthBufCh5RenterToTexture);
+
+    // set colors buffers to be drawn
+    fboCh5RenderToTexture.set_draw_buffers({
+        attachment::color0
+    });
+
+    // Unbind the framebuffer, and revert to default framebuffer
+    gl::FBO::unbind();
+}
+
+void Ch5RenderToTexture::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    // pass 0
+    gl::FBO::bind(fboCh5RenderToTexture);
+    glViewport(0,0,512,512);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    CameraMatrices rMat;
+    rMat.update_mvp(
+        Mat4d::transform2(Vec3d{projScale,projScale,projScale}, projModelRot.conv<double>(), projModelPos.conv<double>()),
+        Mat4d::LookAt({0.0,0.,-2.}, {0.0,0.0,1.0}, {0.0,1.0,0.0}),
+        Mat4d::Perspective(deg_2_rad(60.0), 1.0, 0.3, 1000.0)
+    );
+
+    shader->set_uniform("Light.L", Vec3f{1.0f,1.0f,1.0f});
+    shader->set_uniform("Light.La", lInfo.La.v.data());
+    shader->set_uniform("Light.Position", lInfo.Position.v.data());
+    shader->set_uniform("Material.Ks", mInfo.Ks.v.data());
+    shader->set_uniform("Material.Shininess", &mInfo.Shininess);
+    shader->set_camera_matrices_uniforms(rMat);
+
+    drawersM->get_drawer_ptr("spot-drawer")->draw(shader);
+
+    glFlush();
+
+    // pass 1
+    gl::FBO::unbind();
+    renderTexCh5RenderToTexture.bind();
+
+    glViewport(0,0, camera->screen()->width(), camera->screen()->height());
+
+    shader->set_uniform("Light.Position", lInfo.Position.v.data());
+    shader->set_uniform("Material.Ks", mInfo.Ks.v.data());
+    shader->set_uniform("Material.Shininess", &mInfo.Shininess);
+
+    draw_nb(shader, drawersM->get_drawer_ptr("cube-drawer"));
+}
+
+void Ch5RenderToTexture::update(float elapsedSeconds){
+    Sample::update(elapsedSeconds);
+    angle = (elapsedSeconds * 10.);
+}
+
+void Ch5RenderToTexture::update_imgui(){
+
+    ImGui::Text("########### Projected texture model:");
+    ImGui::Text("### Coords:");
+    ImGui::SliderFloat3("Position###CH5RT-1", projModelPos.v.data(), -10.f, 10.f, "ratio = %.2f");
+    ImGui::SliderFloat3("Rotation###CH5RT-2", projModelRot.v.data(), -360.f, 360.f, "ratio = %.1f");
+    ImGui::SliderFloat("Scale###CH5RT-3", &projScale, 0.01f, 5.f, "ratio = %.2f");
+}
+
+void Ch6EdgeDetectionFilter::init(){
+    shader = shadersM->get_ptr("ch6/edge-detection-filter");
+    lightUBO.generate();
+    lightUBO.set_data_space_from_shader(shader);
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+    update_screen_size();
+}
+
+void Ch6EdgeDetectionFilter::update_screen_size(){
+
+    // Generate and bind the framebuffer
+    screenFBO.clean();
+    screenFBO.generate();
+    screenFBO.bind();
+
+    // Create the texture object
+    screenRenderTexture.clean();
+    screenRenderTexture.init_render(camera->screen()->width(),camera->screen()->height());
 
     TextureOptions options;
     options.minFilter = TextureMinFilter::nearest;
     options.magFilter = TextureMagFilter::nearest;
     options.maxLevel = 0;
-    hdrRenderTexture.set_texture_options(options);
+    screenRenderTexture.set_texture_options(options);
+
+    // Create the depth buffer
+    screenDepthBuffer.clean();
+    screenDepthBuffer.generate();
+    screenDepthBuffer.bind();
+    screenDepthBuffer.set_data_storage(camera->screen()->width(),camera->screen()->height());
 
     // Bind the texture to the FBO
-    hdrFBO.attach_color0_texture(hdrRenderTexture);
+    screenFBO.attach_color0_texture(screenRenderTexture);
 
     // Bind the depth buffer to the FBO
-    hdrFBO.attach_depth_buffer(hdrDepthBuffer);    
+    screenFBO.attach_depth_buffer(screenDepthBuffer);
 
     // set colors buffers to be drawn
-    hdrFBO.set_draw_buffers({
-        attachment::none,
+    screenFBO.set_draw_buffers({
         attachment::color0
     });
 
+    // Unbind the framebuffer, and revert to default framebuffer
     gl::FBO::unbind();
 }
 
-void Ch6HdrLightingToneMapping::draw(tool::gl::Drawer *drawer){
+void Ch6EdgeDetectionFilter::draw(tool::gl::Drawer *drawer){
 
-    if(auto shader = shadersM->get_ptr("ch6/hdr-lighting-tone-mapping"); shader != nullptr){
+    // pass 1 : blinnphong
+    if(enable){
+        screenFBO.bind();
+        glEnable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+    Sample::draw(drawer);
+    shader->use();
+    shader->set_uniform("Pass", 1);
+    shader->set_uniform("EdgeThreshold", edgeThreshold);
 
-        shader->use();
+    lInfo.Position = camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>();
 
-        auto intense = Vec3f{1.0f,1.0f,1.0f};
-        shader->set_uniform("Lights[0].L", intense );
-        shader->set_uniform("Lights[1].L", intense );
-        shader->set_uniform("Lights[2].L", intense );
+    lightUBO.update(lInfo);
+    lightUBO.bind(0);
 
-        intense = Vec3f{0.2f,0.2f,0.2f};
-        shader->set_uniform("Lights[0].La", intense );
-        shader->set_uniform("Lights[1].La", intense );
-        shader->set_uniform("Lights[2].La", intense );
-        shader->set_uniform("DoToneMap", doToneMap);
+    materialUBO.update(mInfo);
+    materialUBO.bind(1);
 
-        // pass 1
-        {
-            shader->set_uniform("Pass", 1);
+    draw_nb(shader, drawer);
 
-            hdrFBO.bind();
-
-            glClearColor(0.5f,0.5f,0.5f,1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glEnable(GL_DEPTH_TEST);
-
-            auto lightPos = Vec4f{0.0f, 4.0f, 2.5f, 1.0f};
-            lightPos.x() = -7.0f;
-            shader->set_uniform("Lights[0].Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-            lightPos.x() = 0.0f;
-            shader->set_uniform("Lights[1].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
-            lightPos.x() = 7.0f;
-            shader->set_uniform("Lights[2].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
-
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.9f, 0.3f, 0.2f});
-            shader->set_uniform("Material.Ks", geo::Vec3f{1.0f, 1.0f, 1.0f});
-            shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
-            shader->set_uniform("Material.Shininess", 100.0f);
-
-            // The backdrop plane
-            // model = Mat4d::transform({2,1.,1.},Vec3d{-90.,0.,180.},{0.0f,0.0f,4.0f});
-            model = Mat4d::rotate(Mat4d(true), Vec3d{1,0,0}, 90.);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // The bottom plane
-            // model = Mat4d::transform({2.,1.,1.},Vec3d{0.,0.,0.},{0.0f,-5.0f,0.0f});
-            model = Mat4d(true);
-            model = Mat4d::translate(model, Vec3d{0,-5,0});
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // Top plane
-            //model = Mat4d::transform({2.,1.,1.},Vec3d{-180.,0.,0.},{0.0f,5.0f,0.0f});
-            model = Mat4d(true);
-            model = Mat4d::translate(model, Vec3d{0,5,0});
-            model = Mat4d::rotate(model, Vec3d{1,0,0}, 180.);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // sphere
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.4f, 0.9f, 0.4f});
-
-            //model = Mat4d::transform({1.,1.,1.},Vec3d{0.,0.,0.},{3.0f,-3.0f,2.0f});
-            model = Mat4d(true);
-            model = Mat4d::translate(model, Vec3d{-3,-3,2.0});
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // teapot
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.4f, 0.4f, 0.9f});
-
-            //model = Mat4d::transform({1.,1.,1.},Vec3d{90.,0.,0.},{-3.0f,-5.0f,1.5f});
-            model = Mat4d(true);
-            model = Mat4d::translate(model, Vec3d{4,-5,1.5});
-            model = Mat4d::rotate(model, Vec3d{1,0,0}, -90.);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("teapot-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-
-        // compute log avg luminance
-        {
-            const int size = camera->screen()->size();
-            hdrRenderTexture.bind();
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
-
-            float sum = 0.0f;
-            size_t count = 0;
-            for( int i = 0; i < size; i++ ) {
-                float lum = geo::dot(
-                    geo::Pt3f{texData[i*3+0], texData[i*3+1], texData[i*3+2]},
-                    geo::Pt3f{0.2126f, 0.7152f, 0.0722f} );
-                if(texData[i*3+0] != 0){
-                    count++;
-                }
-                if(texData[i*3+1] != 0){
-                    count++;
-                }
-
-                if(texData[i*3+2] != 0){
-                    count++;
-                }
-                sum += logf( lum + 0.00001f );
-            }
-            shader->set_uniform( "AveLum", expf( sum / size ) );
-        }
-
+    if(enable){
 
         // pass 2
-        {
-            shader->set_uniform("Pass", 2);
+        glFlush();
 
-            gl::FBO::unbind();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glDisable(GL_DEPTH_TEST);
+        gl::FBO::unbind();
+        screenRenderTexture.bind();
 
-            update_matrices_with_identity();
-            shader->set_camera_matrices_uniforms(camM);
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
+        shader->set_uniform("Pass", 2);
+        draw_screen_quad(shader);
     }
 }
 
-void Ch6HdrLightingToneMapping::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::Checkbox("do tone mapping", &doToneMap);
+void Ch6EdgeDetectionFilter::update_imgui(){
+
+    ImGui::Checkbox("enable###CH6EDF-1", &enable);
+    ImGui::SliderFloat("edge threshold###CH6EDF-2", &edgeThreshold, 0.005f, 0.30f, "ratio = %.3f");
 }
 
-void Ch6HdrBloom::init(){
+void Ch6GaussianFilter::init(){
 
-    weights.resize(10);
-    float sum = 0.f, sigma2 = 25.0f;
+    // gaussian weights
+    weights.resize(5);
+    float sum = 0.f;
 
     // Compute and sum the weights
     weights[0] = gauss(0,sigma2);
     sum = weights[0];
-    for(size_t ii = 1; ii < weights.size(); ii++ ) {
-        weights[ii] = gauss(float(ii), sigma2);
+    for( size_t ii = 1; ii < weights.size(); ii++ ) {
+        weights[ii] = gauss(static_cast<float>(ii), sigma2);
         sum += 2 * weights[ii];
     }
 
@@ -996,296 +1244,13 @@ void Ch6HdrBloom::init(){
         weights[ii] /= sum;
     }
 
+    shader = shadersM->get_ptr("ch6/gaussian-filter");
 
-    update_screen_size();
+    lightUBO.generate();
+    lightUBO.set_data_space_from_shader(shader);
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
 
-
-}
-
-void Ch6HdrBloom::update_screen_size(){
-
-    int size = camera->screen()->size();
-    texData.resize(size*3);
-
-//    gl::FBO::unbind();
-    {
-        // Generate and bind the framebuffer
-        hdrFBO.clean();
-        hdrFBO.generate();
-        hdrFBO.bind();
-
-        // Create the depth buffer
-        hdrDepthBuffer.clean();
-        hdrDepthBuffer.generate();
-        hdrDepthBuffer.bind();
-        hdrDepthBuffer.set_data_storage(camera->screen()->width(),camera->screen()->height());
-
-        // Create the  HDR texture object
-        hdrRenderTexture.clean();
-        hdrRenderTexture.init_hdr_render(camera->screen()->width(),camera->screen()->height(), 4);
-
-        TextureOptions options;
-        options.minFilter = TextureMinFilter::nearest;
-        options.magFilter = TextureMagFilter::nearest;
-        options.maxLevel = 0;
-        hdrRenderTexture.set_texture_options(options);
-
-        // Bind the texture to the FBO
-        hdrFBO.attach_color0_texture(hdrRenderTexture);
-
-        // Bind the depth buffer to the FBO
-        hdrFBO.attach_depth_buffer(hdrDepthBuffer);        
-
-        // set colors buffers to be drawn
-        hdrFBO.set_draw_buffers({attachment::color0});
-
-    }
-    gl::FBO::unbind();
-
-    {
-        // Generate and bind the framebuffer
-        blurFBO.clean();
-        blurFBO.generate();
-        blurFBO.bind();
-
-        bloomBufWidth  = camera->screen()->width()/8;
-        bloomBufHeight = camera->screen()->height()/8;
-
-        // Create two texture objects to ping-pong for the bright-pass filter
-        // and the two-pass blur
-        blurTex1.clean();
-        blurTex1.init_hdr_render(bloomBufWidth,bloomBufHeight, 3);
-
-        blurTex2.clean();
-        blurTex2.init_hdr_render(bloomBufWidth,bloomBufHeight, 3);
-
-        // Bind tex1 to the FBO
-        blurFBO.attach_color0_texture(blurTex1);
-
-        GLenum drawBufs[] = {GL_COLOR_ATTACHMENT0};
-        glNamedFramebufferDrawBuffers(blurFBO.id(), 1, drawBufs);
-    }
-    gl::FBO::unbind();
-}
-
-void Ch6HdrBloom::draw(tool::gl::Drawer *drawer){
-
-    gl::TBO::unbind_textures(0, 3);
-
-    if(auto shader = shadersM->get_ptr("ch6/hdr-bloom"); shader != nullptr){
-
-        shader->use();
-
-        shader->set_uniform("LumThresh", luminanceThreshold);
-        shader->set_uniform("Exposure", exposure);
-        shader->set_uniform("White", white);
-        shader->set_uniform("Gamma", gamma);
-
-        auto intense = Vec3f{1.0f,1.0f,1.0f};
-        shader->set_uniform("Lights[0].L", intense );
-        shader->set_uniform("Lights[1].L", intense );
-        shader->set_uniform("Lights[2].L", intense );
-
-        intense = Vec3f{0.2f,0.2f,0.2f};
-        shader->set_uniform("Lights[0].La", intense );
-        shader->set_uniform("Lights[1].La", intense );
-        shader->set_uniform("Lights[2].La", intense );
-        //        shader->set_uniform("DoToneMap", doToneMap);
-
-        shader->set_uniform("Weight[0]", weights);
-        shader->set_uniform("Light.L", Vec3f{1.0f,1.0f,1.0f});
-        shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
-        shader->set_uniform("Light.Position", Pt4f{0.0f,0.0f,0.0f,1.0f});
-
-        // pass 1
-        {
-            shader->set_uniform("Pass", 1);
-
-            hdrFBO.bind();
-
-            glClearColor(0.5f,0.5f,0.5f,1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glEnable(GL_DEPTH_TEST);
-
-            auto lightPos = Vec4f{0.0f, 4.0f, 2.5f, 1.0f};
-            lightPos.x() = -7.0f;
-            shader->set_uniform("Lights[0].Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
-            lightPos.x() = 0.0f;
-            shader->set_uniform("Lights[1].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
-            lightPos.x() = 7.0f;
-            shader->set_uniform("Lights[2].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
-
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.9f, 0.3f, 0.2f});
-            shader->set_uniform("Material.Ks", geo::Vec3f{1.0f, 1.0f, 1.0f});
-            shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
-            shader->set_uniform("Material.Shininess", 100.0f);
-
-            // The backdrop plane
-            model = Mat4d::rotate(Mat4d(true), Vec3d{1,0,0}, 90.);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // The bottom plane
-            model = Mat4d::translate(Mat4d(true), Vec3d{0,-5,0});
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // Top plane
-            model = Mat4d::translate(Mat4d(true), Vec3d{0,5,0});
-            model = Mat4d::rotate(model, Vec3d{1,0,0}, 180.);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // sphere
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.4f, 0.9f, 0.4f});
-
-            model = Mat4d::translate(Mat4d(true), Vec3d{-3,-3,2.0});
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // teapot
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.4f, 0.4f, 0.9f});
-
-            model = Mat4d::translate(Mat4d(true), Vec3d{4,-5,1.5});
-            model = Mat4d::rotate(model, Vec3d{1,0,0}, -90.);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("teapot-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        // compute log average luminance
-        {
-            const int size = camera->screen()->size();
-            hdrRenderTexture.bind();
-//            gl::TBO::bind_textures({hdrRenderTexture.id(),0,0});
-//            texData.resize(size*4);
-
-//            glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, texData.size()/4, texData.data());
-
-            glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
-//            hdrRenderTexture.get_hdr_texture_data(texData);
-
-            float sum = 0.0f;
-            size_t count = 0;
-            for( int i = 0; i < size; i++ ) {
-                float lum = geo::dot(
-                    geo::Pt3f{texData[i*3+0], texData[i*3+1], texData[i*3+2]},
-                    geo::Pt3f{0.2126f, 0.7152f, 0.0722f} );
-                if(texData[i*3+0] != 0){
-                    count++;
-                }
-                if(texData[i*3+1] != 0){
-                    count++;
-                }
-
-                if(texData[i*3+2] != 0){
-                    count++;
-                }
-                sum += logf( lum + 0.00001f );
-            }
-            shader->set_uniform( "AveLum", expf( sum / size ) );
-        }
-
-
-        // pass 2
-        {
-            shader->set_uniform("Pass", 2);
-
-            blurFBO.bind();
-            blurFBO.attach_color0_texture(blurTex1);
-
-            glViewport(0,0,bloomBufWidth, bloomBufHeight);
-            glDisable(GL_DEPTH_TEST);
-            glClearColor(0,0,0,0);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            update_matrices_with_identity();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-        }
-
-        // pass 3
-        {
-            shader->set_uniform("Pass", 3);
-
-            blurFBO.attach_color0_texture(blurTex2);
-
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        // pass 4
-        {
-            shader->set_uniform("Pass", 4);
-
-            blurFBO.attach_color0_texture(blurTex1);
-
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        // pass 5
-        {
-
-            shader->set_uniform("Pass", 5);
-
-            // Bind to the default framebuffer, this time we're going to
-            // actually draw to the screen!
-            gl::FBO::unbind();
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            glViewport(0,0,camera->screen()->width(), camera->screen()->height());
-
-            // In this pass, we're reading from tex1 (unit 1) and we want
-            // linear sampling to get an extra blur
-            linearSampler.bind(1);
-
-            // Render the full-screen quad
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // Revert to nearest sampling
-            nearestSampler.bind(1);
-        }
-    }
-}
-
-void Ch6HdrBloom::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::SliderFloat("luminance threshold", &luminanceThreshold, 0.f, 5.f, "ratio = %.3f");
-    ImGui::SliderFloat("exposure", &exposure, 0.f, 1.f, "ratio = %.3f");
-    ImGui::SliderFloat("white", &white, 0.f, 1.f, "ratio = %.3f");
-}
-
-
-void Ch6GaussianFilter::init(){
     update_screen_size();
 }
 
@@ -1356,491 +1321,430 @@ void Ch6GaussianFilter::update_screen_size(){
 
 void Ch6GaussianFilter::draw(tool::gl::Drawer *drawer){
 
-    // gaussian weights
-    std_v1<float> weights;
-    weights.resize(5);
+
+    // pass 1 : blinnPhong
+    if(enable){
+        screenFBO.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    Sample::draw(drawer);
+
+    shader->use();
+    shader->set_uniform("Weight[0]", weights);
+    shader->set_uniform("Pass", 1);
+
+    lInfo.Position = camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>();
+
+    lightUBO.update(lInfo);
+    lightUBO.bind(0);
+
+    materialUBO.update(mInfo);
+    materialUBO.bind(1);
+
+    draw_nb(shader, drawer);
+
+    if(enable){
+
+        // pass 2
+        intermediateFBO.bind();
+        screenRenderTexture.bind();
+
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        shader->set_uniform("Pass", 2);
+        draw_screen_quad(shader);
+
+        // pass 3
+        gl::FBO::unbind();
+        intermediateRenderTexture.bind();
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        shader->set_uniform("Pass", 3);
+        draw_screen_quad(shader);
+    }
+}
+
+void Ch6GaussianFilter::update_imgui(){
+
+    ImGui::Checkbox("enable###CH6GF-1", &enable);
+    if(ImGui::SliderFloat("Sigma2###CH6GF-2", &sigma2, 0.01f, 10.00f, "ratio = %.3f")){
+        // Compute and sum the weights
+        float sum = 0.f;
+        weights[0] = gauss(0,sigma2);
+        sum = weights[0];
+        for( size_t ii = 1; ii < weights.size(); ii++ ) {
+            weights[ii] = gauss(static_cast<float>(ii), sigma2);
+            sum += 2 * weights[ii];
+        }
+
+        for(size_t ii = 0; ii < weights.size(); ii++ ) {
+            weights[ii] /= sum;
+        }
+    }
+}
+
+
+void Ch6HdrLightingToneMapping::init(){
+
+    shader = shadersM->get_ptr("ch6/hdr-lighting-tone-mapping");
+
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+
+    update_screen_size();
+}
+
+void Ch6HdrLightingToneMapping::update_screen_size(){
+
+    int size = camera->screen()->size();
+    texData.resize(size*3);
+
+    // Generate and bind the framebuffer
+    hdrFBO.clean();
+    hdrFBO.generate();
+    hdrFBO.bind();
+
+    // Create the depth buffer
+    hdrDepthBuffer.clean();
+    hdrDepthBuffer.generate();
+    hdrDepthBuffer.bind();
+    hdrDepthBuffer.set_data_storage(camera->screen()->width(),camera->screen()->height());
+
+    // Create the  HDR texture object
+    hdrRenderTexture.clean();
+    hdrRenderTexture.init_hdr_render(camera->screen()->width(),camera->screen()->height(), 4);
+
+    TextureOptions options;
+    options.minFilter = TextureMinFilter::nearest;
+    options.magFilter = TextureMagFilter::nearest;
+    options.maxLevel = 0;
+    hdrRenderTexture.set_texture_options(options);
+
+    // Bind the texture to the FBO
+    hdrFBO.attach_color0_texture(hdrRenderTexture);
+
+    // Bind the depth buffer to the FBO
+    hdrFBO.attach_depth_buffer(hdrDepthBuffer);
+
+    // set colors buffers to be drawn
+    hdrFBO.set_draw_buffers({
+        attachment::none,
+        attachment::color0
+    });
+
+    gl::FBO::unbind();
+}
+
+void Ch6HdrLightingToneMapping::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+    shader->use();
+
+    auto intense = Vec3f{1.0f,1.0f,1.0f};
+    shader->set_uniform("Lights[0].L", intense );
+    shader->set_uniform("Lights[1].L", intense );
+    shader->set_uniform("Lights[2].L", intense );
+
+    intense = Vec3f{0.2f,0.2f,0.2f};
+    shader->set_uniform("Lights[0].La", lInfo.La );
+    shader->set_uniform("Lights[1].La", lInfo.La );
+    shader->set_uniform("Lights[2].La", lInfo.La );
+    shader->set_uniform("DoToneMap", doToneMap);
+
+
+    shader->set_uniform("Pass", 1);
+
+    hdrFBO.bind();
+    glClearColor(0.5f,0.5f,0.5f,1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+
+    auto lightPos = Vec4f{0.0f, 4.0f, 2.5f, 1.0f};
+    lightPos.x() = -7.0f;
+    shader->set_uniform("Lights[0].Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    lightPos.x() = 0.0f;
+    shader->set_uniform("Lights[1].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
+    lightPos.x() = 7.0f;
+    shader->set_uniform("Lights[2].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
+
+    materialUBO.bind(0);
+    draw_scene1(shader);
+
+    // compute log avg luminance
+    const int size = camera->screen()->size();
+    hdrRenderTexture.bind();
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
+//    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
+
+    float sum = 0.0f;
+    size_t count = 0;
+
+    static const auto v = geo::Pt3f{0.2126f, 0.7152f, 0.0722f};
+    auto d = reinterpret_cast<geo::Pt3<GLfloat>*>(texData.data());
+    std::for_each(std::execution::unseq, d, d + size, [&](const geo::Pt3<GLfloat> &pt){
+
+        if(pt.x() != 0){
+            count++;
+        }
+        if(pt.y() != 0){
+            count++;
+        }
+        if(pt.z() != 0){
+            count++;
+        }
+        sum += logf( geo::dot(pt, v) + 0.00001f);
+    });
+    shader->set_uniform( "AveLum", expf( sum / size ) );
+
+
+    // pass 2
+    gl::FBO::unbind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+
+    shader->set_uniform("Pass", 2);
+    draw_screen_quad(shader);
+}
+
+void Ch6HdrLightingToneMapping::update_imgui(){
+    ImGui::Checkbox("do tone mapping", &doToneMap);
+}
+
+void Ch6HdrBloom::init(){
+
+    shader = shadersM->get_ptr("ch6/hdr-bloom");
+
+    materialUBO.generate();
+    materialUBO.set_data_space_from_shader(shader);
+
+    weights.resize(10);
     float sum = 0.f;
 
     // Compute and sum the weights
-    weights[0] = gauss(0,sigma2);
+    weights[0] = gauss(0,sigma);
     sum = weights[0];
-    for( int i = 1; i < 5; i++ ) {
-        weights[i] = gauss(float(i), sigma2);
-        sum += 2 * weights[i];
+    for(size_t ii = 1; ii < weights.size(); ii++ ) {
+        weights[ii] = gauss(float(ii), sigma);
+        sum += 2 * weights[ii];
     }
 
     for(size_t ii = 0; ii < weights.size(); ii++ ) {
         weights[ii] /= sum;
     }
 
-    if(auto shader = shadersM->get_ptr("ch6/gaussian-filter"); shader != nullptr){
-
-        shader->use();
-        shader->set_uniform("Weight[0]", weights);
-        shader->set_uniform("Light.L", Vec3f{1.0f,1.0f,1.0f});
-        shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
-        shader->set_uniform("Light.Position", Pt4f{0.0f,0.0f,0.0f,1.0f});
-
-        // pass 1 : blinnPhong
-        {
-            screenFBO.bind();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glEnable(GL_DEPTH_TEST);
-
-            shader->set_uniform("Pass", 1);
-
-            // teapot
-            model = Mat4f::transform({1.f,1.f,1.f},Vec3f{90.f,0,0},{0.0f,0.f,0.f}).conv<double>();
-            update_matrices();
-
-            shader->set_uniform("Material.Kd", Vec3f{0.9f, 0.9f, 0.9f});
-            shader->set_uniform("Material.Ks", Vec3f{0.95f, 0.95f, 0.95f});
-            shader->set_uniform("Material.Ka", Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess" , 100.0f);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("teapot-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // plane
-            model = Mat4f::transform({50.f,50.f,50.f},Vec3f{0,0,0},{0.0f,-0.75f,0.f}).conv<double>();
-            update_matrices();
-
-            shader->set_uniform("Material.Kd", Vec3f{0.4f, 0.4f, 0.4f});
-            shader->set_uniform("Material.Ks", Vec3f{0.0f, 0.0f, 0.0f});
-            shader->set_uniform("Material.Ka", Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess" , 1.0f);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-10x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // torus
-            model = Mat4f::transform({1.f,1.f,1.f},Vec3f{90,0,0},{1.0f,1.f,3.f}).conv<double>();
-            update_matrices();
-
-            shader->set_uniform("Material.Kd", Vec3f{0.9f, 0.5f, 0.2f});
-            shader->set_uniform("Material.Ks", Vec3f{0.95f, 0.95f, 0.95f});
-            shader->set_uniform("Material.Ka", Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess" , 100.0f);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("torus-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        // pass 2
-        {
-            intermediateFBO.bind();
-            screenRenderTexture.bind();
-
-            glDisable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            shader->set_uniform("Pass", 2);
-
-            model       = Mat4d(true);
-            Mat4d view  = Mat4d(true);
-            Mat4d proj  = Mat4d(true);
-            update_matrices(view,proj);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        // pass 3
-        {
-            gl::FBO::unbind();
-            intermediateRenderTexture.bind();
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            shader->set_uniform("Pass", 3);
-
-            update_matrices_with_identity();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-        }
-    }
-}
-
-void Ch6GaussianFilter::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::SliderFloat("Sigma2", &sigma2, 0.01f, 10.00f, "ratio = %.3f");
-}
-
-void Ch6EdgeDetectionFilter::init(){
     update_screen_size();
 }
 
-void Ch6EdgeDetectionFilter::update_screen_size(){
+void Ch6HdrBloom::update_screen_size(){
 
-    // Generate and bind the framebuffer
-    screenFBO.clean();
-    screenFBO.generate();
-    screenFBO.bind();
+    int size = camera->screen()->size();
+    texData.resize(size*3);
 
-    // Create the texture object
-    screenRenderTexture.clean();
-    screenRenderTexture.init_render(camera->screen()->width(),camera->screen()->height());
+//    gl::FBO::unbind();
+    {
+        // Generate and bind the framebuffer
+        hdrFBO.clean();
+        hdrFBO.generate();
+        hdrFBO.bind();
 
-    TextureOptions options;
-    options.minFilter = TextureMinFilter::nearest;
-    options.magFilter = TextureMagFilter::nearest;
-    options.maxLevel = 0;
-    screenRenderTexture.set_texture_options(options);
+        // Create the depth buffer
+        hdrDepthBuffer.clean();
+        hdrDepthBuffer.generate();
+        hdrDepthBuffer.bind();
+        hdrDepthBuffer.set_data_storage(camera->screen()->width(),camera->screen()->height());
 
-    // Create the depth buffer
-    screenDepthBuffer.clean();
-    screenDepthBuffer.generate();
-    screenDepthBuffer.bind();
-    screenDepthBuffer.set_data_storage(camera->screen()->width(),camera->screen()->height());
+        // Create the  HDR texture object
+        hdrRenderTexture.clean();
+        hdrRenderTexture.init_hdr_render(camera->screen()->width(),camera->screen()->height(), 4);
 
-    // Bind the texture to the FBO
-    screenFBO.attach_color0_texture(screenRenderTexture);
+        TextureOptions options;
+        options.minFilter = TextureMinFilter::nearest;
+        options.magFilter = TextureMagFilter::nearest;
+        options.maxLevel = 0;
+        hdrRenderTexture.set_texture_options(options);
 
-    // Bind the depth buffer to the FBO
-    screenFBO.attach_depth_buffer(screenDepthBuffer);
+        // Bind the texture to the FBO
+        hdrFBO.attach_color0_texture(hdrRenderTexture);
 
-    // set colors buffers to be drawn
-    screenFBO.set_draw_buffers({
-        attachment::color0
-    });
+        // Bind the depth buffer to the FBO
+        hdrFBO.attach_depth_buffer(hdrDepthBuffer);        
 
-    // Unbind the framebuffer, and revert to default framebuffer
+        // set colors buffers to be drawn
+        hdrFBO.set_draw_buffers({attachment::color0});
+
+    }
+    gl::FBO::unbind();
+
+    {
+        // Generate and bind the framebuffer
+        blurFBO.clean();
+        blurFBO.generate();
+        blurFBO.bind();
+
+        bloomBufWidth  = camera->screen()->width()/8;
+        bloomBufHeight = camera->screen()->height()/8;
+
+        // Create two texture objects to ping-pong for the bright-pass filter
+        // and the two-pass blur
+        blurTex1.clean();
+        blurTex1.init_hdr_render(bloomBufWidth,bloomBufHeight, 3);
+
+        blurTex2.clean();
+        blurTex2.init_hdr_render(bloomBufWidth,bloomBufHeight, 3);
+
+        // Bind tex1 to the FBO
+        blurFBO.attach_color0_texture(blurTex1);
+
+//        GLenum drawBufs[] = {GL_COLOR_ATTACHMENT0};
+//        glNamedFramebufferDrawBuffers(blurFBO.id(), 1, drawBufs);
+        blurFBO.set_draw_buffers({attachment::color0});
+    }
     gl::FBO::unbind();
 }
 
-void Ch6EdgeDetectionFilter::draw(tool::gl::Drawer *drawer){
+void Ch6HdrBloom::draw(tool::gl::Drawer *drawer){
 
-    if(auto shader = shadersM->get_ptr("ch6/edge-detection-filter"); shader != nullptr){
+    Sample::draw(drawer);
 
-        shader->use();
-
-        shader->set_uniform("EdgeThreshold", edgeThreshold);
-        shader->set_uniform("Light.L", Vec3f{1.0f,1.0f,1.0f});
-        shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
-        shader->set_uniform("Light.Position", Pt4f{0.0f,0.0f,0.0f,1.0f});
-
-        // pass 1 : blinnphong
-        {
-
-            screenFBO.bind();
-            glEnable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            shader->set_uniform("Pass", 1);
-
-            // teapot
-            model = Mat4f::transform({1.f,1.f,1.f},Vec3f{90.f,0,0},{0.0f,0.f,0.f}).conv<double>();
-            update_matrices();
-
-            shader->set_uniform("Material.Kd", Vec3f{0.9f, 0.9f, 0.9f});
-            shader->set_uniform("Material.Ks", Vec3f{0.95f, 0.95f, 0.95f});
-            shader->set_uniform("Material.Ka", Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess" , 100.0f);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("teapot-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // plane
-            model = Mat4f::transform({50.f,50.f,50.f},Vec3f{0,0,0},{0.0f,-0.75f,0.f}).conv<double>();
-            update_matrices();
-
-            shader->set_uniform("Material.Kd", Vec3f{0.4f, 0.4f, 0.4f});
-            shader->set_uniform("Material.Ks", Vec3f{0.0f, 0.0f, 0.0f});
-            shader->set_uniform("Material.Ka", Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess" , 1.0f);
-
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-10x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // torus
-            model = Mat4f::transform({1.f,1.f,1.f},Vec3f{90,0,0},{1.0f,1.f,3.f}).conv<double>();
-            update_matrices();
-
-            shader->set_uniform("Material.Kd", Vec3f{0.9f, 0.5f, 0.2f});
-            shader->set_uniform("Material.Ks", Vec3f{0.95f, 0.95f, 0.95f});
-            shader->set_uniform("Material.Ka", Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess" , 100.0f);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("torus-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        glFlush();
-
-        // pass 2
-        {
-            gl::FBO::unbind();
-            screenRenderTexture.bind();
-
-            glDisable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            shader->set_uniform("Pass", 2);
-
-            update_matrices_with_identity();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-    }
-}
-
-void Ch6EdgeDetectionFilter::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::SliderFloat("edge threshold", &edgeThreshold, 0.005f, 0.30f, "ratio = %.3f");
-}
-
-void Ch5RenderToTexture::init(){
-
-    // Create the texture object
-    renderTexCh5RenderToTexture.init_render(512,512);
-
-    TextureOptions options;
-    options.minFilter = TextureMinFilter::linear;
-    options.magFilter = TextureMagFilter::linear;
-    renderTexCh5RenderToTexture.set_texture_options(options);
-
-    update_screen_size();
-}
-
-void Ch5RenderToTexture::update_screen_size(){
-
-    // Generate and bind the framebuffer
-    fboCh5RenderToTexture.generate();
-    fboCh5RenderToTexture.bind();
-
-    // Create the depth buffer
-    depthBufCh5RenterToTexture.generate();
-    depthBufCh5RenterToTexture.bind();
-    depthBufCh5RenterToTexture.set_data_storage();
-
-    // Bind the texture to the FBO
-    fboCh5RenderToTexture.attach_color0_texture(renderTexCh5RenderToTexture);
-
-    // Bind the depth buffer to the FBO
-    fboCh5RenderToTexture.attach_depth_buffer(depthBufCh5RenterToTexture);
-
-    // set colors buffers to be drawn
-    fboCh5RenderToTexture.set_draw_buffers({
-        attachment::color0
-    });
-
-    // Unbind the framebuffer, and revert to default framebuffer
-    gl::FBO::unbind();
-}
-
-void Ch5RenderToTexture::draw(tool::gl::Drawer *drawer){
-
-    if(auto shader = shadersM->get_ptr("ch5/render-to-texture"); shader != nullptr){
-
-        shader->use();
-
-        { // pass 0
-
-            fboCh5RenderToTexture.bind();
-            glViewport(0,0,512,512);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            Mat4d view = Mat4f::LookAt(Vec3f{0.0f,0.f,-2.f}, Vec3f{0.0f,0.0f,1.0f}, Vec3f{0.0f,1.0f,0.0f}).conv<double>();
-            Mat4d proj = Mat4f::Perspective(60.0f, 1.0f, 0.3f, 10000.0f).conv<double>();
-            model = Mat4f::transform({10.f,10.f,10.f}, Vec3f{angle,angle,angle},{0.0f,0.f,3.f}).conv<double>();
-            update_matrices(view, proj);
-
-            shader->set_uniform("Light.L", Vec3f{1.0f,1.0f,1.0f});
-            shader->set_uniform("Light.La", Vec3f{0.15f,0.15f,0.15f});
-            shader->set_uniform("Light.Position", Pt4f{0,0,0,1});
-            shader->set_uniform("Material.Ks", Vec3f{0.95f, 0.95f, 0.95f});
-            shader->set_uniform("Material.Shininess" , 100.0f);
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("rabbit-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            glFlush();
-        }
-
-        { // pass 1
-
-            gl::FBO::unbind();
-            renderTexCh5RenderToTexture.bind();
-            glViewport(0,0, camera->screen()->width(), camera->screen()->height());
-
-            shader->set_uniform("Light.Position", Vec4f{0.0f,0.0f,0.0f,1.0f} );
-            shader->set_uniform("Material.Ks", Vec3f{0.0f, 0.0f, 0.0f});
-            shader->set_uniform("Material.Shininess", 1.0f);
-
-            model = Mat4f::transform({1.f,1.f,1.f},Vec3f{0.f,0.f,0.f},{0.f,0.f,5.f}).conv<double>();
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("cube-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-    }
-}
-
-void Ch5RenderToTexture::update(float elapsedSeconds){
-    Sample::update(elapsedSeconds);
-    angle = (elapsedSeconds * 10.f);
-}
-
-void Ch5SamplerObject::init(){
-
-    // sampler objects
-    TextureOptions linearOptions;
-    linearOptions.magFilter = TextureMagFilter::linear;
-    linearOptions.minFilter = TextureMinFilter::linear;
-
-    TextureOptions nearestOptions;
-    nearestOptions.magFilter = TextureMagFilter::nearest;
-    nearestOptions.minFilter = TextureMinFilter::nearest;
-
-    auto samplers = gl::Sampler::generate({linearOptions, nearestOptions});
-    linearSampler   = gl::Sampler(linearOptions);
-    nearestSampler  = gl::Sampler(nearestOptions);
-}
-
-void Ch5SamplerObject::draw(tool::gl::Drawer *drawer){
-
-
-    if(auto shader = shadersM->get_ptr("ch5/sampler-objects"); shader != nullptr){
-
-        shader->use();
-        shader->set_uniform("Light.L", Vec3f{1.0f,1.0f, 1.0f});
-        shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
-        shader->set_uniform("Light.Position", Vec4f{0.0f,20.0f,0.0f,1.0f} );
-        shader->set_uniform("Material.Ks", Vec3f{0.95f, 0.95f, 0.95f});
-        shader->set_uniform("Material.Shininess", 100.0f);
-
-        model = Mat4f::transform({1.f,1.f,1.f},Vec3f{0.f,0.f,0.f},{-5.01f,0.f,0.f}).conv<double>();
-        update_matrices();
-        shader->set_camera_matrices_uniforms(camM);
-
-        nearestSampler.bind(0);
-        if(auto drawer = drawersM->get_drawer_ptr("grid-floor-drawer"); drawer != nullptr){
-            drawer->draw(shader);
-        }
-
-        model = Mat4f::transform({1.f,1.f,1.f},Vec3f{0.f,0.f,0.f},{5.01f,0.f,0.f}).conv<double>();
-        update_matrices();
-        shader->set_camera_matrices_uniforms(camM);
-
-        linearSampler.bind(0);
-        if(auto drawer = drawersM->get_drawer_ptr("grid-floor-drawer"); drawer != nullptr){
-            drawer->draw(shader);
-        }
-
-        gl::Sampler::unbind();
-    }
-}
-
-void Ch5DiffuseImageBasedLighting::draw(tool::gl::Drawer *drawer){
-
-    if(auto shader = shadersM->get_ptr("ch5/diffuse-image-based-lighting"); shader != nullptr){
-
-        shader->use();
-        gl::TBO::bind_textures({texturesM->id("grace-diffuse"),texturesM->id("spot_texture")});
-
-        model = Mat4f::transform({1.f,1.f,1.f},Vec3f{0.f,0.f,0.f},{0.0f,0.f,3.f}).conv<double>();
-        update_matrices();
-
-        shader->set_uniform("gamma",  gamma);
-        shader->set_uniform("CamPos", camera->position().conv<float>());
-        shader->set_uniform("ModelMatrix",  model.conv<float>());
-        shader->set_camera_matrices_uniforms(camM);
-
-        if(auto drawer = drawersM->get_drawer_ptr("notext-spot-drawer"); drawer != nullptr){
-            drawer->draw(shader);
-        }
-    }
-}
-
-void Ch5DiffuseImageBasedLighting::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
-    ImGui::SliderFloat("reflect factor", &reflectFactor, 0.0f, 10.00f, "ratio = %.3f");
-    ImGui::SliderFloat("gamma", &gamma, 0.0f, 10.00f, "ratio = %.3f");
-}
-
-void Ch5ProjectTexture::init(){
-    shader = shadersM->get_ptr("ch5/projected-texture");
-    materialUBO.generate();
-    materialUBO.set_data_space_from_shader(shader);
-}
-
-void Ch5ProjectTexture::draw(tool::gl::Drawer *drawer){
-
-    materialUBO.bind(1);
-
-    Vec3f projPos{2.0f,5.0f,5.0f};
-    Vec3f projAt{-2.0f,-4.0f,0.0f};
-    Vec3f projUp{0.0f,1.0f,0.0f};
-    Mat4f projView = Mat4f::LookAt(projPos, projAt, projUp);
-    Mat4f projProj = Mat4f::Perspective(30.0f, 1.0f, 0.2f, 1000.0f);
-    Mat4f bias     = Mat4f::transform({0.5f,0.5f,0.5f},Vec3f{0.f,0.f,0.f},{0.5f,0.5f,0.5f});
-
-    auto mv2 = bias.conv<double>() * projView.conv<double>();
-    auto mvp2 =  mv2 * projProj.conv<double>();
-
-    auto projectorMat = mvp2.conv<float>();//bias * projProj * projView;
-    shader->set_uniform("ProjectorMatrix", projectorMat);
-
-    model = Mat4d::transform({0.5,0.5,0.5},Vec3d{0.,0.,0},{0.,-2.,0.});
-    update_matrices();
+    gl::TBO::unbind_textures(0, 3);
 
     shader->use();
-    shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-    shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
-    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    shader->set_uniform("Weight[0]", weights);
+    shader->set_uniform("LumThresh", luminanceThreshold);
+    shader->set_uniform("Gamma", gamma);
+    shader->set_uniform("Exposure", exposure);
+    shader->set_uniform("White", white);
 
-    mInfo.Ka = {0.5f, 0.5f, 0.5f};
-    mInfo.Kd = {0.5f, 0.5f, 0.5f};
-    mInfo.Ks = {0.8f, 0.8f, 0.8f};
-    mInfo.Shininess = 10.0f;
-    materialUBO.update(mInfo);
+    auto intense = Vec3f{1.0f,1.0f,1.0f};
+    shader->set_uniform("Lights[0].L", intense );
+    shader->set_uniform("Lights[1].L", intense );
+    shader->set_uniform("Lights[2].L", intense );
 
-    shader->set_model_matrix(model);
-    shader->set_camera_matrices_uniforms(camM);
+    shader->set_uniform("Lights[0].La", lInfo.La );
+    shader->set_uniform("Lights[1].La", lInfo.La );
+    shader->set_uniform("Lights[2].La", lInfo.La );
 
-    texturesM->get_tbo("flower-projected")->bind();
-    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-10x10-drawer"); drawer != nullptr){
-        drawer->draw(shader);
+    auto lightPos = Vec4f{0.0f, 4.0f, 2.5f, 1.0f};
+    lightPos.x() = -7.0f;
+    shader->set_uniform("Lights[0].Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
+    lightPos.x() = 0.0f;
+    shader->set_uniform("Lights[1].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
+    lightPos.x() = 7.0f;
+    shader->set_uniform("Lights[2].Position", Pt4f{camera->view().multiply_point(lightPos.conv<double>()).conv<float>()});
+
+    // pass 1
+    shader->set_uniform("Pass", 1);
+
+    hdrFBO.bind();
+    glClearColor(0.5f,0.5f,0.5f,1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    materialUBO.bind(0);
+    draw_scene1(shader);
+
+    // compute log average luminance
+    const int size = camera->screen()->size();
+    hdrRenderTexture.bind();
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
+//    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
+    // gl::TBO::bind_textures({hdrRenderTexture.id(),0,0});
+    // texData.resize(size*4);
+//     glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, texData.size()/4, texData.data());
+    // hdrRenderTexture.get_hdr_texture_data(texData);
+
+    float sum = 0.0f;
+    size_t count = 0;
+
+    static const auto v = geo::Pt3f{0.2126f, 0.7152f, 0.0722f};
+    auto d = reinterpret_cast<geo::Pt3<GLfloat>*>(texData.data());
+    std::for_each(std::execution::unseq, d, d + size/3, [&](const geo::Pt3<GLfloat> &pt){
+
+        if(pt.x() != 0){
+            count++;
+        }
+        if(pt.y() != 0){
+            count++;
+        }
+        if(pt.z() != 0){
+            count++;
+        }
+        sum += logf( geo::dot(pt, v) + 0.00001f);
+    });
+    shader->set_uniform( "AveLum", expf( sum / size ) );
+
+
+    // pass 2
+    shader->set_uniform("Pass", 2);
+
+    blurFBO.bind();
+    blurFBO.attach_color0_texture(blurTex1);
+
+    glViewport(0,0,bloomBufWidth, bloomBufHeight);
+    glDisable(GL_DEPTH_TEST);
+    glClearColor(0,0,0,0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    draw_screen_quad(shader);
+
+    // pass 3
+    shader->set_uniform("Pass", 3);
+    blurFBO.attach_color0_texture(blurTex2);
+    draw_screen_quad(shader);
+
+    // pass 4
+    shader->set_uniform("Pass", 4);
+    blurFBO.attach_color0_texture(blurTex1);
+    draw_screen_quad(shader);
+
+
+    // pass 5
+    shader->set_uniform("Pass", 5);
+
+    // Bind to the default framebuffer, this time we're going to
+    // actually draw to the screen!
+    gl::FBO::unbind();
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glViewport(0,0,camera->screen()->width(), camera->screen()->height());
+
+    // In this pass, we're reading from tex1 (unit 1) and we want
+    // linear sampling to get an extra blur
+    linearSampler.bind(1);
+
+    // Render the full-screen quad
+    draw_screen_quad(shader);
+
+    // Revert to nearest sampling
+    nearestSampler.bind(1);
+
+}
+
+void Ch6HdrBloom::update_imgui(){
+    ImGui::SliderFloat("luminance threshold###CH6HB-1", &luminanceThreshold, 0.f, 5.f, "ratio = %.3f");
+    ImGui::SliderFloat("exposure###CH6HB-2", &exposure, 0.f, 1.f, "ratio = %.3f");
+    ImGui::SliderFloat("white###CH6HB-3", &white, 0.f, 1.f, "ratio = %.3f");
+    if(ImGui::SliderFloat("sigma###CH6HB-4", &sigma, 0.f, 100.f, "ratio = %.1f")){
+        float sum = 0.f;
+
+        // Compute and sum the weights
+        weights[0] = gauss(0,sigma);
+        sum = weights[0];
+        for(size_t ii = 1; ii < weights.size(); ii++ ) {
+            weights[ii] = gauss(float(ii), sigma);
+            sum += 2 * weights[ii];
+        }
+
+        for(size_t ii = 0; ii < weights.size(); ii++ ) {
+            weights[ii] /= sum;
+        }
     }
-
-    model = Mat4d::transform({5.,5.,5.},Vec3f{rx,ry,rz}.conv<double>(),{-5.,-2.,15.});
-    update_matrices();
-
-    shader->set_uniform("ModelMatrix",       model.conv<float>());
-    shader->set_camera_matrices_uniforms(camM);
-
-    if(auto drawer = drawersM->get_drawer_ptr("torus-drawer"); drawer != nullptr){
-        drawer->draw(shader);
-    }
-
 }
 
 
@@ -1953,7 +1857,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
                     shader->set_uniform((lightName + "Position").c_str(), Pt4f{camera->view().multiply_point(lightP.conv<double>()).conv<float>()});
                     ++count;
 
-                    model = Mat4d::transform({0.1,0.1,0.1},Vec3d{0.,0.,0.},lightP.xyz().conv<double>());
+                    camM.m = Mat4d::transform({0.1,0.1,0.1},Vec3d{0.,0.,0.},lightP.xyz().conv<double>());
                     update_matrices();
                     shader->set_camera_matrices_uniforms(camM);
 
@@ -1973,7 +1877,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
 
             for(int ii = 0; ii < 10; ++ii){
                 for(int jj = 0; jj < 10; ++jj){
-                    model = Mat4d::transform({0.3,0.3,0.3},Vec3d{90.,0.,0.},{-15.f+ii*3,0,-15.f+jj*3});
+                    camM.m = Mat4d::transform({0.3,0.3,0.3},Vec3d{90.,0.,0.},{-15.f+ii*3,0,-15.f+jj*3});
                     update_matrices();
                     shader->set_camera_matrices_uniforms(camM);
 
@@ -1988,7 +1892,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
             shader->set_uniform("Material.Ks", geo::Vec3f{1.0f, 1.0f, 1.0f});
             shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
             shader->set_uniform("Material.Shininess", 1.0f);
-            model = Mat4d::transform({5.,5.,5.},Vec3d{0.,0.,0.},{0.0f,-0.75f,0.0f});
+            camM.m = Mat4d::transform({5.,5.,5.},Vec3d{0.,0.,0.},{0.0f,-0.75f,0.0f});
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
 
@@ -2001,7 +1905,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
             shader->set_uniform("Material.Ks", geo::Vec3f{0.0f, 0.0f, 0.0f});
             shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
             shader->set_uniform("Material.Shininess", 1.0f);
-            model = Mat4f::transform({1.f,1.f,1.f},Vec3f{-90,0,0},{1.0f,1.0f,3.0f}).conv<double>();
+            camM.m = Mat4f::transform({1.f,1.f,1.f},Vec3f{-90,0,0},{1.0f,1.0f,3.0f}).conv<double>();
             update_matrices();
 
             shader->set_camera_matrices_uniforms(camM);
@@ -2186,11 +2090,11 @@ void Ch6SSAO::draw(tool::gl::Drawer *drawer){
 
 
             // floor
-            gl::TBO::bind_textures({texturesM->id("hardwood_diffuse")}, 5);
+            gl::TBO::bind_textures({texturesM->texture_id("hardwood_diffuse")}, 5);
 
             shader->set_uniform("Material.UseTex", true);
 
-            model = Mat4d(true);
+            camM.m = Mat4d(true);
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
 
@@ -2199,11 +2103,11 @@ void Ch6SSAO::draw(tool::gl::Drawer *drawer){
             }
 
             // walls
-            gl::TBO::bind_textures({texturesM->id("brick")}, 5);
+            gl::TBO::bind_textures({texturesM->texture_id("brick")}, 5);
 
-            model = Mat4d(true);
-            model = Mat4d::translate(model, {0,0,-2});
-            model = Mat4d::rotate(model, {1,0,0},90);
+            camM.m = Mat4d(true);
+            camM.m = Mat4d::translate(camM.m, {0,0,-2});
+            camM.m = Mat4d::rotate(camM.m, {1,0,0},90);
 
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
@@ -2212,10 +2116,10 @@ void Ch6SSAO::draw(tool::gl::Drawer *drawer){
                 drawer->draw(shader);
             }
 
-            model = Mat4d(true);
-            model = Mat4d::translate(model, {-2,0,0});
-            model = Mat4d::rotate(model, {0,1,0},90);
-            model = Mat4d::rotate(model, {1,0,0},90);
+            camM.m = Mat4d(true);
+            camM.m = Mat4d::translate(camM.m, {-2,0,0});
+            camM.m = Mat4d::rotate(camM.m, {0,1,0},90);
+            camM.m = Mat4d::rotate(camM.m, {1,0,0},90);
 
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
@@ -2230,10 +2134,10 @@ void Ch6SSAO::draw(tool::gl::Drawer *drawer){
 
 //            model = Mat4d::transform(Vec3d{2,2,2}, Vec3d{rx,ry,rz}, Vec3d{x,y,z});
 
-            model = Mat4d(true);
-            model = Mat4d::rotate(model, Vec3d{0,1,0}, 135.);
-            model = Mat4d::scale(model, Vec3d{2,2,2});
-            model = Mat4d::translate(model, Vec3d{0,0.282958,0});
+            camM.m = Mat4d(true);
+            camM.m = Mat4d::rotate(camM.m, Vec3d{0,1,0}, 135.);
+            camM.m = Mat4d::scale(camM.m, Vec3d{2,2,2});
+            camM.m = Mat4d::translate(camM.m, Vec3d{0,0.282958,0});
 
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
@@ -2290,8 +2194,6 @@ void Ch6SSAO::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch6SSAO::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("radius", &radius, 0.01f, 10.f, "ratio = %.3f");
     ImGui::SliderFloat("factor scale", &factorScale, 0.5f, 16.f, "ratio = %.3f");
 }
@@ -2397,8 +2299,8 @@ void Ch6OIT::draw(tool::gl::Drawer *drawer){
                 for( int k = 0; k <= 6; k++ ) {
                     if( (i + j + k) % 2 == 0 ) {
 
-                        model = Mat4d::translate(Mat4d(true), Vec3d{i-3.0, j-3.0, k-3.0});
-                        model = Mat4d::scale(model, Vec3d{size,size,size});
+                        camM.m = Mat4d::translate(Mat4d(true), Vec3d{i-3.0, j-3.0, k-3.0});
+                        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
 
                         update_matrices();
                         shader->set_camera_matrices_uniforms(camM);
@@ -2412,43 +2314,43 @@ void Ch6OIT::draw(tool::gl::Drawer *drawer){
         shader->set_uniform("Kd", geo::Vec4f(0.9f, 0.2f, 0.2f, 0.4f));
         size = 2.0;
         double pos = 1.75;
-        model = Mat4d::translate(Mat4d(true), Vec3d{-pos, -pos, pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{-pos, -pos, pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{-pos, -pos, -pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{-pos, -pos, -pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{-pos, pos, pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{-pos, pos, pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{-pos, pos, -pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{-pos, pos, -pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{pos, pos, pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{pos, pos, pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{pos, pos, -pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{pos, pos, -pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{pos, -pos, pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{pos, -pos, pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
-        model = Mat4d::translate(Mat4d(true), Vec3d{pos, -pos, -pos});
-        model = Mat4d::scale(model, Vec3d{size,size,size});
+        camM.m = Mat4d::translate(Mat4d(true), Vec3d{pos, -pos, -pos});
+        camM.m = Mat4d::scale(camM.m, Vec3d{size,size,size});
         update_matrices();
         shader->set_camera_matrices_uniforms(camM);
         cube->draw();
@@ -2502,7 +2404,7 @@ void Ch7BezCurve::draw(tool::gl::Drawer *drawer){
     glPatchParameteri( GL_PATCH_VERTICES, 4);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    model = geo::Mat4d(true);
+    camM.m = geo::Mat4d(true);
     update_matrices();
 
     // Draw the curve
@@ -2520,8 +2422,6 @@ void Ch7BezCurve::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch7BezCurve::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderInt("bezcurve num segments", &numSegments, 1, 200, "ratio = %.3f");
 }
 
@@ -2563,7 +2463,7 @@ void Ch7ShadeWire::draw(tool::gl::Drawer *drawer){
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    model = Mat4d(true);
+    camM.m = Mat4d(true);
     update_matrices();
     shader->set_camera_matrices_uniforms(camM);
     shader->set_uniform("ProjectionMatrix", camera->projection().conv<float>());    
@@ -2575,8 +2475,6 @@ void Ch7ShadeWire::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch7ShadeWire::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("shadewire line width", &lineWidth, 0.01f, 10.f, "ratio = %.3f");
 }
 
@@ -2608,9 +2506,9 @@ void Ch7ScenePointSprite::draw(tool::gl::Drawer *drawer){
 
     shader->use();
     shader->set_uniform("Size2", sizeSprite);
-    gl::TBO::bind_textures({texturesM->id("flower")});
+    gl::TBO::bind_textures({texturesM->texture_id("flower")});
 
-    model = Mat4d(true);
+    camM.m = Mat4d(true);
     update_matrices();
     shader->set_camera_matrices_uniforms(camM);
     shader->set_uniform("ProjectionMatrix", camera->projection().conv<float>());
@@ -2619,8 +2517,6 @@ void Ch7ScenePointSprite::draw(tool::gl::Drawer *drawer){
 }
 
 void Ch7ScenePointSprite::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderInt("num sprites", &numSprites, 1, 1000, "ratio = %.3f");
     ImGui::SliderFloat("size sprites", &sizeSprite, 0.01f, 10.f, "ratio = %.3f");
 }
@@ -2646,7 +2542,7 @@ void Ch7Silhouette::draw(tool::gl::Drawer *drawer){
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    model = Mat4d(true);
+    camM.m = Mat4d(true);
     update_matrices();
     shader->set_camera_matrices_uniforms(camM);
 
@@ -2776,16 +2672,16 @@ void Ch8ShadowMap::draw(tool::gl::Drawer *drawer){
     {
         solidP->use();
         solidP->set_uniform("Color", Vec4f{1.0f,0.0f,0.0f,1.0f});
-        model = Mat4d::translate(Mat4d(true), lightFrustum->origin().conv<double>());
-        model = Mat4d::scale(model, {0.2f,0.2f,0.2f});
+        camM.m = Mat4d::translate(Mat4d(true), lightFrustum->origin().conv<double>());
+        camM.m = Mat4d::scale(camM.m, {0.2f,0.2f,0.2f});
         update_matrices();
         solidP->set_camera_matrices_uniforms(camM);
         drawersM->get_drawer_ptr("cube-drawer")->draw();
 
         solidP->set_uniform("Color", Vec4f{1.0f,0.0f,1.0f,1.0f});
         auto p = Pt3f(Vec3f{x1,y1,z1});
-        model = Mat4d::translate(Mat4d(true), p.conv<double>());
-        model = Mat4d::scale(model, {0.2f,0.2f,0.2f});
+        camM.m = Mat4d::translate(Mat4d(true), p.conv<double>());
+        camM.m = Mat4d::scale(camM.m, {0.2f,0.2f,0.2f});
         update_matrices();
         solidP->set_camera_matrices_uniforms(camM);
         drawersM->get_drawer_ptr("cube-drawer")->draw();
@@ -2839,9 +2735,9 @@ void Ch8ShadowMap::draw_scene(){
     shadowP->set_uniform("Material.Kd", color);
     shadowP->set_uniform("Material.Ks", Vec3f{0.9f,0.9f,0.9f});
     shadowP->set_uniform("Material.Shininess", 150.0f);
-    model = Mat4d::rotate(Mat4d(true), Vec3d{1,0,0}, -90.);
-    shadowP->set_uniform("ShadowMatrix", model.conv<float>()*lightFrustum->view_matrix()*lightFrustum->projection_matrix() * shadowBias);
-    update_matrices(model, viewP.conv<double>(), projP.conv<double>());
+    camM.m = Mat4d::rotate(Mat4d(true), Vec3d{1,0,0}, -90.);
+    shadowP->set_uniform("ShadowMatrix", camM.m.conv<float>()*lightFrustum->view_matrix()*lightFrustum->projection_matrix() * shadowBias);
+    update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
     shadowP->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("teapot-drawer")->draw();
 
@@ -2849,10 +2745,10 @@ void Ch8ShadowMap::draw_scene(){
     shadowP->set_uniform("Material.Kd", color);
     shadowP->set_uniform("Material.Ks", Vec3f{0.9f,0.9f,0.9f});
     shadowP->set_uniform("Material.Shininess", 150.0f);
-    model = Mat4d::translate(Mat4d(true), Vec3d{0.0f,2.0f,5.0f});
-    model = Mat4d::rotate(model, Vec3d{1,0,0}, -45.);    
-    shadowP->set_uniform("ShadowMatrix", (model.conv<float>() * lightPV));
-    update_matrices(model, viewP.conv<double>(), projP.conv<double>());    
+    camM.m = Mat4d::translate(Mat4d(true), Vec3d{0.0f,2.0f,5.0f});
+    camM.m = Mat4d::rotate(camM.m, Vec3d{1,0,0}, -45.);
+    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
     shadowP->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("torus-drawer")->draw();
 
@@ -2860,23 +2756,23 @@ void Ch8ShadowMap::draw_scene(){
     shadowP->set_uniform("Material.Ks", Vec3f{0.0f, 0.0f, 0.0f});
     shadowP->set_uniform("Material.Ka", Vec3f{0.05f, 0.05f, 0.05f});
     shadowP->set_uniform("Material.Shininess", 1.0f);
-    model = Mat4d(true);
-    shadowP->set_uniform("ShadowMatrix", (model.conv<float>() * lightPV));
-    update_matrices(model, viewP.conv<double>(), projP.conv<double>());
+    camM.m = Mat4d(true);
+    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
     shadowP->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
 
-    model = Mat4d::translate(Mat4d(true), Vec3d{-5.0f,5.0f,0.0f});
-    model = Mat4d::rotate(model, Vec3d{0,0,1}, -90.);
-    shadowP->set_uniform("ShadowMatrix", (model.conv<float>() * lightPV));
-    update_matrices(model, viewP.conv<double>(), projP.conv<double>());
+    camM.m = Mat4d::translate(Mat4d(true), Vec3d{-5.0f,5.0f,0.0f});
+    camM.m = Mat4d::rotate(camM.m, Vec3d{0,0,1}, -90.);
+    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
     shadowP->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
 
-    model = Mat4d::translate(Mat4d(true), Vec3d{0.0f,5.0f,-5.0f});
-    model = Mat4d::rotate(model, Vec3d{1,0,0}, 090.);
-    shadowP->set_uniform("ShadowMatrix", (model.conv<float>() * lightPV));
-    update_matrices(model, viewP.conv<double>(), projP.conv<double>());
+    camM.m = Mat4d::translate(Mat4d(true), Vec3d{0.0f,5.0f,-5.0f});
+    camM.m = Mat4d::rotate(camM.m, Vec3d{1,0,0}, 090.);
+    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
     shadowP->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
 }
@@ -2920,7 +2816,7 @@ void Ch8ShadowMap2::draw(tool::gl::Drawer *drawer){
     // 1. render depth of scene to texture (from light's perspective)
     // --------------------------------------------------------------
 //    geo::Mat4f lightProjection, lightView;
-    lightPos = {x,y,z};//mobileLightPos1.xyz();// {x,y,z};
+    lightPos = xyz;//mobileLightPos1.xyz();// {x,y,z};
     decltype (lightPos) lookAtPos = {x1,y1,z1};
     auto lightProjection  = Mat4f::Perspective(deg_2_rad(fov), 1600.f/600.f, nearPlane, farPlane);
     auto lightView        = Mat4f::LookAt(lightPos, lookAtPos, Pt3f{0.0, 1.0, 0.0});
@@ -2954,7 +2850,7 @@ void Ch8ShadowMap2::draw(tool::gl::Drawer *drawer){
     shadowMapping->set_uniform("viewPos", camera->position().conv<float>());
     shadowMapping->set_uniform("lightPos", lightPos);
     shadowMapping->set_uniform("lightSpaceMatrix", lightSpaceMatrix);
-    gl::TBO::bind_textures({texturesM->get_tbo("brick")->id(), depthMap});
+    gl::TBO::bind_textures({texturesM->texture_tbo("brick")->id(), depthMap});
     render_scene(shadowMapping);
 
     // render Depth map to quad for visual debugging
@@ -2968,13 +2864,13 @@ void Ch8ShadowMap2::draw(tool::gl::Drawer *drawer){
 //    }
     auto shaderSolid = shadersM->get_ptr("ch8/solid");
     shaderSolid->use();
-    model = Mat4d::transform({0.3,0.3,0.3},{0,0,0},lightPos.conv<double>());
+    camM.m = Mat4d::transform({0.3,0.3,0.3},{0,0,0},lightPos.conv<double>());
     update_matrices();
     shaderSolid->set_camera_matrices_uniforms(camM);
     shaderSolid->set_uniform("Color", Pt4f{1,0,0,1});
     drawersM->get_drawer_ptr("sphere-drawer")->draw();
 
-    model = Mat4d::transform({0.3,0.3,0.3},{0,0,0},lookAtPos.conv<double>());
+    camM.m = Mat4d::transform({0.3,0.3,0.3},{0,0,0},lookAtPos.conv<double>());
     update_matrices();
     shaderSolid->set_camera_matrices_uniforms(camM);
     shaderSolid->set_uniform("Color", Pt4f{0,1,0,1});
@@ -2986,23 +2882,23 @@ void Ch8ShadowMap2::draw(tool::gl::Drawer *drawer){
 void Ch8ShadowMap2::render_scene(gl::ShaderProgram *shader){
 
     // floor
-    gl::TBO::bind_textures({texturesM->get_tbo("brick")->id()});
-    model = Mat4d::identity();
-    shader->set_uniform("model", model.conv<float>());
+    gl::TBO::bind_textures({texturesM->texture_tbo("brick")->id()});
+    camM.m = Mat4d::identity();
+    shader->set_uniform("model", camM.m.conv<float>());
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
     // cubes
 
-    gl::TBO::bind_textures({texturesM->get_tbo("hardwood_diffuse")->id()});
+    gl::TBO::bind_textures({texturesM->texture_tbo("hardwood_diffuse")->id()});
     for(int ii = 0; ii < 10; ++ii){
         for(int jj = 0; jj < 10; ++jj){
 
-            model = Mat4d::transform({0.5,0.5,0.5},{ii*45.0,0.0,0.0},{3.0*ii, 1.0, 3.0*jj});
+            camM.m = Mat4d::transform({0.5,0.5,0.5},{ii*45.0,0.0,0.0},{3.0*ii, 1.0, 3.0*jj});
 
 //            model = Mat4d::identity();
 //            model = Mat4d::scale(model, {0.5f,0.5f,0.5f});
 //            model = Mat4d::rotate(model, {45.f,0.f,0.f});
 //            model = Mat4d::translate(model, {3.f*ii, 1.5, 3.f*jj});
-            shader->set_uniform("model", model.conv<float>());
+            shader->set_uniform("model", camM.m.conv<float>());
             drawersM->get_drawer_ptr("cube-drawer")->draw();
 
         }
@@ -3010,8 +2906,6 @@ void Ch8ShadowMap2::render_scene(gl::ShaderProgram *shader){
 }
 
 void Ch8ShadowMap2::update_imgui(){
-    Sample::update_imgui();
-    ImGui::Text("Current:");
     ImGui::SliderFloat("near_plane", &nearPlane, 1.f, 10.4f, "ratio = %.3f");
     ImGui::SliderFloat("far_plane", &farPlane, 3.f, 200.4f, "ratio = %.3f");
     ImGui::SliderFloat("fov", &fov, 15.f, 360.0f, "ratio = %.3f");

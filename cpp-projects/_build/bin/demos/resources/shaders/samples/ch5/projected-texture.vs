@@ -16,10 +16,10 @@ uniform mat4 MVP;
 
 void main(){
 
-    vec4 pos4 = vec4(VertexPosition, 1.0);
+    vec4 pos4 = vec4(VertexPosition,1.0);
 
-    EyeNormal       = normalize(NormalMatrix * VertexNormal);
-    EyePosition     = ModelViewMatrix * pos4;
-    ProjTexCoord    = ProjectorMatrix * (ModelMatrix * pos4);
-    gl_Position     = MVP * pos4;
+    EyeNormal = normalize(NormalMatrix * VertexNormal);
+    EyePosition = ModelViewMatrix * pos4;
+    ProjTexCoord = ProjectorMatrix * (ModelMatrix * pos4);
+    gl_Position = MVP * pos4;
 }

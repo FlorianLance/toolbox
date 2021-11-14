@@ -42,35 +42,46 @@ class TexturesManager{
 
 public:
 
-    bool load_textures_from_directory(const std::string &directoryPath, std_v1<TextureLoadingInfo> infos);
-    bool load_cube_map(const std::string &basePath, const std_a1<std::string,6> &extensions, const std::string &alias, bool flip = true);
-
-    std::weak_ptr<Texture2D> get_texture(const std::string &textureAlias);
-    Texture2D* get_texture_ptr(const std::string &textureAlias);
-    TextureInfo get_texture_info(const std::string &textureAlias, TextureOptions options = {});
-
-    bool generate_texture2d_tbo(const std::string &tboAlias, const std::string &textureAlias, TextureOptions options = {});
-    bool generate_projected_texture2d_tbo(const std::string &tboAlias, const std::string &textureAlias);
-    bool generate_cubemap_tbo(const std::string &tboAlias, const std::string &cubemapAlias);
-
-    gl::TBO *get_tbo(const std::string &tboAlias);
-    gl::TextureName id(const std::string &tboAlias){
-        if(auto tbo = get_tbo(tboAlias); tbo != nullptr){
-            return tbo->id();
-        }
-        return 0;
-    }
-
-private:
-
     using Alias = std::string;
     using Path  = std::string;
 
+    bool load_textures_from_directory(const Path &directoryPath, std_v1<TextureLoadingInfo> infos);
+    bool load_cube_map(const Path &basePath, const std_a1<std::string,6> &extensions, const Alias &alias, bool flip = true);
+
+    std::weak_ptr<Texture2D> get_texture(const Alias &textureAlias);
+    Texture2D* get_texture_ptr(const Alias &textureAlias);
+    TextureInfo get_texture_info(const Alias &textureAlias, TextureOptions options = {});
+
+    bool generate_texture2d_tbo(const Alias &tboAlias, const Alias &textureAlias, TextureOptions options = {});
+    bool generate_projected_texture2d_tbo(const Alias &tboAlias, const Alias &textureAlias);
+    bool generate_cubemap_tbo(const Alias &tboAlias, const Alias &cubemapAlias);
+
+    gl::TBO *texture_tbo(const Alias &tboAlias);
+    gl::TextureName texture_id(const Alias &tboAlias);
+
+    gl::TBO *cube_map_tbo(const Alias &tboAlias);
+    gl::TextureName cube_map_id(const Alias &tboAlias);
+
+//    constexpr size_t textures_count() const noexcept {return texturesAliases.size();}
+//    constexpr size_t cube_maps_count() const noexcept {return cubeMapsAliases.size();}
+//    constexpr size_t tbo_count() const noexcept {return tboAliases.size();}
+
+//    gl::TextureName get_cube_maps_tbo(){
+
+//    }
+
+private:
+
+    std::vector<Alias> texturesAliases;
+    std::vector<Alias> cubeMapsAliases;
+    std::vector<Alias> tboAliases;
+
     std::unordered_map<Path,  Alias> aliasPerPath;
+
     std::unordered_map<Alias, std::shared_ptr<Texture2D>> textures;
     std::unordered_map<Alias, std::shared_ptr<CubeMap>> cubeMaps;
-
-    std::unordered_map<Alias, gl::TBO> TBOs;
+    std::unordered_map<Alias, gl::TBO> texturesTBOs;
+    std::unordered_map<Alias, gl::TBO> cubeMapsTBOs;
 };
 
 }

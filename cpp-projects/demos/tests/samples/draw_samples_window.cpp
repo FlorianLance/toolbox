@@ -262,15 +262,15 @@ bool DrawSampleWindow::init_drawers(){
         drawersInfos.push_back({"notext-plane-40x40-drawer", plane, false});
 
         plane =  std::make_shared<gl::PlaneDrawer>();
-        plane->init(8,8,{tm->id("cement")});
+        plane->init(8,8,{tm->texture_id("cement")});
         drawersInfos.push_back({"floor-drawer", plane, false});
 
         plane = std::make_shared<gl::PlaneDrawer>();
-        plane->init(8,8,{tm->id("me_textile")});
+        plane->init(8,8,{tm->texture_id("me_textile")});
         drawersInfos.push_back({"grid-floor-drawer", plane, false});
 
         plane = std::make_shared<gl::PlaneDrawer>();
-        plane->init(8,8,{tm->id("mybrick-color"), tm->id("mybrick-normal"), tm->id("mybrick-height")});
+        plane->init(8,8,{tm->texture_id("mybrick-color"), tm->texture_id("mybrick-normal"), tm->texture_id("mybrick-height")});
         drawersInfos.push_back({"multi-tex-plane-drawer", plane, false});
     }
 
@@ -292,17 +292,17 @@ bool DrawSampleWindow::init_drawers(){
         drawersInfos.push_back({"cube-drawer", cube, true});
 
         cube = std::make_shared<gl::CubeDrawer>();
-        cube->init(2.f, {tm->id("brick")});
+        cube->init(2.f, {tm->texture_id("brick")});
         cube->scaleHint = 0.3f;
         drawersInfos.push_back({"brick-cube-drawer", cube, false});
 
         cube= std::make_shared<gl::CubeDrawer>();
-        cube->init(2.f, {tm->id("brick"), tm->id("moss")});
+        cube->init(2.f, {tm->texture_id("brick"), tm->texture_id("moss")});
         cube->scaleHint = 0.3f;
         drawersInfos.push_back({"brick-moss-cube-drawer", cube, false});
 
         cube = std::make_shared<gl::CubeDrawer>();
-        cube->init(2.f, {tm->id("cement"), tm->id("moss")});
+        cube->init(2.f, {tm->texture_id("cement"), tm->texture_id("moss")});
         cube->scaleHint = 0.3f;
         drawersInfos.push_back({"cement-moss-cube-drawer", cube, false});
     }
@@ -473,7 +473,8 @@ bool DrawSampleWindow::initialize_gl(){
 
     // camera
     std::cout << "Init camera\n";
-    m_camera.set_direction(0.,0.,0.);
+    m_camera.set_position({0.,0.,5.});
+    m_camera.set_direction({0.,0.,-1.},{0.,1.,0.});
 
     std::cout << "Init drawers\n";
     init_drawers();
@@ -518,10 +519,11 @@ void DrawSampleWindow::draw_imgui(){
     // menu bar
     if (ImGui::BeginMainMenuBar()){
 
-        if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-        if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
-        if (ImGui::MenuItem("Close", "Ctrl+W"))  {  }
-
+        //if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+        //if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
+        if (ImGui::MenuItem("Close", "Ctrl+W"))  {
+            running = false;
+        }
         if (ImGui::BeginMenu("Developer")){
             ImGui::MenuItem("Show demo window", nullptr, &m_showDemoWindow);
             ImGui::MenuItem("Show metrics window", nullptr, &m_showMetricsWindow);
@@ -529,6 +531,7 @@ void DrawSampleWindow::draw_imgui(){
         }
         ImGui::EndMainMenuBar();        
     }
+
 
 
     // show demo
@@ -612,12 +615,16 @@ void DrawSampleWindow::draw_imgui(){
             ++currentSample;
         }
     }
+    ImGui::SameLine();
+    const auto idStr = std::to_string(currentSample);
+    ImGui::Text(idStr.c_str());
 
     if(currentSample < samples.size()){
-        std::get<1>(samples[currentSample])->update_imgui();
+        std::get<1>(samples[currentSample])->parent_update_imgui();
     }
 
     ImGui::End();
+
 
     //    if (ImGui::CollapsingHeader("Scatter Plots")) { // crash
     //        srand(0);
@@ -657,6 +664,7 @@ void DrawSampleWindow::draw_imgui(){
     //    }
 
 }
+
 
 void DrawSampleWindow::resize_windows(){
     // resize current sample

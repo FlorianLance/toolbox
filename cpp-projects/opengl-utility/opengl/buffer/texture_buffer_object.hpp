@@ -46,7 +46,7 @@ static constexpr TupleArray<TextureMinFilter::SizeEnum, TMinFiltGl> textureMinFi
     TMinFiltGl{TextureMinFilter::nearest,                 GL_NEAREST},
     TMinFiltGl{TextureMinFilter::linear,                  GL_LINEAR},
     TMinFiltGl{TextureMinFilter::nearest_mipmap_nearest,  GL_NEAREST_MIPMAP_NEAREST},
-    TMinFiltGl{TextureMinFilter::lLinear_mimmap_nearest,  GL_LINEAR_MIPMAP_NEAREST},
+    TMinFiltGl{TextureMinFilter::linear_mimmap_nearest,  GL_LINEAR_MIPMAP_NEAREST},
     TMinFiltGl{TextureMinFilter::nearest_mipmap_linear,   GL_NEAREST_MIPMAP_LINEAR},
     TMinFiltGl{TextureMinFilter::linear_mipmap_linear,    GL_LINEAR_MIPMAP_LINEAR},
 }};
