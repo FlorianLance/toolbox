@@ -1857,7 +1857,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
                     shader->set_uniform((lightName + "Position").c_str(), Pt4f{camera->view().multiply_point(lightP.conv<double>()).conv<float>()});
                     ++count;
 
-                    camM.m = Mat4d::transform({0.1,0.1,0.1},Vec3d{0.,0.,0.},lightP.xyz().conv<double>());
+                    camM.m = Mat4d::transform2({0.1,0.1,0.1},Vec3d{0.,0.,0.},lightP.xyz().conv<double>());
                     update_matrices();
                     shader->set_camera_matrices_uniforms(camM);
 
@@ -1877,7 +1877,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
 
             for(int ii = 0; ii < 10; ++ii){
                 for(int jj = 0; jj < 10; ++jj){
-                    camM.m = Mat4d::transform({0.3,0.3,0.3},Vec3d{90.,0.,0.},{-15.f+ii*3,0,-15.f+jj*3});
+                    camM.m = Mat4d::transform2({0.3,0.3,0.3},Vec3d{-90.,0.,0.},{-15.f+ii*3,0,-15.f+jj*3});
                     update_matrices();
                     shader->set_camera_matrices_uniforms(camM);
 
@@ -1892,7 +1892,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
             shader->set_uniform("Material.Ks", geo::Vec3f{1.0f, 1.0f, 1.0f});
             shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
             shader->set_uniform("Material.Shininess", 1.0f);
-            camM.m = Mat4d::transform({5.,5.,5.},Vec3d{0.,0.,0.},{0.0f,-0.75f,0.0f});
+            camM.m = Mat4d::transform2({5.,5.,5.},Vec3d{0.,0.,0.},{0.0f,-0.75f,0.0f});
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
 
@@ -1905,7 +1905,7 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
             shader->set_uniform("Material.Ks", geo::Vec3f{0.0f, 0.0f, 0.0f});
             shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
             shader->set_uniform("Material.Shininess", 1.0f);
-            camM.m = Mat4f::transform({1.f,1.f,1.f},Vec3f{-90,0,0},{1.0f,1.0f,3.0f}).conv<double>();
+            camM.m = Mat4f::transform2({1.f,1.f,1.f},Vec3f{-90,0,0},{1.0f,1.0f,3.0f}).conv<double>();
             update_matrices();
 
             shader->set_camera_matrices_uniforms(camM);
