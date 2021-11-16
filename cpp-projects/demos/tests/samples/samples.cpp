@@ -13,6 +13,7 @@
 
 // base
 #include "utility/files.hpp"
+#include "utility/logger.hpp"
 
 // opengl-utility
 #include "opengl/buffer/buffer-utility.hpp"
@@ -25,6 +26,31 @@ using namespace tool::geo;
 using namespace tool::graphics;
 using attachment = tool::gl::FrameBufferAttachment;
 
+
+Sample::Sample(Camera *cam) :
+    // managers
+    shadersM(&Managers::shaders),
+    texturesM(&Managers::textures),
+    modelsM(&Managers::models),
+    drawersM(&Managers::drawers),
+    // camera
+    camera(cam)
+{}
+
+void Sample::parent_init(){
+
+    init();
+
+    // floor
+    floorShader = shadersM->get_ptr("ch5/scene-texture");
+    materialFloorUBO.generate();
+    materialFloorUBO.set_data_space_from_shader(floorShader);
+
+    floorM.Ka = {0.5f, 0.5f, 0.5f};
+    floorM.Kd = {0.5f, 0.5f, 0.5f};
+    floorM.Ks = {0.8f, 0.8f, 0.8f};
+    floorM.Shininess = 10.0f;
+}
 
 void Sample::update(float elapsedSeconds){
 
@@ -59,7 +85,7 @@ void Sample::draw(tool::gl::Drawer *drawer){
     draw_skybox();
 
     if(drawFloor){
-        //  draw_floor();
+        draw_floor();
     }
 
     // update animation of current drawer
@@ -98,6 +124,13 @@ void Sample::parent_update_imgui(){
             if (ImGui::BeginTabItem(names[n], nullptr, ImGuiTabItemFlags_None)){
                 switch (n) {
                 case 0:
+                    ImGui::Text("########### Misc:");
+                    if(ImGui::Button("Reload shader###Misc2")){
+                        reload_shader();
+                    }
+
+                    ImGui::Checkbox("Draw floor###Misc1", &drawFloor);
+
                     ImGui::Text("########### Camera:");
                     ImGui::SliderFloat("FOV###Camera1", &camFov, 10.f, 150.f, "v = %.1f");
 
@@ -115,9 +148,6 @@ void Sample::parent_update_imgui(){
                             camera->set_up_vector(u.conv<double>());
                         }
                     }
-
-                    ImGui::Text("########### Misc:");
-                    ImGui::Checkbox("Draw floor###Floor1", &drawFloor);
 
                     ImGui::Text("########### Skybox:");
                     ImGui::Checkbox("Draw###Skybox1", &drawSkybox);
@@ -217,29 +247,21 @@ void Sample::draw_screen_quad(tool::gl::ShaderProgram *shader){
 
 void Sample::draw_floor(){
 
-    graphics::MaterialInfo floorM;
-    floorM.Ka = {0.5f, 0.5f, 0.5f};
-    floorM.Kd = {0.5f, 0.5f, 0.5f};
-    floorM.Ks = {0.8f, 0.8f, 0.8f};
-    floorM.Shininess = 10.0f;
+    update_matrices_m(Mat4d::transform2({10.,10.,10.},Vec3d{0.,0.,0},{0.,-4.,0.}));
 
-    if(auto shader = shadersM->get_ptr("ch5/scene-texture"); shader != nullptr){
+    gl::TBO::unbind_textures(0,1);
 
-        camM.m = Mat4d::transform({10.,10.,10.},Vec3d{0.,0.,0},{0.,-4.,0.});
-        update_matrices();
+    floorShader->use();
+    floorShader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
+    floorShader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
+    floorShader->set_uniform("Light.Position",camera->view().conv<float>().multiply_point(Sample::worldLight));
+    floorShader->set_camera_matrices_uniforms(camM);
 
-        shader->use();
-        shader->set_uniform("Light.L",  Vec3f{0.8f,0.8f,0.8f});
-        shader->set_uniform("Light.La", Vec3f{0.2f,0.2f,0.2f});
-        shader->set_uniform("Light.Position",camera->view().conv<float>().multiply_point(Sample::worldLight));
-        shader->set_camera_matrices_uniforms(camM);
+    materialFloorUBO.update(floorM);
+    materialFloorUBO.bind(0);
 
-        materialUBO.update(floorM);
-        materialUBO.bind(1);
-
-        if(auto drawer = drawersM->get_drawer_ptr("floor-drawer"); drawer != nullptr){
-            drawer->draw();
-        }
+    if(auto drawer = drawersM->get_drawer_ptr("floor-drawer"); drawer != nullptr){
+        drawer->draw();
     }
 }
 
@@ -363,7 +385,17 @@ void Sample::draw_scene1(tool::gl::ShaderProgram *shader){
     }
 }
 
+void Sample::reload_shader(){
+    if(shader != nullptr){
+        Logger::message("Try to reload current shader.\n");
+        if(auto reloadedShader = shadersM->reload_shader(shader); reloadedShader != nullptr){
+            shader = reloadedShader;
+        }
+    }
+}
+
 void Ch3Diffuse::init(){
+    Sample::init();
     shader = shadersM->get_ptr("ch3/diffuse");
 }
 
@@ -1754,6 +1786,8 @@ void Ch6HdrBloom::update_imgui(){
 
 void Ch6Deferred::init(){
 
+    shader = shadersM->get_ptr("ch6/deferred");
+
     const std_v1<geo::Pt3f> colors = {
         Vec3f{1.f,0.f,0.f},
         Vec3f{0.f,1.f,0.f},
@@ -1822,121 +1856,79 @@ void Ch6Deferred::update_screen_size(){
 
 void Ch6Deferred::draw(tool::gl::Drawer *drawer){
 
+    // pass 1
+    deferredFBO.bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    Sample::draw(drawer);
+
     gl::TBO::unbind_textures(0, 3);
+    shader->use();
+    shader->set_uniform("Pass", 1);
+    shader->set_uniform("Material.Ks", mInfo.Ks);
+    shader->set_uniform("Material.Ka", mInfo.Ka);
+    shader->set_uniform("Material.Shininess", mInfo.Shininess);
+    shader->set_uniform("LightCount", 25);
 
+    int count = 0;
+    for(int ii = 0; ii < 5; ++ii){
+        for(int jj = 0; jj < 5; ++jj){
 
-    if(auto shader = shadersM->get_ptr("ch6/deferred"); shader != nullptr){
+            std::string lightName = "Light[" + std::to_string(count) + "].";
+            shader->set_uniform((lightName + "L").c_str(),  Vec3f{0.8f,0.8f,0.8f});
+            shader->set_uniform((lightName + "La").c_str(), lightsColors[count]);
 
-        shader->use();
+            shader->set_uniform("Material.Kd", lightsColors[count]);
 
-        // pass 1
-        {
-            shader->set_uniform("Pass", 1);
+            auto lightP = Pt4f{-10.f+ii*4,2,-10.f+jj*4, 1.f};
+            shader->set_uniform((lightName + "Position").c_str(), Pt4f{camera->view().multiply_point(lightP.conv<double>()).conv<float>()});
+            ++count;
 
-            deferredFBO.bind();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glEnable(GL_DEPTH_TEST);
-
-
-            shader->set_uniform("Material.Ks", geo::Vec3f{0.0f, 0.0f, 0.0f});
-            shader->set_uniform("Material.Ka", geo::Vec3f{0.1f, 0.1f, 0.1f});
-            shader->set_uniform("Material.Shininess", 1.0f);
-
-            shader->set_uniform("LightCount", 25);
-            int count = 0;
-            for(int ii = 0; ii < 5; ++ii){
-                for(int jj = 0; jj < 5; ++jj){
-
-                    std::string lightName = "Light[" + std::to_string(count) + "].";
-                    shader->set_uniform((lightName + "L").c_str(),  Vec3f{0.8f,0.8f,0.8f});
-                    shader->set_uniform((lightName + "La").c_str(), lightsColors[count]);
-
-                    shader->set_uniform("Material.Kd", lightsColors[count]);
-
-                    auto lightP = Pt4f{-10.f+ii*4,2,-10.f+jj*4, 1.f};
-                    shader->set_uniform((lightName + "Position").c_str(), Pt4f{camera->view().multiply_point(lightP.conv<double>()).conv<float>()});
-                    ++count;
-
-                    camM.m = Mat4d::transform2({0.1,0.1,0.1},Vec3d{0.,0.,0.},lightP.xyz().conv<double>());
-                    update_matrices();
-                    shader->set_camera_matrices_uniforms(camM);
-
-                    if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
-                        drawer->draw(shader);
-                    }
-                }
-            }
-
-
-
-            // teapot
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.5f, 0.5f, 0.5f});
-            shader->set_uniform("Material.Ks", geo::Vec3f{1.0f, 1.0f, 1.0f});
-            shader->set_uniform("Material.Ka", geo::Vec3f{0.5f, 0.5f, 0.5f});
-            shader->set_uniform("Material.Shininess", 100.0f);
-
-            for(int ii = 0; ii < 10; ++ii){
-                for(int jj = 0; jj < 10; ++jj){
-                    camM.m = Mat4d::transform2({0.3,0.3,0.3},Vec3d{-90.,0.,0.},{-15.f+ii*3,0,-15.f+jj*3});
-                    update_matrices();
-                    shader->set_camera_matrices_uniforms(camM);
-
-                    if(auto drawer = drawersM->get_drawer_ptr("teapot-drawer"); drawer != nullptr){
-                        drawer->draw(shader);
-                    }
-                }
-            }
-
-            // plane
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.1f, 0.9f, 0.2f});
-            shader->set_uniform("Material.Ks", geo::Vec3f{1.0f, 1.0f, 1.0f});
-            shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
-            shader->set_uniform("Material.Shininess", 1.0f);
-            camM.m = Mat4d::transform2({5.,5.,5.},Vec3d{0.,0.,0.},{0.0f,-0.75f,0.0f});
+            camM.m = Mat4d::transform2({0.1,0.1,0.1},Vec3d{0.,0.,0.},lightP.xyz().conv<double>());
             update_matrices();
             shader->set_camera_matrices_uniforms(camM);
 
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-10x10-drawer"); drawer != nullptr){
+            if(auto drawer = drawersM->get_drawer_ptr("sphere-drawer"); drawer != nullptr){
                 drawer->draw(shader);
             }
-
-            // torus
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.1f, 0.3f, 0.9f});
-            shader->set_uniform("Material.Ks", geo::Vec3f{0.0f, 0.0f, 0.0f});
-            shader->set_uniform("Material.Ka", geo::Vec3f{0.2f, 0.2f, 0.2f});
-            shader->set_uniform("Material.Shininess", 1.0f);
-            camM.m = Mat4f::transform2({1.f,1.f,1.f},Vec3f{-90,0,0},{1.0f,1.0f,3.0f}).conv<double>();
-            update_matrices();
-
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("torus-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-//            glFinish(); // ?
-        }
-
-        // pass 2
-        {
-            shader->set_uniform("Pass", 2);
-
-            gl::FBO::unbind();
-            gl::TBO::bind_textures({posTex.id(), normTex.id(),
-                diffuseColorTex.id(),ambiantColorTex.id(),specularColorTex.id()
-            });
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glDisable(GL_DEPTH_TEST);
-            draw_screen_quad(shader);
         }
     }
+
+    // teapot
+    shader->set_uniform("Material.Kd", mInfo.Kd);
+    shader->set_uniform("Material.Ks", mInfo.Ks);
+    shader->set_uniform("Material.Ka", mInfo.Ka);
+    shader->set_uniform("Material.Shininess", mInfo.Shininess);
+
+    for(int ii = 0; ii < 10; ++ii){
+        for(int jj = 0; jj < 10; ++jj){
+            update_matrices_m(Mat4d::transform2({0.3,0.3,0.3},Vec3d{-90.,0.,0.},{-15.f+ii*3,0,-15.f+jj*3}));
+            shader->set_camera_matrices_uniforms(camM);
+            drawersM->get_drawer_ptr("teapot-drawer")->draw(shader);
+        }
+    }
+
+    // current
+    draw_nb(shader, drawer);
+
+     // pass 2
+    shader->set_uniform("Pass", 2);
+    gl::FBO::unbind();
+    gl::TBO::bind_textures({posTex.id(), normTex.id(),
+        diffuseColorTex.id(),ambiantColorTex.id(),specularColorTex.id()
+    });
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    draw_screen_quad(shader);
 }
 
 
 
 
 void Ch6SSAO::init(){
+
+    shader = shadersM->get_ptr("ch6/ssao");
 
     std::mt19937 generator;
     std::uniform_real_distribution<float> distr01(0.0f, 1.0f);
@@ -1963,14 +1955,14 @@ void Ch6SSAO::init(){
         return result;
     };
 
-    int size = 4;
+    int size = 4; // 10 -> lag
     std::vector<GLfloat> randDirections(3 * size * size);
     for (int i = 0; i < size * size; i++) {
         geo::Vec3f v = uniformCircle();
         randDirections[i * 3 + 0] = v.x();
         randDirections[i * 3 + 1] = v.y();
         randDirections[i * 3 + 2] = v.z();
-        std::cout << i << " " << v << "\n";
+//        std::cout << i << " " << v << "\n";
     }
 
     gl::TextureOptions options;
@@ -1988,6 +1980,7 @@ void Ch6SSAO::init(){
         //  x * (1.0 - a) + y * a       
         v *= 0.1f * (1.0 - scale) + 1.0f * scale;
         kern[i] = {v.x(), v.y(), v.z()};
+        std::cout << i << " " << v << "\n";
     }
 
 //    std_v1<geo::Pt3f> colors;
@@ -2067,135 +2060,111 @@ void Ch6SSAO::update_screen_size(){
 
 void Ch6SSAO::draw(tool::gl::Drawer *drawer){
 
+    Sample::draw(drawer);
 
-    if(auto shader = shadersM->get_ptr("ch6/ssao"); shader != nullptr){
+    shader->use();
+    shader->set_uniform("doBlurPass", doBlurPass);
+    shader->set_uniform("randScale", geo::Vec2f{800.f/factorScale, 600.f/factorScale});
+    shader->set_uniform("SampleKernel[0]", kern);
+    shader->set_uniform("ProjectionMatrix", camera->projection().conv<float>());
+    shader->set_uniform("Radius", radius);
 
-        shader->use();
+    // pass 1 : Render to G-Buffers
+    deferredFBO.bind();
+    shader->set_uniform("Pass", 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 
-        shader->set_uniform("randScale", geo::Vec2f{800.f/factorScale, 600.f/factorScale});
-        shader->set_uniform("SampleKernel[0]", kern);
-        shader->set_uniform("ProjectionMatrix", camera->projection().conv<float>());
-        shader->set_uniform("Radius", radius);
+    shader->set_uniform("Light.L", geo::Vec3f{0.3f, 0.3f, 0.3f});
+    shader->set_uniform("Light.La", lInfo.La);
+    // shader->set_uniform("Light.Position", Pt4f{3.0f, 3.0f, 1.5f, 1.0f});
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos1.conv<double>()).conv<float>()});
 
-        // pass 1 : Render to G-Buffers
-        shader->set_uniform("Pass", 1);
-        deferredFBO.bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
-        {
-            shader->set_uniform("Light.L", geo::Vec3f{0.3f, 0.3f, 0.3f});
-            shader->set_uniform("Light.La", geo::Vec3f{0.5f, 0.5f, 0.5f});
-            shader->set_uniform("Light.Position", Pt4f{3.0f, 3.0f, 1.5f, 1.0f});
-//            shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(mobileLightPos.conv<double>()).conv<float>()});
+    // floor
+    gl::TBO::bind_textures({texturesM->texture_id("hardwood_diffuse")}, 5);
+    shader->set_uniform("Material.UseTex", true);
 
+    update_matrices_m(Mat4d(true));
+    shader->set_camera_matrices_uniforms(camM);
 
-            // floor
-            gl::TBO::bind_textures({texturesM->texture_id("hardwood_diffuse")}, 5);
-
-            shader->set_uniform("Material.UseTex", true);
-
-            camM.m = Mat4d(true);
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // walls
-            gl::TBO::bind_textures({texturesM->texture_id("brick")}, 5);
-
-            camM.m = Mat4d(true);
-            camM.m = Mat4d::translate(camM.m, {0,0,-2});
-            camM.m = Mat4d::rotate(camM.m, {1,0,0},90);
-
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            camM.m = Mat4d(true);
-            camM.m = Mat4d::translate(camM.m, {-2,0,0});
-            camM.m = Mat4d::rotate(camM.m, {0,1,0},90);
-            camM.m = Mat4d::rotate(camM.m, {1,0,0},90);
-
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-
-            // dragon
-            shader->set_uniform("Material.UseTex", false);
-            shader->set_uniform("Material.Kd", geo::Vec3f{0.9f, 0.5f, 0.2f});
-
-//            model = Mat4d::transform(Vec3d{2,2,2}, Vec3d{rx,ry,rz}, Vec3d{x,y,z});
-
-            camM.m = Mat4d(true);
-            camM.m = Mat4d::rotate(camM.m, Vec3d{0,1,0}, 135.);
-            camM.m = Mat4d::scale(camM.m, Vec3d{2,2,2});
-            camM.m = Mat4d::translate(camM.m, Vec3d{0,0.282958,0});
-
-            update_matrices();
-            shader->set_camera_matrices_uniforms(camM);
-
-            if(auto drawer = drawersM->get_drawer_ptr("dragon-drawer"); drawer != nullptr){
-                drawer->draw(shader);
-            }
-        }
-
-        // pass 2 : SSAO
-        shader->set_uniform("Pass", 2);
-        ssaoFBO.bind();
-        ssaoFBO.attach_color0_texture(aoTex[0]);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-        {
-            gl::TBO::bind_textures({
-               posTex.id(),
-               normTex.id(),
-               colorTex.id()//,
-               //aoTex[0].id(),
-               //randRotationTex.id()
-               },
-               0
-            );
-
-            gl::TBO::bind_textures({randRotationTex.id()}, 4);
-            draw_screen_quad(shader);
-        }
-
-        // pass 3 : Blur
-        // Read from aoTex[0], write to aoTex[1]
-        shader->set_uniform("Pass", 3);
-        ssaoFBO.attach_color0_texture(aoTex[1]);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-        {
-            gl::TBO::bind_textures({aoTex[0].id() }, 3);
-            draw_screen_quad(shader);
-        }
-
-        // pass 4 : Lighting
-        // Read from aoTex[1] (blurred)
-        shader->set_uniform("Pass", 4);
-        gl::FBO::unbind();
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-        {
-            gl::TBO::bind_textures({aoTex[1].id() }, 3);
-
-            draw_screen_quad(shader);
-        }
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
     }
+
+
+    // walls
+    gl::TBO::bind_textures({texturesM->texture_id("brick")}, 5);
+
+    camM.m = Mat4d::translate(Mat4d(true), {0,0,-2});
+    update_matrices_m(Mat4d::rotate(camM.m, {1,0,0},90));
+    shader->set_camera_matrices_uniforms(camM);
+
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    camM.m = Mat4d::translate(Mat4d(true), {-2,0,0});
+    camM.m = Mat4d::rotate(camM.m, {0,1,0},90);
+    update_matrices_m(Mat4d::rotate(camM.m, {1,0,0},90));
+    shader->set_camera_matrices_uniforms(camM);
+
+    if(auto drawer = drawersM->get_drawer_ptr("notext-plane-20x10-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    // dragon
+    shader->set_uniform("Material.UseTex", false);
+    shader->set_uniform("Material.Kd", geo::Vec3f{0.9f, 0.5f, 0.2f});
+
+    camM.m = Mat4d::rotate(Mat4d(true), Vec3d{0,1,0}, 135.);
+    camM.m = Mat4d::scale(camM.m, Vec3d{2,2,2});
+    update_matrices_m(Mat4d::translate(camM.m, Vec3d{0,0.282958,0}));
+    shader->set_camera_matrices_uniforms(camM);
+
+    if(auto drawer = drawersM->get_drawer_ptr("dragon-drawer"); drawer != nullptr){
+        drawer->draw(shader);
+    }
+
+    // current
+    gl::TBO::unbind_textures(0, 5); // TODO: change index texture in shader
+    shader->set_uniform("Material.UseTex", false);
+    shader->set_uniform("Material.Kd", mInfo.Kd);
+    draw_nb(shader, drawer);
+
+    // pass 2 : SSAO
+    shader->set_uniform("Pass", 2);
+    ssaoFBO.bind();
+    ssaoFBO.attach_color0_texture(aoTex[0]);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+
+    gl::TBO::bind_textures({posTex.id(),normTex.id(),colorTex.id()/**,aoTex[0].id(),randRotationTex.id()*/},0);
+    gl::TBO::bind_textures({randRotationTex.id()}, 4);
+    draw_screen_quad(shader);
+
+    // pass 3 : Blur
+    // Read from aoTex[0], write to aoTex[1]
+    shader->set_uniform("Pass", 3);
+    ssaoFBO.attach_color0_texture(aoTex[1]);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    gl::TBO::bind_textures({aoTex[0].id() }, 3);
+    draw_screen_quad(shader);
+
+    // pass 4 : Lighting
+    // Read from aoTex[1] (blurred)
+    shader->set_uniform("Pass", 4);
+    gl::FBO::unbind();
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    gl::TBO::bind_textures({aoTex[1].id() }, 3);
+    draw_screen_quad(shader);
 }
 
 void Ch6SSAO::update_imgui(){
     ImGui::SliderFloat("radius", &radius, 0.01f, 10.f, "ratio = %.3f");
     ImGui::SliderFloat("factor scale", &factorScale, 0.5f, 16.f, "ratio = %.3f");
+    ImGui::Checkbox("do blur pass", &doBlurPass);
 }
 
 

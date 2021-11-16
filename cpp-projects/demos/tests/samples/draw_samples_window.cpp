@@ -19,9 +19,18 @@ using namespace tool::gl;
 using namespace tool::graphics;
 
 DrawSampleWindow::DrawSampleWindow(std::string title, geo::Pt2<unsigned int> size, std::optional<sf::ContextSettings> context) :
-      BaseSfmlGlWindow(title, size, context){
+    BaseSfmlGlWindow(title, size, context){
 
-    Logger::init("./", "draw_sample.html");
+    Logger::init("./", "draw_sample.html", false);
+    Logger::get()->message_signal.connect([=](std::string message){
+        std::cout << message;
+    });
+    Logger::get()->warning_signal.connect([=](std::string warning){
+        std::cout << warning;
+    });
+    Logger::get()->error_signal.connect([=](std::string error){
+        std::cerr << error;
+    });
 }
 
 
@@ -49,6 +58,7 @@ bool DrawSampleWindow::init_shaders(){
         {"learn/3_1_1_shadow_mapping_depth",    &VS_FS},
         {"learn/3_1_1_debug_quad",              &VS_FS}
     };
+
 
     // find shaders dir path
     const auto currentPath = std::filesystem::current_path();
@@ -435,7 +445,7 @@ bool DrawSampleWindow::init_samples(){
 
     for(auto &demo : samples){
         Logger::message(std::format("Init sample {}\n", std::get<0>(demo)));
-        std::get<1>(demo)->init();
+        std::get<1>(demo)->parent_init();
         samplesName.push_back(std::get<0>(demo));
     }
 
@@ -472,14 +482,14 @@ bool DrawSampleWindow::initialize_gl(){
     }
 
     // camera
-    std::cout << "Init camera\n";
+    Logger::message("Init camera\n");
     m_camera.set_position({0.,0.,5.});
     m_camera.set_direction({0.,0.,-1.},{0.,1.,0.});
 
-    std::cout << "Init drawers\n";
+    Logger::message("Init drawers\n");
     init_drawers();
 
-    std::cout << "Init samples\n";
+    Logger::message("Init samples\n");
     init_samples();
 
     VAO::unbind();
@@ -553,6 +563,7 @@ void DrawSampleWindow::draw_imgui(){
 
 
     ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
+    ImGui::Text(std::format("Frame time generation [{} ms]", std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration).count()).c_str());
 
     ImGui::Text("Drawer");
     ImGui::SameLine();

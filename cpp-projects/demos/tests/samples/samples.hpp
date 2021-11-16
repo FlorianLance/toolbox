@@ -36,8 +36,7 @@ struct Light2{
 // std140
 struct MaterialPbr{
 
-    MaterialPbr(geo::Pt4f c, float r, float m) : color(c), rough(r), metal(m){
-    }
+    MaterialPbr(geo::Pt4f c, float r, float m) : color(c), rough(r), metal(m){}
 
     geo::Pt4f color;                        // 0
     float rough;                            // 12
@@ -49,46 +48,10 @@ struct MaterialPbr{
 };
 
 
-
-
-
 struct Sample{
 
-    geo::Vec3f from_glm(const glm::vec3 &v) const{
-        return {v.x, v.y, v.z};
-    }
-
-    geo::Vec4f from_glm(const glm::vec4 &v) const{
-        return {v.x, v.y, v.z, v.w};
-    }
-
-    geo::Mat4f from_glm(const glm::mat4 &m) const{
-        return {
-            m[0][0], m[1][0], m[2][0], m[3][0],
-            m[0][1], m[1][1], m[2][1], m[3][1],
-            m[0][2], m[1][2], m[2][2], m[3][2],
-            m[0][3], m[1][3], m[2][3], m[3][3],
-        };
-    }
-
-    float gauss(float x, float sigma2 ) const{
-        double coeff = 1.0 / (tool::two_PI<double>* sigma2);
-        double expon = -(x*x) / (2.0 * sigma2);
-        return (float) (coeff*exp(expon));
-    }
-
-    Sample(Camera *cam) :
-        // camera
-        camera(cam),
-        // managers
-        shadersM(&Managers::shaders),
-        texturesM(&Managers::textures),
-        modelsM(&Managers::models),
-        drawersM(&Managers::drawers)
-    {
-
-    }
-
+    Sample(Camera *cam);
+    void parent_init();
     virtual void init(){}
     virtual void update_screen_size(){}
     virtual void update(float elapsedSeconds);    
@@ -96,21 +59,42 @@ struct Sample{
     virtual void parent_update_imgui();
     virtual void update_imgui(){}
 
-
-    void draw_nb(gl::ShaderProgram *shader, gl::Drawer *drawer);
-
+    // matrices
     void update_matrices();
     void update_matrices_m(const geo::Mat4d &model = geo::Mat4d(true));
     void update_matrices_p(const geo::Mat4d &proj);
     void update_matrices_vp(const geo::Mat4d &view, const geo::Mat4d &proj);
     void update_matrices_mvp(const geo::Mat4d &model, const geo::Mat4d &view, const geo::Mat4d &proj);
 
+    // draw
+    void draw_nb(gl::ShaderProgram *shader, gl::Drawer *drawer);
     void draw_screen_quad(gl::ShaderProgram *shader);
     void draw_floor();
     void draw_lights();
     void draw_skybox();
-
     void draw_scene1(gl::ShaderProgram *shader);
+
+    // shaders
+    void reload_shader();
+
+    // utility
+    // # glm convert
+    static inline geo::Vec3f from_glm(const glm::vec3 &v)noexcept {return {v.x, v.y, v.z};}
+    static inline geo::Vec4f from_glm(const glm::vec4 &v)noexcept {return {v.x, v.y, v.z, v.w};}
+    static inline geo::Mat4f from_glm(const glm::mat4 &m) noexcept{
+        return {
+            m[0][0], m[1][0], m[2][0], m[3][0],
+            m[0][1], m[1][1], m[2][1], m[3][1],
+            m[0][2], m[1][2], m[2][2], m[3][2],
+            m[0][3], m[1][3], m[2][3], m[3][3],
+        };
+    }
+    // # misc
+    static inline float gauss(float x, float sigma2 ){
+        double coeff = 1.0 / (tool::two_PI<double>* sigma2);
+        double expon = -(x*x) / (2.0 * sigma2);
+        return (float) (coeff*exp(expon));
+    }
 
 public:
 
@@ -120,85 +104,67 @@ public:
     static inline float x1 = 0.f;
     static inline float y1 = 0.f;
     static inline float z1 = 1.f;
-    static inline float rx = 0.f;
-    static inline float ry = 0.f;
-    static inline float rz = 0.f;
     // ##
 
-
-protected:
-
-    float elapsedSeconds = 0.f;
+protected:    
 
     // gui parameters
+    // # draw
     static inline bool drawFloor  = true;
     static inline bool drawSkybox = true;
-    static inline bool drawLights = true;
-    static inline bool moveLight = true;
+    static inline bool drawLights = true;    
+    // # model
     static inline geo::Pt3f modelPos = {0.f,0.f, 2.f};
     static inline geo::Pt3f modelRot = {};
     static inline geo::Pt3f skyboxRot = {};
     static inline float scale = 1.f;
     static inline geo::Pt3<int> nb = {1,1,1};
+    // # light
+    static inline bool moveLight = true;
     static inline geo::Pt4f worldLight{0.f,10.f,0.f,1.0f};
     static inline geo::Pt4f mobileLightPos1 = geo::Pt4f(5.0f, 5.0f, 5.0f, 1.0f);
     static inline geo::Pt4f mobileLightPos2 = geo::Pt4f(4.0f, 4.0f, 4.0f, 1.0f);
+    // # animation
     static inline int idAnimation = 0;
     static inline int nbAnimations = 0;
     static inline bool stopAnimation = false;
     static inline float timeAnimation = 0.f;
-    static inline float durationAnimation = 10.f;
-
+    static inline float durationAnimation = 10.f;    
+    // # camera
     static inline float camFov = 60.f;
+    // # materials
+    static inline graphics::LightInfo lInfo = {{},{0.4f, 0.4f, 0.4f},{1.0f, 1.0f, 1.0f},{1.0f, 1.0f, 1.0f}};
+    static inline graphics::MaterialInfo mInfo = {{0.5f, 0.5f, 0.5f},{0.5f, 0.5f, 0.5f},{0.8f, 0.8f, 0.8f},10.0f};
+    static inline graphics::MaterialPbr mPbrInfo = {{1.f, 0.71f, 0.29f,1.f},0.50f,0.f};
+    static inline graphics::RefractMaterialInfo rmInfo = {0.1f, 0.94f};
 
-    static inline gl::TextureName skyboxT;
-
-    static inline graphics::LightInfo lInfo = {
-        {},
-        {0.4f, 0.4f, 0.4f},
-        {1.0f, 1.0f, 1.0f},
-        {1.0f, 1.0f, 1.0f}
-    };
-
-    static inline graphics::MaterialInfo mInfo = {
-        {0.5f, 0.5f, 0.5f},
-        {0.5f, 0.5f, 0.5f},
-        {0.8f, 0.8f, 0.8f},
-        10.0f
-    };
-
-    static inline graphics::MaterialPbr mPbrInfo = {
-        {1.f, 0.71f, 0.29f,1.f},
-        0.50f,
-        0.f
-    };
-
-    static inline graphics::RefractMaterialInfo rmInfo = {
-        0.1f, 0.94f
-    };
-
-//    auto gold = MaterialPbr(Pt4f(1, 0.71f, 0.29f,1.f),           0.50f,0.f);
-//    auto copper = MaterialPbr(Pt4f(0.95f, 0.64f, 0.54f,1.f),       0.50f,0.f);
-//    auto aluminium = MaterialPbr(Pt4f(0.91f, 0.92f, 0.92f,1.f),       0.50f,0.f);
-//    auto titanium = MaterialPbr(Pt4f(0.542f, 0.497f, 0.449f,1.f),    0.50f,0.f);
-//    auto silver = MaterialPbr(Pt4f(0.95f, 0.93f, 0.88f,1.f),       0.50f,0.f);
-
-    // camera / transform
-    Camera *camera = nullptr;
-    CameraMatrices camM;
-
-    // managers
+    // common
+    // # time
+    float elapsedSeconds = 0.f;
+    // # managers
     ShadersManager  *shadersM   = nullptr;
     TexturesManager *texturesM  = nullptr;
     ModelsManager   *modelsM    = nullptr;
     DrawersManager  *drawersM   = nullptr;
-
-    // UBO
+    // # camera / transform
+    Camera *camera = nullptr;
+    CameraMatrices camM;
+    // # UBO
     gl::LightUBO lightUBO;
     gl::MaterialUBO materialUBO;
-
-    // shaders
+    // # shaders
     gl::ShaderProgram *shader = nullptr;
+
+    // floor
+    graphics::MaterialInfo floorM;
+    gl::MaterialUBO materialFloorUBO;
+    gl::ShaderProgram *floorShader = nullptr;
+
+    //    auto gold = MaterialPbr(Pt4f(1, 0.71f, 0.29f,1.f),           0.50f,0.f);
+    //    auto copper = MaterialPbr(Pt4f(0.95f, 0.64f, 0.54f,1.f),       0.50f,0.f);
+    //    auto aluminium = MaterialPbr(Pt4f(0.91f, 0.92f, 0.92f,1.f),       0.50f,0.f);
+    //    auto titanium = MaterialPbr(Pt4f(0.542f, 0.497f, 0.449f,1.f),    0.50f,0.f);
+    //    auto silver = MaterialPbr(Pt4f(0.95f, 0.93f, 0.88f,1.f),       0.50f,0.f);
 };
 
 // ############################################## CH3
@@ -487,28 +453,6 @@ private:
     std::vector<GLfloat> texData;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 struct Ch6Deferred : public Sample{
     Ch6Deferred(Camera *cam) : Sample(cam){}
     void init() final override;
@@ -524,7 +468,6 @@ private:
     gl::GeometryTexture2D specularColorTex;
     std_v1<geo::Pt3f> lightsColors;
 };
-
 struct Ch6SSAO : public Sample{
     Ch6SSAO(Camera *cam) : Sample(cam){}
     void init() final override;
@@ -534,6 +477,7 @@ struct Ch6SSAO : public Sample{
 private:
     float radius = 0.55f;
     float factorScale = 4.f;
+    bool doBlurPass = true;
     gl::FBO deferredFBO;
     gl::RBO depthBuf;
     gl::FBO ssaoFBO;
@@ -544,6 +488,29 @@ private:
     gl::Texture2D randRotationTex;
     std::vector<geo::Vec3f> kern;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 struct Ch6OIT : public Sample{
     struct ListNode {

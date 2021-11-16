@@ -278,23 +278,23 @@ void ShaderProgram::set_camera_matrices_uniforms(const graphics::CameraMatrices 
 
 void ShaderProgram::debug_display(){
 
-    std::cout << "[shader files]:\n";
+    Logger::message("[shader files]:\n");
     for(const auto& file : m_loadedShadersFileNames){
-        std::cout << file << "\n";
+        Logger::message(std::format("  -{}\n", file));
     }
-    std::cout << "[attribs]:\n";
+    Logger::message("[attribs]:\n");
     for(const auto& attrib : attribs){
-        std::cout << attrib << "\n";
+        Logger::message(std::format("  -{}\n", attrib));
     }
-    std::cout << "[uniforms]:\n";
+    Logger::message("[uniforms]:\n");
     for(const auto& uniform : uniforms){
-        std::cout << "  " << uniform.first << " -> " << get_name(uniform.second.first.v) << "\n";
+        Logger::message(std::format("  -[{}][{}]\n", uniform.first, get_name(uniform.second.first.v)));
     }
-    std::cout << "[uniforms blocks]:\n";
+    Logger::message("[uniforms blocks]:\n");
     for(const auto& uniformBlock : uniformBlocks){
-        std::cout << uniformBlock.first << " size: " << uniformBlock.second.size.v << " loc: " << uniformBlock.second.location.v << "\n";
+        Logger::message(std::format("  -[{}][size: {}][loc: {}]\n", uniformBlock.first, uniformBlock.second.size.v, uniformBlock.second.location.v));
         for(const auto &element : uniformBlock.second.elements){
-            std::cout << "  element name: " << element.first << " index: " << element.second.index << " offset: " << element.second.offset << "\n";
+            Logger::message(std::format("    -[name: {}][index: {}][offset: {}]\n", element.first, element.second.index, element.second.offset));
         }
     }
 }
@@ -480,6 +480,8 @@ void ShaderProgram::clean(){
 
 bool ShaderProgram::load_from_files(const std_v1<std::string> &shadersPaths){
 
+    m_shadersFilePaths = shadersPaths;
+
     namespace fs = std::filesystem;
 
     std_v1<std::pair<Shader::Type, std::string>> shadersCode;
@@ -529,8 +531,9 @@ bool ShaderProgram::load_from_files(const std_v1<std::string> &shadersPaths){
 
         // add to shader array
         shadersCode.emplace_back(std::make_pair(Shader::extensions[ext], shaderStream.str()));
-//        std::cout << "load from source code  " << path << " -> " << Shader::get_name(Shader::extensions[ext]) << "\n";
+        // Shader::get_name(Shader::extensions[ext])
     }
+
 
     return load_from_source_code(shadersCode);
 }
@@ -564,6 +567,7 @@ bool ShaderProgram::init_shader(GLuint &shader, Shader::Type shaderType, const c
     if(status == GL_FALSE){
         glGetShaderInfoLog(shader, 512, nullptr, m_infoLog);
         Logger::error(std::format("Shader compilation failed: {} \n", m_infoLog));
+        clean();
         return false;
     }
 

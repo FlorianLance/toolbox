@@ -139,6 +139,7 @@ public:
     void debug_display();
 
     std::string loaded_files_names_to_str() const;
+    inline std_v1<std::string> shaders_file_paths() const noexcept { return m_shadersFilePaths;}
 
 private:
 
@@ -150,6 +151,7 @@ private:
     GLuint m_id = 0;
     char m_infoLog[512];
     std_v1<std::string> m_loadedShadersFileNames;
+    std_v1<std::string> m_shadersFilePaths;
 
     static constexpr const char* MVM = "ModelViewMatrix";
     static constexpr const char* MM  = "ModelMatrix";

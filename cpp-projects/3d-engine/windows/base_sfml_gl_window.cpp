@@ -212,10 +212,6 @@ void BaseSfmlGlWindow::start(){
         if((timePerFrame-frameDuration).count() > 0){
             std::this_thread::sleep_for(timePerFrame-frameDuration);
         }
-
-        auto fdms = std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration);
-        std::cout << fdms.count() << " ";
-
         Bench::stop();
         // Bench::display();
     }

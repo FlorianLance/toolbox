@@ -1,6 +1,8 @@
 
 #include "shaders_manager.hpp"
 
+// base
+#include "utility/logger.hpp"
 
 using namespace tool::graphics;
 using namespace tool::gl;
@@ -8,15 +10,15 @@ using namespace tool::gl;
 bool ShadersManager::add_shader( const std::string &alias, const std::vector<std::string> &paths){
 
     if(shaders.count(alias) != 0){
-        std::cerr << "[ShadersM] Shader alias " << alias << " already exists.\n";
+        Logger::error(std::format("[ShadersM] Shader alias {} already exists.\n", alias));
         return false;
     }
 
     auto shader = std::make_shared<gl::ShaderProgram>();
     if(!shader->load_from_files(paths)){
-        std::cerr << "[ShadersM] Cannot generate ShaderProgram from paths:\n";
+        Logger::error("[ShadersM] Cannot generate ShaderProgram from paths:\n");
         for(const auto &path : paths){
-            std::cerr << "  -> " << path << "\n";
+            Logger::error(std::format(" -> {}\n", path));
         }
         return false;
     }
@@ -28,12 +30,34 @@ bool ShadersManager::add_shader( const std::string &alias, const std::vector<std
 bool ShadersManager::add_shader(const std::string &alias, ShaderProgram&& shader){
 
     if(shaders.count(alias) != 0){
-        std::cerr << "[ShadersM] Shader alias " << alias << " already exists.\n";
+        Logger::error(std::format("[ShadersM] Shader alias {} already exists.\n", alias));
         return false;
     }
 
     shaders[alias] = std::make_shared<ShaderProgram>(std::move(shader));
     return true;
+}
+
+ShaderProgram *ShadersManager::reload_shader(ShaderProgram *shader){
+
+    std::string alias;
+    for(const auto &s : shaders){
+        if(s.second.get() == shader){
+            alias = s.first;
+            break;
+        }
+    }
+
+    auto reloadedShader = std::make_shared<gl::ShaderProgram>();
+    if(!reloadedShader->load_from_files(shader->shaders_file_paths())){
+        Logger::error(std::format("[ShadersM] Cannot reload ShaderProgram with alias {}:\n", alias));
+        return nullptr;
+    }
+
+    shaders[alias]->clean();
+    shaders[alias] = reloadedShader;
+
+    return reloadedShader.get();
 }
 
 std::weak_ptr<ShaderProgram> ShadersManager::get(std::string alias){

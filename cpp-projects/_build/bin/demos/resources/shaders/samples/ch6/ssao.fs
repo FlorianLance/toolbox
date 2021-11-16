@@ -14,6 +14,8 @@ uniform mat4 ProjectionMatrix;
 
 const int kernelSize = 64;
 
+uniform bool doBlurPass = true;
+
 uniform int Pass;   // Pass number
 uniform vec3 SampleKernel[kernelSize];
 uniform float Radius = 0.55;
@@ -56,8 +58,9 @@ void pass1() {
     NormalData   = normalize(Normal);
     if( Material.UseTex ) {
         ColorData = pow( texture(DiffTex, TexCoord.xy).rgb, vec3(2.2) );
+    } else {
+        ColorData = Material.Kd;
     }
-    else ColorData = Material.Kd;
 }
 
 // SSAO pass
@@ -106,18 +109,21 @@ void pass2() {
 
 // Blur pass
 void pass3() {
+
     ivec2 pix = ivec2( gl_FragCoord.xy );
-    float sum = 0.0;
-    for( int x = -1; x <= 1; ++x ) {
-        for( int y = -1; y <= 1; y++ ) {
-            sum += texelFetchOffset( AoTex, pix, 0, ivec2(x,y) ).r;
+    if(doBlurPass){
+        float sum = 0.0;
+        for( int x = -1; x <= 1; ++x ) {
+            for( int y = -1; y <= 1; y++ ) {
+                sum += texelFetchOffset( AoTex, pix, 0, ivec2(x,y) ).r;
+            }
         }
+        AoData = sum * (1.0 / 9.0);
+    }else{
+        AoData = texelFetchOffset( AoTex, pix, 0, ivec2(0,0) ).r;
     }
 
-    float ao = sum * (1.0 / 9.0);
-    AoData = ao;
-    // AoData = texelFetchOffset( AoTex, pix, 0, ivec2(0,0) ).r;//ao;
-    //FragColor = vec4(ao, ao, ao, 1);
+    // FragColor = vec4(ao, ao, ao, 1);
 }
 
 // Final color pass

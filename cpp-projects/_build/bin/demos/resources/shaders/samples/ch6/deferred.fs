@@ -57,22 +57,22 @@ vec3 diffuseModel( vec3 pos, vec3 norm, vec3 diff ) {
 
 
 vec3 blinnPhong( vec3 position, vec3 n, vec3 kd, vec3 ka, vec3 ks, int idx ) {
-  vec3 ambient = Light[idx].La * ka;
-  vec3 s = normalize( Light[idx].Position.xyz - position );
 
-  vec3 l = Light[idx].Position.xyz - position;
-  float dist = length(l);
-  l = normalize(l);
+    vec3 ambient = Light[idx].La * ka;
+    vec3 s = normalize( Light[idx].Position.xyz - position );
 
-  float sDotN = max( dot(s,n), 0.0 );
-  vec3 diffuse = kd * sDotN;
-  vec3 spec = vec3(0.0);
-  if( sDotN > 0.0 ) {
-    vec3 v = normalize(-position.xyz);
-    vec3 h = normalize( v + s );
-    spec = ks *
-            pow( max( dot(h,n), 0.0 ), Material.Shininess );
-  }
+    vec3 l = Light[idx].Position.xyz - position;
+    float dist = length(l);
+    l = normalize(l);
+
+    float sDotN = max( dot(s,n), 0.0 );
+    vec3 diffuse = kd * sDotN;
+    vec3 spec = vec3(0.0);
+    if( sDotN > 0.0 ) {
+        vec3 v = normalize(-position.xyz);
+        vec3 h = normalize( v + s );
+        spec = ks * pow( max( dot(h,n), 0.0 ), Material.Shininess );
+    }
 
     vec3 res = ambient + Light[idx].L * (diffuse + spec);
     res /= (dist*dist );
@@ -102,12 +102,6 @@ void pass2() {
     vec3 ambiantColor   = vec3( texture( AmbiantColorTex, TexCoord) );
     vec3 specularColor  = vec3( texture( SpecularColorTex, TexCoord) );
 
-    //FragColor = vec4( diffuseModel(pos,norm,diffColor), 1.0 );
-    //FragColor = vec4(diffColor, 1.0);
-    //FragColor = vec4(specularColor.xyz, 1.0);
-
-// LightCount
-
     vec3 sum = vec3(0);
     for(int ii = 0; ii < LightCount; ++ii){
         sum += blinnPhong(pos, norm, diffColor, ambiantColor, specularColor, ii).xyz;
@@ -119,12 +113,14 @@ void pass2() {
         FragColor = vec4(sum, 1.0);
     }
 
-
     //FragColor = vec4(blinnPhong(pos, norm, diffColor, ambiantColor, specularColor, 0).xyz, 1.0);
     //FragColor = vec4(vec3(texture(PositionTex, TexCoord)),1);
 }
 
 void main() {
-    if( Pass == 1) pass1();
-    else if(Pass==2) pass2();
+    if( Pass == 1) {
+        pass1();
+    }else if(Pass==2) {
+        pass2();
+    }
 }

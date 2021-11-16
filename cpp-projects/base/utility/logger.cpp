@@ -71,7 +71,9 @@ Logger *Logger::get(){
     return nullptr;
 }
 
-void Logger::init(std::string_view logDirectoryPath, std::string_view logFileName){
+void Logger::init(std::string_view logDirectoryPath, std::string_view logFileName, bool doFormat){
+
+    Logger::Impl::doFormat = doFormat;
 
     if(logDirectoryPath.length() == 0 || logFileName.length() == 0){
         std::cerr << "[LOGGER-ERROR] Empty path or filename.\n";

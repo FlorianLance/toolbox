@@ -44,6 +44,8 @@ public:
 
     bool add_shader(const std::string &alias, const std::vector<std::string> &paths);
     bool add_shader(const std::string &alias, gl::ShaderProgram&& shader);
+    gl::ShaderProgram* reload_shader(gl::ShaderProgram *shader);
+
 
     std::weak_ptr<gl::ShaderProgram> get(std::string alias);
     gl::ShaderProgram* get_ptr(std::string alias);
