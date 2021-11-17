@@ -31,6 +31,8 @@
 
 // Qt
 #include <QPlainTextEdit>
+#include <QCompleter>
+
 
 namespace tool::ui{
 
@@ -46,16 +48,29 @@ public:
     QColor highlightedLineColor = QColor(80,80,80);
     int offsetLineCounter = 0;
 
+
+//    void setCompleter(QCompleter *completer);
+//    QCompleter *completer() const{return c;};
+
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
+//    void keyPressEvent(QKeyEvent *e) override;
+//    void focusInEvent(QFocusEvent *e) override;
 
 private slots:
+//    void insertCompletion(const QString &completion);
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &rect, int dy);
 
 private:
+//    QString textUnderCursor() const;
+
+private:
     QWidget *lineNumberArea = nullptr;
+//    QCompleter *c = nullptr;
+//    QStringList words;
 };
 
 class LineNumberArea : public QWidget{

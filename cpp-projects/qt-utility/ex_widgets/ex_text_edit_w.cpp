@@ -42,7 +42,7 @@ ExTextEditW *ExTextEditW::init_widget(QString txt, bool enabled){
     return this;
 }
 
-ExTextEditW *ExTextEditW::init_widget_as_csharp_editor(const QStringList &classesToAdd, const QColor &bc, QString txt, bool enabled){
+ExTextEditW *ExTextEditW::init_widget_as_csharp_editor(const QColor &bc, QString txt, bool enabled){
 
     QFont font;
     font.setFamily("Courier");
@@ -56,8 +56,8 @@ ExTextEditW *ExTextEditW::init_widget_as_csharp_editor(const QStringList &classe
     auto distance = metrics.horizontalAdvance("    ");
     w->setTabStopDistance(distance);
 
-    ui::CSharpHighlighter *cshStartFunction = new ui::CSharpHighlighter(w->document());
-    cshStartFunction->add_classes(classesToAdd);
+    ui::CSharpHighlighter *cshStartFunction = new ui::CSharpHighlighter(w->document(), &CSharpHighlighting::csharpHighlingRules);
+    static_cast<void>(cshStartFunction);
     w->setStyleSheet(QString("background-color: rgb(%1,%2,%3); border: 0px ;").arg(bc.red()).arg(bc.green()).arg(bc.blue()));
     w->zoomIn(2);
 

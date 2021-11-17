@@ -30,46 +30,21 @@
 #include <QSyntaxHighlighter>
 #include <QRegularExpression>
 
+// local
+#include "qt_highlighting.hpp"
+#include "qt_str.hpp"
 
 namespace tool::ui {
-
-struct HighlightingRule
-{
-    QRegularExpression pattern;
-    QTextCharFormat format;
-};
 
 class CSharpHighlighter : public QSyntaxHighlighter{
     Q_OBJECT
 
 public:
-    CSharpHighlighter(QTextDocument *parent = nullptr);
-
-    void add_classes(const QStringList &classNames);
-
+    CSharpHighlighter(QTextDocument *parent, QVector<HighlightingRule> *highlightingRules);
 protected:
     void highlightBlock(const QString &text) override;
-
 private:
 
-    QVector<HighlightingRule> highlightingRules;
-
-    QRegularExpression commentStartExpression;
-    QRegularExpression commentEndExpression;
-
-    QTextCharFormat digitFormat;
-    QTextCharFormat keywordFormat;
-    QTextCharFormat typeFormat;
-
-    QTextCharFormat structInstancesFormat;
-    QTextCharFormat classesInstancesFormat;
-
-    QTextCharFormat classFormat;
-    QTextCharFormat singleLineCommentFormat;
-    QTextCharFormat multiLineCommentFormat;
-    QTextCharFormat quotationFormat;
-    QTextCharFormat functionFormat;
-
-    QTextCharFormat defaultFormat;
+    QVector<HighlightingRule> *highlightingRules = nullptr;
 };
 }

@@ -98,6 +98,7 @@ LIBS +=  \
 
 HEADERS += \
     # global
+    qt_highlighting.hpp \
     qt_io.hpp \
     qt_logger.hpp \
     qt_process.hpp \
@@ -151,6 +152,7 @@ HEADERS += \
 
 SOURCES += \
     # global
+    qt_highlighting.cpp \
     qt_logger.cpp \
     qt_str.cpp \
     qt_ui.cpp \
