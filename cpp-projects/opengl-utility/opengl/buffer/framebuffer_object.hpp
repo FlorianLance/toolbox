@@ -206,6 +206,8 @@ struct FBO{
 
     bool set_draw_buffers(std_v1<gl::FrameBufferAttachment> attachments){
 
+        // glDrawBuffers, glNamedFramebufferDrawBuffers — Specifies a list of color buffers to be drawn into
+
         // Set the targets for the fragment output variables
         glNamedFramebufferDrawBuffers(m_id, static_cast<GLsizei>(attachments.size()), reinterpret_cast<unsigned int*>(&attachments[0]));        
 
@@ -218,6 +220,25 @@ struct FBO{
             return false;
         }
     }
+
+//    bool set_read_buffer(){
+
+//        // glReadBuffer, glNamedFramebufferReadBuffer — select a color buffer source for pixels
+
+//        // Set the targets for the fragment output variables
+//        glNamedFramebufferReadBuffer(m_id, static_cast<GLsizei>(attachments.size()), reinterpret_cast<unsigned int*>(&attachments[0]));
+
+//        //specifies a color buffer. Accepted values are GL_FRONT_LEFT, GL_FRONT_RIGHT, GL_BACK_LEFT, GL_BACK_RIGHT, GL_FRONT, GL_BACK, GL_LEFT, GL_RIGHT, and the constants GL_COLOR_ATTACHMENTi.
+
+//        GLenum result = glCheckNamedFramebufferStatus(m_id, GL_FRAMEBUFFER);
+//        if( result == GL_FRAMEBUFFER_COMPLETE) {
+//            // std::cout << "Framebuffer is complete\n";
+//            return true;
+//        } else {
+//            std::cerr << "Framebuffer error: " << result << "\n";
+//            return false;
+//        }
+//    }
 
     inline GLuint id() const{return m_id;}
     inline GLuint color_attachment(size_t id = 0) const {return colorAttachments[id];}

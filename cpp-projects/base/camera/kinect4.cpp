@@ -71,6 +71,10 @@ struct Kinect4::Impl{
     k4a_device_configuration_t k4aConfig;
     K4::Config config;
 
+    // imug
+    geo::Pt3f currentGyroPos;
+    geo::Pt3f currentGyroRot;
+
     // parameters
     Parameters parameters;
 
@@ -568,6 +572,27 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         }
         times.afterCaptureTS = nanoseconds_since_epoch();
 
+        // imu
+        k4a_imu_sample_t sample;
+        if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
+            sample.acc_sample;
+            sample.acc_timestamp_usec;
+            sample.gyro_timestamp_usec;
+            sample.temperature;
+
+            auto &gs = sample.gyro_sample.xyz;
+            if(std::abs(gs.x) < 0.1f){
+                gs.x = 0.f;
+            }
+            if(std::abs(gs.y) < 0.1f){
+                gs.y = 0.f;
+            }
+            if(std::abs(gs.z) < 0.1f){
+                gs.z = 0.f;
+            }
+            currentGyroRot += {gs.x, gs.y, gs.z};
+            Logger::message(std::format("imu {}{}{} \n", currentGyroRot.x(), currentGyroRot.y(), currentGyroRot.z()));
+        }
 
         // get a color image
         if(colorResolution != ColorResolution::OFF){
@@ -613,6 +638,7 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
         // get temperature
         temperature = capture.get_temperature_c();
+
 
         // convert color image format
         if(colorResolution != ColorResolution::OFF){

@@ -53,7 +53,7 @@ bool DrawSampleWindow::init_shaders(){
         {"ch6/deferred",&VS_FS},{"ch6/ssao",&VS_FS},{"ch6/oit",&VS_FS},
         {"ch7/solid",&VS_FS},{"ch7/bezcurve", &VS_FS_TES_TCS}, {"ch7/shadewire", &VS_FS_GS}, {"ch7/pointsprite", &VS_FS_GS}, // ch7
         {"ch7/silhouette", &VS_FS_GS},
-        {"ch8/shadowmap", &VS_FS},{"ch8/solid", &VS_FS}, // ch8
+        {"ch8/shadowmap", &VS_FS},{"ch8/shadowpcf", &VS_FS},{"ch8/solid", &VS_FS}, // ch8
         {"learn/3_1_1_shadow_mapping",          &VS_FS}, // learnopengl
         {"learn/3_1_1_shadow_mapping_depth",    &VS_FS},
         {"learn/3_1_1_debug_quad",              &VS_FS}
@@ -220,6 +220,7 @@ bool DrawSampleWindow::init_models(){
                 {"alex",    mesh + "/alex/alex_breahting_idle.fbx"},
                 {"rabbit",  mesh + "/rabbit/stanford_rabbit.obj"},
                 {"storm",   mesh + "/storm/source/Storm_Ani.fbx"},
+                {"building",mesh + "/building.obj"},
             });
 
         Bench::stop();
@@ -366,6 +367,11 @@ bool DrawSampleWindow::init_drawers(){
     drawersInfos.push_back({"dragon-drawer", model, true});
 
     model =  std::make_shared<tool::gl::ModelDrawer>();
+    model->init(mm->get_model("building"));
+    model->scaleHint = 10.f;
+    drawersInfos.push_back({"building-drawer", model, true});
+
+    model =  std::make_shared<tool::gl::ModelDrawer>();
     model->init(mm->get_model("crysis"));
     model->scaleHint = 0.1f;
     drawersInfos.push_back({"crysis-drawer", model, true});
@@ -442,6 +448,7 @@ bool DrawSampleWindow::init_samples(){
     samples.emplace_back(std::make_tuple("ch7Silhouette",  std::make_unique<Ch7Silhouette>(&m_camera)));
     samples.emplace_back(std::make_tuple("ch8ShadowMap",  std::make_unique<Ch8ShadowMap>(&m_camera)));
     samples.emplace_back(std::make_tuple("ch8ShadowMap2",  std::make_unique<Ch8ShadowMap2>(&m_camera)));
+    samples.emplace_back(std::make_tuple("ch8ShadowPcf",  std::make_unique<Ch8ShadowPcf>(&m_camera)));
 
     for(auto &demo : samples){
         Logger::message(std::format("Init sample {}\n", std::get<0>(demo)));
@@ -560,7 +567,6 @@ void DrawSampleWindow::draw_imgui(){
 //        ImGuiWindowFlags_NoMove  |
 //        ImGuiWindowFlags_MenuBar |
 //        ImGuiWindowFlags_AlwaysAutoResize;
-
 
     ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
     ImGui::Text(std::format("Frame time generation [{} ms]", std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration).count()).c_str());

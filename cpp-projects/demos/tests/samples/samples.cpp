@@ -2,7 +2,6 @@
 #include "samples.hpp"
 
 // std
-#include <random>
 #include <algorithm>
 #include <execution>
 
@@ -27,14 +26,13 @@ using namespace tool::graphics;
 using attachment = tool::gl::FrameBufferAttachment;
 
 
-Sample::Sample(Camera *cam) :
-    // managers
-    shadersM(&Managers::shaders),
-    texturesM(&Managers::textures),
-    modelsM(&Managers::models),
-    drawersM(&Managers::drawers),
-    // camera
-    camera(cam)
+Sample::Sample(Camera *cam) : // managers
+      shadersM(&Managers::shaders),
+      texturesM(&Managers::textures),
+      modelsM(&Managers::models),
+      drawersM(&Managers::drawers),
+      // camera
+      camera(cam)
 {}
 
 void Sample::parent_init(){
@@ -102,7 +100,7 @@ void Sample::draw(tool::gl::Drawer *drawer){
                 modelDrawer->update_animation(
                     model->animations[idAnimation].name,
                     stopAnimation ? timeAnimation : elapsedSeconds
-                );
+                    );
             }
         }
     }
@@ -116,7 +114,8 @@ void Sample::parent_update_imgui(){
 
     const char* names[5] = { "Misc", "Lights", "Materials", "Model", "Current"};
 
-    ImGuiColorEditFlags miscFlags;
+    ImGuiColorEditFlags miscFlags = ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_NoOptions;
+
 
     if (ImGui::BeginTabBar("Common", tabBarFags)){
 
@@ -205,7 +204,7 @@ void Sample::draw_nb(gl::ShaderProgram *shader, tool::gl::Drawer *drawer){
             for(int kk = 0; kk < nb.z(); ++kk){
 
                 camM.m = Mat4d::transform2({s,s,s}, modelRot.conv<double>(),
-                    {p.x() + 1.f*(ii-nb.x()/2), p.y() + 1.f*(jj-nb.y()/2), p.z() + 1.f*(kk-nb.z()/2)});
+                                           {p.x() + 1.f*(ii-nb.x()/2), p.y() + 1.f*(jj-nb.y()/2), p.z() + 1.f*(kk-nb.z()/2)});
                 update_matrices();
 
                 shader->set_camera_matrices_uniforms(camM);
@@ -313,7 +312,7 @@ void Sample::draw_skybox(){
         gl::TBO::bind_textures({texturesM->cube_map_id("grace")},0);
 
         if(auto drawer = drawersM->get_drawer_ptr("skybox-drawer"); drawer != nullptr){
-            drawer->draw();            
+            drawer->draw();
         }
     }
 }
@@ -603,17 +602,17 @@ void Ch4PhongMultiLights::init(){
     materialUBO.set_data_space_from_shader(shader);
 }
 
-void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
+    void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
 
-    Sample::draw(drawer);
+        Sample::draw(drawer);
 
-    std_v1<Pt4f> lPos ={
-        Pt4f{camera->view().multiply_point({5.0,5.0,2.0,1.0}).conv<float>()},
-        Pt4f{camera->view().multiply_point({0.0,5.0,2.0,1.0}).conv<float>()},
-        Pt4f{camera->view().multiply_point({5.0,0.0,2.0,1.0}).conv<float>()},
-        Pt4f{camera->view().multiply_point({5.0,5.0,0.0,1.0}).conv<float>()},
-        Pt4f{camera->view().multiply_point({0.0,5.0,0.0,1.0}).conv<float>()},
-        };
+        std_v1<Pt4f> lPos ={
+            Pt4f{camera->view().multiply_point({5.0,5.0,2.0,1.0}).conv<float>()},
+            Pt4f{camera->view().multiply_point({0.0,5.0,2.0,1.0}).conv<float>()},
+            Pt4f{camera->view().multiply_point({5.0,0.0,2.0,1.0}).conv<float>()},
+            Pt4f{camera->view().multiply_point({5.0,5.0,0.0,1.0}).conv<float>()},
+            Pt4f{camera->view().multiply_point({0.0,5.0,0.0,1.0}).conv<float>()},
+            };
 
     std_v1<Vec3f> lL ={
         Vec3f{0.f,0.8f,0.8f},
@@ -1065,7 +1064,7 @@ void Ch5SamplerObject::update_imgui(){
     ImGuiColorEditFlags miscFlags;
     if(ImGui::ColorEdit4("borderColor###CH5SO-7", options1.borderColor.v.data(), miscFlags)){
         sampler1.initialize(options1);
-    }    
+    }
 }
 
 
@@ -1126,7 +1125,7 @@ void Ch5RenderToTexture::draw(tool::gl::Drawer *drawer){
         Mat4d::transform2(Vec3d{projScale,projScale,projScale}, projModelRot.conv<double>(), projModelPos.conv<double>()),
         Mat4d::LookAt({0.0,0.,-2.}, {0.0,0.0,1.0}, {0.0,1.0,0.0}),
         Mat4d::Perspective(deg_2_rad(60.0), 1.0, 0.3, 1000.0)
-    );
+        );
 
     shader->set_uniform("Light.L", Vec3f{1.0f,1.0f,1.0f});
     shader->set_uniform("Light.La", lInfo.La.v.data());
@@ -1512,7 +1511,7 @@ void Ch6HdrLightingToneMapping::draw(tool::gl::Drawer *drawer){
     const int size = camera->screen()->size();
     hdrRenderTexture.bind();
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
-//    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
+    //    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
 
     float sum = 0.0f;
     size_t count = 0;
@@ -1578,7 +1577,7 @@ void Ch6HdrBloom::update_screen_size(){
     int size = camera->screen()->size();
     texData.resize(size*3);
 
-//    gl::FBO::unbind();
+    //    gl::FBO::unbind();
     {
         // Generate and bind the framebuffer
         hdrFBO.clean();
@@ -1605,7 +1604,7 @@ void Ch6HdrBloom::update_screen_size(){
         hdrFBO.attach_color0_texture(hdrRenderTexture);
 
         // Bind the depth buffer to the FBO
-        hdrFBO.attach_depth_buffer(hdrDepthBuffer);        
+        hdrFBO.attach_depth_buffer(hdrDepthBuffer);
 
         // set colors buffers to be drawn
         hdrFBO.set_draw_buffers({attachment::color0});
@@ -1633,8 +1632,8 @@ void Ch6HdrBloom::update_screen_size(){
         // Bind tex1 to the FBO
         blurFBO.attach_color0_texture(blurTex1);
 
-//        GLenum drawBufs[] = {GL_COLOR_ATTACHMENT0};
-//        glNamedFramebufferDrawBuffers(blurFBO.id(), 1, drawBufs);
+        //        GLenum drawBufs[] = {GL_COLOR_ATTACHMENT0};
+        //        glNamedFramebufferDrawBuffers(blurFBO.id(), 1, drawBufs);
         blurFBO.set_draw_buffers({attachment::color0});
     }
     gl::FBO::unbind();
@@ -1685,10 +1684,10 @@ void Ch6HdrBloom::draw(tool::gl::Drawer *drawer){
     const int size = camera->screen()->size();
     hdrRenderTexture.bind();
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
-//    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
+    //    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
     // gl::TBO::bind_textures({hdrRenderTexture.id(),0,0});
     // texData.resize(size*4);
-//     glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, texData.size()/4, texData.data());
+    //     glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, texData.size()/4, texData.data());
     // hdrRenderTexture.get_hdr_texture_data(texData);
 
     float sum = 0.0f;
@@ -1912,11 +1911,11 @@ void Ch6Deferred::draw(tool::gl::Drawer *drawer){
     // current
     draw_nb(shader, drawer);
 
-     // pass 2
+    // pass 2
     shader->set_uniform("Pass", 2);
     gl::FBO::unbind();
     gl::TBO::bind_textures({posTex.id(), normTex.id(),
-        diffuseColorTex.id(),ambiantColorTex.id(),specularColorTex.id()
+                            diffuseColorTex.id(),ambiantColorTex.id(),specularColorTex.id()
     });
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
@@ -1933,7 +1932,6 @@ void Ch6SSAO::init(){
     std::mt19937 generator;
     std::uniform_real_distribution<float> distr01(0.0f, 1.0f);
 
-    std::random_device rd;
     generator.seed(rd());
 
     auto uniformCircle = [&](){
@@ -1962,7 +1960,7 @@ void Ch6SSAO::init(){
         randDirections[i * 3 + 0] = v.x();
         randDirections[i * 3 + 1] = v.y();
         randDirections[i * 3 + 2] = v.z();
-//        std::cout << i << " " << v << "\n";
+        //        std::cout << i << " " << v << "\n";
     }
 
     gl::TextureOptions options;
@@ -1977,16 +1975,16 @@ void Ch6SSAO::init(){
         geo::Vec3f v = uniformHemisphere();
         float scale = ((float)(i * i)) / (kernSize * kernSize);
         // v *= glm::mix(0.1f, 1.0f, scale);
-        //  x * (1.0 - a) + y * a       
+        //  x * (1.0 - a) + y * a
         v *= 0.1f * (1.0 - scale) + 1.0f * scale;
         kern[i] = {v.x(), v.y(), v.z()};
         std::cout << i << " " << v << "\n";
     }
 
-//    std_v1<geo::Pt3f> colors;
-//    colors.resize(kernSize);
-//    std::fill(colors.begin(), colors.end(), geo::Pt3f{1,0,0});
-//    tool::io::save_cloud("./kernel.obj", kern.data(), colors.data(), kern.size());
+    //    std_v1<geo::Pt3f> colors;
+    //    colors.resize(kernSize);
+    //    std::fill(colors.begin(), colors.end(), geo::Pt3f{1,0,0});
+    //    tool::io::save_cloud("./kernel.obj", kern.data(), colors.data(), kern.size());
 
     update_screen_size();
 }
@@ -2167,15 +2165,7 @@ void Ch6SSAO::update_imgui(){
     ImGui::Checkbox("do blur pass", &doBlurPass);
 }
 
-
-
-
-
-
-
-
 void Ch6OIT::init(){
-
 
     shader = shadersM->get_ptr("ch6/oit");
 
@@ -2184,7 +2174,6 @@ void Ch6OIT::init(){
     tPrev = 0.f;
 
     glEnable(GL_DEPTH_TEST);
-
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     pass1Index = glGetSubroutineIndex( shader->id(), GL_FRAGMENT_SHADER, "pass1");
@@ -2234,7 +2223,7 @@ void Ch6OIT::draw(tool::gl::Drawer *drawer){
     counterBuffer.bind_to_index(0);
 
     // clear buffers
-    {        
+    {
         // updates a subset of a buffer object's data store
         GLuint zero = 0;
         counterBuffer.update_data(&zero, sizeof(GLuint));
@@ -2353,9 +2342,9 @@ void Ch7BezCurve::init(){
     bezPoints = std::make_unique<gl::CloudPointsDrawer>();
     bezPoints->init(&patch);
 
-    prog = shadersM->get_ptr("ch7/bezcurve");    
-    prog->set_uniform("NumStrips", 1);
-    prog->set_uniform("LineColor", geo::Vec4f(1.0f,0.0f,0.0f,1.0f));
+    shader = shadersM->get_ptr("ch7/bezcurve");
+    shader->set_uniform("NumStrips", 1);
+    shader->set_uniform("LineColor", geo::Vec4f(1.0f,0.0f,0.0f,1.0f));
 
     solidProg = shadersM->get_ptr("ch7/solid");
     solidProg->set_uniform("Color", geo::Vec4f(0.5f,1.0f,1.0f,1.0f));
@@ -2366,20 +2355,22 @@ void Ch7BezCurve::init(){
 
 void Ch7BezCurve::draw(tool::gl::Drawer *drawer){
 
+    Sample::draw(drawer);
+
     glEnable(GL_DEPTH_TEST);
     glPointSize(10.0f);
 
     // Set the number of vertices per patch.  IMPORTANT!!
     glPatchParameteri( GL_PATCH_VERTICES, 4);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     camM.m = geo::Mat4d(true);
     update_matrices();
 
     // Draw the curve
-    prog->use();
-    prog->set_uniform("NumSegments", numSegments);
-    prog->set_camera_matrices_uniforms(camM);
+    shader->use();
+    shader->set_uniform("NumSegments", numSegments);
+    shader->set_camera_matrices_uniforms(camM);
     bezPoints->draw_patches();
 
     // Draw the control points
@@ -2396,13 +2387,7 @@ void Ch7BezCurve::update_imgui(){
 
 void Ch7ShadeWire::init(){
 
-    shader = shadersM->get_ptr("ch7/shadewire");    
-    shader->set_uniform("Line.Color", geo::Vec4f(0.05f,0.0f,0.05f,1.0f));
-    shader->set_uniform("Material.Kd", geo::Vec3f(0.7f, 0.7f, 0.7f));
-    shader->set_uniform("Material.Ka", geo::Vec3f(0.2f, 0.2f, 0.2f));
-    shader->set_uniform("Light.Intensity", geo::Vec3f(1.0f, 1.0f, 1.0f));
-    shader->set_uniform("Material.Ks", geo::Vec3f(0.8f, 0.8f, 0.8f));
-    shader->set_uniform("Material.Shininess", 100.0f);
+    shader = shadersM->get_ptr("ch7/shadewire");
 
     update_screen_size();
 }
@@ -2425,20 +2410,19 @@ void Ch7ShadeWire::update_screen_size(){
 
 void Ch7ShadeWire::draw(tool::gl::Drawer *drawer){
 
+    Sample::draw(drawer);
+
     shader->use();
     shader->set_uniform("Line.Width", lineWidth);
     shader->set_uniform("Light.Position", mobileLightPos1);
+    shader->set_uniform("Line.Color", geo::Vec4f(0.05f,0.0f,0.05f,1.0f));
+    shader->set_uniform("Light.Intensity", geo::Vec3f(1.0f, 1.0f, 1.0f));
+    shader->set_uniform("Material.Kd", mInfo.Kd);
+    shader->set_uniform("Material.Ka", mInfo.Ka);
+    shader->set_uniform("Material.Ks", mInfo.Ks);
+    shader->set_uniform("Material.Shininess", mInfo.Shininess);
 
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    camM.m = Mat4d(true);
-    update_matrices();
-    shader->set_camera_matrices_uniforms(camM);
-    shader->set_uniform("ProjectionMatrix", camera->projection().conv<float>());    
-
-    auto ogre = drawersM->get_drawer_ptr("ogre-drawer");
-    ogre->draw();
+    draw_nb(shader, drawer);
 
     glFinish();
 }
@@ -2455,9 +2439,11 @@ void Ch7ScenePointSprite::init(){
 
 void Ch7ScenePointSprite::draw(tool::gl::Drawer *drawer){
 
-    std::random_device rd;
+    Sample::draw(drawer);
+
     std::mt19937 e2(rd());
     std::uniform_real_distribution<float> dist(0.f, 10000.f);
+
     std_v1<geo::Pt3f> locations;
     locations.reserve(numSprites);
     const auto max = dist.max();
@@ -2470,19 +2456,12 @@ void Ch7ScenePointSprite::draw(tool::gl::Drawer *drawer){
     }
     pointsSprites->init(&locations);
 
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     shader->use();
     shader->set_uniform("Size2", sizeSprite);
     gl::TBO::bind_textures({texturesM->texture_id("flower")});
 
-    camM.m = Mat4d(true);
-    update_matrices();
-    shader->set_camera_matrices_uniforms(camM);
     shader->set_uniform("ProjectionMatrix", camera->projection().conv<float>());
-
-    pointsSprites->draw();
+    draw_nb(shader, pointsSprites.get());
 }
 
 void Ch7ScenePointSprite::update_imgui(){
@@ -2490,26 +2469,28 @@ void Ch7ScenePointSprite::update_imgui(){
     ImGui::SliderFloat("size sprites", &sizeSprite, 0.01f, 10.f, "ratio = %.3f");
 }
 
+
+
 void Ch7Silhouette::init(){
-
     shader = shadersM->get_ptr("ch7/silhouette");
-
     shader->set_uniform("EdgeWidth", 0.015f);
     shader->set_uniform("PctExtend", 0.25f);
     shader->set_uniform("LineColor", geo::Pt4f(0.05f,0.0f,0.05f,1.0f));
     shader->set_uniform("Material.Kd", geo::Pt3f(0.7f, 0.5f, 0.2f));
     shader->set_uniform("Material.Ka", geo::Pt3f(0.2f, 0.2f, 0.2f));
     shader->set_uniform("Light.Intensity", geo::Pt3f(1.0f, 1.0f, 1.0f));
-
 }
 
 void Ch7Silhouette::draw(tool::gl::Drawer *drawer){
 
+    Sample::draw(drawer);
+
+    glEnable(GL_DEPTH_TEST);
+
     shader->use();
     shader->set_uniform("Light.Position", mobileLightPos1);// geo::Pt4f(0.0f,0.0f,0.0f,1.0f));
 
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     camM.m = Mat4d(true);
     update_matrices();
@@ -2517,15 +2498,16 @@ void Ch7Silhouette::draw(tool::gl::Drawer *drawer){
 
     // auto ogre = drawersM->get_drawer_ptr("ogre-drawer");
     // TODO: convert mesh to agency mode
-//    ogre->draw_adjacency();
+    //    drawer->draw_adjacency();
 
     glFinish();
 }
 
+
 void Ch8ShadowMap::init(){
 
     solidP  = shadersM->get_ptr("ch8/solid");
-    shadowP = shadersM->get_ptr("ch8/shadowmap");
+    shader = shadersM->get_ptr("ch8/shadowpcf");
 
     frustumD     = dynamic_cast<gl::FrustumDrawer*>(drawersM->get_drawer_ptr("frustum-drawer"));
     lightFrustum = dynamic_cast<gl::Frustum*>(frustumD->object());
@@ -2569,8 +2551,8 @@ void Ch8ShadowMap::init(){
 
     // ##########
 
-    pass1Index = glGetSubroutineIndex( shadowP->id(), GL_FRAGMENT_SHADER, "recordDepth");
-    pass2Index = glGetSubroutineIndex( shadowP->id(), GL_FRAGMENT_SHADER, "shadeWithShadow");
+    pass1Index = glGetSubroutineIndex( shader->id(), GL_FRAGMENT_SHADER, "recordDepth");
+    pass2Index = glGetSubroutineIndex( shader->id(), GL_FRAGMENT_SHADER, "shadeWithShadow");
 
     shadowBias = Mat4f{
         0.5f,0.0f,0.0f,0.0f,
@@ -2579,82 +2561,79 @@ void Ch8ShadowMap::init(){
         0.5f,0.5f,0.5f,1.0f
     };
 
-    shadowP->set_uniform("Light.Intensity", Vec3f{0.85f,0.85f,0.85f});
-    shadowP->set_uniform("ShadowMap", gl::Sampler2DShadow{0});
+    shader->set_uniform("ShadowMap", gl::Sampler2DShadow{0});
 }
 
 void Ch8ShadowMap::draw(tool::gl::Drawer *drawer){
 
+    Sample::draw(drawer);
+
+    // update frustum
+    lightFrustum->set_perspective(fov, aspectRatio, 1.0f, 25.0f);
+//    lightFrustum->orient( lightPos, {0,0,0}, Vec3f{0.0f,1.0f,0.0f});
+    lightFrustumV =  Mat4d::transform2(Vec3d{1,1,1},lightRot.conv<double>(),lightPos.conv<double>());
+    lightFrustumP = lightFrustum->projection_matrix().conv<double>();
+//    lightFrustumP  = Mat4d::Ortho(-10.0, 10.0, -10.0, 10.0, 1., 10.);
+    lightPV = lightFrustumV.conv<float>().inverse() * lightFrustumP.conv<float>() * shadowBias;
+//    lightPV = lightFrustumV.conv<float>() * lightFrustumP.conv<float>() * shadowBias;
+
+    shader->use();
+    shader->set_uniform("ProjectorMatrix", lightPV.conv<float>());
+
+
+    // Pass 1 (shadow map generation)
+    // # fbo
+    shadowFBO.bind();
+    // # textures
+    gl::TBO::bind_textures({shadowTexture.id()});
+//     # clean
+    glClear(GL_DEPTH_BUFFER_BIT);
+    // # flags
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_POLYGON_OFFSET_FILL); // set the scale and units used to calculate depth values
+    glCullFace(GL_FRONT); // specify whether front- or back-facing facets can be culled
+    glPolygonOffset(2.5f,10.0f);
+    // # viewport
+    glViewport(0,0,shadowMapWidth,shadowMapHeight);
+    // # uniforms
+    glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &pass1Index);
+    viewP = lightFrustumV.conv<float>().inverse();
+    projP = lightFrustumP.conv<float>();
+    shader->set_uniform("Light.Intensity", lInfo.Ld);
+    shader->set_uniform("Light.Ambiant", lInfo.La);
+    // # draw
+    draw_scene();
+    // # restore flags
+    glCullFace(GL_BACK);
+    // # wait
+    glFlush();
 
-    float c = 1.65f;
-    lightPos = Vec3f(0.0f,c * 5.25f, c * 7.5f);  // World coords
-    lightFrustum->orient( lightPos, {0,0,0}, Vec3f{0.0f,1.0f,0.0f});
-    lightFrustum->set_perspective(60.0f, 1.0f, 1.0f, 25.0f);
-    lightPV = lightFrustum->view_matrix()*lightFrustum->projection_matrix() * shadowBias;
+    //  spitOutDepthBuffer(); // This is just used to get an image of the depth buffer
 
-    shadowP->use();
-    {
-        shadowFBO.bind();
-        gl::TBO::bind_textures({shadowTexture.id()});
-        glClear(GL_DEPTH_BUFFER_BIT);
+    // Pass 2 (render)
+    // # fbo
+    gl::FBO::unbind();
+    // # clean
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // # viewport
+    glViewport(0,0,camera->screen()->width(), camera->screen()->height());
+    // # uniforms
+    glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &pass2Index);
+    viewP = camera->view().conv<float>();
+    projP = camera->projection().conv<float>();
+    shader->set_uniform("Light.Position", camera->view().conv<float>().multiply_point(Pt4f(lightPos,1.0f)));
+    // # draw
+    draw_scene();
 
-        // Pass 1 (shadow map generation)
-        viewP = lightFrustum->view_matrix();
-        projP = lightFrustum->projection_matrix();
-        glViewport(0,0,shadowMapWidth,shadowMapHeight);
-
-        glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &pass1Index);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT); // specify whether front- or back-facing facets can be culled
-        glEnable(GL_POLYGON_OFFSET_FILL); // set the scale and units used to calculate depth values
-        glPolygonOffset(2.5f,10.0f);
-        draw_scene();
-        glCullFace(GL_BACK);
-        glFlush();
-    }
-
-//    spitOutDepthBuffer(); // This is just used to get an image of the depth buffer
-
-    {
-        // Pass 2 (render)
-        viewP = camera->view().conv<float>();
-        projP = camera->projection().conv<float>();
-        shadowP->set_uniform("Light.Position", camera->view().conv<float>().multiply_point(Pt4f(lightFrustum->origin(),1.0f)));
-
-        gl::FBO::unbind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0,0,camera->screen()->width(), camera->screen()->height());
-        glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &pass2Index);
-
-        draw_scene();
-    }
-
-    {
-        // Draw the light's frustum
-        solidP->use();
-        solidP->set_uniform("Color", Vec4f{1.0f,0.0f,0.0f,1.0f});
-        solidP->set_uniform("MVP",((lightFrustum->inverse_view_matrix()*camera->view().conv<float>())*camera->projection().conv<float>()));
-        frustumD->draw();
-    }
-
-    {
-        solidP->use();
-        solidP->set_uniform("Color", Vec4f{1.0f,0.0f,0.0f,1.0f});
-        camM.m = Mat4d::translate(Mat4d(true), lightFrustum->origin().conv<double>());
-        camM.m = Mat4d::scale(camM.m, {0.2f,0.2f,0.2f});
-        update_matrices();
-        solidP->set_camera_matrices_uniforms(camM);
-        drawersM->get_drawer_ptr("cube-drawer")->draw();
-
-        solidP->set_uniform("Color", Vec4f{1.0f,0.0f,1.0f,1.0f});
-        auto p = Pt3f(Vec3f{x1,y1,z1});
-        camM.m = Mat4d::translate(Mat4d(true), p.conv<double>());
-        camM.m = Mat4d::scale(camM.m, {0.2f,0.2f,0.2f});
-        update_matrices();
-        solidP->set_camera_matrices_uniforms(camM);
-        drawersM->get_drawer_ptr("cube-drawer")->draw();
-    }
+    // Draw the light's frustum
+    // # shader
+    solidP->use();
+    // # uniforms
+    solidP->set_uniform("Color", Vec4f{1.0f,0.0f,0.0f,1.0f});
+    solidP->set_uniform("MVP",((lightFrustumV*camera->view())*camera->projection()).conv<float>());
+    // # draw
+    frustumD->draw();
 }
 
 
@@ -2692,192 +2671,359 @@ void Ch8ShadowMap::spit_out_depth_buffer() {
     delete [] buffer;
     delete [] imgBuffer;
 
-//    exit(1);
+    //    exit(1);
 }
+
+
+void Ch8ShadowMap::update_imgui(){
+    ImGui::SliderFloat("FOV###CH8SM1-1", &fov, 5.0f, 150.00f, "ratio = %.1f");
+    ImGui::SliderFloat("Aspect ratio###CH8SM1-2", &aspectRatio, 0.0f, 5.00f, "ratio = %.3f");
+    ImGui::DragFloat3("Light pos###CH8SM1-3", lightPos.v.data(), 0.05f, -50.0f, 50.00f, "ratio = %.2f");
+    ImGui::DragFloat3("Light rot###CH8SM1-4", lightRot.v.data(), 1.f, -360.0f, 360.00f, "ratio = %.2f");
+}
+
 
 void Ch8ShadowMap::draw_scene(){
 
-
-
     Vec3f color ={0.7f,0.5f,0.3f};
-    shadowP->set_uniform("Material.Ka", color * 0.05f);
-    shadowP->set_uniform("Material.Kd", color);
-    shadowP->set_uniform("Material.Ks", Vec3f{0.9f,0.9f,0.9f});
-    shadowP->set_uniform("Material.Shininess", 150.0f);
+    shader->set_uniform("Material.Ka", color * 0.05f);
+    shader->set_uniform("Material.Kd", color);
+    shader->set_uniform("Material.Ks", Vec3f{0.9f,0.9f,0.9f});
+    shader->set_uniform("Material.Shininess", 150.0f);
     camM.m = Mat4d::rotate(Mat4d(true), Vec3d{1,0,0}, -90.);
-    shadowP->set_uniform("ShadowMatrix", camM.m.conv<float>()*lightFrustum->view_matrix()*lightFrustum->projection_matrix() * shadowBias);
+    shader->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
     update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
-    shadowP->set_camera_matrices_uniforms(camM);
+    shader->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("teapot-drawer")->draw();
 
-    shadowP->set_uniform("Material.Ka", color * 0.05f);
-    shadowP->set_uniform("Material.Kd", color);
-    shadowP->set_uniform("Material.Ks", Vec3f{0.9f,0.9f,0.9f});
-    shadowP->set_uniform("Material.Shininess", 150.0f);
+    shader->set_uniform("Material.Ka", color * 0.05f);
+    shader->set_uniform("Material.Kd", color);
+    shader->set_uniform("Material.Ks", Vec3f{0.9f,0.9f,0.9f});
+    shader->set_uniform("Material.Shininess", 150.0f);
     camM.m = Mat4d::translate(Mat4d(true), Vec3d{0.0f,2.0f,5.0f});
     camM.m = Mat4d::rotate(camM.m, Vec3d{1,0,0}, -45.);
-    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    shader->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
     update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
-    shadowP->set_camera_matrices_uniforms(camM);
+    shader->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("torus-drawer")->draw();
 
-    shadowP->set_uniform("Material.Kd", Vec3f{0.25f, 0.25f, 0.25f});
-    shadowP->set_uniform("Material.Ks", Vec3f{0.0f, 0.0f, 0.0f});
-    shadowP->set_uniform("Material.Ka", Vec3f{0.05f, 0.05f, 0.05f});
-    shadowP->set_uniform("Material.Shininess", 1.0f);
+    shader->set_uniform("Material.Kd", Vec3f{0.25f, 0.25f, 0.25f});
+    shader->set_uniform("Material.Ks", Vec3f{0.0f, 0.0f, 0.0f});
+    shader->set_uniform("Material.Ka", Vec3f{0.05f, 0.05f, 0.05f});
+    shader->set_uniform("Material.Shininess", 1.0f);
     camM.m = Mat4d(true);
-    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    shader->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
     update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
-    shadowP->set_camera_matrices_uniforms(camM);
+    shader->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
 
     camM.m = Mat4d::translate(Mat4d(true), Vec3d{-5.0f,5.0f,0.0f});
     camM.m = Mat4d::rotate(camM.m, Vec3d{0,0,1}, -90.);
-    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    shader->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
     update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
-    shadowP->set_camera_matrices_uniforms(camM);
+    shader->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
 
     camM.m = Mat4d::translate(Mat4d(true), Vec3d{0.0f,5.0f,-5.0f});
     camM.m = Mat4d::rotate(camM.m, Vec3d{1,0,0}, 090.);
-    shadowP->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    shader->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
     update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
-    shadowP->set_camera_matrices_uniforms(camM);
+    shader->set_camera_matrices_uniforms(camM);
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
 }
 
 void Ch8ShadowMap2::init(){
 
-    // configure depth map FBO
-    glGenFramebuffers(1, &depthMapFBO);
-    // create depth texture
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     // retrieve shaders
-    shadowMapping       = shadersM->get_ptr("learn/3_1_1_shadow_mapping");
+    shader              = shadersM->get_ptr("learn/3_1_1_shadow_mapping");
     shadowMappingDepth  = shadersM->get_ptr("learn/3_1_1_shadow_mapping_depth");
     debugQuad           = shadersM->get_ptr("learn/3_1_1_debug_quad");
 
-//    shadowMapping->set_uniform("diffuseTexture", gl::Sampler2D{0});
-//    shadowMapping->set_uniform("shadowMap", gl::Sampler2D{1});
-//    debugQuad->set_uniform("depthMap", gl::Sampler2D{0});
+    // Set up the framebuffer object
+    {
+        // Generate and bind the framebuffer
+        depthmapFBO.clean();
+        depthmapFBO.generate();
+        depthmapFBO.bind();
+
+        // Create the depth buffer
+        depthMap.clean();
+        depthMap.debug_generate();
+
+        glTextureStorage2D (
+            depthMap.id(),    // GLuint texture
+            1,                      // GLsizei levels
+            GL_DEPTH_COMPONENT24,   // GLenum internalformat
+            SHADOW_WIDTH,         // GLsizei width
+            SHADOW_HEIGHT         // GLsizei height
+        );
+
+        TextureOptions options;
+        options.magFilter = TextureMagFilter::nearest;
+        options.minFilter = TextureMinFilter::nearest;
+        options.wrapS     = TextureWrapMode::clamp_to_border;
+        options.wrapT     = TextureWrapMode::clamp_to_border;
+        options.borderColor = {1.0f, 0.0f,0.0f,0.0f };
+        depthMap.set_texture_options(options);
+
+        // depthmapFBO.attach_depth_texture(depthMap);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap.id(), 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+
+        // set colors buffers to be drawn
+        depthmapFBO.set_draw_buffers({attachment::none});
+
+        gl::FBO::unbind();
+    }
+
+
+//    shader->use();
+
+//    shader->set_uniform("diffuseTexture", gl::Sampler2D{0});
+//    shader->set_uniform("shadowMap", gl::Sampler2DShadow{1});
+
+//    shader->set_uniform("shadowMap", gl::Sampler2DShadow{(int)depthMap});
 }
 
 void Ch8ShadowMap2::draw(tool::gl::Drawer *drawer){
 
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //Sample::draw(drawer);
 
-    // 1. render depth of scene to texture (from light's perspective)
-    // --------------------------------------------------------------
-//    geo::Mat4f lightProjection, lightView;
-    lightPos = xyz;//mobileLightPos1.xyz();// {x,y,z};
-    decltype (lightPos) lookAtPos = {x1,y1,z1};
-    auto lightProjection  = Mat4f::Perspective(deg_2_rad(fov), 1600.f/600.f, nearPlane, farPlane);
-    auto lightView        = Mat4f::LookAt(lightPos, lookAtPos, Pt3f{0.0, 1.0, 0.0});
-    auto lightSpaceMatrix = lightView * lightProjection;// lightProjection;
+    glm::vec3 lightPos1,lookAt1;
+    lightPos1.x = lightPos.x();
+    lightPos1.y = lightPos.y();
+    lightPos1.z = lightPos.z();
+    lookAt1.x = lookAt.x();
+    lookAt1.y = lookAt.y();
+    lookAt1.z = lookAt.z();
 
-    // render scene from light's point of view
-    shadowMappingDepth->use();
-    shadowMappingDepth->set_uniform("lightSpaceMatrix", lightSpaceMatrix);
+    //    auto lightProjection  = Mat4f::Ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    //    auto lightView        = Mat4f::LookAt(mobileLightPos1.xyz(), {0.0f, 0.0f,  0.0f}, Pt3f{0.0, 1.0, 0.0});
+    auto lightProjection = from_glm(glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane));
+    auto lightView       = from_glm(glm::lookAt(lightPos1, lookAt1, glm::vec3(0.0, 1.0, 0.0)));
+    auto lightSpaceMatrix = lightView * lightProjection;
+
 
     // 1. first render to depth map
+    shadowMappingDepth->use();
+    shadowMappingDepth->set_uniform("lightSpaceMatrix", lightSpaceMatrix);
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        depthmapFBO.bind();
         glClear(GL_DEPTH_BUFFER_BIT);
+        gl::TBO::bind_textures({texturesM->texture_tbo("hardwood_diffuse")->id()});
         render_scene(shadowMappingDepth);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-//    // reset viewport
-//    glViewport(0, 0, camera->screen()->width(), camera->screen()->height());
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
     // 2. then render scene as normal with shadow mapping (using depth map)
+    shader->use();
+    shader->set_uniform("projection", camera->projection().conv<float>());
+    shader->set_uniform("view", camera->view().conv<float>());
+    shader->set_uniform("viewPos", camera->position().conv<float>());
+    shader->set_uniform("lightPos", lightPos);//camera->view().conv<float>().multiply_point(Pt4f(lightPos,1.0f)).xyz());
+    shader->set_uniform("lightSpaceMatrix", lightSpaceMatrix);
     glViewport(0, 0, camera->screen()->width(), camera->screen()->height());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl::FBO::unbind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl::TBO::bind_textures({texturesM->texture_tbo("hardwood_diffuse")->id(), depthMap.id()});
+        render_scene(shader);
 
-    shadowMapping->use();
-    shadowMapping->set_uniform("projection", camera->projection().conv<float>());
-    shadowMapping->set_uniform("view", camera->view().conv<float>());
-
-    // set light uniforms
-    shadowMapping->set_uniform("viewPos", camera->position().conv<float>());
-    shadowMapping->set_uniform("lightPos", lightPos);
-    shadowMapping->set_uniform("lightSpaceMatrix", lightSpaceMatrix);
-    gl::TBO::bind_textures({texturesM->texture_tbo("brick")->id(), depthMap});
-    render_scene(shadowMapping);
-
-    // render Depth map to quad for visual debugging
-    // ---------------------------------------------
-//    debugQuad->use();
-//    debugQuad->set_uniform("near_plane", near_plane);
-//    debugQuad->set_uniform("far_plane", far_plane);
-//    gl::TBO::bind_textures({depthMap});
-//    if(auto drawer = drawersM->get_drawer_ptr("screen-quad-drawer"); drawer != nullptr){
-//        drawer->draw(debugQuad);
-//    }
     auto shaderSolid = shadersM->get_ptr("ch8/solid");
     shaderSolid->use();
-    camM.m = Mat4d::transform({0.3,0.3,0.3},{0,0,0},lightPos.conv<double>());
+    camM.m = Mat4d::transform2({0.3,0.3,0.3},{0,0,0},lightPos.conv<double>());
     update_matrices();
     shaderSolid->set_camera_matrices_uniforms(camM);
     shaderSolid->set_uniform("Color", Pt4f{1,0,0,1});
     drawersM->get_drawer_ptr("sphere-drawer")->draw();
 
-    camM.m = Mat4d::transform({0.3,0.3,0.3},{0,0,0},lookAtPos.conv<double>());
+
+    camM.m = Mat4d::transform2({0.3,0.3,0.3},{0,0,0},lookAt.conv<double>());
     update_matrices();
     shaderSolid->set_camera_matrices_uniforms(camM);
     shaderSolid->set_uniform("Color", Pt4f{0,1,0,1});
     drawersM->get_drawer_ptr("sphere-drawer")->draw();
-
 }
 
 
 void Ch8ShadowMap2::render_scene(gl::ShaderProgram *shader){
 
     // floor
-    gl::TBO::bind_textures({texturesM->texture_tbo("brick")->id()});
+//    gl::TBO::bind_textures({texturesM->texture_tbo("brick")->id(), depthMap.id()});
     camM.m = Mat4d::identity();
     shader->set_uniform("model", camM.m.conv<float>());
     drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
-    // cubes
 
-    gl::TBO::bind_textures({texturesM->texture_tbo("hardwood_diffuse")->id()});
+    // cubes
+//    gl::TBO::bind_textures({texturesM->texture_tbo("hardwood_diffuse")->id(), depthMap.id()});
     for(int ii = 0; ii < 10; ++ii){
         for(int jj = 0; jj < 10; ++jj){
-
-            camM.m = Mat4d::transform({0.5,0.5,0.5},{ii*45.0,0.0,0.0},{3.0*ii, 1.0, 3.0*jj});
-
-//            model = Mat4d::identity();
-//            model = Mat4d::scale(model, {0.5f,0.5f,0.5f});
-//            model = Mat4d::rotate(model, {45.f,0.f,0.f});
-//            model = Mat4d::translate(model, {3.f*ii, 1.5, 3.f*jj});
+            camM.m = Mat4d::transform2({0.5,0.5,0.5},{ii*45.0,0.0,0.0},{3.0*ii, 1.0, 3.0*jj});
             shader->set_uniform("model", camM.m.conv<float>());
             drawersM->get_drawer_ptr("cube-drawer")->draw();
-
         }
-    }    
+    }
 }
 
 void Ch8ShadowMap2::update_imgui(){
-    ImGui::SliderFloat("near_plane", &nearPlane, 1.f, 10.4f, "ratio = %.3f");
-    ImGui::SliderFloat("far_plane", &farPlane, 3.f, 200.4f, "ratio = %.3f");
-    ImGui::SliderFloat("fov", &fov, 15.f, 360.0f, "ratio = %.3f");
+    ImGui::SliderFloat("near_plane###CH8SM2-1", &nearPlane, 1.f, 10.4f, "ratio = %.3f");
+    ImGui::SliderFloat("far_plane###CH8SM2-2", &farPlane, 3.f, 200.4f, "ratio = %.3f");
+    ImGui::SliderFloat("fov###CH8SM2-3", &fov, 15.f, 360.0f, "ratio = %.3f");
+    ImGui::DragFloat3("light pos###CH8SM2-4", lightPos.v.data(), 0.1f, -100.f, 100.0, "ratio = %.3f");
+    ImGui::DragFloat3("look at###CH8SM2-5", lookAt.v.data(), 0.1f, -100.f, 100.0, "ratio = %.3f");
+
 }
 
 
+
+void Ch8ShadowPcf::init(){
+
+    shader = shadersM->get_ptr("ch8/shadowpcf");
+
+
+    // Set up the framebuffer object
+    {
+
+        // Generate and bind the framebuffer
+        shadowFBO.clean();
+        shadowFBO.generate();
+        shadowFBO.bind();
+
+        // Create the depth buffer
+        shadowTexture.clean();
+        shadowTexture.debug_generate();
+
+        glTextureStorage2D (
+            shadowTexture.id(),    // GLuint texture
+            1,                      // GLsizei levels
+            GL_DEPTH_COMPONENT24,   // GLenum internalformat
+            shadowMapWidth,         // GLsizei width
+            shadowMapHeight         // GLsizei height
+        );
+
+
+        TextureOptions options;
+        options.magFilter = TextureMagFilter::linear; // linear
+        options.minFilter = TextureMinFilter::linear; // linear
+        options.wrapS     = TextureWrapMode::clamp_to_border;
+        options.wrapT     = TextureWrapMode::clamp_to_border;
+        options.borderColor = {1.0f, 0.0f,0.0f,0.0f };
+        shadowTexture.set_texture_options(options);
+        glTextureParameteri(shadowTexture.id(), GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+        glTextureParameteri(shadowTexture.id(), GL_TEXTURE_COMPARE_MODE,  GL_COMPARE_REF_TO_TEXTURE);
+
+        shadowFBO.attach_depth_texture(shadowTexture);
+
+        // set colors buffers to be drawn
+        shadowFBO.set_draw_buffers({attachment::none});
+
+        gl::FBO::unbind();
+    }
+
+
+    pass1Index = glGetSubroutineIndex( shader->id(), GL_FRAGMENT_SHADER, "recordDepth");
+    pass2Index = glGetSubroutineIndex( shader->id(), GL_FRAGMENT_SHADER, "shadeWithShadow");
+
+    shadowScale = geo::Mat4f{
+        0.5f,0.0f,0.0f,0.0f,
+        0.0f,0.5f,0.0f,0.0f,
+        0.0f,0.0f,0.5f,0.0f,
+        0.5f,0.5f,0.5f,1.0f
+    };
+    shader->set_uniform("ShadowMap", gl::Sampler2DShadow{0});
+}
+
+void Ch8ShadowPcf::draw(tool::gl::Drawer *drawer){
+
+    Sample::draw(drawer);
+
+
+    auto frustumD =  drawersM->get_drawer_ptr("frustum-drawer");
+    if(!frustumD){
+        return;
+    }
+    auto lightFrustum = dynamic_cast<gl::Frustum*>(frustumD->object());
+
+    // update frustum
+    lightFrustum->set_perspective(fov, aspectRatio, 1.0f, 25.0f);
+    auto lightFrustumV =  Mat4d::transform2(Vec3d{1,1,1},lightRot.conv<double>(),lightPos.conv<double>());
+    auto lightFrustumP = lightFrustum->projection_matrix().conv<double>();
+    lightPV = lightFrustumV.conv<float>().inverse() * lightFrustumP.conv<float>() * shadowScale;
+
+
+    shader->use();
+
+    // Pass 1 (shadow map generation)
+    // # fbo
+    shadowFBO.bind();
+    // # textures
+    gl::TBO::bind_textures({shadowTexture.id()});
+    // # clean
+    glClear(GL_DEPTH_BUFFER_BIT);
+    // # flags
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glCullFace(GL_FRONT);
+    glPolygonOffset(2.5f,10.0f);
+    // # viewport
+    glViewport(0,0,shadowMapWidth,shadowMapHeight);
+    // # uniforms
+    glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &pass1Index);
+    viewP = lightFrustumV.conv<float>().inverse();
+    projP = lightFrustumP.conv<float>();
+    shader->set_uniform("Light.Intensity", lInfo.Ld);
+    shader->set_uniform("Material.Kd", mInfo.Kd);
+    shader->set_uniform("Material.Ks", mInfo.Ks);
+    shader->set_uniform("Material.Ka", mInfo.Ka);
+    shader->set_uniform("Material.Shininess", mInfo.Shininess);
+
+    camM.m = Mat4d(true);
+    shader->set_uniform("ShadowMatrix", (camM.m.conv<float>() * lightPV));
+    update_matrices_mvp(camM.m, viewP.conv<double>(), projP.conv<double>());
+    shader->set_camera_matrices_uniforms(camM);
+    drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
+    drawersM->get_drawer_ptr("building-drawer")->draw(shader);
+
+    glCullFace(GL_BACK);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glFlush();
+
+    auto lp = geo::Pt4f(lightPos,1.f);
+    shader->set_uniform("Light.Position", Pt4f{camera->view().multiply_point(lp.conv<double>()).conv<float>()});
+
+    gl::FBO::unbind();
+    glViewport(0,0,camera->screen()->width(),camera->screen()->height());
+    glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &pass2Index);
+
+    update_matrices_mvp(camM.m, camera->view(), camera->projection());
+    shader->set_camera_matrices_uniforms(camM);
+    drawersM->get_drawer_ptr("notext-plane-40x40-drawer")->draw();
+    drawersM->get_drawer_ptr("building-drawer")->draw(shader);
+
+    auto shaderSolid = shadersM->get_ptr("ch8/solid");
+    shaderSolid->use();
+    camM.m = Mat4d::transform2({0.3,0.3,0.3},{0,0,0},lightPos.conv<double>());
+    update_matrices();
+    shaderSolid->set_camera_matrices_uniforms(camM);
+    shaderSolid->set_uniform("Color", Pt4f{1,0,0,1});
+    drawersM->get_drawer_ptr("sphere-drawer")->draw();
+
+    // Draw the light's frustum
+    // # shader
+    shaderSolid->use();
+    // # uniforms
+    shaderSolid->set_uniform("Color", Vec4f{1.0f,0.0f,0.0f,1.0f});
+    shaderSolid->set_uniform("MVP",((lightFrustumV*camera->view())*camera->projection()).conv<float>());
+    // # draw
+    frustumD->draw();
+
+
+    glFinish();
+}
+
+void Ch8ShadowPcf::update_imgui(){
+
+//    ImGui::SliderFloat("FOV###CH8SMP-1", &fov, 5.0f, 150.00f, "ratio = %.1f");
+//    ImGui::SliderFloat("Aspect ratio###CH8SMP-2", &aspectRatio, 0.0f, 5.00f, "ratio = %.3f");
+    ImGui::DragFloat3("Light pos###CH8SMP-3", lightPos.v.data(), 0.05f, -50.0f, 50.00f, "ratio = %.2f");
+    ImGui::DragFloat3("Light rot###CH8SMP-4", lightRot.v.data(), 1.f, -360.0f, 360.00f, "ratio = %.2f");
+}

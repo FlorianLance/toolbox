@@ -1,6 +1,9 @@
 
 #pragma once
 
+// std
+#include <random>
+
 // glm
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -48,13 +51,13 @@ struct MaterialPbr{
 };
 
 
-struct Sample{
+    struct Sample{
 
-    Sample(Camera *cam);
+        Sample(Camera *cam);
     void parent_init();
     virtual void init(){}
     virtual void update_screen_size(){}
-    virtual void update(float elapsedSeconds);    
+    virtual void update(float elapsedSeconds);
     virtual void draw(gl::Drawer *drawer = nullptr);
     virtual void parent_update_imgui();
     virtual void update_imgui(){}
@@ -87,7 +90,7 @@ struct Sample{
             m[0][1], m[1][1], m[2][1], m[3][1],
             m[0][2], m[1][2], m[2][2], m[3][2],
             m[0][3], m[1][3], m[2][3], m[3][3],
-        };
+            };
     }
     // # misc
     static inline float gauss(float x, float sigma2 ){
@@ -106,13 +109,13 @@ public:
     static inline float z1 = 1.f;
     // ##
 
-protected:    
+protected:
 
     // gui parameters
     // # draw
     static inline bool drawFloor  = true;
     static inline bool drawSkybox = true;
-    static inline bool drawLights = true;    
+    static inline bool drawLights = true;
     // # model
     static inline geo::Pt3f modelPos = {0.f,0.f, 2.f};
     static inline geo::Pt3f modelRot = {};
@@ -129,7 +132,7 @@ protected:
     static inline int nbAnimations = 0;
     static inline bool stopAnimation = false;
     static inline float timeAnimation = 0.f;
-    static inline float durationAnimation = 10.f;    
+    static inline float durationAnimation = 10.f;
     // # camera
     static inline float camFov = 60.f;
     // # materials
@@ -160,6 +163,7 @@ protected:
     gl::MaterialUBO materialFloorUBO;
     gl::ShaderProgram *floorShader = nullptr;
 
+    static inline std::random_device rd;
     //    auto gold = MaterialPbr(Pt4f(1, 0.71f, 0.29f,1.f),           0.50f,0.f);
     //    auto copper = MaterialPbr(Pt4f(0.95f, 0.64f, 0.54f,1.f),       0.50f,0.f);
     //    auto aluminium = MaterialPbr(Pt4f(0.91f, 0.92f, 0.92f,1.f),       0.50f,0.f);
@@ -308,7 +312,7 @@ private:
     geo::Pt3f projPos = {0.0f,3.0f,0.0f};
     geo::Pt3f projRot = {-120.0f,0.0f,0.0f};
     TextureOptions projOptions;
-    gl::ShaderProgram *solidP = nullptr;      
+    gl::ShaderProgram *solidP = nullptr;
 };
 struct Ch5DiffuseImageBasedLighting : public Sample{
     Ch5DiffuseImageBasedLighting(Camera *cam) : Sample(cam){}
@@ -335,14 +339,14 @@ private:
         "linear"
     };
 
-    static inline std::vector<std::string> minFiltersStr = {
-        "nearest",
-        "linear",
-        "nearest_mipmap_nearest",
-        "linear_mimmap_nearest",
-        "nearest_mipmap_linear",
-        "linear_mipmap_linear",
-    };
+        static inline std::vector<std::string> minFiltersStr = {
+            "nearest",
+            "linear",
+            "nearest_mipmap_nearest",
+            "linear_mimmap_nearest",
+            "nearest_mipmap_linear",
+            "linear_mipmap_linear",
+            };
 
     static inline std::vector<std::string> wrapModeStr = {
         "clamp_to_edge",
@@ -404,7 +408,7 @@ private:
     gl::Texture2D screenRenderTexture;
     // intermediate FBO
     gl::FBO intermediateFBO;
-    gl::Texture2D intermediateRenderTexture;    
+    gl::Texture2D intermediateRenderTexture;
 };
 
 struct Ch6HdrLightingToneMapping : public Sample{
@@ -489,29 +493,6 @@ private:
     std::vector<geo::Vec3f> kern;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 struct Ch6OIT : public Sample{
     struct ListNode {
         geo::Col4f color;
@@ -530,7 +511,6 @@ private:
     gl::PBO clearBuffer;
     gl::Texture2D headPtrTexture;
     GLuint pass1Index, pass2Index;
-    gl::ShaderProgram *shader = nullptr;
 };
 
 struct Ch7BezCurve : public Sample{
@@ -541,7 +521,6 @@ struct Ch7BezCurve : public Sample{
 private:
     int numSegments = 50;
     GLuint vaoHandle;
-    gl::ShaderProgram *prog = nullptr;
     gl::ShaderProgram *solidProg = nullptr;
     std::unique_ptr<gl::CloudPointsDrawer> bezPoints = nullptr;
 };
@@ -556,7 +535,6 @@ private:
     float lineWidth = 0.75f;
     gl::ShaderProgram *shader = nullptr;
 };
-
 struct Ch7ScenePointSprite : public Sample{
     Ch7ScenePointSprite(Camera *cam) : Sample(cam){}
     void init() final override;
@@ -566,22 +544,19 @@ private:
     float sizeSprite = 0.15f;
     int numSprites = 50;
     GLuint sprites;
-    gl::ShaderProgram *shader = nullptr;
     std::unique_ptr<gl::CloudPointsDrawer> pointsSprites = nullptr;
 };
-
 struct Ch7Silhouette : public Sample{
     Ch7Silhouette(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
 private:
-    gl::ShaderProgram *shader = nullptr;
 };
-
 struct Ch8ShadowMap : public Sample{
     Ch8ShadowMap(Camera *cam) : Sample(cam){}
     void init() final override;
     void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
 private:
     void spit_out_depth_buffer();
     void draw_scene();
@@ -591,12 +566,44 @@ private:
     int shadowMapWidth = 1024, shadowMapHeight = 1024;
     geo::Mat4f lightPV, shadowBias;
     geo::Mat4f viewP, projP;
-    gl::ShaderProgram *shadowP = nullptr;
     gl::ShaderProgram *solidP = nullptr;
     gl::FrustumDrawer *frustumD = nullptr;
     gl::Frustum *lightFrustum = nullptr;
-    geo::Pt3f lightPos;
+    geo::Pt3f lightPos = geo::Vec3f(0.0f,1.65f * 5.25f, 1.65f * 7.5f);  // World coords
+    geo::Pt3f lightRot;
+
+    geo::Mat4d lightFrustumV;
+    geo::Mat4d lightFrustumP;
+    geo::Mat4f lightShadowM;
+
+    float fov = 60.f;
+    float aspectRatio = 1.f;
 };
+
+struct Ch8ShadowPcf : public Sample{
+    Ch8ShadowPcf(Camera *cam) : Sample(cam){}
+    void init() final override;
+    void draw(gl::Drawer *drawer = nullptr) final override;
+    void update_imgui() final override;
+private:
+    GLuint pass1Index, pass2Index;
+    geo::Mat4f lightPV, shadowScale;
+    geo::Mat4f viewP, projP;
+
+    geo::Pt3f lightPos = geo::Vec3f(0.0f,1.65f * 5.25f, 1.65f * 7.5f);  // World coords
+    geo::Pt3f lightRot;
+
+    int shadowMapWidth = 1024;
+    int shadowMapHeight = 1024;
+    gl::Texture2D shadowTexture;
+    gl::FBO shadowFBO;
+
+    float fov = 60.f;
+    float aspectRatio = 1.f;
+};
+
+
+
 
 struct Ch8ShadowMap2 : public Sample{
     Ch8ShadowMap2(Camera *cam) : Sample(cam){}
@@ -605,13 +612,19 @@ struct Ch8ShadowMap2 : public Sample{
     void render_scene(gl::ShaderProgram *shader);
     void update_imgui() final override;
 private:
-    unsigned int depthMapFBO;
-    unsigned int depthMap;
-    const unsigned int SHADOW_WIDTH = 512, SHADOW_HEIGHT = 512;
-    gl::ShaderProgram *shadowMapping = nullptr;
+//    unsigned int depthMapFBO;
+//    unsigned int depthMap;
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+//    gl::ShaderProgram *shadowMapping = nullptr;
     gl::ShaderProgram *shadowMappingDepth = nullptr;
     gl::ShaderProgram *debugQuad = nullptr;
     geo::Pt3f lightPos{-2.0f, 4.0f, -1.0f};
+    geo::Pt3f lookAt{0.f,0.0f,0.f};
+
+//    unsigned int depthMap;
+
+    gl::Texture2D depthMap;
+    gl::FBO depthmapFBO;
 public:
     float nearPlane = 1.0f;
     float farPlane  = 10.5f;

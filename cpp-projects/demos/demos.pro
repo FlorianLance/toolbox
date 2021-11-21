@@ -304,6 +304,8 @@ DISTFILES += \
     ../_build/bin/demos/resources/shaders/samples/ch7/solid.vs \
     ../_build/bin/demos/resources/shaders/samples/ch8/shadowmap.fs \
     ../_build/bin/demos/resources/shaders/samples/ch8/shadowmap.vs \
+    ../_build/bin/demos/resources/shaders/samples/ch8/shadowpcf.fs \
+    ../_build/bin/demos/resources/shaders/samples/ch8/shadowpcf.vs \
     ../_build/bin/demos/resources/shaders/samples/ch8/shadowvolume-comp.fs \
     ../_build/bin/demos/resources/shaders/samples/ch8/shadowvolume-comp.vs \
     ../_build/bin/demos/resources/shaders/samples/ch8/shadowvolume-render.fs \

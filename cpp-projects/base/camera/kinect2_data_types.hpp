@@ -201,7 +201,7 @@ constexpr std::uint32_t voxels_data_size64           = depth_count;
 constexpr std::uint32_t triangles_data_size64        = triangles_count;
 
 constexpr float invalid_value = -10.f;
-[[maybe_unused]] constexpr geo::Pt3f invalid_point = {invalid_value,invalid_value,invalid_value};
+[[maybe_unused]] constexpr geo::Pt3f invalid_point(invalid_value,invalid_value,invalid_value);
 
 // mode mapping
 // # for each component category : name

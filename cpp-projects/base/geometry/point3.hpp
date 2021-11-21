@@ -69,6 +69,10 @@ struct Point3 : public Point<acc,3>{
         v = std::move(other.v);
     }
 
+    constexpr explicit Point3(acc v) noexcept {
+        this->v = {v,v,v};
+    }
+
     constexpr Point3(acc x, acc y, acc z) noexcept {
         v = {x,y,z};
     }
@@ -202,6 +206,15 @@ constexpr Pt3<acc> cross(const Pt3<acc> &l, const Pt3<acc> &r) noexcept{
         l.z() * r.x() - l.x() * r.z(),
         l.x() * r.y() - l.y() * r.x()
     };
+
+//    __m128 const set0 = _mm_set_ps(0.0f, a.z, a.y, a.x);
+//    __m128 const set1 = _mm_set_ps(0.0f, b.z, b.y, b.x);
+//    __m128 const xpd0 = glm_vec4_cross(set0, set1);
+
+//    vec<4, float, Q> Result;
+//    Result.data = xpd0;
+//    return vec<3, float, Q>(Result);
+
 }
 
 template<typename acc>

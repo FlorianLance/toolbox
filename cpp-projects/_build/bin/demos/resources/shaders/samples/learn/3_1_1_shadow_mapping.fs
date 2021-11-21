@@ -84,6 +84,10 @@ void main()
     if(uv.x < 800){
         //FragColor = vec4(color, 1.0);
         FragColor = vec4(shadow,shadow,shadow, 1.0);
+        //vec3 projCoords = fs_in.FragPosLightSpace.xyz / fs_in.FragPosLightSpace.w;
+//        FragColor = fs_in.FragPosLightSpace;
+        //FragColor = vec4(projCoords, 1.0);
+//        FragColor = vec4(viewDir, 1.0);
     }else{
         FragColor = vec4(lighting, 1.0);
     }

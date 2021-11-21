@@ -276,4 +276,30 @@ constexpr Pt4<acc> operator/(const Pt4<acc> &p, acc value) noexcept{
     return divide(p, value);
 }
 
+//template<typename acc>
+//constexpr Vec4<acc> cross(const Vec4<acc> &l, const Vec4<acc> &r) noexcept{
+
+//    return {
+//        l.y() * r.z() - l.z() * r.y(),
+//        l.z() * r.x() - l.x() * r.z(),
+//        l.x() * r.y() - l.y() * r.x()
+//    };
+    //    __m128 const set0 = _mm_set_ps(0.0f, a.z, a.y, a.x);
+    //    __m128 const set1 = _mm_set_ps(0.0f, b.z, b.y, b.x);
+    //    __m128 const xpd0 = glm_vec4_cross(set0, set1);
+    //    vec<4, float, Q> Result;
+    //    Result.data = xpd0;
+    //    return vec<3, float, Q>(Result);
+//    glm_vec4 const swp0 = _mm_shuffle_ps(v1, v1, _MM_SHUFFLE(3, 0, 2, 1));
+//    glm_vec4 const swp1 = _mm_shuffle_ps(v1, v1, _MM_SHUFFLE(3, 1, 0, 2));
+//    glm_vec4 const swp2 = _mm_shuffle_ps(v2, v2, _MM_SHUFFLE(3, 0, 2, 1));
+//    glm_vec4 const swp3 = _mm_shuffle_ps(v2, v2, _MM_SHUFFLE(3, 1, 0, 2));
+//    glm_vec4 const mul0 = _mm_mul_ps(swp0, swp3);
+//    glm_vec4 const mul1 = _mm_mul_ps(swp1, swp2);
+//    glm_vec4 const sub0 = _mm_sub_ps(mul0, mul1);
+//    return sub0;
+//    return {};
+//}
+
+
 }

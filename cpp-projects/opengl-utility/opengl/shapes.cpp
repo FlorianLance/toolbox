@@ -689,9 +689,10 @@ void Teapot::build_patch_reflect(
     }
 }
 
-void Teapot::build_patch(geo::Vec3f patch[][4], std_v1<GLfloat> &B, std_v1<GLfloat> &dB, std_v1<GLfloat> &v,
-                        std_v1<GLfloat> &n, std_v1<GLfloat> &tc, std_v1<GLuint> &el,
-                        int &index, int &elIndex, int &tcIndex, int grid, geo::Mat3f reflect, bool invertNormal){
+void Teapot::build_patch(geo::Vec3f patch[][4],
+    std_v1<GLfloat> &B, std_v1<GLfloat> &dB, std_v1<GLfloat> &v,
+    std_v1<GLfloat> &n, std_v1<GLfloat> &tc, std_v1<GLuint> &el,
+    int &index, int &elIndex, int &tcIndex, int grid, geo::Mat3f reflect, bool invertNormal){
 
     int startIndex = index / 3;
     float tcFactor = 1.0f / grid;
@@ -703,7 +704,7 @@ void Teapot::build_patch(geo::Vec3f patch[][4], std_v1<GLfloat> &B, std_v1<GLflo
             Vec3f pt = reflect * evaluate(i,j,B,patch);
             Vec3f norm = reflect * evaluate_normal(i,j,B,dB,patch);
             if( invertNormal ){
-                norm *= -1.f;
+                norm = -norm;
             }
 
             v[index]    = pt.x();
@@ -808,7 +809,11 @@ Vec3f Teapot::evaluate_normal(int gridU, int gridV, std_v1<GLfloat> &B, std_v1<G
         }
     }
 
-    return normalize(geo::cross(du, dv));
+    auto norm = geo::cross(du, dv);
+    if(geo::norm(norm) != 0.0f){
+        norm = geo::normalize(norm);
+    }
+    return norm;
 }
 
 void Teapot::move_lid(int grid, std_v1<GLfloat> &p, const Mat4f &lidTransform){
