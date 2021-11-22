@@ -219,7 +219,7 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
     if (audioInitStatus != SoundIoErrorNone){
         Logger::error("Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
     }else{
-        Logger::message("audio devices {}\n", static_cast<int>(k4a::K4AAudioManager::Instance().GetDeviceCount()));
+        Logger::message(std::format("audio devices {}\n", k4a::K4AAudioManager::Instance().GetDeviceCount()));
     }
 
 
