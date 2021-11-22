@@ -81,6 +81,10 @@ INCLUDEPATH += \
     $$KINECT4_INCLUDES \
     # boost
     $$BOOST_INCLUDES \
+    # libsoundio
+    $$LIBSOUNDIO_INCLUDES \
+    # libusb
+    $$LIBUSB_INCLUDES \
 
 ####################################### LIBRAIRIES
 LIBS += \
@@ -98,11 +102,21 @@ LIBS += \
     $$KINECT4_LIBS \
     # boost
     $$BOOST_LIBS \
+    # libsoundio
+    $$LIBSOUNDIO_LIBS \
+    # libusb
+    $$LIBUSB_LIBS \
 
 ####################################### PROJECT FILES
 
 HEADERS += \
     # files    
+    camera/k4a/k4aaudiomanager.h \
+    camera/k4a/k4aaudiowindow.h \
+    camera/k4a/k4adevicecorrelator.h \
+    camera/k4a/k4amicrophone.h \
+    camera/k4a/k4amicrophonelistener.h \
+    camera/k4a/k4asoundio_util.h \
     camera/kinect2_settings_files.hpp \
     files/assimp_loader.hpp \
     # geometry
@@ -190,6 +204,11 @@ HEADERS += \
 SOURCES += \
     base_main.cpp \
     # files        
+    camera/k4a/k4aaudiomanager.cpp \
+    camera/k4a/k4aaudiowindow.cpp \
+    camera/k4a/platform/windows/k4adevicecorrelator.cpp \
+    camera/k4a/k4amicrophone.cpp \
+    camera/k4a/k4amicrophonelistener.cpp \
     camera/kinect2_settings_files.cpp \
     files/assimp_loader.cpp \
     # graphics

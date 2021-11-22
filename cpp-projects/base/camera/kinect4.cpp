@@ -41,6 +41,8 @@
 // local
 // # kinect4
 #include "k4a/k4astaticimageproperties.h"
+#include "k4a/k4amicrophonelistener.h"
+#include "k4a/k4aaudiomanager.h"
 // # utility
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
@@ -71,7 +73,11 @@ struct Kinect4::Impl{
     k4a_device_configuration_t k4aConfig;
     K4::Config config;
 
-    // imug
+    // audio
+    std::shared_ptr<k4a::K4AMicrophoneListener> audioListener;
+    std::shared_ptr<k4a::K4AMicrophone> microphone;
+
+    // imu
     geo::Pt3f currentGyroPos;
     geo::Pt3f currentGyroRot;
 
@@ -207,6 +213,16 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
     }else{
         Logger::message(std::format("Devices found: {}\n", i->deviceCount));
     }
+
+
+    const int audioInitStatus = k4a::K4AAudioManager::Instance().Initialize();
+    if (audioInitStatus != SoundIoErrorNone){
+        Logger::error("Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
+    }else{
+        Logger::message("audio devices {}\n", static_cast<int>(k4a::K4AAudioManager::Instance().GetDeviceCount()));
+    }
+
+
 }
 
 Kinect4::~Kinect4(){
@@ -351,7 +367,7 @@ bool Kinect4::start_cameras(const k4a_device_configuration_t &k4aConfig){
         i->device.start_cameras(&i->k4aConfig);
 
         Logger::message("[Kinect4] start imu\n");
-        i->device.start_imu();
+        i->device.start_imu();        
 
     }  catch (std::runtime_error error) {
         Logger::error("[Kinect4] start_cameras error: {]\n", error.what());
@@ -573,26 +589,26 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         times.afterCaptureTS = nanoseconds_since_epoch();
 
         // imu
-        k4a_imu_sample_t sample;
-        if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
-            sample.acc_sample;
-            sample.acc_timestamp_usec;
-            sample.gyro_timestamp_usec;
-            sample.temperature;
+//        k4a_imu_sample_t sample;
+//        if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
+//            sample.acc_sample;
+//            sample.acc_timestamp_usec;
+//            sample.gyro_timestamp_usec;
+//            sample.temperature;
 
-            auto &gs = sample.gyro_sample.xyz;
-            if(std::abs(gs.x) < 0.1f){
-                gs.x = 0.f;
-            }
-            if(std::abs(gs.y) < 0.1f){
-                gs.y = 0.f;
-            }
-            if(std::abs(gs.z) < 0.1f){
-                gs.z = 0.f;
-            }
-            currentGyroRot += {gs.x, gs.y, gs.z};
-            Logger::message(std::format("imu {}{}{} \n", currentGyroRot.x(), currentGyroRot.y(), currentGyroRot.z()));
-        }
+//            auto &gs = sample.gyro_sample.xyz;
+//            if(std::abs(gs.x) < 0.1f){
+//                gs.x = 0.f;
+//            }
+//            if(std::abs(gs.y) < 0.1f){
+//                gs.y = 0.f;
+//            }
+//            if(std::abs(gs.z) < 0.1f){
+//                gs.z = 0.f;
+//            }
+//            currentGyroRot += {gs.x, gs.y, gs.z};
+//            Logger::message(std::format("imu {}{}{} \n", currentGyroRot.x(), currentGyroRot.y(), currentGyroRot.z()));
+//        }
 
         // get a color image
         if(colorResolution != ColorResolution::OFF){

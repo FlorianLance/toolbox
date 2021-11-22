@@ -21,8 +21,18 @@ SFML_DIR                             = $$TOOLBOX_CPP_THIRDPARTY_DIR"/SFML"
 GLM_DIR                              = $$TOOLBOX_CPP_THIRDPARTY_DIR"/glm"
 BIOPAC_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/biopac"
 QWT_DIR                              = $$TOOLBOX_CPP_THIRDPARTY_DIR"/qwt-6.1.4"
+LIBSOUNDIO_DIR                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libsoundio"
+LIBUSB_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libusb"
 
 ########################################################## INCLUDES
+
+############################ LIBUSSB
+LIBUSB_INCLUDES = \
+    $$LIBUSB_DIR"/includes" \
+
+############################ LIBSOUNDIO
+LIBSOUNDIO_INCLUDES = \
+    $$LIBSOUNDIO_DIR"/includes" \
 
 ############################ OPENCV
 OPENCV_INCLUDES = \
@@ -213,5 +223,14 @@ equals(COMPILER, "vs"){
             -L$$QWT_DIR"/lib/release" \
             -lqwt\
 
+############################ LIBSOUNDIO
+        LIBSOUNDIO_LIBS =\
+            -L$$LIBSOUNDIO_DIR"/lib/x64" \
+            -llibsoundio\
+
+############################ LIBUSB
+        LIBUSB_LIBS =\
+            -L$$LIBUSB_DIR"/lib" \
+            -llibusb-1.0\
     }
 }
