@@ -54,9 +54,6 @@ public:
     void init_image_32f(GLsizei width, GLsizei height, int nbChannels);
     void update_image_32f(GLfloat *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset);
 
-    constexpr GLsizei width()  const{return m_width;}
-    constexpr GLsizei height() const{return m_height;}
-
 };
 
 class CubeMap : public TBO{

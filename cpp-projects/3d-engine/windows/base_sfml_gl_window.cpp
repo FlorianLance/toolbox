@@ -35,6 +35,7 @@
 
 // base
 #include "utility/benchmark.hpp"
+#include "utility/logger.hpp"
 
 // opengl-utility
 #include "opengl/utility/glew_utility.hpp"
@@ -179,6 +180,7 @@ void BaseSfmlGlWindow::start(){
         update();
         post_update();
 
+
         m_scene.clear(sf::Color::White);
 
         // draw opengl
@@ -275,6 +277,35 @@ void BaseSfmlGlWindow::mouse_wheel_scroll_event(sf::Event::MouseWheelScrollEvent
 void BaseSfmlGlWindow::keyboard_keypress_event(sf::Event::KeyEvent event){
     if(!imguiMouse && !imguiKeyboard){
         update_camera_with_keyboardpress_event(event);
+    }
+}
+
+void BaseSfmlGlWindow::check_imgui_inputs(){
+
+//    if (!ImGui::IsItemHovered()){
+//        return;
+//    }
+
+    ImGuiIO& io = ImGui::GetIO();
+    if(io.WantCaptureMouse){
+
+        auto mPos = geo::Pt2f{io.MousePos.x, io.MousePos.y};
+        auto preMPos = geo::Pt2f{io.MousePosPrev.x, io.MousePosPrev.y};
+        if(square_norm(mPos - preMPos) != 0){
+            Logger::message(std::format("%f %f\n", io.MouseDelta.x, io.MouseDelta.y));
+        }
+
+//        if(io.MousePos - io.MousePosPrev){
+
+//        }
+
+
+//        ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
+//        ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (io.MouseDownDuration[i] >= 0.0f)   { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
+//        ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))          { ImGui::SameLine(); ImGui::Text("b%d", i); }
+//        ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i))    { ImGui::SameLine(); ImGui::Text("b%d", i); }
+//        ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))         { ImGui::SameLine(); ImGui::Text("b%d", i); }
+//        ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
     }
 }
 

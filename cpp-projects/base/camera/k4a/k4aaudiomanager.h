@@ -30,12 +30,19 @@ public:
 
     int RefreshDevices();
 
-    size_t GetDeviceCount() const
-    {
-        return m_inputDevices.size();
+    size_t get_devices_count() const{
+        return m_devicesNames.size();
     }
 
-    std::shared_ptr<K4AMicrophone> GetMicrophoneForDevice(const std::string &deviceSerialNumber);
+    std::string get_device_name(size_t id) const{
+        if(id < m_devicesNames.size()){
+            return m_devicesNames[id];
+        }
+        return "";
+    }
+
+    std::shared_ptr<K4AMicrophone> get_microphone_for_device(const std::string &deviceName);
+//    std::shared_ptr<K4AMicrophone> GetMicrophoneForDevice(const std::string &deviceSerialNumber);
 
     ~K4AAudioManager() = default;
     K4AAudioManager(const K4AAudioManager &) = delete;
@@ -50,6 +57,7 @@ private:
 
     SoundIoUniquePtr m_io;
 
+    std::vector<std::string> m_devicesNames;
     std::map<std::string, std::shared_ptr<SoundIoDevice>> m_inputDevices;
 };
 } // namespace k4aviewer

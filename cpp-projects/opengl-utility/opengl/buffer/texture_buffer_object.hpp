@@ -129,6 +129,9 @@ struct TBO{
     void get_hdr_texture_data(std::vector<GLfloat> &data);
 
     constexpr GLsizei nb_channels() const{return m_nbChannels;}
+    constexpr GLsizei width()  const{return m_width;}
+    constexpr GLsizei height() const{return m_height;}
+    constexpr GLsizei depth() const{return m_depth;}
 
     void debug_generate();
 

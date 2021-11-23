@@ -74,8 +74,8 @@ struct Kinect4::Impl{
     K4::Config config;
 
     // audio
-    std::shared_ptr<k4a::K4AMicrophoneListener> audioListener;
-    std::shared_ptr<k4a::K4AMicrophone> microphone;
+    std::shared_ptr<k4a::K4AMicrophone> microphone = nullptr;
+    std::shared_ptr<k4a::K4AMicrophoneListener> audioListener = nullptr;
 
     // imu
     geo::Pt3f currentGyroPos;
@@ -219,10 +219,36 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
     if (audioInitStatus != SoundIoErrorNone){
         Logger::error("Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
     }else{
-        Logger::message(std::format("audio devices {}\n", k4a::K4AAudioManager::Instance().GetDeviceCount()));
+        size_t nbDevices = k4a::K4AAudioManager::Instance().get_devices_count();
+        Logger::message(std::format("Audio devices count: {}\n", nbDevices));
+
+        for(size_t ii = 0; ii < nbDevices; ++ii){
+            std::string deviceName = k4a::K4AAudioManager::Instance().get_device_name(ii);
+            Logger::message(std::format(" - {}\n", deviceName));
+            if (deviceName.find("Azure Kinect Microphone Array") != std::string::npos) {
+                Logger::message(std::format("Found Azure kinect microphones array.\n"));
+                i->microphone = k4a::K4AAudioManager::Instance().get_microphone_for_device(deviceName);
+                if(i->microphone == nullptr){
+                    Logger::error(std::format("Cannot init microphone.\n"));
+                    i->audioListener = nullptr;
+                    return;
+                }
+                i->microphone->Start();
+                if(i->microphone->IsStarted()){
+                    i->audioListener = i->microphone->CreateListener();
+                }else{
+                    Logger::error(std::format("Cannot start microphone.\n"));
+                }
+//                i->audioListener =  std::make_shared<k4a::K4AMicrophoneListener>(i->microphone);
+                if(i->audioListener == nullptr){
+                    Logger::error(std::format("Cannot init audio listener.\n"));
+                    return;
+                }
+                break;
+            }
+        }
+
     }
-
-
 }
 
 Kinect4::~Kinect4(){
@@ -609,6 +635,31 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 //            currentGyroRot += {gs.x, gs.y, gs.z};
 //            Logger::message(std::format("imu {}{}{} \n", currentGyroRot.x(), currentGyroRot.y(), currentGyroRot.z()));
 //        }
+
+        // microphone
+        if(audioListener != nullptr){
+//            audioListener->ProcessFrames()
+
+            audioListener->ProcessFrames([&](k4a::K4AMicrophoneFrame *frame, const size_t frameCount) {
+                for (size_t frameId = 0; frameId < frameCount; frameId++){
+                    for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
+                        //m_channelData[channelId].AddSample(frame[frameId].Channel[channelId]);
+                    }
+                }
+                Logger::message(std::format("audio frames count {}\n", frameCount));
+                return frameCount;
+            });
+
+            if (audioListener->GetStatus() != SoundIoErrorNone){
+                Logger::error(std::format("Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
+//                audioListener->reset();
+            }else if (audioListener->Overflowed()){
+                // K4AViewerErrorManager::Instance().SetErrorStatus("Warning: sound overflow detected!");
+                Logger::warning(std::format("arning: sound overflow detected!\n"));
+                audioListener->ClearOverflowed();
+            }
+        }
+
 
         // get a color image
         if(colorResolution != ColorResolution::OFF){

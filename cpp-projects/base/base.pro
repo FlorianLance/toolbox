@@ -118,6 +118,7 @@ HEADERS += \
     camera/k4a/k4amicrophonelistener.h \
     camera/k4a/k4asoundio_util.h \
     camera/kinect2_settings_files.hpp \
+    camera/kinect4_utility.hpp \
     files/assimp_loader.hpp \
     # geometry
     ## shapes

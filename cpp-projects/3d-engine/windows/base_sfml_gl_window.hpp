@@ -89,7 +89,7 @@ protected:
     virtual void update(){}
     virtual void post_update(){}
 
-    // events
+    // sfml events
     // # mouse
     virtual void mouse_button_pressed_event(sf::Event::MouseButtonEvent event);
     virtual void mouse_button_released_event(sf::Event::MouseButtonEvent event);
@@ -98,6 +98,9 @@ protected:
     // # key
     virtual void keyboard_keypress_event(sf::Event::KeyEvent event);
     virtual void keyboard_keyrelease_event(sf::Event::KeyEvent event){static_cast<void>(event);}
+
+    // imgui events
+    virtual void check_imgui_inputs();
 
     // camera
     virtual void update_camera_with_mouse_button_event(sf::Event::MouseButtonEvent event, bool pressed);

@@ -213,10 +213,10 @@ namespace tool::camera::K4{
 
         // send
         bool sendCompressedDataFrame    = false;
-        bool sendDisplayColorFrame      = false;
-        bool sendDisplayDepthFrame      = false;
-        bool sendDisplayInfraredFrame   = false;
-        bool sendDisplayCloud           = false;
+        bool sendDisplayColorFrame      = true;
+        bool sendDisplayDepthFrame      = true;
+        bool sendDisplayInfraredFrame   = true;
+        bool sendDisplayCloud           = true;
     };
 
     // compressed data (to be sended throught network)
@@ -283,6 +283,8 @@ namespace tool::camera::K4{
 
         std::chrono::nanoseconds endFrameReadingTS;
     };
+
+
 
 }
 
