@@ -111,6 +111,7 @@ LIBS += \
 
 HEADERS += \
     # files    
+    camera/k4a/k4aaudiochanneldatagraph.h \
     camera/k4a/k4aaudiomanager.h \
     camera/k4a/k4aaudiowindow.h \
     camera/k4a/k4adevicecorrelator.h \
@@ -205,6 +206,7 @@ HEADERS += \
 SOURCES += \
     base_main.cpp \
     # files        
+    camera/k4a/k4aaudiochanneldatagraph.cpp \
     camera/k4a/k4aaudiomanager.cpp \
     camera/k4a/k4aaudiowindow.cpp \
     camera/k4a/platform/windows/k4adevicecorrelator.cpp \

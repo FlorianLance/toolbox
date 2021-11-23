@@ -217,6 +217,7 @@ namespace tool::camera::K4{
         bool sendDisplayDepthFrame      = true;
         bool sendDisplayInfraredFrame   = true;
         bool sendDisplayCloud           = true;
+        bool sendAudio                  = true;
     };
 
     // compressed data (to be sended throught network)
@@ -257,6 +258,8 @@ namespace tool::camera::K4{
 
     // display data frame (to be displayed in a client)
     struct DisplayDataFrame{
+        size_t audioFramesCount = 0;
+        std::array<std::vector<float>, 7> audioChannelsData;
         PixelsFrame colorFrame;
         PixelsFrame depthFrame;
         PixelsFrame infraredFrame;

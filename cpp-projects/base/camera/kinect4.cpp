@@ -43,6 +43,7 @@
 #include "k4a/k4astaticimageproperties.h"
 #include "k4a/k4amicrophonelistener.h"
 #include "k4a/k4aaudiomanager.h"
+#include "k4a/k4aaudiochanneldatagraph.h"
 // # utility
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
@@ -76,6 +77,8 @@ struct Kinect4::Impl{
     // audio
     std::shared_ptr<k4a::K4AMicrophone> microphone = nullptr;
     std::shared_ptr<k4a::K4AMicrophoneListener> audioListener = nullptr;
+    size_t lastFrameCount = 0;
+    std::array<std::vector<float>, k4a::K4AMicrophoneFrame::ChannelCount> channelsData;
 
     // imu
     geo::Pt3f currentGyroPos;
@@ -322,6 +325,16 @@ bool Kinect4::is_opened() const{
 bool Kinect4::is_reading_frames() const{return i->readFramesFromCameras;}
 
 void Kinect4::close(){
+
+    if(i->microphone){
+        if(i->microphone->IsStarted()){
+            i->microphone->Stop();
+        }
+        if(i->audioListener){
+            i->audioListener = nullptr;
+        }
+    }
+
     if(i->readFramesFromCameras){
         Logger::error("Reading must be stopped before closing the device.\n");
         return;
@@ -636,30 +649,39 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 //            Logger::message(std::format("imu {}{}{} \n", currentGyroRot.x(), currentGyroRot.y(), currentGyroRot.z()));
 //        }
 
-        // microphone
+        // microphones
+        lastFrameCount = 0;
         if(audioListener != nullptr){
-//            audioListener->ProcessFrames()
 
+            // process audio frame
             audioListener->ProcessFrames([&](k4a::K4AMicrophoneFrame *frame, const size_t frameCount) {
-                for (size_t frameId = 0; frameId < frameCount; frameId++){
-                    for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
-                        //m_channelData[channelId].AddSample(frame[frameId].Channel[channelId]);
+
+                // store last count
+                lastFrameCount = frameCount;
+
+                // resize channels if necessary
+                for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
+                    if(channelsData[channelId].size() != lastFrameCount){
+                        channelsData[channelId].resize(lastFrameCount);
                     }
                 }
-                Logger::message(std::format("audio frames count {}\n", frameCount));
+
+                // copy data
+                for (size_t frameId = 0; frameId < frameCount; frameId++){
+                    for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
+                        channelsData[channelId][frameId] = frame[frameId].Channel[channelId];
+                    }
+                }
                 return frameCount;
             });
 
             if (audioListener->GetStatus() != SoundIoErrorNone){
                 Logger::error(std::format("Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
-//                audioListener->reset();
             }else if (audioListener->Overflowed()){
-                // K4AViewerErrorManager::Instance().SetErrorStatus("Warning: sound overflow detected!");
-                Logger::warning(std::format("arning: sound overflow detected!\n"));
+                Logger::warning(std::format("Warning: sound overflow detected!\n"));
                 audioListener->ClearOverflowed();
             }
         }
-
 
         // get a color image
         if(colorResolution != ColorResolution::OFF){
@@ -1032,6 +1054,18 @@ void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Paramet
         {1.f,1.f,0.f},
         {1.f,0.f,0.f},
     };
+
+    // send audio
+    if(p.sendAudio && lastFrameCount != 0){
+        d->audioFramesCount = lastFrameCount;
+        for(size_t ii = 0; ii < d->audioChannelsData.size(); ++ii){
+            std::vector<float> &audioChannel = d->audioChannelsData[ii];
+            if(audioChannel.size() < d->audioFramesCount){
+                audioChannel.resize(d->audioFramesCount);
+            }
+            std::copy(std::begin(audioChannel), std::begin(audioChannel) + lastFrameCount, std::begin(channelsData[ii]));
+        }
+    }
 
     // send color frame
     if(p.sendDisplayColorFrame && color.has_value()){
