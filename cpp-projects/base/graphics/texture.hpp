@@ -180,7 +180,7 @@ struct TextureOptions{
     TextureType type                  = TextureType::diffuse;
     TextureOperation operation        = TextureOperation::add;
     TextureMapping mapping            = TextureMapping::UV;
-    geo::Pt3<TextureMapMode> mapMode  = {TextureMapMode::wrap,TextureMapMode::wrap,TextureMapMode::wrap};
+    geo::Pt3<TextureMapMode> mapMode{TextureMapMode::wrap,TextureMapMode::wrap,TextureMapMode::wrap};
 
     // mixed
     TextureWrapMode wrapS       = TextureWrapMode::repeat; // Sets the wrap parameter for texture coordinate s
@@ -189,7 +189,7 @@ struct TextureOptions{
     TextureMinFilter minFilter  = TextureMinFilter::nearest_mipmap_linear;
     TextureMagFilter magFilter  = TextureMagFilter::linear;
 
-    geo::Pt4f borderColor = {0.0f,0.0f,0.0f,0.0f};
+    geo::Pt4f borderColor{0.0f,0.0f,0.0f,0.0f};
 
     int maxLevel = 1000; // Sets the index of the highest defined mipmap level. This is an integer value. The initial value is 1000.
     int minLOD = -1000; // Sets the minimum level-of-detail parameter. This floating-point value limits the selection of highest resolution mipmap (lowest mipmap level). The initial value is -1000.

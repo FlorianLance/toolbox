@@ -661,18 +661,18 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
                 // resize channels if necessary
                 for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
-                    if(channelsData[channelId].size() != lastFrameCount){
+                    if(channelsData[channelId].size() < lastFrameCount){
                         channelsData[channelId].resize(lastFrameCount);
                     }
                 }
 
                 // copy data
-                for (size_t frameId = 0; frameId < frameCount; frameId++){
+                for (size_t frameId = 0; frameId < lastFrameCount; ++frameId){
                     for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
                         channelsData[channelId][frameId] = frame[frameId].Channel[channelId];
                     }
                 }
-                return frameCount;
+                return lastFrameCount;
             });
 
             if (audioListener->GetStatus() != SoundIoErrorNone){
@@ -901,18 +901,18 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p,
         }
 
         // depth filtering
-        if(ii < p.minWidth){
+        if(ii < p.minHeight){
             depthBuffer[id] = invalid_depth_value;
             return;
-        }else if(ii > p.maxWidth){
+        }else if(ii > p.maxHeight){
             depthBuffer[id] = invalid_depth_value;
             return;
         }
 
-        if(jj < p.minHeight){
+        if(jj < p.minWidth){
             depthBuffer[id] = invalid_depth_value;
             return;
-        }else if(jj > p.maxHeight){
+        }else if(jj > p.maxWidth){
             depthBuffer[id] = invalid_depth_value;
             return;
         }
@@ -928,20 +928,16 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p,
         // color filtering
         if(colorImage.has_value() && p.filterDepthWithColor){
 
-            auto delta = sqrt(
-                (colorBuffer->x()-p.filterColor.x())*(colorBuffer->x()-p.filterColor.x()) +
-                (colorBuffer->y()-p.filterColor.y())*(colorBuffer->y()-p.filterColor.y()) +
-                (colorBuffer->z()-p.filterColor.z())*(colorBuffer->z()-p.filterColor.z())
-            );
+            auto delta = norm(colorBuffer[id].xyz().conv<int>()-p.filterColor.conv<int>());
             if(delta > p.maxDiffColor.x()){
                 depthBuffer[id] = invalid_depth_value;
                 return;
             }
 
-            if(colorBuffer->x() == 0 && colorBuffer->y() == 0 && colorBuffer->z() == 0 && colorBuffer->w() == 0){
-                depthBuffer[id] = invalid_depth_value;
-                return;
-            }
+//            if(colorBuffer->x() == 0 && colorBuffer->y() == 0 && colorBuffer->z() == 0 && colorBuffer->w() == 0){
+//                depthBuffer[id] = invalid_depth_value;
+//                return;
+//            }
         }
 
         // infrared filtering
@@ -1063,7 +1059,7 @@ void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Paramet
             if(audioChannel.size() < d->audioFramesCount){
                 audioChannel.resize(d->audioFramesCount);
             }
-            std::copy(std::begin(audioChannel), std::begin(audioChannel) + lastFrameCount, std::begin(channelsData[ii]));
+            std::copy(std::begin(channelsData[ii]), std::begin(channelsData[ii]) + lastFrameCount, std::begin(audioChannel));
         }
     }
 

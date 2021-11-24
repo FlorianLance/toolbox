@@ -63,8 +63,12 @@ struct Point2 : public Point<acc,2>{
         v = std::move(other.v);
     }
 
-    constexpr Point2(acc x, acc y) noexcept {
+    constexpr explicit Point2(acc x, acc y) noexcept {
         v = {x,y};
+    }
+
+    constexpr Point2(std::initializer_list<acc> l) noexcept{
+        std::move(l.begin(), l.end(), std::begin(v));
     }
 
     inline acc& x() noexcept {return v[0];}

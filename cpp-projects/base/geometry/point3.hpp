@@ -55,7 +55,7 @@ struct Point3 : public Point<acc,3>{
 
     using Point<acc,3>::v;
 
-    Point3() = default;        
+    Point3() = default;
     Point3(const Point3& other) = default;
     Point3& operator=(const Point3& other) = default;
     Point3(Point3&& other) = default;
@@ -73,8 +73,12 @@ struct Point3 : public Point<acc,3>{
         this->v = {v,v,v};
     }
 
-    constexpr Point3(acc x, acc y, acc z) noexcept {
+    constexpr explicit Point3(acc x, acc y, acc z) noexcept {
         v = {x,y,z};
+    }
+
+    constexpr Point3(std::initializer_list<acc> l) noexcept{
+        std::move(l.begin(), l.end(), std::begin(v));
     }
 
     inline acc& x() noexcept {return v[0];}

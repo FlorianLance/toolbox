@@ -74,8 +74,12 @@ struct Point4 : public Point<acc,4>{
         v = {p.x(), p.y(), p.z(), w};
     }
 
-    constexpr Point4(acc x, acc y, acc z, acc w) noexcept {
+    constexpr explicit Point4(acc x, acc y, acc z, acc w) noexcept {
         v = {x,y,z,w};
+    }
+
+    constexpr Point4(std::initializer_list<acc> l) noexcept{
+        std::move(l.begin(), l.end(), std::begin(v));
     }
 
     inline acc& x() noexcept {return v[0];}

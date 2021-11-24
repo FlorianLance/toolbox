@@ -20,6 +20,8 @@ public:
     explicit K4AAudioChannelDataGraph(const char *name);
     void add_sample(float sample);
 
+
+
 private:
 
     // We need to keep track of the min and max separately to produce graphs
@@ -59,13 +61,15 @@ private:
         DataPoint() : Max(0), PositiveRms(0), NegativeRms(0), Min(0) {}
     };
 
-    static constexpr size_t AudioChannelGraphSampleCount = 120;
-    std::array<DataPoint, AudioChannelGraphSampleCount> m_graphData = {};
+
+
 
     // We're targeting 60FPS, so we want to do our sample math approximately
     // often enough that we trigger an update to the graph every frame.
     //
+    static constexpr size_t AudioChannelGraphSampleCount = 120;
     static constexpr size_t AudioSamplesPerGraphSample = K4AMicrophoneSampleRate / 60;
+    std::array<DataPoint, AudioChannelGraphSampleCount> m_graphData = {};
     size_t m_nextGraphPointIndex = 0;
     SignedAudioDataAccumulator m_positiveDataAccumulator;
     SignedAudioDataAccumulator m_negativeDataAccumulator;

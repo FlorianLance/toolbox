@@ -602,17 +602,17 @@ void Ch4PhongMultiLights::init(){
     materialUBO.set_data_space_from_shader(shader);
 }
 
-    void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
+void Ch4PhongMultiLights::draw(tool::gl::Drawer *drawer){
 
-        Sample::draw(drawer);
+    Sample::draw(drawer);
 
-        std_v1<Pt4f> lPos ={
-            Pt4f{camera->view().multiply_point({5.0,5.0,2.0,1.0}).conv<float>()},
-            Pt4f{camera->view().multiply_point({0.0,5.0,2.0,1.0}).conv<float>()},
-            Pt4f{camera->view().multiply_point({5.0,0.0,2.0,1.0}).conv<float>()},
-            Pt4f{camera->view().multiply_point({5.0,5.0,0.0,1.0}).conv<float>()},
-            Pt4f{camera->view().multiply_point({0.0,5.0,0.0,1.0}).conv<float>()},
-            };
+    std_v1<Pt4f> lPos ={
+        Pt4f{camera->view().multiply_point(Pt4d{5.0,5.0,2.0,1.0}).conv<float>()},
+        Pt4f{camera->view().multiply_point(Pt4d{0.0,5.0,2.0,1.0}).conv<float>()},
+        Pt4f{camera->view().multiply_point(Pt4d{5.0,0.0,2.0,1.0}).conv<float>()},
+        Pt4f{camera->view().multiply_point(Pt4d{5.0,5.0,0.0,1.0}).conv<float>()},
+        Pt4f{camera->view().multiply_point(Pt4d{0.0,5.0,0.0,1.0}).conv<float>()},
+    };
 
     std_v1<Vec3f> lL ={
         Vec3f{0.f,0.8f,0.8f},
