@@ -36,6 +36,7 @@
 
 // base
 #include "utility/tuple_array.hpp"
+#include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
 
 namespace tool::camera::K4{
@@ -119,28 +120,32 @@ namespace tool::camera::K4{
     using CE = bool;
     using ME = bool;
     using IE = bool;
+    using Range = geo::Pt2f;
+    using Resolution = geo::Pt2<int>;
+    using DRes = Resolution;
+    using CRes = Resolution;
 
     using TMode = std::tuple<
-        Mode,                     IF,         CR,         DM,                 FPS,      CE,    ME,    IE>;
+        Mode,                     IF,         CR,         DM,                 FPS,      Range,          DRes, CE,    ME,    IE>;
     static constexpr TupleArray<Mode::SizeEnum, TMode> modes = {{
         // cloud
         TMode
-        {M::Cloud_320x288,        IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, true,  false, true},
-        {M::Cloud_640x576,        IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, true,  false, true},
-        {M::Cloud_512x512,        IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, true,  false, true},
-        {M::Cloud_1024x1024,      IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, true,  false, true},
+        {M::Cloud_320x288,        IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, {0.5f,5.46f},   {320,288},  true,  false, true},
+        {M::Cloud_640x576,        IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, {0.5f,3.86f},   {640,576},  true,  false, true},
+        {M::Cloud_512x512,        IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, {0.25f,2.88f},  {512,512},  true,  false, true},
+        {M::Cloud_1024x1024,      IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, {0.25f,2.21f},  {1024,1024},true,  false, true},
         // frame
-        {M::Full_frame_320x288,   IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, false, false, true},
-        {M::Full_frame_640x576,   IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, false, false, true},
-        {M::Full_frame_512x512,   IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, false, false, true},
-        {M::Full_frame_1024x1024, IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, false, false, true},
+        {M::Full_frame_320x288,   IF::YUY2,   CR::R720P,  DM::NFOV_2X2BINNED, FPS::F30, {0.5f,5.46f},   {320,288},  false, false, true},
+        {M::Full_frame_640x576,   IF::YUY2,   CR::R720P,  DM::NFOV_UNBINNED,  FPS::F30, {0.5f,3.86f},   {640,576},  false, false, true},
+        {M::Full_frame_512x512,   IF::YUY2,   CR::R720P,  DM::WFOV_2X2BINNED, FPS::F30, {0.25f,2.88f},  {512,512},  false, false, true},
+        {M::Full_frame_1024x1024, IF::YUY2,   CR::R720P,  DM::WFOV_UNBINNED,  FPS::F15, {0.25f,2.21f},  {1024,1024},false, false, true},
         // only color
-        {M::Only_color_1280x720,  IF::YUY2,   CR::R720P,  DM::OFF,            FPS::F30, false, false, false},
-        {M::Only_color_1920x1080, IF::BGRA32, CR::R1080P, DM::OFF,            FPS::F30, false, false, false},
-        {M::Only_color_2560x1440, IF::BGRA32, CR::R1440P, DM::OFF,            FPS::F30, false, false, false},
-        {M::Only_color_2048x1536, IF::BGRA32, CR::R1536P, DM::OFF,            FPS::F30, false, false, false},
-        {M::Only_color_3840x2160, IF::BGRA32, CR::R2160P, DM::OFF,            FPS::F30, false, false, false},
-        {M::Only_color_4096x3072, IF::BGRA32, CR::R3072P, DM::OFF,            FPS::F15, false, false, false},
+        {M::Only_color_1280x720,  IF::YUY2,   CR::R720P,  DM::OFF,            FPS::F30, {0,0},          {0,0},      false, false, false},
+        {M::Only_color_1920x1080, IF::BGRA32, CR::R1080P, DM::OFF,            FPS::F30, {0,0},          {0,0},      false, false, false},
+        {M::Only_color_2560x1440, IF::BGRA32, CR::R1440P, DM::OFF,            FPS::F30, {0,0},          {0,0},      false, false, false},
+        {M::Only_color_2048x1536, IF::BGRA32, CR::R1536P, DM::OFF,            FPS::F30, {0,0},          {0,0},      false, false, false},
+        {M::Only_color_3840x2160, IF::BGRA32, CR::R2160P, DM::OFF,            FPS::F30, {0,0},          {0,0},      false, false, false},
+        {M::Only_color_4096x3072, IF::BGRA32, CR::R3072P, DM::OFF,            FPS::F15, {0,0},          {0,0},      false, false, false},
     }};
 
     [[maybe_unused]] static constexpr ImageFormat image_format(Mode m) {
@@ -155,14 +160,20 @@ namespace tool::camera::K4{
     [[maybe_unused]] static constexpr Framerate framerate(Mode m) {
         return modes.at<0,4>(m);
     }
-    [[maybe_unused]] static constexpr bool has_cloud(Mode m) {
+    [[maybe_unused]] static constexpr Range range(Mode m) {
         return modes.at<0,5>(m);
     }
-    [[maybe_unused]] static constexpr bool has_mesh(Mode m) {
+    [[maybe_unused]] static constexpr Resolution depth_resolution(Mode m) {
         return modes.at<0,6>(m);
     }
-    [[maybe_unused]] static constexpr bool has_infrared(Mode m) {
+    [[maybe_unused]] static constexpr bool has_cloud(Mode m) {
         return modes.at<0,7>(m);
+    }
+    [[maybe_unused]] static constexpr bool has_mesh(Mode m) {
+        return modes.at<0,8>(m);
+    }
+    [[maybe_unused]] static constexpr bool has_infrared(Mode m) {
+        return modes.at<0,9>(m);
     }
 
     struct Config{
@@ -174,21 +185,16 @@ namespace tool::camera::K4{
         bool disableLED = false;
     };
 
-
-    static constexpr int max_width_value  = 1024;
-    static constexpr int max_height_value = 1024;
-
     [[maybe_unused]] static constexpr std::int16_t invalid_depth_value = 0;
-    static constexpr std::int16_t default_depth_value = 3000;
-    [[maybe_unused]] static constexpr std::int16_t max_depth_value = 16000;
+    static constexpr Mode defaultMode = K4::Mode::Cloud_640x576;
 
     struct Parameters{
 
         // # width / height
         unsigned int minWidth  = 0;
-        unsigned int maxWidth  = max_width_value;
+        unsigned int maxWidth  = depth_resolution(defaultMode).x();
         unsigned int minHeight = 0;
-        unsigned int maxHeight = max_height_value;
+        unsigned int maxHeight = depth_resolution(defaultMode).y();
 
         // color
         float yFactor = 1.f;
@@ -198,8 +204,8 @@ namespace tool::camera::K4{
         geo::Pt3<std::uint8_t> maxDiffColor = geo::Pt3<std::uint8_t>(10,40,40);
 
         // # depth
-        std::int16_t minDepthValue = 300;
-        std::int16_t maxDepthValue = default_depth_value;
+        std::int16_t minDepthValue = static_cast<std::int16_t>(range(defaultMode).x()*1000.f);
+        std::int16_t maxDepthValue = static_cast<std::int16_t>(range(defaultMode).y()*1000.f);
 
         // compression
         unsigned char jpegCompressionRate = 80;

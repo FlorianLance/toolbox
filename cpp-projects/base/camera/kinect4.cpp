@@ -123,13 +123,14 @@ struct Kinect4::Impl{
         std::optional<k4a::image> depthImage,
         std::optional<k4a::image> infraredImage);
 
-    void update_display_data_frame(DisplayDataFrame *d, const Parameters &p,
+    void update_display_data_frame(K4::Mode mode, DisplayDataFrame *d, const Parameters &p,
         std::optional<k4a::image> color,
         std::optional<k4a::image> depth,
         std::optional<k4a::image> infra,
         std::optional<k4a::image> cloud);
 
     void filter_depth_image(const K4::Parameters &p,
+        K4::Mode mode,
         k4a::image depthImage,
         std::optional<k4a::image> colorImage,
         std::optional<k4a::image> infraredImage);
@@ -508,21 +509,19 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
         // set color indices
         indicesColors1D.resize(colorSize);
-        std::iota(std::begin(indicesColors1D), std::end(indicesColors1D), 0);
-
-
-
-        Logger::message(std::format("colorFrame {} {} \n", colorWidth, colorHeight));
+        std::iota(std::begin(indicesColors1D), std::end(indicesColors1D), 0);       
     }
 
     const auto depthMode = depth_mode(mode);
     if(depthMode != DepthMode::OFF){
 
         // retrieve depth dimensions
-        const auto depthDims     = k4a::GetDepthDimensions(static_cast<k4a_depth_mode_t>(depth_mode(mode)));
-        depthWidth  = std::get<0>(depthDims);
-        depthHeight = std::get<1>(depthDims);
+        auto depthRes = depth_resolution(mode);
+        depthWidth  = depthRes.x();
+        depthHeight  = depthRes.y();
         depthSize   = depthWidth*depthHeight;
+
+        Logger::message(std::format("depthframe {} {} \n", depthWidth, depthHeight));
 
         // init resized color image
         if(colorResolution != ColorResolution::OFF){
@@ -540,8 +539,8 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         // set 3D depth indices
         indicesDepths3D.resize(depthSize);
         size_t id = 0;
-        for(size_t ii = 0; ii < depthWidth; ++ii){
-            for(size_t jj = 0; jj < depthHeight; ++jj){
+        for(size_t ii = 0; ii < depthHeight; ++ii){
+            for(size_t jj = 0; jj < depthWidth; ++jj){
                 indicesDepths3D[id] = {id,ii,jj};
                 ++id;
             }
@@ -829,7 +828,7 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         // filter depth image
         if(depthImage.has_value()){
             Bench::start("[Kinect4] Filter depth");
-            filter_depth_image(p, depthImage.value(), colorImage, infraredImage);
+            filter_depth_image(p, mode, depthImage.value(), colorImage, infraredImage);
             Bench::stop();            
         }
         times.depthFilteringTS = nanoseconds_since_epoch();
@@ -865,7 +864,7 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             tool::Bench::start("[Kinect4] Write display data frame");
             auto currDisplayFrame = displayFrames[currentDisplayFramesId++];
             currentDisplayFramesId = currentDisplayFramesId%displayFrames.size();
-            update_display_data_frame(currDisplayFrame.get(), p, colorImage, depthImage, infraredImage, pointCloudImage);
+            update_display_data_frame(mode, currDisplayFrame.get(), p, colorImage, depthImage, infraredImage, pointCloudImage);
             tool::Bench::stop();
 
             kinect4->new_display_frame_signal(currDisplayFrame);
@@ -881,13 +880,17 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
     //tool::Bench::display(BenchUnit::milliseconds, 0, true);
 }
 
-void Kinect4::Impl::filter_depth_image(const Parameters &p,
+void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
     k4a::image depthImage, std::optional<k4a::image> colorImage, std::optional<k4a::image> infraredImage){
 
     // retrieve buffers
     auto depthBuffer = reinterpret_cast<int16_t*>(depthImage.get_buffer());
     geo::Pt4<uint8_t>* colorBuffer = colorImage.has_value() ? reinterpret_cast<geo::Pt4<uint8_t>*>(colorImage.value().get_buffer()) : nullptr;
     uint16_t* infraredBuffer = infraredImage.has_value() ? reinterpret_cast<uint16_t*>(infraredImage.value().get_buffer()) : nullptr;
+
+    const auto dRange = range(mode)*1000.f;
+    auto minD = p.minDepthValue < dRange.x() ? static_cast<std::int16_t>(dRange.x()) : p.minDepthValue;
+    auto maxD = p.maxDepthValue > dRange.y() ? static_cast<std::int16_t>(dRange.y()) : p.maxDepthValue;
 
     validDepthValues = 0;
     for_each(std::execution::par_unseq, std::begin(indicesDepths3D), std::end(indicesDepths3D), [&](const Pt3<size_t> &dIndex){
@@ -917,10 +920,10 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p,
             return;
         }
 
-        if(depthBuffer[id] < p.minDepthValue){
+        if(depthBuffer[id] < minD){
             depthBuffer[id] = invalid_depth_value;
             return;
-        }else if(depthBuffer[id] > p.maxDepthValue){
+        }else if(depthBuffer[id] > maxD){
             depthBuffer[id] = invalid_depth_value;
             return;
         }
@@ -1027,7 +1030,7 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
 
 
 
-void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Parameters &p,
+void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d, const Parameters &p,
     std::optional<k4a::image> color,
     std::optional<k4a::image> depth,
     std::optional<k4a::image> infra,
@@ -1043,13 +1046,13 @@ void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Paramet
         {1.f,0.f,0.f},
     };
 
-    const std_v1<Pt3f> infraGradient ={
-        {0.f,0.f,1.f},
-        {0.f,1.f,1.f},
-        {0.f,1.f,0.f},
-        {1.f,1.f,0.f},
-        {1.f,0.f,0.f},
-    };
+//    const std_v1<Pt3f> infraGradient ={
+//        {0.f,0.f,1.f},
+//        {0.f,1.f,1.f},
+//        {0.f,1.f,0.f},
+//        {1.f,1.f,0.f},
+//        {1.f,0.f,0.f},
+//    };
 
     // send audio
     if(p.sendAudio && lastFrameCount != 0){
@@ -1114,14 +1117,21 @@ void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Paramet
         auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
 
         // find min/max
-        const auto [pmin, pmax] = std::minmax_element(depthBuffer, depthBuffer + size);
-        min = static_cast<float>(*pmin);
-        max = static_cast<float>(*pmax);
-        diff = max-min;
+//        const auto [pmin, pmax] = std::minmax_element(depthBuffer, depthBuffer + size);
+//        min = static_cast<float>(*pmin);
+//        max = static_cast<float>(*pmax);
+//        diff = max-min;
+        const auto dRange = range(mode)*1000.f;
+        const auto diff = dRange.y() - dRange.x();
 
         for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
 
-            float vF = (static_cast<float>(depthBuffer[id]) - min)/diff;
+            if(depthBuffer[id] == invalid_depth_value){
+                d->depthFrame.pixels[id] = {};
+                return;
+            }
+
+            float vF = (static_cast<float>(depthBuffer[id]) - dRange.x())/diff;
             float intPart;
             float decPart = std::modf((vF*(depthGradient.size()-1)), &intPart);
             size_t idG = static_cast<size_t>(intPart);
@@ -1144,31 +1154,23 @@ void Kinect4::Impl::update_display_data_frame(DisplayDataFrame *d, const Paramet
 
         const size_t width = infra->get_width_pixels();
         const size_t height = infra->get_height_pixels();
-        const size_t size = width * height;
         d->infraredFrame.width  = width;
         d->infraredFrame.height = height;
-        //frame->infraredFrame.pixels.resize(size);
 
         auto infraBuffer = reinterpret_cast<const uint16_t*>(infra->get_buffer());
 
-        // find min/max
-        const auto [pmin, pmax] = std::minmax_element(infraBuffer, infraBuffer + size);
-        min = static_cast<float>(*pmin);
-        max = static_cast<float>(*pmax);
-        diff = max-min;
-
+        const float max = 2000;
         for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
 
-            float vF = static_cast<float>(infraBuffer[id] - min)/diff;
-            float intPart;
-            float decPart = std::modf((vF*(infraGradient.size()-1)), &intPart);
-            size_t idG = static_cast<size_t>(intPart);
-
-            auto col = infraGradient[idG]*(1.f-decPart) + infraGradient[idG+1]*decPart;
+            float vF = static_cast<float>(infraBuffer[id]);
+            if(vF > max){
+                vF = max;
+            }
+            vF/=max;
             d->infraredFrame.pixels[id] = {
-                static_cast<std::uint8_t>(255*col.x()),
-                static_cast<std::uint8_t>(255*col.y()),
-                static_cast<std::uint8_t>(255*col.z())
+                static_cast<std::uint8_t>(255*vF),
+                static_cast<std::uint8_t>(255*vF),
+                static_cast<std::uint8_t>(255*vF)
             };
         });
 
