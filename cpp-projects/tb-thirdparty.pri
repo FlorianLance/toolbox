@@ -212,6 +212,7 @@ equals(COMPILER, "vs"){
         TURBOJPG_LIBS =\
             -L$$TURBOJPG_DIR"/build/Release" \
             -lturbojpeg \
+            -ljpeg \
 
 ############################ FASTPFOR
         FASTPFOR_LIBS =\
