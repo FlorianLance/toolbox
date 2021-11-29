@@ -40,6 +40,9 @@ using TextureName = GLuint;
 struct UintData{
     const GLuint *v;
 };
+struct IntData{
+    const GLint *v;
+};
 struct FloatData{
     const GLfloat *v;
 };

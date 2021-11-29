@@ -255,12 +255,22 @@ namespace tool::camera::K4{
         std::vector<geo::Pt3f> pixels;
     };
 
-    // colored cloud diplay data
+    // colored cloud display data
     struct ColoredCloudFrame{
         size_t validVerticesCount = 0;
         std::vector<geo::Pt3f> vertices;
         std::vector<geo::Pt3f> colors;
+        std::vector<geo::Pt3f> normals;
     };
+
+
+    // colored voxels display data
+    struct ColoredVoxelsFrame{
+        size_t validVoxelsCount = 0;
+        std::vector<geo::Pt3<int>> voxels;
+        std::vector<geo::Pt3f> colors;
+    };
+
 
     // display data frame (to be displayed in a client)
     struct DisplayDataFrame{

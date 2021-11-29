@@ -61,10 +61,10 @@ struct UBO{
     void set_data_storage(GLsizeiptr sizeData, void *data = nullptr, GLenum usage = GL_DYNAMIC_STORAGE_BIT){
 
         glNamedBufferStorage(
-            m_id,               // GLuint buffer,
-            m_size = sizeData,  // GLsizeiptr size,
-            data,               // const void *data,
-            GL_DYNAMIC_STORAGE_BIT               // GLbitfield flags
+            m_id,              // GLuint buffer,
+            m_size = sizeData, // GLsizeiptr size,
+            data,              // const void *data,
+            usage              // GLbitfield flags
         );
     }
 

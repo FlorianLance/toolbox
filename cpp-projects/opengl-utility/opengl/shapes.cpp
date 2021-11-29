@@ -294,6 +294,11 @@ Cloud::Cloud(std_v1<geo::Pt3f> *vertices, std_v1<geo::Pt3f> *colors){
     init_buffers(static_cast<GLuint>(vertices->size()), vertices->data(), (colors != nullptr) ? (colors->data()) : nullptr);
 }
 
+Voxels::Voxels(size_t size, geo::Pt3<int> *voxels, Pt3f *colors){
+    init_buffers(static_cast<GLuint>(size), voxels, colors);
+}
+
+
 Plane::Plane(GLfloat xsize, GLfloat zsize, size_t xdivs, size_t zdivs, GLfloat smax, GLfloat tmax){
 
     size_t nPoints = (xdivs + 1) * (zdivs + 1);
@@ -909,3 +914,4 @@ Mat4f Frustum::projection_matrix() const{
 Pt3f Frustum::origin() const{
     return m_position;
 }
+

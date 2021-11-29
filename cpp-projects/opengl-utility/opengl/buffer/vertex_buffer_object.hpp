@@ -48,6 +48,7 @@ struct VBO{
 
     void generate();
     void load_data(FloatData data, SizeData size);
+    void load_data(IntData data, SizeData size);
 //    void load_dynamic_data(FloatData data, SizeData size);
     bool attrib(AttriIndex index, AttriSize size, AttriType type, Stride stride, AttribOffset offset = {nullptr});
     void clean();

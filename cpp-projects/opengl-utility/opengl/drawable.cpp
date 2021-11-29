@@ -26,6 +26,8 @@
 
 #include "drawable.hpp"
 
+// base
+#include "utility/logger.hpp"
 
 // local
 #include "gl_draw.hpp"
@@ -33,67 +35,12 @@
 using namespace tool;
 using namespace tool::gl;
 
-void LineMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points, std_v1<GLfloat> *colors){
-
-    if(indices == nullptr || points == nullptr){
-        // ...
-        return;
-    }
-
-    if(buffersInitialized){
-        clean();
-    }
-
-    vao.generate();
-    pointsB.generate();
-    indicesB.generate();
-    if(colors != nullptr){
-        colorsB.generate();
-    }
-
-    vao.bind();
-
-    indicesB.bind();
-    indicesB.load_data(UintData{indices->data()}, SizeData{GLsizeiptr(indices->size()*sizeof(std::uint32_t))});
-
-    pointsB.load_data(FloatData{points->data()}, SizeData{static_cast<GLsizeiptr>(points->size()*sizeof(GLfloat))});
-    pointsB.attrib(AttriIndex{0}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
-
-    if(colors != nullptr){
-        colorsB.load_data(FloatData{colors->data()}, SizeData{static_cast<GLsizeiptr>(colors->size()*sizeof(GLfloat))});
-        colorsB.attrib(AttriIndex{1}, AttriSize{4}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
-    }
-
-    nVerts = static_cast<GLsizei>(indices->size());
-
-    VAO::unbind();
-    buffersInitialized = true;
-}
-
-
-void LineMesh::render() const {
-
-    if(!buffersInitialized){
-        return;
-    }
-
-    vao.bind();
-    draw_lines_with_ebo(VerticesCount{nVerts});
-    VAO::unbind();
-}
-
-void LineMesh::clean(){
-    vao.clean();
-    pointsB.clean();
-    indicesB.clean();
-    colorsB.clean();
-    buffersInitialized = false;
-}
 
 
 void PointMesh::init_buffers(GLuint size, geo::Pt3f *points, geo::Pt3f *colors){
 
     if(points == nullptr){
+        Logger::error("[LineMesh::init_buffers] error, no points buffers.\n");
         return;
     }
 
@@ -116,7 +63,7 @@ void PointMesh::init_buffers(GLuint size, geo::Pt3f *points, geo::Pt3f *colors){
         colorsB.attrib(AttriIndex{1}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
     }
 
-    nVerts = static_cast<GLsizei>(size);
+    nIndices = static_cast<GLsizei>(size);
 
     VAO::unbind();
     buffersInitialized = true;
@@ -126,6 +73,7 @@ void PointMesh::init_buffers(GLuint size, geo::Pt3f *points, geo::Pt3f *colors){
 void PointMesh::init_buffers(GLuint size, geo::Pt2f *points, geo::Pt3f *colors){
 
     if(points == nullptr){
+        Logger::error("[PointMesh::init_buffers] error, no points buffers.\n");
         return;
     }
 
@@ -148,7 +96,39 @@ void PointMesh::init_buffers(GLuint size, geo::Pt2f *points, geo::Pt3f *colors){
         colorsB.attrib(AttriIndex{1}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
     }
 
-    nVerts = static_cast<GLsizei>(size);
+    nIndices = static_cast<GLsizei>(size);
+
+    VAO::unbind();
+    buffersInitialized = true;
+}
+
+void PointMesh::init_buffers(GLuint size, geo::Pt3<int> *voxels, geo::Pt3f *colors){
+
+    if(voxels == nullptr){
+        Logger::error("[PointMesh::init_buffers] error, no voxels buffers.\n");
+        return;
+    }
+
+    if(buffersInitialized){
+        clean();
+    }
+
+    vao.generate();
+    pointsB.generate();
+    if(colors != nullptr){
+        colorsB.generate();
+    }
+
+    vao.bind();
+    pointsB.load_data(IntData{reinterpret_cast<GLint*>(voxels)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLint))});
+    pointsB.attrib(AttriIndex{0}, AttriSize{3}, AttriType{GL_INT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(int))});
+
+    if(colors != nullptr){
+        colorsB.load_data(FloatData{reinterpret_cast<GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
+        colorsB.attrib(AttriIndex{1}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
+    }
+
+    nIndices = static_cast<GLsizei>(size);
 
     VAO::unbind();
     buffersInitialized = true;
@@ -161,7 +141,7 @@ void PointMesh::render() const{
     }
 
     vao.bind();
-    draw_points(VerticesCount{nVerts});
+    draw_points(VerticesCount{nIndices});
     VAO::unbind();
 }
 
@@ -172,7 +152,7 @@ void PointMesh::render_patches() const{
     }
 
     vao.bind();
-    draw_patches(VerticesCount{nVerts});
+    draw_patches(VerticesCount{nIndices});
     VAO::unbind();
 }
 
@@ -184,10 +164,84 @@ void PointMesh::clean(){
 }
 
 
+void LineMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points, std_v1<GLfloat> *colors){
+
+    // check inputs
+    if(indices == nullptr || points == nullptr){
+        Logger::error("[LineMesh::init_buffers] error, no indices or points buffers.\n");
+        return;
+    }
+
+    if(indices->size() == 0 || points->size() == 0){
+        Logger::error("[LineMesh::init_buffers] error, empty buffers.\n");
+        return;
+    }
+
+    if(!colors){
+        if(points->size() != colors->size()){
+            Logger::error("[LineMesh::init_buffers] error, different size for points and colors buffers.\n");
+            return;
+        }
+    }
+
+    // clean buffers
+    if(buffersInitialized){
+        clean();
+    }
+
+    // generate buffers
+    vao.generate();
+    pointsB.generate();
+    indicesB.generate();
+    if(colors != nullptr){
+        colorsB.generate();
+    }
+
+    // load data
+    vao.bind();
+    indicesB.bind();
+    indicesB.load_data(UintData{indices->data()}, SizeData{GLsizeiptr(indices->size()*sizeof(std::uint32_t))});
+
+    pointsB.load_data(FloatData{points->data()}, SizeData{static_cast<GLsizeiptr>(points->size()*sizeof(GLfloat))});
+    pointsB.attrib(AttriIndex{0}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
+
+    if(colors != nullptr){
+        colorsB.load_data(FloatData{colors->data()}, SizeData{static_cast<GLsizeiptr>(colors->size()*sizeof(GLfloat))});
+        colorsB.attrib(AttriIndex{1}, AttriSize{4}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
+    }
+
+    nIndices = static_cast<GLsizei>(indices->size());
+
+    VAO::unbind();
+    buffersInitialized = true;
+}
+
+
+void LineMesh::render() const {
+
+    if(!buffersInitialized){
+        return;
+    }
+
+    vao.bind();
+    draw_lines_with_ebo(VerticesCount{nIndices});
+    VAO::unbind();
+}
+
+void LineMesh::clean(){
+    vao.clean();
+    pointsB.clean();
+    indicesB.clean();
+    colorsB.clean();
+    buffersInitialized = false;
+}
+
+
+
 void TriangleMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points, std_v1<GLfloat> *normals, std_v1<GLfloat> *texCoords, std_v1<GLfloat> *tangents, std_v1<GLfloat> *colors){
 
     if(indices == nullptr || points == nullptr){
-        std::cerr << "[GL] init_buffers: input data is null.\n";
+        Logger::error("[TriangleMesh::init_buffers] error, no indices or points buffers.\n");
         return;
     }
 
@@ -195,7 +249,7 @@ void TriangleMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points
         hasNormals = points->size() == normals->size();
 
         if(!hasNormals && normals->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of normals.\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of normals.\n");
             return;
         }
     }
@@ -204,7 +258,7 @@ void TriangleMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points
         hasTexCoord = (points->size()/3) == (texCoords->size()/2);
 
         if(!hasTexCoord && texCoords->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of tex coord. \n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of tex coord.\n");
             return;
         }
     }
@@ -213,7 +267,8 @@ void TriangleMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points
         hasTangents = (points->size()/3) == (tangents->size()/4);
 
         if(!hasTangents && tangents->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of tangents.\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of tangents.\n");
+            return;
         }
     }
 
@@ -221,7 +276,8 @@ void TriangleMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points
         hasColors = (points->size()/3) == (colors->size()/4);
 
         if(!hasColors && colors->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of colors.\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of colors.\n");
+            return;
         }
     }
 
@@ -291,7 +347,7 @@ void TriangleMesh::init_buffers(std_v1<GLuint> *indices, std_v1<GLfloat> *points
         colorsB.attrib(AttriIndex{4}, AttriSize{4}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
     }
 
-    nVerts = static_cast<GLsizei>(indices->size());
+    nIndices = static_cast<GLsizei>(indices->size());
 
     VAO::unbind();
     buffersInitialized = true;
@@ -301,7 +357,7 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
                                 std_v1<geo::Pt2f> *texCoords, std_v1<geo::Pt4f> *tangents, std_v1<geo::BoneData> *bones, std_v1<geo::Pt4f> *colors){
 
     if(indices == nullptr || points == nullptr){
-        std::cerr << "[GL] init_buffers: input data is null. [INIT CANCELED]\n";
+        Logger::error("[TriangleMesh::init_buffers] error, no indices or points buffers.\n");
         return;
     }
 
@@ -309,7 +365,7 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
         hasNormals = points->size() == normals->size();
 
         if(!hasNormals && normals->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of normals. [INIT CANCELED]\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of normals.\n");
             return;
         }
     }
@@ -318,7 +374,7 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
         hasTexCoord = points->size() == texCoords->size();
 
         if(!hasTexCoord && texCoords->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of tex coords. [INIT CANCELED]\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of tex coord.\n");
             return;
         }
     }
@@ -327,7 +383,8 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
         hasTangents = points->size() == tangents->size();
 
         if(!hasTangents && tangents->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of tangents: " << points->size() << " - " << tangents->size() << "\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of tangents.\n");
+            return;
         }
     }
 
@@ -335,7 +392,8 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
         hasBones = points->size() == bones->size();
 
         if(!hasBones && bones->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of bones.\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of bones.\n");
+            return;
         }
     }
 
@@ -343,7 +401,8 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
         hasColors = points->size() == colors->size();
 
         if(!hasColors && colors->size() > 0){
-            std::cerr << "[GL] init_buffers: Invalid size of colors: " << points->size() << " - " << colors->size() << "\n";
+            Logger::error("[TriangleMesh::init_buffers] Invalid size of colors.\n");
+            return;
         }
     }
 
@@ -447,7 +506,7 @@ void TriangleMesh::init_buffers(std_v1<geo::TriIds> *indices, std_v1<geo::Pt3f> 
     }
 
 
-    nVerts = static_cast<GLsizei>(indices->size()*3);
+    nIndices = static_cast<GLsizei>(indices->size()*3);
 
 
     VAO::unbind();
@@ -461,7 +520,7 @@ void TriangleMesh::render() const {
     }
 
     vao.bind();
-    draw_triangles_with_ebo(VerticesCount{nVerts});
+    draw_triangles_with_ebo(VerticesCount{nIndices});
     VAO::unbind();
 }
 
@@ -472,7 +531,7 @@ void TriangleMesh::render_adjacency() const{
     }
 
     vao.bind();
-    draw_triangles_adjacency_with_ebo(VerticesCount{nVerts});
+    draw_triangles_adjacency_with_ebo(VerticesCount{nIndices});
     VAO::unbind();
 }
 

@@ -57,6 +57,11 @@ public:
 
     }
     virtual void clean(){}
+
+    constexpr GLuint indices_nb() const noexcept{ return nIndices;}
+
+protected:
+    GLsizei nIndices = 0;
 };
 
 
@@ -64,7 +69,7 @@ class PointMesh : public Drawable{
 
 protected:
 
-    GLsizei nVerts;
+
     VBO pointsB;
     VBO colorsB;
     VAO vao;
@@ -83,18 +88,26 @@ protected:
         geo::Pt3f *colors = nullptr
     );
 
+    void init_buffers(
+        GLuint size,
+        geo::Pt3<int> *voxels,
+        geo::Pt3f *colors = nullptr
+    );
+
+
 public:
 
     virtual void render() const override;
     virtual void render_patches() const override;
     virtual void clean() override;
+
+
 };
 
 
 class LineMesh : public Drawable{
 protected:
 
-    GLsizei nVerts;
     VBO pointsB;
     VBO colorsB;
     EBO indicesB;
@@ -127,7 +140,6 @@ public:
 
 protected:
 
-    GLsizei nVerts;
     VBO pointsB;
     VBO normalsB;
     VBO tangentsB;

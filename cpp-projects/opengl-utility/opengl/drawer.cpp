@@ -88,6 +88,9 @@ void CloudPointsDrawer::init(std_v1<geo::Pt3f> *points, std_v1<geo::Pt3f> *color
     drawableObject = std::make_unique<gl::Cloud>(points, colors);
 }
 
+void VoxelsDrawer::init(size_t size, geo::Pt3<int> *voxels, geo::Pt3f *colors){
+    drawableObject = std::make_unique<gl::Voxels>(size, voxels, colors);
+}
 
 void MeshDrawer::init(geo::Mesh<float> *mesh){
     drawableObject = std::make_unique<gl::Mesh>(mesh);
@@ -249,3 +252,4 @@ void TeapotDrawer::init(std_v1<TextureName> textures){
 void FrustumDrawer::init(){
     drawableObject = std::make_unique<Frustum>();
 }
+

@@ -1,103 +1,80 @@
-<p> [101] <font color="DarkBlue">Init models
+<p> [107] <font color="DarkBlue">Init models
 </font></p>
-<p> [103] <font color="DarkBlue">[Bench::First start call from thread 6728]
+<p> [108] <font color="DarkBlue">[Bench::First start call from thread 3052]
 </font></p>
-<p> [2198] <font color="DarkBlue">Init textures
+<p> [1812] <font color="DarkBlue">Init textures
 </font></p>
-<p> [2198] <font color="DarkBlue"># Load textures from path [E:\DEV\EPFL\lnco-exvr\exvr\toolbox\cpp-projects\_build\bin\demos/resources/textures].
+<p> [1812] <font color="DarkBlue"># Load textures from path [C:\lnco-exvr\exvr\toolbox\cpp-projects\_build\bin\demos/resources/textures].
 </font></p>
-<p> [2438] <font color="DarkBlue"># Load cubemaps
+<p> [1999] <font color="DarkBlue"># Load cubemaps
 </font></p>
-<p> [2521] <font color="DarkBlue"># Generate texture 2d TBO
+<p> [2067] <font color="DarkBlue"># Generate texture 2d TBO
 </font></p>
-<p> [2541] <font color="DarkBlue"># Generate cubemaps TBO
+<p> [2082] <font color="DarkBlue"># Generate cubemaps TBO
 </font></p>
-<p> [2551] <font color="DarkBlue"># Other
+<p> [2088] <font color="DarkBlue"># Other
 </font></p>
-<p> [2552] <font color="DarkBlue">Init shaders
+<p> [2089] <font color="DarkBlue">Init shaders
 </font></p>
-<p> [2553] <font color="DarkBlue">Shader [others/unicolor] loaded.
+<p> [2094] <font color="DarkBlue">Shader [others/unicolor] loaded.
 </font></p>
-<p> [2554] <font color="DarkBlue">Shader [others/skybox] loaded.
+<p> [2095] <font color="DarkBlue">Shader [others/skybox] loaded.
 </font></p>
-<p> [2554] <font color="DarkBlue">Shader [others/screen-quad] loaded.
+<p> [2095] <font color="DarkBlue">Shader [others/screen-quad] loaded.
 </font></p>
-<p> [2555] <font color="DarkBlue">Shader [ch2/1] loaded.
+<p> [2096] <font color="DarkBlue">Shader [ch2/1] loaded.
 </font></p>
-<p> [2556] <font color="DarkBlue">Shader [ch3/diffuse] loaded.
+<p> [2097] <font color="DarkBlue">Shader [ch3/diffuse] loaded.
 </font></p>
-<p> [2558] <font color="DarkBlue">Shader [ch3/phong] loaded.
+<p> [2098] <font color="DarkBlue">Shader [ch3/phong] loaded.
 </font></p>
-<p> [2558] <font color="DarkBlue">Shader [ch3/twoside] loaded.
+<p> [2099] <font color="DarkBlue">Shader [ch3/twoside] loaded.
 </font></p>
-<p> [2559] <font color="DarkBlue">Shader [ch3/flat] loaded.
+<p> [2099] <font color="DarkBlue">Shader [ch3/flat] loaded.
 </font></p>
-<p> [2560] <font color="DarkBlue">Shader [ch3/discard] loaded.
+<p> [2100] <font color="DarkBlue">Shader [ch3/discard] loaded.
 </font></p>
-<p> [2561] <font color="DarkBlue">Shader [ch4/phong-multi-lights] loaded.
+<p> [2101] <font color="DarkBlue">Shader [ch4/phong-multi-lights] loaded.
 </font></p>
-<p> [2562] <font color="DarkBlue">Shader [ch4/phong-directional-light] loaded.
+<p> [2102] <font color="DarkBlue">Shader [ch4/phong-directional-light] loaded.
 </font></p>
-<p> [2563] <font color="DarkBlue">Shader [ch4/phong-per-fragment] loaded.
+<p> [2102] <font color="DarkBlue">Shader [ch4/phong-per-fragment] loaded.
 </font></p>
-<p> [2565] <font color="DarkBlue">Shader [ch4/blinn-phong] loaded.
+<p> [2103] <font color="DarkBlue">Shader [ch4/blinn-phong] loaded.
 </font></p>
-<p> [2565] <font color="DarkBlue">Shader [ch4/cartoon] loaded.
+<p> [2104] <font color="DarkBlue">Shader [ch4/cartoon] loaded.
 </font></p>
-<p> [2566] <font color="DarkBlue">Shader [ch4/pbr] loaded.
+<p> [2122] <font color="DarkRed">Shader compilation failed: 0(14) : warning C7022: unrecognized profile specifier "a"
+0(14) : error C7558: OpenGL does not allow profile specifiers on declarations
+ 
 </font></p>
-<p> [2568] <font color="DarkBlue">Shader [ch5/scene-texture] loaded.
+<p> [2124] <font color="DarkRed">Cannot load shader source code : #version 440
+
+layout (location = 0) in vec3 VertexPosition;
+layout (location = 1) in vec3 VertexNormal;
+
+out vec3 Position;
+out vec3 Normal;
+
+uniform mat4 ModelViewMatrix;
+uniform mat3 NormalMatrix;
+uniform mat4 ProjectionMatrix;
+uniform mat4 MVP;
+a
+void main(){
+    Normal = normalize(NormalMatrix * VertexNormal);
+    Position = (ModelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
+    gl_Position = MVP * vec4(VertexPosition, 1.0);
+}
+
+
+ of type: vertex.
 </font></p>
-<p> [2569] <font color="DarkBlue">Shader [ch5/scene-multi-textures] loaded.
+<p> [2124] <font color="DarkRed">[ShadersM] Cannot generate ShaderProgram from paths:
 </font></p>
-<p> [2570] <font color="DarkBlue">Shader [ch5/discard-pixels] loaded.
+<p> [2124] <font color="DarkRed"> -> C:\lnco-exvr\exvr\toolbox\cpp-projects\_build\bin\demos\resources\shaders\samples\ch4/pbr.vs
 </font></p>
-<p> [2571] <font color="DarkBlue">Shader [ch5/normal-map] loaded.
+<p> [2125] <font color="DarkRed"> -> C:\lnco-exvr\exvr\toolbox\cpp-projects\_build\bin\demos\resources\shaders\samples\ch4/pbr.fs
 </font></p>
-<p> [2572] <font color="DarkBlue">Shader [ch5/parallax-mapping] loaded.
+<p> [2125] <font color="DarkRed">Fail to load all shaders.
 </font></p>
-<p> [2573] <font color="DarkBlue">Shader [ch5/steep-parallax-mapping] loaded.
-</font></p>
-<p> [2574] <font color="DarkBlue">Shader [ch5/reflect-cubemap] loaded.
-</font></p>
-<p> [2574] <font color="DarkBlue">Shader [ch5/refract-cubemap] loaded.
-</font></p>
-<p> [2575] <font color="DarkBlue">Shader [ch5/projected-texture] loaded.
-</font></p>
-<p> [2576] <font color="DarkBlue">Shader [ch5/render-to-texture] loaded.
-</font></p>
-<p> [2576] <font color="DarkBlue">Shader [ch5/sampler-objects] loaded.
-</font></p>
-<p> [2577] <font color="DarkBlue">Shader [ch5/diffuse-image-based-lighting] loaded.
-</font></p>
-<p> [2579] <font color="DarkBlue">Shader [ch6/edge-detection-filter] loaded.
-</font></p>
-<p> [2580] <font color="DarkBlue">Shader [ch6/gaussian-filter] loaded.
-</font></p>
-<p> [2581] <font color="DarkBlue">Shader [ch6/hdr-lighting-tone-mapping] loaded.
-</font></p>
-<p> [2582] <font color="DarkBlue">Shader [ch6/hdr-bloom] loaded.
-</font></p>
-<p> [2584] <font color="DarkBlue">Shader [ch6/deferred] loaded.
-</font></p>
-<p> [2586] <font color="DarkBlue">Shader [ch6/ssao] loaded.
-</font></p>
-<p> [2587] <font color="DarkBlue">Shader [ch6/oit] loaded.
-</font></p>
-<p> [2588] <font color="DarkBlue">Shader [ch7/solid] loaded.
-</font></p>
-<p> [2589] <font color="DarkBlue">Shader [ch7/bezcurve] loaded.
-</font></p>
-<p> [2590] <font color="DarkBlue">Shader [ch7/shadewire] loaded.
-</font></p>
-<p> [2591] <font color="DarkBlue">Shader [ch7/pointsprite] loaded.
-</font></p>
-<p> [2592] <font color="DarkBlue">Shader [ch7/silhouette] loaded.
-</font></p>
-<p> [2593] <font color="DarkBlue">Shader [ch8/shadowmap] loaded.
-</font></p>
-<p> [2594] <font color="DarkBlue">Shader [ch8/shadowpcf] loaded.
-</font></p>
-<p> [2594] <font color="DarkBlue">Shader [ch8/solid] loaded.
-</font></p>
-<p> [2596] <font color="DarkBlue">Shader [learn/3_1_1_shadow_

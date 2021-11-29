@@ -144,6 +144,12 @@ public:
     void init(std_v1<geo::Pt3f> *points, std_v1<geo::Pt3f> *colors = nullptr);
 };
 
+class VoxelsDrawer : public Drawer{
+public:
+    void init(size_t size, geo::Pt3<int> *voxels, geo::Pt3f *colors = nullptr);
+};
+
+
 // ## triangles
 class SkyboxDrawer : public Drawer{
 public:

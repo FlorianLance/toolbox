@@ -127,4 +127,9 @@ public:
     Cloud(std_v1<geo::Pt3f> *vertices, std_v1<geo::Pt3f> *colors);
 };
 
+class Voxels : public PointMesh{
+public :
+    Voxels(size_t size, geo::Pt3<int> *voxels, geo::Pt3f *colors);
+};
+
 }

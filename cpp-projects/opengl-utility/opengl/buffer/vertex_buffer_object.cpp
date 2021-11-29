@@ -55,6 +55,16 @@ void VBO::generate(){
 //    );
 //}
 
+void VBO::load_data(IntData data, SizeData size){
+    GLenum usage =  GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
+    glNamedBufferStorage(
+        m_id,   // GLuint buffer
+        size.v, // GLsizeiptr size
+        data.v, // const void *data
+        usage   // GLenum usage
+    );
+}
+
 void VBO::load_data(FloatData data, SizeData size){
 
     // bit combination of: GL_DYNAMIC_STORAGE_BIT, GL_MAP_READ_BIT GL_MAP_WRITE_BIT, GL_MAP_PERSISTENT_BIT, GL_MAP_COHERENT_BIT, and GL_CLIENT_STORAGE_BIT.
@@ -100,6 +110,7 @@ void VBO::load_data(FloatData data, SizeData size){
         usage   // GLenum usage
     );
 }
+
 
 bool VBO::attrib(AttriIndex index, AttriSize size, AttriType type, Stride stride, AttribOffset offset){
 
