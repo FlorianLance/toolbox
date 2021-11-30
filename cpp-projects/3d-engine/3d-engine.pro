@@ -93,6 +93,8 @@ LIBS +=\
 
 HEADERS += \
     # ui
+    imgui/extra/ImGuiFileDialog.h \
+    imgui/extra/ImGuiFileDialogConfig.h \
     imgui/misc/cpp/imgui_stdlib.h \
     immediate_ui.hpp \
     # resources
@@ -133,6 +135,7 @@ HEADERS += \
 
 SOURCES += \
     # main
+    imgui/extra/ImGuiFileDialog.cpp \
     imgui/misc/cpp/imgui_stdlib.cpp \
     main.cpp \
     # resources

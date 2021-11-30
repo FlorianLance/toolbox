@@ -23,8 +23,22 @@ BIOPAC_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/biopac"
 QWT_DIR                              = $$TOOLBOX_CPP_THIRDPARTY_DIR"/qwt-6.1.4"
 LIBSOUNDIO_DIR                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libsoundio"
 LIBUSB_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libusb"
+OPEN3D_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/Open3D-0.13" # Open3D-0.8.0
+EIGEN_DIR                            = $$TOOLBOX_CPP_THIRDPARTY_DIR"/eigen-3.4-rc1"
+LIBPNG_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libpng"
 
 ########################################################## INCLUDES
+
+############################# EIGEN
+EIGEN_INCLUDES = \
+    $$EIGEN_DIR \
+
+############################# OPEN3D
+OPEN3D_INCLUDES =\
+    $$OPEN3D_DIR"/src" \
+    $$OPEN3D_DIR"/3rdparty/fmt/include" \
+    $$OPEN3D_DIR"/3rdparty/jsoncpp/include" \
+    $$OPEN3D_DIR"/3rdparty/rply/include" \
 
 ############################ LIBUSSB
 LIBUSB_INCLUDES = \
@@ -233,5 +247,17 @@ equals(COMPILER, "vs"){
         LIBUSB_LIBS =\
             -L$$LIBUSB_DIR"/lib" \
             -llibusb-1.0\
+
+############################# OPEN3D
+
+        OPEN3D_LIBS =\
+            -L$$OPEN3D_DIR"/build/lib/Release" \
+            -lOpen3D \
+            -lqhullcpp \
+            -lqhullstatic_r \
+            -L$$OPEN3D_DIR"/3rdparty/jsoncpp/lib" \
+            -ljsoncpp \
+            -L$$OPEN3D_DIR"/3rdparty/rply/lib" \
+            -lrply \
     }
 }

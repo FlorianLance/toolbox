@@ -183,33 +183,32 @@ void QtLogger::init(QString logDirectoryPath, QString logFileName){
     std::unique_lock<std::mutex> lock(QtLogger::Impl::locker);
     if(QtLogger::Impl::logger == nullptr){
 
-//        if(QFile::exists(absoluteFilePath)){
+        if(QFile::exists(absoluteFilePath)){
 
-//            int id = absoluteFilePath.lastIndexOf('.');
-//            if(id == -1){
-//                // error
-//                return;
-//            }
+            int id = absoluteFilePath.lastIndexOf('.');
+            if(id != -1){
+                QString leftPart  = absoluteFilePath.left(id);
+                QString extension = absoluteFilePath.mid(id);
+                QString previousFileName  = leftPart % QSL("_previous") % extension;
 
-//            auto leftPart  = absoluteFilePath.left(id);
-//            auto extension = absoluteFilePath.mid(id);
-//            auto newFileName  = leftPart % QSL("_previous") % extension;
+                bool copyPrevious = true;
+                if(QFile::exists(previousFileName)){
+                    if(!QFile::remove(previousFileName)){
+                        qWarning() << "[QtLogger-ERROR] Cannot remove previous log file: " << previousFileName;
+                        copyPrevious = false;
+                    }
+                }
 
-//            auto previousPath = absoluteFilePath;
-//            previousPath.replace_filename(newFileName);
-
-//            bool copyPrevious = true;
-//            if(fs::exists(previousPath)){
-//                if(!fs::remove(previousPath)){
-//                    std::cerr << "[LOGGER-ERROR] Cannot remove previous log file.\n";
-//                    copyPrevious = false;
-//                }
-//            }
-
-//            if(copyPrevious){
-//                fs::copy(absoluteFilePath, previousPath);
-//            }
-//        }
+                if(copyPrevious){
+                    if(!QFile::copy(absoluteFilePath, previousFileName)){
+                        qWarning() << "[QtLogger-ERROR] Cannot save last log file " << absoluteFilePath << " to " << previousFileName;
+                    }
+                }
+            }else{
+                qWarning() << "[QtLogger-ERROR] Invalid log file path, no extension: " << absoluteFilePath;
+                return;
+            }
+        }
 
         // init log file
         QtLogger::Impl::epochStart = nanoseconds_since_epoch();
@@ -217,7 +216,7 @@ void QtLogger::init(QString logDirectoryPath, QString logFileName){
         QtLogger::Impl::file       = std::make_unique<QFile>(absoluteFilePath);
 
         if(!QtLogger::Impl::file->open(QFile::WriteOnly | QFile::Text)){
-            qWarning() << "[QtLogger-ERROR] Cannot write to log file: " << absoluteFilePath;;
+            qWarning() << "[QtLogger-ERROR] Cannot write to log file: " << absoluteFilePath;
             return;
         }
 

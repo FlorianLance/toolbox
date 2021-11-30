@@ -29,7 +29,6 @@
 
 // Qt
 #include <QObject>
-#include <QString>
 
 // local
 #include "qt_str.hpp"

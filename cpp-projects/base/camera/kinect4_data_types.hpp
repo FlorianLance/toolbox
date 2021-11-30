@@ -38,6 +38,7 @@
 #include "utility/tuple_array.hpp"
 #include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
+#include "geometry/point4.hpp"
 
 namespace tool::camera::K4{
 
@@ -91,7 +92,7 @@ namespace tool::camera::K4{
                                                       // next device in the chain. 'Sync Out' is a mirror of 'Sync In' for this mode.
     };
 
-    enum class Mode : int {
+    enum class Mode : std::int32_t {
         // clouds
         Cloud_320x288,
         Cloud_640x576,
@@ -186,6 +187,8 @@ namespace tool::camera::K4{
     };
 
     [[maybe_unused]] static constexpr std::int16_t invalid_depth_value = 0;
+    [[maybe_unused]] static constexpr std::int16_t invalid_infra_value = 0;
+    [[maybe_unused]] static constexpr geo::Pt4<std::uint8_t> invalid_color_value = {0,0,0,0};
     static constexpr Mode defaultMode = K4::Mode::Cloud_640x576;
 
     struct Parameters{
@@ -216,6 +219,8 @@ namespace tool::camera::K4{
 
         // flogs
         bool filterDepthWithColor = false;
+        bool invalidateColorFromDepth = false;
+        bool invalidateInfraFromDepth = false;
 
         // send
         bool sendCompressedDataFrame    = false;
@@ -229,17 +234,18 @@ namespace tool::camera::K4{
     // compressed data (to be sended throught network)
     struct CompressedDataFrame{
 
+        Mode mode;
         k4a_calibration_t calibration;
 
         size_t colorWidth;
         size_t colorHeight;
-        std::vector<std::uint8_t> compressedColorBuffer;
+        std::vector<std::uint8_t> colorBuffer;
         size_t depthWidth;
         size_t depthHeight;
-        std::vector<std::uint32_t> compressedDepthBuffer;
+        std::vector<std::uint32_t> depthBuffer;
         size_t infraWidth;
         size_t infraHeight;
-        std::vector<std::uint32_t> compressedInfraBuffer;
+        std::vector<std::uint32_t> infraBuffer;
     };
 
     // image display data (color,depth,infrared)
@@ -260,7 +266,7 @@ namespace tool::camera::K4{
         size_t validVerticesCount = 0;
         std::vector<geo::Pt3f> vertices;
         std::vector<geo::Pt3f> colors;
-        std::vector<geo::Pt3f> normals;
+        // std::vector<geo::Pt3f> normals;
     };
 
 
@@ -294,7 +300,7 @@ namespace tool::camera::K4{
         std::chrono::nanoseconds convertColorTS;
         std::chrono::nanoseconds resizeColorTS;
 
-        std::chrono::nanoseconds depthFilteringTS;
+        std::chrono::nanoseconds filteringTS;
         std::chrono::nanoseconds cloudGenerationTS;
 
         std::chrono::nanoseconds compressFrameTS;

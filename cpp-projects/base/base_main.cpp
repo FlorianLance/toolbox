@@ -219,7 +219,7 @@ void kinect4_test(){
         size_t idFrame = 0;
         tjhandle jpegUncompressor = tjInitDecompress();
         tool::camera::IntegersEncoder depthCompressor;
-        for(const auto &frame : compressedFrames){
+        for(const auto &cFrame : compressedFrames){
 
 
             std::string pathColor = "./uncompressed_color_" + std::to_string(idFrame) + ".png";
@@ -227,16 +227,16 @@ void kinect4_test(){
             std::string pathCloud = "./uncompressed_cloud_" + std::to_string(idFrame) + ".obj";
 
             std::vector<std::uint8_t> uncompressedColorData;
-            uncompressedColorData.resize(frame->colorWidth * frame->colorHeight*4);
+            uncompressedColorData.resize(cFrame->colorWidth * cFrame->colorHeight*4);
 
             const int decompressStatus = tjDecompress2(
                 jpegUncompressor,
-                frame->compressedColorBuffer.data(),
-                static_cast<unsigned long>(frame->compressedColorBuffer.size()),
+                cFrame->colorBuffer.data(),
+                static_cast<unsigned long>(cFrame->colorBuffer.size()),
                 uncompressedColorData.data(),
-                frame->colorWidth,
+                cFrame->colorWidth,
                 0, // pitch
-                frame->colorHeight,
+                cFrame->colorHeight,
                 TJPF_RGBA,
                 TJFLAG_FASTDCT// | TJFLAG_FASTUPSAMPLE
             );
@@ -247,8 +247,8 @@ void kinect4_test(){
 
             tool::graphics::Texture texColor;
             texColor.copy_2d_data(
-                frame->colorWidth,
-                frame->colorHeight,
+                cFrame->colorWidth,
+                cFrame->colorHeight,
                 4,
                 uncompressedColorData.data()
             );
@@ -256,16 +256,16 @@ void kinect4_test(){
 
             // depth
             std::vector<std::uint16_t> uncompressedDepthData;
-            uncompressedDepthData.resize(frame->depthWidth*frame->depthHeight);
+            uncompressedDepthData.resize(cFrame->depthWidth*cFrame->depthHeight);
 
             size_t originalSize;
 
             try{
                 originalSize= depthCompressor.decode(
-                    frame->compressedDepthBuffer.data(),
-                    frame->compressedDepthBuffer.size(),
+                    cFrame->depthBuffer.data(),
+                    cFrame->depthBuffer.size(),
                     reinterpret_cast<std::uint32_t*>(uncompressedDepthData.data()),
-                    (frame->depthWidth*frame->depthHeight)/2
+                    (cFrame->depthWidth*cFrame->depthHeight)/2
                 );
             }catch(std::exception e){
                 Logger::error(std::format("Error uncompress depth {}.\n", e.what()));
@@ -288,7 +288,7 @@ void kinect4_test(){
             diff = max-min;
 
             std::vector<std::uint8_t> uncompressedDepthImageData;
-            uncompressedDepthImageData.resize(frame->depthWidth * frame->depthHeight*4);
+            uncompressedDepthImageData.resize(cFrame->depthWidth * cFrame->depthHeight*4);
 
             for(size_t ii = 0; ii < uncompressedDepthData.size(); ++ii){
 
@@ -305,8 +305,8 @@ void kinect4_test(){
             }
 
             texColor.copy_2d_data(
-                frame->depthWidth,
-                frame->depthWidth,
+                cFrame->depthWidth,
+                cFrame->depthWidth,
                 4,
                 uncompressedDepthImageData.data()
             );
@@ -316,25 +316,25 @@ void kinect4_test(){
             Logger::message("uncompress depth\n");
             k4a::image depthImage = k4a::image::create(
                 k4a_image_format_t::K4A_IMAGE_FORMAT_DEPTH16,
-                frame->depthWidth, frame->depthWidth,
-                static_cast<int32_t>(frame->depthWidth * 1 * sizeof(uint16_t)));
+                cFrame->depthWidth, cFrame->depthWidth,
+                static_cast<int32_t>(cFrame->depthWidth * 1 * sizeof(uint16_t)));
 
             try{
                 originalSize= depthCompressor.decode(
-                    frame->compressedDepthBuffer.data(),
-                    frame->compressedDepthBuffer.size(),
+                    cFrame->depthBuffer.data(),
+                    cFrame->depthBuffer.size(),
                     reinterpret_cast<std::uint32_t*>(depthImage.get_buffer()),
-                    (frame->depthWidth*frame->depthHeight)/2
+                    (cFrame->depthWidth*cFrame->depthHeight)/2
                 );
             }catch(std::exception e){
                 Logger::error(std::format("Error uncompress depth {}.\n", e.what()));
             }
 
-            k4a_transformation_t tr = k4a_transformation_create(&frame->calibration);
+            k4a_transformation_t tr = k4a_transformation_create(&cFrame->calibration);
             k4a::image pointCloudImage = k4a::image::create(K4A_IMAGE_FORMAT_CUSTOM,
-                frame->depthWidth,
-                frame->depthHeight,
-                static_cast<int32_t>(frame->depthWidth * 3 * sizeof(int16_t))
+                cFrame->depthWidth,
+                cFrame->depthHeight,
+                static_cast<int32_t>(cFrame->depthWidth * 3 * sizeof(int16_t))
             );
 
             k4a_result_t result = k4a_transformation_depth_image_to_point_cloud(

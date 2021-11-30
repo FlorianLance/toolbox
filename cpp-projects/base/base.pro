@@ -85,6 +85,10 @@ INCLUDEPATH += \
     $$LIBSOUNDIO_INCLUDES \
     # libusb
     $$LIBUSB_INCLUDES \
+    # eigen
+    $$EIGEN_INCLUDES\
+    # open3D
+    $$OPEN3D_INCLUDES \
 
 ####################################### LIBRAIRIES
 LIBS += \
@@ -106,6 +110,10 @@ LIBS += \
     $$LIBSOUNDIO_LIBS \
     # libusb
     $$LIBUSB_LIBS \
+    # eigen
+    $$EIGEN_LIBS\
+    # open3D
+    $$OPEN3D_LIBS \
 
 ####################################### PROJECT FILES
 
@@ -213,6 +221,7 @@ SOURCES += \
     camera/k4a/k4amicrophone.cpp \
     camera/k4a/k4amicrophonelistener.cpp \
     camera/kinect2_settings_files.cpp \
+    camera/kinect4_utility.cpp \
     files/assimp_loader.cpp \
     # graphics
     graphics/texture.cpp \
