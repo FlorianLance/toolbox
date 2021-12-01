@@ -30,7 +30,7 @@
 
 // local
 #include "geometry/point3.hpp"
-#include "utility/types_utility.hpp"
+#include "utility/types.hpp"
 
 namespace tool::geo{
 

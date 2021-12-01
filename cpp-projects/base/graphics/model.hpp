@@ -31,8 +31,8 @@
 #include <optional>
 
 // base
-#include "utility/vector_utility.hpp"
-#include "utility/string_utility.hpp"
+#include "utility/vector.hpp"
+#include "utility/string.hpp"
 #include "geometry/matrix4.hpp"
 #include "geometry/quaternion.hpp"
 

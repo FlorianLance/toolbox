@@ -33,7 +33,7 @@
 #include <qwt_curve_fitter.h>
 
 // base
-#include "utility/maths_utility.hpp"
+#include "utility/math.hpp"
 #include "geometry/point2.hpp"
 
 using namespace tool;

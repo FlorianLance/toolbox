@@ -32,7 +32,7 @@
 #include <ostream>
 
 // local
-#include "utility/maths_utility.hpp"
+#include "utility/math.hpp"
 #include "geometry/point.hpp"
 
 namespace tool::geo {

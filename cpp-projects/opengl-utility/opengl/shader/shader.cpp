@@ -34,7 +34,7 @@
 
 // base
 #include "utility/logger.hpp"
-#include "utility/string_utility.hpp"
+#include "utility/string.hpp"
 
 using namespace tool;
 using namespace tool::gl;

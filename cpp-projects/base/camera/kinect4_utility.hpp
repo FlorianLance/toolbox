@@ -69,8 +69,13 @@ public:
     void process_open3d_cloud(const std::vector<std::uint8_t> &uncompressedColor);
 
     void convert_to_cloud(
+        CompressedDataFrame *cFrame,
         const std::vector<std::uint8_t> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
         tool::camera::K4::ColoredCloudFrame &cloud);
+
+    void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);
+    void voxelize(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);
 
 private:
     struct Impl;

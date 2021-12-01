@@ -47,7 +47,7 @@
 // # utility
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 // # geometry
 #include "geometry/point4.hpp"
 // # data
@@ -78,11 +78,10 @@ struct Kinect4::Impl{
     std::shared_ptr<k4a::K4AMicrophone> microphone = nullptr;
     std::shared_ptr<k4a::K4AMicrophoneListener> audioListener = nullptr;
     size_t lastFrameCount = 0;
-    std::array<std::vector<float>, k4a::K4AMicrophoneFrame::ChannelCount> channelsData;
+    std::vector<k4a::K4AMicrophoneFrame> audioFrames;
 
     // imu
-    geo::Pt3f currentGyroPos;
-    geo::Pt3f currentGyroRot;
+    ImuSample imuSample;
 
     // parameters
     Parameters parameters;
@@ -90,17 +89,19 @@ struct Kinect4::Impl{
     // state
     std::atomic_bool readFramesFromCameras = false;
     float temperature = 0.f;
-    std::atomic<size_t> validDepthValues = 0;
+    size_t validDepthValues = 0;
     FrameReadingTimings times;
 
     // arrays indices
     std_v1<size_t> indicesDepths1D;
+    std_v1<size_t> indicesDepths1DNoBorders;
     std_v1<geo::Pt3<size_t>> indicesDepths3D;
     std_v1<size_t> indicesColors1D;
+    std_v1<bool> depthMask;
 
     // compression
     // # integer compressor
-    IntegersEncoder integerCompressor;
+    data::IntegersEncoder integerCompressor;
     // # jpeg compressor
     tjhandle jpegCompressor = nullptr;
     unsigned char *tjCompressedImage = nullptr;
@@ -124,7 +125,7 @@ struct Kinect4::Impl{
         std::optional<k4a::image> depthImage,
         std::optional<k4a::image> infraredImage);
 
-    void update_display_data_frame(K4::Mode mode, DisplayDataFrame *d, const Parameters &p,
+    void update_display_data_frame(K4::Mode mode, DisplayDataFrame *dFrame, const Parameters &p,
         std::optional<k4a::image> color,
         std::optional<k4a::image> depth,
         std::optional<k4a::image> infra,
@@ -534,15 +535,19 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         }
 
         // set depth indices
+        depthMask.resize(depthSize);
         indicesDepths1D.resize(depthSize);
-        std::iota(std::begin(indicesDepths1D), std::end(indicesDepths1D), 0);
-
-        // set 3D depth indices
+        std::iota(std::begin(indicesDepths1D), std::end(indicesDepths1D), 0);                
         indicesDepths3D.resize(depthSize);
+        indicesDepths1DNoBorders.reserve((depthWidth-2)*(depthHeight-2));
         size_t id = 0;
+        size_t idNoBorders = 0;
         for(size_t ii = 0; ii < depthHeight; ++ii){
             for(size_t jj = 0; jj < depthWidth; ++jj){
                 indicesDepths3D[id] = {id,ii,jj};
+                if(ii > 0 && ii < depthHeight-1 && jj > 0 && jj < depthWidth-1 ){
+                    indicesDepths1DNoBorders.push_back(id);
+                }
                 ++id;
             }
         }
@@ -628,26 +633,16 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         times.afterCaptureTS = nanoseconds_since_epoch();
 
         // imu
-//        k4a_imu_sample_t sample;
-//        if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
-//            sample.acc_sample;
-//            sample.acc_timestamp_usec;
-//            sample.gyro_timestamp_usec;
-//            sample.temperature;
-
-//            auto &gs = sample.gyro_sample.xyz;
-//            if(std::abs(gs.x) < 0.1f){
-//                gs.x = 0.f;
-//            }
-//            if(std::abs(gs.y) < 0.1f){
-//                gs.y = 0.f;
-//            }
-//            if(std::abs(gs.z) < 0.1f){
-//                gs.z = 0.f;
-//            }
-//            currentGyroRot += {gs.x, gs.y, gs.z};
-//            Logger::message(std::format("imu {}{}{} \n", currentGyroRot.x(), currentGyroRot.y(), currentGyroRot.z()));
-//        }
+        k4a_imu_sample_t sample;
+        if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
+            imuSample.temperature = sample.temperature;
+            const auto &dAcc = sample.acc_sample.xyz;
+            imuSample.acc ={dAcc.x,dAcc.y,dAcc.z};
+            imuSample.accTsMs = sample.acc_timestamp_usec;
+            const auto &dGyr = sample.gyro_sample.xyz;
+            imuSample.gyr = {dGyr.x,dGyr.y,dGyr.z};
+            imuSample.gyrTsMs = sample.gyro_timestamp_usec;
+        }
 
         // microphones
         lastFrameCount = 0;
@@ -657,21 +652,19 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             audioListener->ProcessFrames([&](k4a::K4AMicrophoneFrame *frame, const size_t frameCount) {
 
                 // store last count
-                lastFrameCount = frameCount;
+                lastFrameCount = frameCount;                
+                if(lastFrameCount == 0){
+                    return lastFrameCount;
+                }
 
-                // resize channels if necessary
-                for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
-                    if(channelsData[channelId].size() < lastFrameCount){
-                        channelsData[channelId].resize(lastFrameCount);
-                    }
+                // resize audio buffer
+                if(audioFrames.size() < lastFrameCount){
+                    audioFrames.resize(lastFrameCount);
                 }
 
                 // copy data
-                for (size_t frameId = 0; frameId < lastFrameCount; ++frameId){
-                    for (size_t channelId = 0; channelId < k4a::K4AMicrophoneFrame::ChannelCount; channelId++){
-                        channelsData[channelId][frameId] = frame[frameId].Channel[channelId];
-                    }
-                }
+                std::copy(frame, frame + lastFrameCount, audioFrames.begin());
+
                 return lastFrameCount;
             });
 
@@ -910,39 +903,33 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
     auto minD = p.minDepthValue < dRange.x() ? static_cast<std::int16_t>(dRange.x()) : p.minDepthValue;
     auto maxD = p.maxDepthValue > dRange.y() ? static_cast<std::int16_t>(dRange.y()) : p.maxDepthValue;
 
-    validDepthValues = 0;
     for_each(std::execution::par_unseq, std::begin(indicesDepths3D), std::end(indicesDepths3D), [&](const Pt3<size_t> &dIndex){
 
         const size_t id = dIndex.x();
         const size_t ii = dIndex.y();
         const size_t jj = dIndex.z();
 
+        depthMask[id] = false;
         if(depthBuffer[id] == invalid_depth_value){
             return;
         }
 
         // depth filtering
         if(ii < p.minHeight){
-            depthBuffer[id] = invalid_depth_value;
             return;
         }else if(ii > p.maxHeight){
-            depthBuffer[id] = invalid_depth_value;
             return;
         }
 
         if(jj < p.minWidth){
-            depthBuffer[id] = invalid_depth_value;
             return;
         }else if(jj > p.maxWidth){
-            depthBuffer[id] = invalid_depth_value;
             return;
         }
 
         if(depthBuffer[id] < minD){
-            depthBuffer[id] = invalid_depth_value;
             return;
         }else if(depthBuffer[id] > maxD){
-            depthBuffer[id] = invalid_depth_value;
             return;
         }
 
@@ -964,8 +951,82 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
         // infrared filtering
         // ...
 
+        depthMask[id] = true;
+    });
+
+    const bool doLocalDiffFiltering = true;
+    const size_t widthPlusOne  = depthImage.get_width_pixels() +1;
+    const size_t widthMinusOne = depthImage.get_height_pixels() -1;
+
+    if(doLocalDiffFiltering){
+        const float mLocal =  parameters.maxLocalDiff;
+        for_each(std::execution::par_unseq, std::begin(indicesDepths1DNoBorders), std::end(indicesDepths1DNoBorders), [&](size_t id){
+
+            if(!depthMask[id]){
+                return;
+            }
+
+            float meanDiff = 0;
+            size_t count = 0;
+            float currDepth = depthBuffer[id];
+            const size_t idA = id - widthPlusOne;
+            const size_t idB = idA + 1;
+            const size_t idC = idB + 1;
+            const size_t idD = id - 1;
+            const size_t idE = id + 1;
+            const size_t idF = id + widthMinusOne;
+            const size_t idG = idF + 1;
+            const size_t idH = idG + 1;
+
+            if(depthMask[idA]){
+                meanDiff += abs(depthBuffer[idA]-currDepth);
+                ++count;
+            }
+            if(depthMask[idB]){
+                meanDiff += abs(depthBuffer[idB]-currDepth);
+                ++count;
+            }
+            if(depthMask[idC]){
+                meanDiff += abs(depthBuffer[idC]-currDepth);
+                ++count;
+            }
+            if(depthMask[idD]){
+                meanDiff += abs(depthBuffer[idD]-currDepth);
+                ++count;
+            }
+            if(depthMask[idE]){
+                meanDiff += abs(depthBuffer[idE]-currDepth);
+                ++count;
+            }
+            if(depthMask[idF]){
+                meanDiff += abs(depthBuffer[idF]-currDepth);
+                ++count;
+            }
+            if(depthMask[idG]){
+                meanDiff += abs(depthBuffer[idG]-currDepth);
+                ++count;
+            }
+            if(depthMask[idH]){
+                meanDiff += abs(depthBuffer[idH]-currDepth);
+                ++count;
+            }
+
+            depthMask[id] = (count == 0) ? false : (1.*meanDiff/count < mLocal);
+            if(rand()%1000 == 0){
+                Logger::message(std::format("{} {} {} | ", meanDiff, count, (1.*meanDiff/count)));
+            }
+        });
+    }
+
+    validDepthValues = 0;
+    for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
+        if(!depthMask[id]){
+            depthBuffer[id] = invalid_depth_value;
+        }else{
+            validDepthValues++;
+        }
         // increment counter
-        validDepthValues.fetch_add(1, std::memory_order_relaxed);
+//        validDepthValues.fetch_add(1, std::memory_order_relaxed);
     });
 }
 
@@ -1025,7 +1086,7 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
 
     auto cFrame = std::make_shared<CompressedDataFrame>();
     cFrame->mode = mode;
-    cFrame->calibration = calibration;
+    cFrame->calibration = calibration;    
 
     if(colorImage.has_value()){
 
@@ -1064,6 +1125,8 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
 
 
     if(depthImage.has_value()){
+
+        cFrame->validVerticesCount = validDepthValues;
 
         // init buffer
         cFrame->depthWidth  = depthImage->get_width_pixels();
@@ -1119,19 +1182,29 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
         // Logger::message(std::format("size compressed {} {}\n", infraSize, sizeInfraCompressed));
     }
 
+    // copy audio frames
+    if(lastFrameCount > 0){
+        cFrame->audioFrames.resize(lastFrameCount);
+        auto ad1 = reinterpret_cast<float*>(audioFrames.data());
+        auto ad2 = reinterpret_cast<float*>(cFrame->audioFrames.data());
+        std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
+    }
+
+    // copy imu sample
+    cFrame->imuSample = imuSample;
+
     return cFrame;
 }
 
 
 
-void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d, const Parameters &p,
+void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *dFrame, const Parameters &p,
     std::optional<k4a::image> color,
     std::optional<k4a::image> depth,
     std::optional<k4a::image> infra,
     std::optional<k4a::image> cloud){
 
     // init depth frame
-    float min=0.f,max =0.f,diff = 0.f;
     const std_v1<Pt3f> depthGradient ={
         {0.f,0.f,1.f},
         {0.f,1.f,1.f},
@@ -1140,24 +1213,13 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
         {1.f,0.f,0.f},
     };
 
-//    const std_v1<Pt3f> infraGradient ={
-//        {0.f,0.f,1.f},
-//        {0.f,1.f,1.f},
-//        {0.f,1.f,0.f},
-//        {1.f,1.f,0.f},
-//        {1.f,0.f,0.f},
-//    };
-
     // send audio
     if(p.sendAudio && lastFrameCount != 0){
-        d->audioFramesCount = lastFrameCount;
-        for(size_t ii = 0; ii < d->audioChannelsData.size(); ++ii){
-            std::vector<float> &audioChannel = d->audioChannelsData[ii];
-            if(audioChannel.size() < d->audioFramesCount){
-                audioChannel.resize(d->audioFramesCount);
-            }
-            std::copy(std::begin(channelsData[ii]), std::begin(channelsData[ii]) + lastFrameCount, std::begin(audioChannel));
-        }
+        // copy audio frames
+        dFrame->audioFrames.resize(lastFrameCount);
+        auto ad1 = reinterpret_cast<float*>(audioFrames.data());
+        auto ad2 = reinterpret_cast<float*>(dFrame->audioFrames.data());
+        std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
     }
 
     // send color frame
@@ -1174,8 +1236,8 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
             height = color->get_height_pixels();
         }
 
-        d->colorFrame.width  = width;
-        d->colorFrame.height = height;
+        dFrame->colorFrame.width  = width;
+        dFrame->colorFrame.height = height;
 
         auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(color->get_buffer());
         std::vector<size_t> *ids;
@@ -1186,7 +1248,7 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
         }
 
         for_each(std::execution::par_unseq, std::begin(*ids), std::end(*ids), [&](size_t id){
-            d->colorFrame.pixels[id] = {
+            dFrame->colorFrame.pixels[id] = {
                 colorBuffer[id].z(),
                 colorBuffer[id].y(),
                 colorBuffer[id].x()
@@ -1203,25 +1265,17 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
 
         const size_t width = depth->get_width_pixels();
         const size_t height = depth->get_height_pixels();
-        const size_t size = width * height;
-        d->depthFrame.width  = width;
-        d->depthFrame.height = height;
-//        frame->depthFrame.pixels.resize(size);
+        dFrame->depthFrame.width  = width;
+        dFrame->depthFrame.height = height;
 
         auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
-
-        // find min/max
-//        const auto [pmin, pmax] = std::minmax_element(depthBuffer, depthBuffer + size);
-//        min = static_cast<float>(*pmin);
-//        max = static_cast<float>(*pmax);
-//        diff = max-min;
         const auto dRange = range(mode)*1000.f;
         const auto diff = dRange.y() - dRange.x();
 
         for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
 
             if(depthBuffer[id] == invalid_depth_value){
-                d->depthFrame.pixels[id] = {};
+                dFrame->depthFrame.pixels[id] = {};
                 return;
             }
 
@@ -1231,7 +1285,7 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
             size_t idG = static_cast<size_t>(intPart);
 
             auto col = depthGradient[idG]*(1.f-decPart) + depthGradient[idG+1]*decPart;
-            d->depthFrame.pixels[id] = {
+            dFrame->depthFrame.pixels[id] = {
                 static_cast<std::uint8_t>(255*col.x()),
                 static_cast<std::uint8_t>(255*col.y()),
                 static_cast<std::uint8_t>(255*col.z())
@@ -1248,8 +1302,8 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
 
         const size_t width = infra->get_width_pixels();
         const size_t height = infra->get_height_pixels();
-        d->infraredFrame.width  = width;
-        d->infraredFrame.height = height;
+        dFrame->infraredFrame.width  = width;
+        dFrame->infraredFrame.height = height;
 
         auto infraBuffer = reinterpret_cast<const uint16_t*>(infra->get_buffer());
 
@@ -1261,7 +1315,7 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
                 vF = max;
             }
             vF/=max;
-            d->infraredFrame.pixels[id] = {
+            dFrame->infraredFrame.pixels[id] = {
                 static_cast<std::uint8_t>(255*vF),
                 static_cast<std::uint8_t>(255*vF),
                 static_cast<std::uint8_t>(255*vF)
@@ -1277,9 +1331,7 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
         auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(color->get_buffer());
         auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
 
-        //frame->cloud.vertices.resize(validDepthValues);
-        //frame->cloud.colors.resize(validDepthValues);
-        d->cloud.validVerticesCount = validDepthValues;
+        dFrame->cloud.validVerticesCount = validDepthValues;
 
         size_t idV = 0;
         for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
@@ -1288,12 +1340,12 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
                 return;
             }
 
-            d->cloud.vertices[idV]= geo::Pt3f{
+            dFrame->cloud.vertices[idV]= geo::Pt3f{
                 static_cast<float>(-cloudBuffer[id].x()),
                 static_cast<float>(-cloudBuffer[id].y()),
                 static_cast<float>( cloudBuffer[id].z())
             }*0.01f;
-            d->cloud.colors[idV] = geo::Pt3f{
+            dFrame->cloud.colors[idV] = geo::Pt3f{
                 static_cast<float>(colorBuffer[id].z()),
                 static_cast<float>(colorBuffer[id].y()),
                 static_cast<float>(colorBuffer[id].x())
@@ -1302,6 +1354,9 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
             ++idV;
         });
     }
+
+    // copy imu sample
+    dFrame->imuSample = imuSample;
 }
 
 

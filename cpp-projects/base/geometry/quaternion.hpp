@@ -28,7 +28,7 @@
 
 // local
 #include "geometry/point3.hpp"
-#include "utility/maths_utility.hpp"
+#include "utility/math.hpp"
 
 namespace tool::geo {
 

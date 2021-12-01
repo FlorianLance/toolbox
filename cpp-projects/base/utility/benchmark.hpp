@@ -43,9 +43,9 @@ namespace tool {
         milliseconds, microseconds, nanoseconds
     };
 
-    constexpr static std::string_view milliUnitStr =  "ms"sv;
-    constexpr static std::string_view microUnitStr =  "μs"sv;
-    constexpr static std::string_view nanoUnitStr  =  "ns"sv;
+    [[maybe_unused]] constexpr static std::string_view milliUnitStr =  "ms"sv;
+    [[maybe_unused]] constexpr static std::string_view microUnitStr =  "μs"sv;
+    [[maybe_unused]] constexpr static std::string_view nanoUnitStr  =  "ns"sv;
 
     struct Bench{
 

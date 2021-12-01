@@ -214,6 +214,7 @@ namespace tool::camera::K4{
         unsigned char jpegCompressionRate = 80;
 
         // # neigbhours
+        float maxLocalDiff = 10.f;
         unsigned char nbMinNeighboursNb = 1;
         unsigned char minNeighboursLoops = 1;
 
@@ -231,21 +232,32 @@ namespace tool::camera::K4{
         bool sendAudio                  = true;
     };
 
+    struct ImuSample{
+        float temperature;     /**< Temperature reading of this sample (Celsius). */
+        geo::Pt3f acc;         /**< Accelerometer sample in meters per second squared. */
+        std::int64_t accTsMs;  /**< Timestamp of the accelerometer in microseconds. */
+        geo::Pt3f gyr;         /**< Gyro sample in radians per second. */
+        std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
+    };
+
     // compressed data (to be sended throught network)
     struct CompressedDataFrame{
 
         Mode mode;
         k4a_calibration_t calibration;
 
-        size_t colorWidth;
-        size_t colorHeight;
+        size_t validVerticesCount = 0;
+        size_t colorWidth = 0;
+        size_t colorHeight = 0;
         std::vector<std::uint8_t> colorBuffer;
-        size_t depthWidth;
-        size_t depthHeight;
+        size_t depthWidth = 0;
+        size_t depthHeight = 0;
         std::vector<std::uint32_t> depthBuffer;
-        size_t infraWidth;
-        size_t infraHeight;
+        size_t infraWidth = 0;
+        size_t infraHeight = 0;
         std::vector<std::uint32_t> infraBuffer;
+        std::vector<std::array<float, 7>> audioFrames;
+        ImuSample imuSample;
     };
 
     // image display data (color,depth,infrared)
@@ -255,11 +267,11 @@ namespace tool::camera::K4{
         std::vector<geo::Pt3<std::uint8_t>> pixels;
     };
 
-    struct PixelsHRFrame{
-        size_t width = 0;
-        size_t height = 0;
-        std::vector<geo::Pt3f> pixels;
-    };
+//    struct PixelsHRFrame{
+//        size_t width = 0;
+//        size_t height = 0;
+//        std::vector<geo::Pt3f> pixels;
+//    };
 
     // colored cloud display data
     struct ColoredCloudFrame{
@@ -269,23 +281,21 @@ namespace tool::camera::K4{
         // std::vector<geo::Pt3f> normals;
     };
 
-
     // colored voxels display data
-    struct ColoredVoxelsFrame{
-        size_t validVoxelsCount = 0;
-        std::vector<geo::Pt3<int>> voxels;
-        std::vector<geo::Pt3f> colors;
-    };
-
+//    struct ColoredVoxelsFrame{
+//        size_t validVoxelsCount = 0;
+//        std::vector<geo::Pt3<int>> voxels;
+//        std::vector<geo::Pt3f> colors;
+//    };
 
     // display data frame (to be displayed in a client)
     struct DisplayDataFrame{
-        size_t audioFramesCount = 0;
-        std::array<std::vector<float>, 7> audioChannelsData;
         PixelsFrame colorFrame;
         PixelsFrame depthFrame;
         PixelsFrame infraredFrame;
         ColoredCloudFrame cloud;
+        std::vector<std::array<float, 7>> audioFrames;
+        ImuSample imuSample;
     };
 
 

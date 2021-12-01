@@ -39,7 +39,7 @@
 
 // base
 #include "geometry/matrix4.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 #include "graphics/camera.hpp"
 
 // opengl-utility

@@ -25,13 +25,11 @@
 #pragma once
 
 // local
-#include "types_utility.hpp"
-#include "vector_utility.hpp"
-#include "array_utility.hpp"
-#include "constants_utility.hpp"
-#include "maths_utility.hpp"
-#include "string_utility.hpp"
-#include "mouse_utility.hpp"
-#include "keyboard_utility.hpp"
-#include "files.hpp"
-#include "view.hpp"
+#include "utility/types.hpp"
+#include "utility/vector.hpp"
+#include "utility/array.hpp"
+#include "utility/constants.hpp"
+#include "utility/math.hpp"
+#include "utility/string.hpp"
+#include "utility/io.hpp"
+#include "utility/view.hpp"

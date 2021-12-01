@@ -30,7 +30,7 @@
 // std
 #include <memory>
 
-namespace tool::camera {
+namespace tool::data {
 
     class IntegersEncoder{
 

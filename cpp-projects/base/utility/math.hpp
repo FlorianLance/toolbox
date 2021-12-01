@@ -1,5 +1,4 @@
 
-
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -24,67 +23,43 @@
 ** DEALINGS IN THE SOFTWARE.                                                  **
 **                                                                            **
 ********************************************************************************/
+#pragma once
 
-#include "integers_encoder.hpp"
+// std
+#include <limits>
 
-#pragma warning( disable : 4100 )
-#pragma warning( disable : 4267 )
+// local
+#include "utility/constants.hpp"
 
-// fastfor
-#include "fastpfor/codecfactory.h"
-#include "fastpfor/deltautil.h"
+namespace tool {
 
-
-using namespace tool::data;
-
-struct IntegersEncoder::Impl{
-    std::shared_ptr<FastPForLib::IntegerCODEC> codec = nullptr;
-    Impl(){}
-};
-
-IntegersEncoder::IntegersEncoder() : m_p(std::make_unique<IntegersEncoder::Impl>()){
-    m_p->codec = std::shared_ptr<FastPForLib::IntegerCODEC>(new FastPForLib::CompositeCodec<FastPForLib::SIMDFastPFor<8>, FastPForLib::VariableByte>());
+template <typename acc>
+constexpr acc ipow(acc num, unsigned int pow){
+    return (pow >= sizeof(unsigned int)*8) ? 0 : pow == 0 ? 1 : num * ipow(num, pow-1);
 }
 
-IntegersEncoder::~IntegersEncoder(){}
+// constexpr function not available in current std library
+template<typename acc> constexpr acc abs(acc v){ return v<0?-v:v;}
 
-size_t IntegersEncoder::encode(uint32_t *inputData, size_t sizeInput, uint32_t *compressedData, size_t outputFullSize){
+template<class acc>
+constexpr static acc deg_2_rad(const acc deg)noexcept {return deg*PI_180<acc>;}
 
-    try{
-        m_p->codec->encodeArray(
-            inputData, sizeInput,
-            compressedData, outputFullSize
-        );
-    }catch(std::exception e){
-        std::cerr << "Error encode array: " << e.what() << "\n";
-        return 0;
-    }catch(...){
-        std::cerr << "Error encode array: unknow error \n";
-        return 0;
-    }
+template<class acc>
+constexpr static acc rad_2_deg(const acc rad)noexcept {return rad*d180_PI<acc>;}
 
-    return outputFullSize;
+template<class acc>
+constexpr typename std::enable_if<std::numeric_limits<acc>::is_integer, bool>::type almost_equal(acc x, acc y, int ulp = 1) noexcept{
+    (void)ulp;
+    return x == y;
 }
 
-size_t IntegersEncoder::decode(uint32_t *codedData, size_t sizeCoded, uint32_t *decodedData, size_t sizeOriginalData){
-
-    try{
-        m_p->codec->decodeArray(
-            codedData, sizeCoded,
-            decodedData, sizeOriginalData
-        );
-    }catch(std::exception e){
-        std::cerr << "Error decode array: " << e.what() << "\n";
-        return 0;
-    }catch(...){
-        std::cerr << "Error decode array: unknow error \n";
-        return 0;
-    }
-
-    return sizeOriginalData;
+template<class acc>
+constexpr typename std::enable_if<!std::numeric_limits<acc>::is_integer, bool>::type almost_equal(acc x, acc y, int ulp = 1) noexcept{
+    // the machine epsilon has to be scaled to the magnitude of the values used
+    // and multiplied by the desired precision in ULPs (units in the last place)
+    const acc diff = abs<acc>(x-y);
+    return diff < std::numeric_limits<acc>::epsilon() * abs<acc>(x+y) * ulp
+    // unless the result is subnormal
+           || diff < std::numeric_limits<acc>::min();
 }
-
-#pragma warning( default : 4100 )
-#pragma warning( default : 4267 )
-
-
+}

@@ -27,8 +27,8 @@
 #include "shapes.hpp"
 
 // base
-#include "utility/constants_utility.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/constants.hpp"
+#include "utility/vector.hpp"
 //#include "geometry/matrix3.hpp"
 
 using namespace tool;

@@ -33,9 +33,9 @@
 #include <QPolygonF>
 
 // base
-#include "utility/keyboard_utility.hpp"
-#include "utility/mouse_utility.hpp"
-#include "utility/types_utility.hpp"
+#include "input/keyboard.hpp"
+#include "input/mouse.hpp"
+#include "utility/types.hpp"
 #include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
 

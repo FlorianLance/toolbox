@@ -130,7 +130,7 @@ struct Kinect2::Impl{
     std::unique_ptr<std_a1<Pt3f, depth_count>> depthDataTemporal = nullptr;    
     cv::Mat binaryDepth;
     cv::Mat erodedBinaryDepth;
-    IntegersEncoder depthCompressor;
+    data::IntegersEncoder depthCompressor;
     CloudDataUP cloudData  = nullptr;
     unsigned short* depthBuffer = nullptr;
     unsigned int depthBufferSize = 0;
@@ -163,6 +163,7 @@ struct Kinect2::Impl{
         indicesDepths.resize(depth_count);
         std::iota(std::begin(indicesDepths), std::end(indicesDepths), 0);
 
+        // ?
         indicesDepthsWithoutBorders.resize((depth_width-2)*(depth_height-2));
         size_t count = 0;
         for(size_t ii = 0; ii < depth_height; ++ii){

@@ -17,14 +17,11 @@
 //
 #include "k4amicrophone.h"
 
-namespace k4a
-{
+namespace k4a{
+
 constexpr size_t K4AMicrophoneSampleRate = 48000;
-
-struct K4AMicrophoneFrame
-{
+struct K4AMicrophoneFrame{
     static constexpr size_t ChannelCount = 7;
-
     float Channel[ChannelCount];
 };
 

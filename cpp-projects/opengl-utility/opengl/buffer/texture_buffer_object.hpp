@@ -29,7 +29,7 @@
 
 // base
 #include "geometry/point3.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 #include "graphics/texture.hpp"
 
 // local

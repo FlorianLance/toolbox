@@ -36,8 +36,8 @@
 #include "geometry/point3.hpp"
 #include "geometry/point4.hpp"
 #include "geometry/voxel.hpp"
-#include "utility/vector_utility.hpp"
-#include "utility/string_utility.hpp"
+#include "utility/vector.hpp"
+#include "utility/string.hpp"
 #include "utility/tuple_array.hpp"
 
 namespace tool::camera::K2{

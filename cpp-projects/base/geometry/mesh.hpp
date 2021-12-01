@@ -38,8 +38,8 @@
 #include "geometry/matrix4.hpp"
 #include "geometry/triangle3.hpp"
 #include "geometry/shapes/aabb3.hpp"
-#include "utility/vector_utility.hpp"
-#include "utility/string_utility.hpp"
+#include "utility/vector.hpp"
+#include "utility/string.hpp"
 
 
 namespace tool::geo {

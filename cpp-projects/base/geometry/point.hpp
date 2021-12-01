@@ -33,7 +33,7 @@
 #include <algorithm>
 
 // local
-#include "utility/array_utility.hpp"
+#include "utility/array.hpp"
 
 namespace tool::geo {
 

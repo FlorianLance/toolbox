@@ -57,7 +57,7 @@ typedef void (__stdcall * SignalDoubleCB)(int, int,double);
 typedef void (__stdcall * SignalStringCB)(int, int,const char*);
 
 // local
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 
 namespace tool::ex {
 

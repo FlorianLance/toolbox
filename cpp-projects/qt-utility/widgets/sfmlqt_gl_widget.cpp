@@ -44,7 +44,7 @@
 // base
 #include "geometry/point3.hpp"
 #include "geometry/matrix4.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 
 using namespace tool::ui;
 using namespace tool::geo;

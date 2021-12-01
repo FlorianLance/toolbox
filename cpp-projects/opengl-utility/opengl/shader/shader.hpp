@@ -40,7 +40,7 @@
 
 // base
 #include "utility/tuple_array.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 #include "geometry/point2.hpp"
 #include "geometry/matrix4.hpp"
 #include "graphics/camera.hpp"

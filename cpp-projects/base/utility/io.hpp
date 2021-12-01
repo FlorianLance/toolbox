@@ -26,40 +26,53 @@
 #pragma once
 
 // std
-#include <limits>
+#include <fstream>
+#include <ostream>
+#include <vector>
 
-// local
-#include "utility/constants_utility.hpp"
+namespace tool{
 
-namespace tool {
-
-template <typename acc>
-constexpr acc ipow(acc num, unsigned int pow){
-    return (pow >= sizeof(unsigned int)*8) ? 0 : pow == 0 ? 1 : num * ipow(num, pow-1);
+// write
+template<typename T>
+void write(std::ofstream &file, T value){
+    file.write(reinterpret_cast<char*>(&value), sizeof(T));
+}
+template<typename T>
+void write(std::ofstream &file, T *value){
+    file.write(reinterpret_cast<char*>(value), sizeof(T));
+}
+template<typename T>
+void write_array(std::ofstream &file, T *value, size_t size){
+    if(size > 0 ){
+        file.write(reinterpret_cast<char*>(value), sizeof(T)*size);
+    }
 }
 
-// constexpr function not available in current std library
-template<typename acc> constexpr acc abs(acc v){ return v<0?-v:v;}
-
-template<class acc>
-constexpr static acc deg_2_rad(const acc deg)noexcept {return deg*PI_180<acc>;}
-
-template<class acc>
-constexpr static acc rad_2_deg(const acc rad)noexcept {return rad*d180_PI<acc>;}
-
-template<class acc>
-constexpr typename std::enable_if<std::numeric_limits<acc>::is_integer, bool>::type almost_equal(acc x, acc y, int ulp = 1) noexcept{
-    (void)ulp;
-    return x == y;
+// read
+template<typename T>
+T read(std::ifstream &file){
+    T value;
+    file.read(reinterpret_cast<char*>(&value), sizeof(T));
+    return value;
 }
 
-template<class acc>
-constexpr typename std::enable_if<!std::numeric_limits<acc>::is_integer, bool>::type almost_equal(acc x, acc y, int ulp = 1) noexcept{
-    // the machine epsilon has to be scaled to the magnitude of the values used
-    // and multiplied by the desired precision in ULPs (units in the last place)
-    const acc diff = abs<acc>(x-y);
-    return diff < std::numeric_limits<acc>::epsilon() * abs<acc>(x+y) * ulp
-    // unless the result is subnormal
-           || diff < std::numeric_limits<acc>::min();
+template<typename T>
+void read(std::ifstream &file, T *value){
+    file.read(reinterpret_cast<char*>(value), sizeof(T));
 }
+template<typename T>
+void read_array(std::ifstream &file, T *value, size_t size){
+    if(size > 0){
+        file.read(reinterpret_cast<char*>(value), sizeof(T)*size);
+    }
+}
+
+template<typename T>
+std::vector<T> read(std::ifstream &file, size_t size){
+    std::vector<T> values(size);
+    file.read(reinterpret_cast<char*>(values.data()), sizeof(T)*size);
+    return values;
+}
+
+
 }

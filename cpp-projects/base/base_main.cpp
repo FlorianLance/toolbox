@@ -36,12 +36,13 @@
 
 // local
 #include "utility/logger.hpp"
+#include "utility/benchmark.hpp"
+#include "utility/io.hpp"
 #include "camera/kinect2.hpp"
 #include "camera/kinect4.hpp"
 #include "data/integers_encoder.hpp"
 #include "graphics/texture.hpp"
-#include "utility/benchmark.hpp"
-#include "utility/files.hpp"
+#include "files/cloud_io.hpp"
 
 using namespace tool;
 
@@ -202,7 +203,8 @@ void kinect4_test(){
             auto &cloudF = frame->cloud;
             std::cout << "c: " << cloudF.validVerticesCount << "\n";
             if(cloudF.validVerticesCount > 0){
-                if(!tool::files::save_cloud(pathCloud, cloudF.vertices.data(), cloudF.colors.data(), cloudF.validVerticesCount)){
+
+                if(!tool::files::CloudIO::save_cloud<float>(pathCloud, cloudF.vertices.data(), cloudF.colors.data(), cloudF.validVerticesCount)){
                     Logger::error("Failed cloud.\n");
                 }
             }
@@ -218,7 +220,7 @@ void kinect4_test(){
 
         size_t idFrame = 0;
         tjhandle jpegUncompressor = tjInitDecompress();
-        tool::camera::IntegersEncoder depthCompressor;
+        tool::data::IntegersEncoder depthCompressor;
         for(const auto &cFrame : compressedFrames){
 
 
@@ -371,7 +373,7 @@ void kinect4_test(){
                     }/255.f;
                 }
 
-                if(!tool::files::save_cloud(pathCloud, cloud.vertices.data(), cloud.colors.data(), cloud.validVerticesCount)){
+                if(!tool::files::CloudIO::save_cloud(pathCloud, cloud.vertices.data(), cloud.colors.data(), cloud.validVerticesCount)){
                     Logger::error("Faild uncompressed cloud.\n");
                 }
             }

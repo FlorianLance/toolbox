@@ -27,7 +27,7 @@
 
 // base
 #include "geometry/point4.hpp"
-#include "utility/vector_utility.hpp"
+#include "utility/vector.hpp"
 
 using namespace tool;
 using namespace tool::gl;

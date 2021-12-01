@@ -34,8 +34,8 @@
 
 
 // local
-#include "vector_utility.hpp"
-#include "maths_utility.hpp"
+#include "utility/vector.hpp"
+#include "utility/math.hpp"
 
 namespace tool {
 

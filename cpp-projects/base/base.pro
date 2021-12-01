@@ -118,19 +118,11 @@ LIBS += \
 ####################################### PROJECT FILES
 
 HEADERS += \
-    # files    
-    camera/k4a/k4aaudiochanneldatagraph.h \
-    camera/k4a/k4aaudiomanager.h \
-    camera/k4a/k4aaudiowindow.h \
-    camera/k4a/k4adevicecorrelator.h \
-    camera/k4a/k4amicrophone.h \
-    camera/k4a/k4amicrophonelistener.h \
-    camera/k4a/k4asoundio_util.h \
-    camera/kinect2_settings_files.hpp \
-    camera/kinect4_utility.hpp \
+    # files
+    files/cloud_io.hpp \
     files/assimp_loader.hpp \
     # geometry
-    ## shapes
+    ## shapes    
     geometry/geometry.hpp \
     geometry/transform.hpp \
     geometry/shapes/aabb3.hpp \
@@ -169,26 +161,27 @@ HEADERS += \
     graphics/texture.hpp \
     graphics/model.hpp \
     graphics/camera.hpp \
+    # input
+    input/joypad.hpp \
+    input/mouse.hpp \
+    input/keyboard.hpp \
     # network
-    # utility
     network/network_interface.hpp \
+    # utility    
+    utility/array.hpp \
     utility/benchmark.hpp \
-    utility/joypad_utility.hpp \
+    utility/constants.hpp \
+    utility/io.hpp \
+    utility/math.hpp \
+    utility/string.hpp \
+    utility/thread.hpp \
+    utility/types.hpp \
+    utility/vector.hpp \
     utility/logger.hpp \
-    utility/mouse_utility.hpp \
-    utility/thread_utility.hpp \
     utility/tuple_array.hpp \
     utility/utility.hpp \
     utility/view.hpp \
     utility/time.hpp \
-    utility/files.hpp \
-    utility/vector_utility.hpp \
-    utility/types_utility.hpp \
-    utility/array_utility.hpp \
-    utility/constants_utility.hpp \
-    utility/maths_utility.hpp \
-    utility/string_utility.hpp \
-    utility/keyboard_utility.hpp \    
     # exvr
     exvr/ex_component.hpp \
     # algorithms
@@ -196,6 +189,15 @@ HEADERS += \
     # tests
     tests/marching_cube_test.hpp \
     # camera
+    camera/k4a/k4aaudiochanneldatagraph.h \
+    camera/k4a/k4aaudiomanager.h \
+    camera/k4a/k4aaudiowindow.h \
+    camera/k4a/k4adevicecorrelator.h \
+    camera/k4a/k4amicrophone.h \
+    camera/k4a/k4amicrophonelistener.h \
+    camera/k4a/k4asoundio_util.h \
+    camera/kinect2_settings_files.hpp \
+    camera/kinect4_utility.hpp \
     camera/kinect2_data_types.hpp \
     camera/kinect2_network_types.hpp \
     camera/kinect4_data_types.hpp \
@@ -212,8 +214,17 @@ HEADERS += \
     thirdparty/stb/stb_image_write.h \
 
 SOURCES += \
+    # main
     base_main.cpp \
-    # files        
+    # files
+    files/assimp_loader.cpp \
+    files/cloud_io.cpp \
+    # graphics
+    graphics/texture.cpp \
+    # utility    
+    utility/benchmark.cpp \
+    utility/logger.cpp \
+    # camera
     camera/k4a/k4aaudiochanneldatagraph.cpp \
     camera/k4a/k4aaudiomanager.cpp \
     camera/k4a/k4aaudiowindow.cpp \
@@ -222,13 +233,6 @@ SOURCES += \
     camera/k4a/k4amicrophonelistener.cpp \
     camera/kinect2_settings_files.cpp \
     camera/kinect4_utility.cpp \
-    files/assimp_loader.cpp \
-    # graphics
-    graphics/texture.cpp \
-    # utility    
-    utility/benchmark.cpp \
-    utility/logger.cpp \
-    # camera
     camera/kinect2_data_types.cpp \
     camera/kinect4.cpp \
     camera/kinect2_manager.cpp \
