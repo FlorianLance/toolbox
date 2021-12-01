@@ -903,6 +903,9 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
     auto minD = p.minDepthValue < dRange.x() ? static_cast<std::int16_t>(dRange.x()) : p.minDepthValue;
     auto maxD = p.maxDepthValue > dRange.y() ? static_cast<std::int16_t>(dRange.y()) : p.maxDepthValue;
 
+    const auto res = depth_resolution(mode);
+
+
     for_each(std::execution::par_unseq, std::begin(indicesDepths3D), std::end(indicesDepths3D), [&](const Pt3<size_t> &dIndex){
 
         const size_t id = dIndex.x();
@@ -935,10 +938,8 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
 
         // color filtering
         if(colorImage.has_value() && p.filterDepthWithColor){
-
             auto delta = norm(colorBuffer[id].xyz().conv<int>()-p.filterColor.conv<int>());
             if(delta > p.maxDiffColor.x()){
-                depthBuffer[id] = invalid_depth_value;
                 return;
             }
 
@@ -955,8 +956,8 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
     });
 
     const bool doLocalDiffFiltering = true;
-    const size_t widthPlusOne  = depthImage.get_width_pixels() +1;
-    const size_t widthMinusOne = depthImage.get_height_pixels() -1;
+    const size_t widthPlusOne  = res.x() +1;
+    const size_t widthMinusOne = res.x() -1;
 
     if(doLocalDiffFiltering){
         const float mLocal =  parameters.maxLocalDiff;
@@ -1012,9 +1013,9 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
             }
 
             depthMask[id] = (count == 0) ? false : (1.*meanDiff/count < mLocal);
-            if(rand()%1000 == 0){
-                Logger::message(std::format("{} {} {} | ", meanDiff, count, (1.*meanDiff/count)));
-            }
+//            if(rand()%1000 == 0){
+//                Logger::message(std::format("{} {} {} | ", meanDiff, count, (1.*meanDiff/count)));
+//            }
         });
     }
 
