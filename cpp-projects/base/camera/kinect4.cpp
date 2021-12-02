@@ -541,7 +541,6 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         indicesDepths3D.resize(depthSize);
         indicesDepths1DNoBorders.reserve((depthWidth-2)*(depthHeight-2));
         size_t id = 0;
-        size_t idNoBorders = 0;
         for(size_t ii = 0; ii < depthHeight; ++ii){
             for(size_t jj = 0; jj < depthWidth; ++jj){
                 indicesDepths3D[id] = {id,ii,jj};
@@ -967,6 +966,9 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
                 return;
             }
 
+            // A B C
+            // D I E
+            // F G H
             float meanDiff = 0;
             size_t count = 0;
             float currDepth = depthBuffer[id];
@@ -978,6 +980,47 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
             const size_t idF = id + widthMinusOne;
             const size_t idG = idF + 1;
             const size_t idH = idG + 1;
+
+
+            // B I G
+            // A I H
+            // F I C
+//            float diffH = -1.f; // D I E
+//            if(depthMask[idD] && depthMask[idE]){
+//                diffH = (abs(depthBuffer[idD]-currDepth) + abs(depthBuffer[idE]-currDepth))/3.f;
+//            }
+//            if(diffH > mLocal){
+//                depthMask[id] = false;
+//                return;
+//            }
+
+//            float diffV = -1.f; // B I G
+//            if(depthMask[idB] && depthMask[idG]){
+//                diffV = (abs(depthBuffer[idB]-currDepth) + abs(depthBuffer[idG]-currDepth))/3.f;
+//            }
+//            if(diffV > mLocal){
+//                depthMask[id] = false;
+//                return;
+//            }
+
+//            float diffD1 = -1.f; // A I H
+//            if(depthMask[idA] && depthMask[idH]){
+//                diffD1 = (abs(depthBuffer[idA]-currDepth) + abs(depthBuffer[idH]-currDepth))/3.f;
+//            }
+//            if(diffD1 > mLocal){
+//                depthMask[id] = false;
+//                return;
+//            }
+
+//            float diffD2 = -1.f; // F I C
+//            if(depthMask[idF] && depthMask[idC]){
+//                diffD2 = (abs(depthBuffer[idF]-currDepth) + abs(depthBuffer[idC]-currDepth))/3.f;
+//            }
+//            if(diffD2 > mLocal){
+//                depthMask[id] = false;
+//                return;
+//            }
+//            depthMask[id] = (count == 0) ? false : (1.*meanDiff/count < mLocal);
 
             if(depthMask[idA]){
                 meanDiff += abs(depthBuffer[idA]-currDepth);
@@ -1013,9 +1056,6 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
             }
 
             depthMask[id] = (count == 0) ? false : (1.*meanDiff/count < mLocal);
-//            if(rand()%1000 == 0){
-//                Logger::message(std::format("{} {} {} | ", meanDiff, count, (1.*meanDiff/count)));
-//            }
         });
     }
 

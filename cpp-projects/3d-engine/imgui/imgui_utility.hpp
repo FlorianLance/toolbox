@@ -32,4 +32,9 @@ static auto vector_getter = [](void* vec, int idx, const char** out_text){
     }
     return ListBox(label, currIndex, vector_getter,static_cast<void*>(&values), values.size());
 }
+
+[[maybe_unused]] static void Text(const std::string &text){
+    auto d = text.c_str();
+    ImGui::Text(d, d + text.size());
+}
 }

@@ -44,6 +44,10 @@ public:
     void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame);
     void clean_frames();
     void set_transform(size_t idCamera, geo::Mat4d tr);
+    geo::Mat4d get_transform(size_t idCamera) const;
+
+    std::int64_t start_time(size_t idCamera) const;
+    std::int64_t end_time(size_t idCamera) const;
 
     bool save_to_file(const std::string &path);
     bool load_from_file(const std::string &path);

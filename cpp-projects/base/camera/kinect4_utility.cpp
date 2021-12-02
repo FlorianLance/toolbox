@@ -50,6 +50,7 @@
 #include "utility/logger.hpp"
 #include "data/integers_encoder.hpp"
 
+using namespace tool::geo;
 using namespace tool::camera::K4;
 
 struct CompressedFramesManager::Impl{
@@ -122,6 +123,34 @@ void CompressedFramesManager::set_transform(size_t idCamera, geo::Mat4d tr){
     }
     Logger::error("[CompressedFramesManager] Cannot set transform, invalid camera id.\n");
 }
+
+tool::geo::Mat4d CompressedFramesManager::get_transform(size_t idCamera) const{
+    if(idCamera < m_p->transforms.size()){
+        return m_p->transforms[idCamera];
+    }
+    Logger::error("[CompressedFramesManager] Cannot get transform, invalid camera id.\n");
+    return geo::Mat4d::identity();
+}
+
+std::int64_t CompressedFramesManager::start_time(size_t idCamera) const{
+    if(idCamera < m_p->framesPerCamera.size()){
+        if(m_p->framesPerCamera[idCamera].size() > 0){
+            return std::get<1>(m_p->framesPerCamera[idCamera][0]);
+        }
+    }
+    return -1;
+}
+
+int64_t CompressedFramesManager::end_time(size_t idCamera) const{
+    if(idCamera < m_p->framesPerCamera.size()){
+        if(m_p->framesPerCamera[idCamera].size() > 0){
+            return std::get<1>(m_p->framesPerCamera[idCamera][m_p->framesPerCamera[idCamera].size()-1]);
+        }
+    }
+    return -1;
+}
+
+//auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 bool CompressedFramesManager::save_to_file(const std::string &path){
 
