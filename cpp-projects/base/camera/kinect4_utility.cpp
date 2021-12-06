@@ -116,6 +116,20 @@ CompressedDataFrame *CompressedFramesManager::get_frame(size_t idFrame, size_t i
     return nullptr;
 }
 
+size_t CompressedFramesManager::frame_id(size_t idCamera, float timeMs){
+
+    const auto start = start_time(idCamera);
+    size_t idFrame = 0;
+    for(const auto &frame : m_p->framesPerCamera[idCamera]){
+        auto frameTimeMs = (std::get<1>(frame)-start)*0.000001f;
+        if(timeMs < frameTimeMs){
+            return idFrame;
+        }
+        idFrame = std::get<0>(frame);
+    }
+    return idFrame;
+}
+
 void CompressedFramesManager::set_transform(size_t idCamera, geo::Mat4d tr){
     if(idCamera < m_p->transforms.size()){
         m_p->transforms[idCamera] = tr;
@@ -431,6 +445,30 @@ bool CompressedFramesManager::uncompress_infra(CompressedDataFrame *cFrame, std:
     return true;
 }
 
+std::vector<float> CompressedFramesManager::audio_samples(size_t idCamera, size_t idChannel){
+
+    const auto &frames = m_p->framesPerCamera[idCamera];
+
+    size_t count = 0;
+    for(const auto &frame : frames){
+        auto data = std::get<2>(frame);
+        count += data->audioFrames.size();
+    }
+
+    std::vector<float> audioData;
+    audioData.reserve(count);
+
+    for(const auto &frame : frames){
+        const auto &data = std::get<2>(frame);
+        for(const auto &channelValue : data->audioFrames){
+            audioData.push_back(channelValue[idChannel]);
+        }
+    }
+
+
+    return audioData;
+}
+
 void CompressedFramesManager::convert_to_depth_image(Mode mode, CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth, std::vector<uint8_t> &imageDepth){
 
     // resize image buffer
@@ -566,18 +604,17 @@ void CompressedFramesManager::process_open3d_cloud(const std::vector<uint8_t> &u
 //    }
 }
 
-void CompressedFramesManager::convert_to_cloud(CompressedDataFrame *cFrame,
+void CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
         const std::vector<uint8_t> &uncompressedColor, const std::vector<std::uint16_t> &uncompressedDepth, ColoredCloudFrame &cloud){
 
     auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
 
     // resize cloud if necessary
-    const auto size = cFrame->validVerticesCount;
-    if(cloud.validVerticesCount < size){
-        cloud.vertices.resize(size);
-        cloud.colors.resize(size);
+    if(cloud.validVerticesCount < validVerticesCount){
+        cloud.vertices.resize(validVerticesCount);
+        cloud.colors.resize(validVerticesCount);
     }
-    cloud.validVerticesCount = size;
+    cloud.validVerticesCount = validVerticesCount;
 
     // resize depth indices
     if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
@@ -607,6 +644,31 @@ void CompressedFramesManager::convert_to_cloud(CompressedDataFrame *cFrame,
 
         ++idV;
     });
+}
+
+void CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
+                                               geo::Pt3f *vertices, geo::Pt3f *colors){
+
+    auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
+    size_t idV = 0;
+    for(size_t ii = 0; ii < uncompressedDepth.size(); ++ii){
+
+        if(uncompressedDepth[ii] == invalid_depth_value){
+            return;
+        }
+
+        vertices[idV]= geo::Pt3f{
+            static_cast<float>(-cloudBuffer[ii].x()),
+            static_cast<float>(-cloudBuffer[ii].y()),
+            static_cast<float>( cloudBuffer[ii].z())
+        }*0.01f;
+        colors[idV] = geo::Pt3f{
+            static_cast<float>(uncompressedColor[ii*4+0]),
+            static_cast<float>(uncompressedColor[ii*4+1]),
+            static_cast<float>(uncompressedColor[ii*4+2])
+        }/255.f;
+
+    }
 }
 
 void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize){

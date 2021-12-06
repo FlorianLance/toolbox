@@ -40,6 +40,7 @@ public:
     size_t nb_cameras() const noexcept;
     size_t nb_frames(size_t idCamera = 0) const noexcept;
     CompressedDataFrame *get_frame(size_t idFrame, size_t idCamera = 0);
+    size_t frame_id(size_t idCamera, float timeMs);
 
     void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame);
     void clean_frames();
@@ -55,6 +56,8 @@ public:
     bool uncompress_color(CompressedDataFrame *cFrame, std::vector<std::uint8_t> &uncompressedColor);
     bool uncompress_depth(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedDepth);
     bool uncompress_infra(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedInfra);
+
+    std::vector<float> audio_samples(size_t idCamera, size_t idChannel);
 
     void convert_to_depth_image(
         Mode mode,
@@ -73,10 +76,16 @@ public:
     void process_open3d_cloud(const std::vector<std::uint8_t> &uncompressedColor);
 
     void convert_to_cloud(
-        CompressedDataFrame *cFrame,
+        size_t validVerticesCount,
         const std::vector<std::uint8_t> &uncompressedColor,
         const std::vector<std::uint16_t> &uncompressedDepth,
         tool::camera::K4::ColoredCloudFrame &cloud);
+
+    void convert_to_cloud(
+        const std::vector<std::uint8_t> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        geo::Pt3f *vertices, geo::Pt3f *colors);
+
 
     void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);
     void voxelize(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);
