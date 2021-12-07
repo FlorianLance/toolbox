@@ -35,6 +35,48 @@
 
 namespace tool::str {
 
+[[maybe_unused]] static inline bool replace(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = str.find(from);
+    if(start_pos == std::string::npos){
+        return false;
+    }
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
+
+[[maybe_unused]] static inline void replace_all(std::string& str, const std::string& from, const std::string& to) {
+    if(from.empty()){
+        return;
+    }
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}
+
+static void replace_all2(std::string& source, const std::string& from, const std::string& to){
+
+    std::string newString;
+    newString.reserve(source.length());  // avoids a few memory allocations
+
+    std::string::size_type lastPos = 0;
+    std::string::size_type findPos;
+
+    while(std::string::npos != (findPos = source.find(from, lastPos))){
+        newString.append(source, lastPos, findPos - lastPos);
+        newString += to;
+        lastPos = findPos + from.length();
+    }
+
+    // Care for the rest after last occurrence
+    //newString += source.substr(lastPos);
+    newString.append(source, lastPos, source.length() - lastPos);
+
+    source.swap(newString);
+}
+
+
 [[maybe_unused]] static inline void remove_from_left(std::string &s, char delim){
     auto pos = s.find_last_of(delim);
     if(pos ==  std::string::npos){
@@ -117,23 +159,5 @@ namespace tool::str {
     return elems;
 }
 
-[[maybe_unused]] static inline bool replace(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = str.find(from);
-    if(start_pos == std::string::npos){
-        return false;
-    }
-    str.replace(start_pos, from.length(), to);
-    return true;
-}
 
-[[maybe_unused]] static inline void replace_all(std::string& str, const std::string& from, const std::string& to) {
-    if(from.empty()){
-        return;
-    }
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
-    }
-}
 }

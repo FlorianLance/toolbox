@@ -445,29 +445,78 @@ bool CompressedFramesManager::uncompress_infra(CompressedDataFrame *cFrame, std:
     return true;
 }
 
-std::vector<float> CompressedFramesManager::audio_samples(size_t idCamera, size_t idChannel){
+void CompressedFramesManager::audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer){
 
     const auto &frames = m_p->framesPerCamera[idCamera];
 
-    size_t count = 0;
+    size_t samplesCount = 0;
     for(const auto &frame : frames){
         auto data = std::get<2>(frame);
-        count += data->audioFrames.size();
+        samplesCount += data->audioFrames.size();
     }
 
-    std::vector<float> audioData;
-    audioData.reserve(count);
+
+    audioBuffer.resize(7);
+    for(auto &channelAudioBuffer : audioBuffer){
+        channelAudioBuffer.reserve(samplesCount);
+    }
 
     for(const auto &frame : frames){
-        const auto &data = std::get<2>(frame);
-        for(const auto &channelValue : data->audioFrames){
-            audioData.push_back(channelValue[idChannel]);
+        auto data = std::get<2>(frame);
+        for(size_t idChannel = 0; idChannel < 7; ++idChannel){
+            for(const auto &channelsData : data->audioFrames){
+                audioBuffer[idChannel].push_back(channelsData[idChannel]);
+            }
         }
+    }
+}
+
+void CompressedFramesManager::audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer){
+
+    const auto &frames = m_p->framesPerCamera[idCamera];
+    size_t samplesCount = 0;
+    for(const auto &frame : frames){
+        auto data = std::get<2>(frame);
+        samplesCount += data->audioFrames.size();
     }
 
 
-    return audioData;
+    audioBuffer.resize(samplesCount*7);
+
+    size_t id = 0;
+    for(const auto &frame : frames){
+        auto data = std::get<2>(frame);
+        for(const auto &channelsData : data->audioFrames){
+            for(size_t idChannel = 0; idChannel < 7; ++idChannel){
+                audioBuffer[id++] = channelsData[idChannel];
+            }
+        }
+    }
 }
+
+//std::vector<float> CompressedFramesManager::audio_samples(size_t idCamera, size_t idChannel){
+
+//    const auto &frames = m_p->framesPerCamera[idCamera];
+
+//    size_t count = 0;
+//    for(const auto &frame : frames){
+//        auto data = std::get<2>(frame);
+//        count += data->audioFrames.size();
+//    }
+
+//    std::vector<float> audioData;
+//    audioData.reserve(count);
+
+//    for(const auto &frame : frames){
+//        const auto &data = std::get<2>(frame);
+//        for(const auto &channelValue : data->audioFrames){
+//            audioData.push_back(channelValue[idChannel]);
+//        }
+//    }
+
+
+//    return audioData;
+//}
 
 void CompressedFramesManager::convert_to_depth_image(Mode mode, CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth, std::vector<uint8_t> &imageDepth){
 

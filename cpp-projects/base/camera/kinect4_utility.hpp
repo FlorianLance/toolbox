@@ -57,7 +57,9 @@ public:
     bool uncompress_depth(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedDepth);
     bool uncompress_infra(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedInfra);
 
-    std::vector<float> audio_samples(size_t idCamera, size_t idChannel);
+    void audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer);
+    void audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer);
+
 
     void convert_to_depth_image(
         Mode mode,

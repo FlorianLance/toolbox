@@ -7,6 +7,7 @@ SIGNALS_INCLUDES                     = $$TOOLBOX_CPP_THIRDPARTY_DIR"/signals"
 TINYPLY_INCLUDES                     = $$TOOLBOX_CPP_THIRDPARTY_DIR"/tinyply"
 IMGUI_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/imgui-master"
 CATCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/catch"
+AUDIOFILE_INCLUDES                   = $$TOOLBOX_CPP_THIRDPARTY_DIR"/audiofile"
 ############################ third-party others
 TURBOJPG_DIR                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libjpeg-turbo-2.0.3"
 FASTPFOR_DIR                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/FastPFor"
