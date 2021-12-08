@@ -130,6 +130,16 @@ size_t CompressedFramesManager::frame_id(size_t idCamera, float timeMs){
     return idFrame;
 }
 
+size_t CompressedFramesManager::valid_vertices_count(size_t idFrame, size_t idCamera){
+    if(idCamera < m_p->framesPerCamera.size()){
+        if(idFrame < m_p->framesPerCamera[idCamera].size()){
+            auto data = std::get<2>(m_p->framesPerCamera[idCamera][idFrame]);
+            return data->validVerticesCount;
+        }
+    }
+    return 0;
+}
+
 void CompressedFramesManager::set_transform(size_t idCamera, geo::Mat4d tr){
     if(idCamera < m_p->transforms.size()){
         m_p->transforms[idCamera] = tr;
@@ -261,6 +271,12 @@ bool CompressedFramesManager::load_from_file(const std::string &path){
     // read nb of cameras
     std::int8_t nbCameras;
     read(file, &nbCameras);
+
+    if(nbCameras < 1){
+        Logger::error(std::format("[CompressedFramesManager] Invalid cameras number from file: {}.\n", path));
+        return false;
+    }
+
     m_p->framesPerCamera.resize(nbCameras);
     m_p->transforms.resize(nbCameras);
 
@@ -491,6 +507,12 @@ void CompressedFramesManager::audio_samples_all_channels(size_t idCamera, std::v
                 audioBuffer[id++] = channelsData[idChannel];
             }
         }
+
+//        for(size_t idChannel = 0; idChannel < 7; ++idChannel){
+//            for(const auto &channelsData : data->audioFrames){
+//                audioBuffer[id++] = channelsData[idChannel];
+//            }
+//        }
     }
 }
 
@@ -696,28 +718,35 @@ void CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
 }
 
 void CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
-                                               geo::Pt3f *vertices, geo::Pt3f *colors){
+        geo::Pt3f *vertices, geo::Pt3f *colors){
+
+    // resize depth indices
+    if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
+        m_p->indicesDepths1D.resize(uncompressedDepth.size());
+        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
+    }
 
     auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
     size_t idV = 0;
-    for(size_t ii = 0; ii < uncompressedDepth.size(); ++ii){
+    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), [&](size_t id){
 
-        if(uncompressedDepth[ii] == invalid_depth_value){
+        if(uncompressedDepth[id] == invalid_depth_value){
             return;
         }
 
         vertices[idV]= geo::Pt3f{
-            static_cast<float>(-cloudBuffer[ii].x()),
-            static_cast<float>(-cloudBuffer[ii].y()),
-            static_cast<float>( cloudBuffer[ii].z())
+            static_cast<float>(-cloudBuffer[id].x()),
+            static_cast<float>(-cloudBuffer[id].y()),
+            static_cast<float>( cloudBuffer[id].z())
         }*0.01f;
         colors[idV] = geo::Pt3f{
-            static_cast<float>(uncompressedColor[ii*4+0]),
-            static_cast<float>(uncompressedColor[ii*4+1]),
-            static_cast<float>(uncompressedColor[ii*4+2])
+            static_cast<float>(uncompressedColor[id*4+0]),
+            static_cast<float>(uncompressedColor[id*4+1]),
+            static_cast<float>(uncompressedColor[id*4+2])
         }/255.f;
 
-    }
+        idV++;
+    });
 }
 
 void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize){

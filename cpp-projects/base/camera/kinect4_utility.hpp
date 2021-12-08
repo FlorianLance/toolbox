@@ -41,6 +41,7 @@ public:
     size_t nb_frames(size_t idCamera = 0) const noexcept;
     CompressedDataFrame *get_frame(size_t idFrame, size_t idCamera = 0);
     size_t frame_id(size_t idCamera, float timeMs);
+    size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0);
 
     void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame);
     void clean_frames();
