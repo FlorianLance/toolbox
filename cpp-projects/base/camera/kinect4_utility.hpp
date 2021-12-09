@@ -78,16 +78,21 @@ public:
 
     void process_open3d_cloud(const std::vector<std::uint8_t> &uncompressedColor);
 
-    void convert_to_cloud(
+    size_t convert_to_cloud(
         size_t validVerticesCount,
         const std::vector<std::uint8_t> &uncompressedColor,
         const std::vector<std::uint16_t> &uncompressedDepth,
         tool::camera::K4::ColoredCloudFrame &cloud);
 
-    void convert_to_cloud(
+    size_t convert_to_cloud(
         const std::vector<std::uint8_t> &uncompressedColor,
         const std::vector<std::uint16_t> &uncompressedDepth,
         geo::Pt3f *vertices, geo::Pt3f *colors);
+
+    size_t convert_to_cloud(
+        const std::vector<std::uint8_t> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        geo::Pt3f *vertices, geo::Pt4f *colors);
 
 
     void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);

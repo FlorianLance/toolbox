@@ -82,8 +82,12 @@ CompressedFramesManager::CompressedFramesManager() : m_p(std::make_unique<Compre
 
 void CompressedFramesManager::add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame){
     if(idCamera >= m_p->framesPerCamera.size()){
+
         m_p->framesPerCamera.resize(idCamera+1);
-        m_p->transforms.resize(idCamera+1);
+        while(m_p->transforms.size() != (idCamera+1)){
+            m_p->transforms.push_back(geo::Mat4d::identity());
+        }
+
     }
     auto idFrame = m_p->framesPerCamera[idCamera].size();
     m_p->framesPerCamera[idCamera].push_back(std::make_tuple(idFrame, timestamp, frame));
@@ -148,7 +152,7 @@ void CompressedFramesManager::set_transform(size_t idCamera, geo::Mat4d tr){
     Logger::error("[CompressedFramesManager] Cannot set transform, invalid camera id.\n");
 }
 
-tool::geo::Mat4d CompressedFramesManager::get_transform(size_t idCamera) const{
+tool::geo::Mat4d CompressedFramesManager::get_transform(size_t idCamera) const{    
     if(idCamera < m_p->transforms.size()){
         return m_p->transforms[idCamera];
     }
@@ -675,7 +679,7 @@ void CompressedFramesManager::process_open3d_cloud(const std::vector<uint8_t> &u
 //    }
 }
 
-void CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
+size_t CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
         const std::vector<uint8_t> &uncompressedColor, const std::vector<std::uint16_t> &uncompressedDepth, ColoredCloudFrame &cloud){
 
     auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
@@ -715,9 +719,10 @@ void CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
 
         ++idV;
     });
+    return idV;
 }
 
-void CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
+size_t CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
         geo::Pt3f *vertices, geo::Pt3f *colors){
 
     // resize depth indices
@@ -745,8 +750,41 @@ void CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncom
             static_cast<float>(uncompressedColor[id*4+2])
         }/255.f;
 
-        idV++;
+        ++idV;
     });
+    return idV;
+}
+
+size_t CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth, geo::Pt3f *vertices, geo::Pt4f *colors){
+    // resize depth indices
+    if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
+        m_p->indicesDepths1D.resize(uncompressedDepth.size());
+        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
+    }
+
+    auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
+    size_t idV = 0;
+    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), [&](size_t id){
+
+        if(uncompressedDepth[id] == invalid_depth_value){
+            return;
+        }
+
+        vertices[idV]= geo::Pt3f{
+            static_cast<float>(-cloudBuffer[id].x()),
+            static_cast<float>(-cloudBuffer[id].y()),
+            static_cast<float>( cloudBuffer[id].z())
+        }*0.01f;
+        colors[idV] = geo::Pt4f{
+            static_cast<float>(uncompressedColor[id*4+0]),
+            static_cast<float>(uncompressedColor[id*4+1]),
+            static_cast<float>(uncompressedColor[id*4+2]),
+            255.f
+        }/255.f;
+
+        ++idV;
+    });
+    return idV;
 }
 
 void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize){
