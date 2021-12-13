@@ -39,6 +39,7 @@
 #include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
 #include "geometry/point4.hpp"
+#include "geometry/matrix4.hpp"
 
 namespace tool::camera::K4{
 
@@ -240,6 +241,38 @@ namespace tool::camera::K4{
         std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
     };
 
+    struct VoxelData{
+        std::int64_t idX : 13, idY : 13, idZ : 14, r : 8, g : 8, b : 8;
+    };
+
+
+    // display
+    // # image display data (color,depth,infrared)
+    struct PixelsFrame{
+        size_t width = 0;
+        size_t height = 0;
+        std::vector<geo::Pt3<std::uint8_t>> pixels;
+    };
+
+    // colored cloud display data
+    struct ColoredCloudFrame{
+        size_t validVerticesCount = 0;
+        std::vector<geo::Pt3f> vertices;
+        std::vector<geo::Pt3f> colors;
+        // std::vector<geo::Pt3f> normals;
+    };
+
+    // # display data frame (to be displayed in a client)
+    struct DisplayDataFrame{
+        PixelsFrame colorFrame;
+        PixelsFrame depthFrame;
+        PixelsFrame infraredFrame;
+        ColoredCloudFrame cloud;
+        std::vector<std::array<float, 7>> audioFrames;
+        ImuSample imuSample;
+    };
+
+
     // compressed data (to be sended throught network)
     struct CompressedDataFrame{
 
@@ -258,47 +291,23 @@ namespace tool::camera::K4{
         std::vector<std::uint32_t> infraBuffer;
         std::vector<std::array<float, 7>> audioFrames;
         ImuSample imuSample;
+
+        size_t voxelsCount = 0;
+        std::vector<std::uint32_t> voxelsBuffer;
     };
 
-    // image display data (color,depth,infrared)
-    struct PixelsFrame{
-        size_t width = 0;
-        size_t height = 0;
-        std::vector<geo::Pt3<std::uint8_t>> pixels;
-    };
-
-//    struct PixelsHRFrame{
-//        size_t width = 0;
-//        size_t height = 0;
-//        std::vector<geo::Pt3f> pixels;
-//    };
-
-    // colored cloud display data
-    struct ColoredCloudFrame{
-        size_t validVerticesCount = 0;
-        std::vector<geo::Pt3f> vertices;
-        std::vector<geo::Pt3f> colors;
-        // std::vector<geo::Pt3f> normals;
-    };
-
-    // colored voxels display data
-//    struct ColoredVoxelsFrame{
-//        size_t validVoxelsCount = 0;
-//        std::vector<geo::Pt3<int>> voxels;
-//        std::vector<geo::Pt3f> colors;
-//    };
-
-    // display data frame (to be displayed in a client)
-    struct DisplayDataFrame{
-        PixelsFrame colorFrame;
-        PixelsFrame depthFrame;
-        PixelsFrame infraredFrame;
-        ColoredCloudFrame cloud;
-        std::vector<std::array<float, 7>> audioFrames;
-        ImuSample imuSample;
+    // uncompressed
+    struct UncompressedDataFrame{
+        // uncompressed data
+        std::vector<std::uint8_t> colorData;
+        std::vector<std::uint16_t> depthData;
+        std::vector<std::uint16_t> infraData;
+        // # cloud data
+        tool::camera::K4::ColoredCloudFrame cloud;
     };
 
 
+    // to be removed?
     struct FrameReadingTimings{
         std::chrono::nanoseconds startFrameReadingTS;
         std::chrono::nanoseconds afterCaptureTS;
@@ -318,9 +327,6 @@ namespace tool::camera::K4{
 
         std::chrono::nanoseconds endFrameReadingTS;
     };
-
-
-
 }
 
 

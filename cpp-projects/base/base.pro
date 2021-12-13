@@ -119,6 +119,8 @@ LIBS += \
 
 HEADERS += \
     # files
+    exvr/ex_resource.hpp \
+    exvr/ex_utility.hpp \
     files/cloud_io.hpp \
     files/assimp_loader.hpp \
     # geometry

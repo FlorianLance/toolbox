@@ -27,32 +27,62 @@
 #pragma once
 
 // local
-#include "geometry/matrix4.hpp"
 #include "kinect4_data_types.hpp"
 
 namespace tool::camera::K4{
 
-class CompressedFramesManager{
-public:
-    CompressedFramesManager();
-    ~CompressedFramesManager();
+enum class VolumetricVideoMode : std::int8_t{
+    Clouds = 0,Voxels
+};
 
+struct FrameData{
+    size_t idFrame;
+    std::int64_t timeStamp;
+    std::shared_ptr<CompressedDataFrame> data;
+};
+
+struct CameraData{
+    geo::Mat4d transform = geo::Mat4d::identity();
+    std::vector<FrameData> frames;
+};
+
+class VolumetricVideoResource{
+public:
+    VolumetricVideoResource();
+    ~VolumetricVideoResource();
+
+    VolumetricVideoMode mode() const noexcept;
     size_t nb_cameras() const noexcept;
     size_t nb_frames(size_t idCamera = 0) const noexcept;
     CompressedDataFrame *get_frame(size_t idFrame, size_t idCamera = 0);
+    std::vector<FrameData> *get_frames(size_t idCamera = 0);
+
     size_t frame_id(size_t idCamera, float timeMs);
     size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0);
-
-    void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame);
-    void clean_frames();
+    std::int64_t start_time(size_t idCamera) const;
+    std::int64_t end_time(size_t idCamera) const;
     void set_transform(size_t idCamera, geo::Mat4d tr);
     geo::Mat4d get_transform(size_t idCamera) const;
 
-    std::int64_t start_time(size_t idCamera) const;
-    std::int64_t end_time(size_t idCamera) const;
+    void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame);
+    void clean_frames();
 
     bool save_to_file(const std::string &path);
     bool load_from_file(const std::string &path);
+
+
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> m_p = nullptr;
+};
+
+
+class VolumetricVideoManager{
+public:
+    VolumetricVideoManager(VolumetricVideoResource *volumetricVideo);
+    ~VolumetricVideoManager();
+
 
     bool uncompress_color(CompressedDataFrame *cFrame, std::vector<std::uint8_t> &uncompressedColor);
     bool uncompress_depth(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedDepth);

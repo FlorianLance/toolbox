@@ -36,10 +36,6 @@
 #include <array>
 #include <mutex>
 
-typedef void (__stdcall * StrackTraceCB)(const char*);
-typedef void (__stdcall * LogCB)(const char*);
-typedef void (__stdcall * LogWarningCB)(const char*);
-typedef void (__stdcall * LogErrorCB)(const char*);
 typedef long (__stdcall * EllapsedTimeExpMsCB)();
 typedef long (__stdcall * EllapsedTimeRoutineMsCB)();
 typedef int (__stdcall * GetCB)(const char*);
@@ -57,6 +53,7 @@ typedef void (__stdcall * SignalDoubleCB)(int, int,double);
 typedef void (__stdcall * SignalStringCB)(int, int,const char*);
 
 // local
+#include "ex_utility.hpp"
 #include "utility/vector.hpp"
 
 namespace tool::ex {

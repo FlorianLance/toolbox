@@ -53,13 +53,370 @@
 using namespace tool::geo;
 using namespace tool::camera::K4;
 
-struct CompressedFramesManager::Impl{
+
+struct VolumetricVideoResource::Impl{
+    VolumetricVideoMode mode = VolumetricVideoMode::Clouds;
+    std::vector<CameraData> camData;
+
+    void read_file(std::ifstream &file){
+
+        // read mode
+//        std::int8_t mode;
+        read(file, &mode);
+//        mode = static_cast<VolumetricVideoMode>(mode);
+
+        // read nb of cameras
+        std::int8_t nbCameras;
+        read(file, &nbCameras);
+
+        camData.resize(nbCameras);
+
+        // read infos per camera
+        std::int32_t nbFrames;
+        for(auto &cameraData : camData){
+
+            // read nb frames
+            read(file, &nbFrames);
+
+            // create frames
+            cameraData.frames.reserve(nbFrames);
+            for(size_t ii = 0; ii < static_cast<size_t>(nbFrames); ++ii){
+                cameraData.frames.emplace_back(FrameData{0,0, std::make_shared<CompressedDataFrame>()});
+            }
+
+            // calibration matrix
+            read_array(file, cameraData.transform.array.data(), 16);
+        }
+
+        // read frames
+        size_t totalColorCompressed   = 0;
+        size_t totalColorUncompressed = 0;
+        size_t totalDepthCompressed   = 0;
+        size_t totalDepthUncompressed = 0;
+        size_t totalInfraCompressed   = 0;
+        size_t totalInfraUncompressed = 0;
+
+        for(auto &cameraData : camData){
+            for(auto &frame : cameraData.frames){
+                // read frame
+                auto fData = frame.data.get();
+                std::int32_t idFrame;
+                std::int64_t timestamp;
+                // # read frame info
+                read(file, &idFrame);
+                frame.idFrame = idFrame;
+                read(file, &timestamp);
+                frame.timeStamp = timestamp;
+
+                if(mode == VolumetricVideoMode::Clouds){
+
+                    read(file, &fData->mode);
+                    //Logger::message(std::format("id frame {} ts {}\n", idFrame, timestamp));
+                    read_array(file, reinterpret_cast<char*>(&fData->calibration), sizeof (k4a_calibration_t));
+                    std::int32_t validVerticesCount;
+                    read(file, &validVerticesCount);
+                    fData->validVerticesCount = validVerticesCount;
+                    // # read color
+                    std::int16_t colorWidth, colorHeight;
+                    std::int32_t colorBufferSize;
+                    read(file, &colorWidth);
+                    read(file, &colorHeight);
+                    read(file, &colorBufferSize);
+                    // Logger::message(std::format("colors sizes {} {} {} \n", (int)colorWidth, (int)colorHeight, colorBufferSize));
+                    fData->colorWidth  = colorWidth;
+                    fData->colorHeight = colorHeight;
+                    fData->colorBuffer.resize(colorBufferSize);
+                    totalColorUncompressed += colorWidth*colorHeight;
+                    totalColorCompressed   += colorBufferSize;
+                    read_array(file, fData->colorBuffer.data(), fData->colorBuffer.size());
+                    // # read depth
+                    std::int16_t depthWidth, depthHeight;
+                    std::int32_t depthBufferSize;
+                    read(file, &depthWidth);
+                    read(file, &depthHeight);
+                    read(file, &depthBufferSize);
+                    // Logger::message(std::format("depth sizes {} {} {} \n", (int)depthWidth, (int)depthHeight, depthBufferSize));
+                    fData->depthWidth  = depthWidth;
+                    fData->depthHeight = depthHeight;
+                    fData->depthBuffer.resize(depthBufferSize);
+                    totalDepthUncompressed += depthWidth*depthHeight;
+                    totalDepthCompressed   += depthBufferSize;
+                    read_array(file, fData->depthBuffer.data(), fData->depthBuffer.size());
+                    // # read infra
+                    std::int16_t infraWidth, infraHeight;
+                    std::int32_t infraBufferSize;
+                    read(file, &infraWidth);
+                    read(file, &infraHeight);
+                    read(file, &infraBufferSize);
+                    // Logger::message(std::format("infra sizes {} {} {} \n", (int)infraWidth, (int)infraHeight, infraBufferSize));
+                    fData->infraWidth  = infraWidth;
+                    fData->infraHeight = infraHeight;
+                    fData->infraBuffer.resize(infraBufferSize);
+                    totalInfraUncompressed += infraWidth*infraHeight;
+                    totalInfraCompressed   += infraBufferSize;
+                    read_array(file, fData->infraBuffer.data(), fData->infraBuffer.size());
+
+                }else if(mode == VolumetricVideoMode::Voxels){
+
+                    std::int32_t voxelsBufferSize;
+                    read(file, &voxelsBufferSize);
+                    fData->voxelsBuffer.resize(voxelsBufferSize);
+                    read_array(file, fData->voxelsBuffer.data(), fData->voxelsBuffer.size());
+                }
+
+                // # read audio
+                std::int32_t audioBufferSize;
+                read(file, &audioBufferSize);
+                fData->audioFrames.resize(audioBufferSize);
+                read_array(file, reinterpret_cast<float*>(fData->audioFrames.data()),audioBufferSize*7);
+                Logger::message(std::format("audio frames sizes {} \n", (int)audioBufferSize));
+                // # read imu
+                read_array(file, reinterpret_cast<char*>(&fData->imuSample), sizeof (ImuSample));
+            }
+        }
+
+        if(totalColorUncompressed != 0 && totalDepthUncompressed != 0 && totalInfraUncompressed != 0){
+            auto colCompressionFactor   = (1.0*totalColorCompressed)/totalColorUncompressed;
+            auto depthCompressionFactor = (1.0*totalDepthCompressed)/totalDepthUncompressed;
+            auto infraCompressionFactor = (1.0*totalInfraCompressed)/totalInfraUncompressed;
+            Logger::message(std::format("Compression rates {} {} {}\n", colCompressionFactor, depthCompressionFactor, infraCompressionFactor));
+        }
+    }
+
+
+
+    void write_file(std::ofstream &file){
+
+        // write mode
+        write(file, static_cast<std::int8_t>(mode));   // std::int8_t
+
+        // write nb of cameras
+        write(file, static_cast<std::int8_t>(camData.size()));             // std::int8_t
+
+        // write infos per camera
+        for(auto &cameraData : camData){
+            // nb frames
+            write(file, static_cast<std::int32_t>(cameraData.frames.size()));   // std::int32_t * cameras count
+            // calibration matrix
+            write_array(file, cameraData.transform.array.data(), 16);           // double * 16
+        }
+
+        // writes frames
+        for(const auto &cameraData : camData){
+            for(const auto &frame : cameraData.frames){
+                // write frame
+                auto fData = frame.data.get();
+                // # write frame info
+                write(file, static_cast<std::int32_t>(frame.idFrame));                      // std::int32_t
+                write(file, frame.timeStamp);                                               // std::int64_t
+
+                if(mode == VolumetricVideoMode::Clouds){
+
+                    write(file, static_cast<std::int32_t>(fData->mode));                        // std::int32_t
+                    write_array(file, reinterpret_cast<char*>(&fData->calibration),
+                                sizeof (k4a_calibration_t));                                    // sizeof(k4a_calibration_t)
+                    write(file, static_cast<std::int32_t>(fData->validVerticesCount));          // std::int32_t
+                    // # write color
+                    write(file, static_cast<std::int16_t>(fData->colorWidth));                  // std::int16_t
+                    write(file, static_cast<std::int16_t>(fData->colorHeight));                 // std::int16_t
+                    write(file, static_cast<std::int32_t>(fData->colorBuffer.size()));          // std::int32_t
+                    write_array(file, fData->colorBuffer.data(), fData->colorBuffer.size());    // buffer size * std::int8_t
+                    // # write depth
+                    write(file, static_cast<std::int16_t>(fData->depthWidth));                  // std::int16_t
+                    write(file, static_cast<std::int16_t>(fData->depthHeight));                 // std::int16_t
+                    write(file, static_cast<std::int32_t>(fData->depthBuffer.size()));          // std::int32_t
+                    write_array(file, fData->depthBuffer.data(), fData->depthBuffer.size());    // buffer size * std::int32_t
+                    // # write infra
+                    write(file, static_cast<std::int16_t>(fData->infraWidth));                  // std::int16_t
+                    write(file, static_cast<std::int16_t>(fData->infraHeight));                 // std::int16_t
+                    write(file, static_cast<std::int32_t>(fData->infraBuffer.size()));          // std::int32_t
+                    write_array(file, fData->infraBuffer.data(), fData->infraBuffer.size());    // buffer size * std::int32_t
+
+                }else if(mode == VolumetricVideoMode::Voxels){
+                    // # write voxels
+                    write(file, static_cast<std::int32_t>(fData->voxelsCount));                 // std::int32_t
+                    write_array(file, fData->voxelsBuffer.data(), fData->voxelsBuffer.size());  // buffer size * std::int32_t
+                }
+
+                // # write audio
+                write(file, static_cast<std::int32_t>(fData->audioFrames.size()));          // std::int32_t
+                if(fData->audioFrames.size() > 0){
+                    write_array(file, reinterpret_cast<float*>(fData->audioFrames.data()),
+                                fData->audioFrames.size()*7);                               // buffer size * 7 * float
+                }
+                // # write imu
+                write_array(file, reinterpret_cast<char*>(&fData->imuSample), sizeof (ImuSample));
+            }
+        }
+    }
+
+};
+
+VolumetricVideoResource::VolumetricVideoResource() : m_p(std::make_unique<VolumetricVideoResource::Impl>()){
+
+}
+
+VolumetricVideoResource::~VolumetricVideoResource(){}
+
+VolumetricVideoMode VolumetricVideoResource::mode() const noexcept{
+    return m_p->mode;
+}
+
+size_t VolumetricVideoResource::nb_cameras() const noexcept{return m_p->camData.size();}
+
+size_t VolumetricVideoResource::nb_frames(size_t idCamera) const noexcept {
+    if(idCamera < m_p->camData.size()){
+        return m_p->camData[idCamera].frames.size();
+    }
+    return 0;
+}
+
+CompressedDataFrame *VolumetricVideoResource::get_frame(size_t idFrame, size_t idCamera){
+    if(idCamera < m_p->camData.size()){
+        if(idFrame < m_p->camData[idCamera].frames.size()){
+            return m_p->camData[idCamera].frames[idFrame].data.get();
+        }
+        Logger::error("[VolumetricVideoResource] Cannot get frame, invalid frame id.\n");
+        return nullptr;
+    }
+    Logger::error("[VolumetricVideoResource] Cannot get frame, invalid camera id.\n");
+    return nullptr;
+}
+
+std::vector<FrameData> *VolumetricVideoResource::get_frames(size_t idCamera){
+    if(idCamera < m_p->camData.size()){
+        return &m_p->camData[idCamera].frames;
+    }
+    Logger::error("[VolumetricVideoResource] Cannot get frame, invalid camera id.\n");
+    return nullptr;
+}
+
+size_t VolumetricVideoResource::frame_id(size_t idCamera, float timeMs){
+
+    const auto start = start_time(idCamera);
+    size_t idFrame = 0;
+    for(const auto &frame : m_p->camData[idCamera].frames){
+        auto frameTimeMs = (frame.timeStamp-start)*0.000001f;
+        if(timeMs < frameTimeMs){
+            return idFrame;
+        }
+        idFrame = frame.idFrame;
+    }
+    return idFrame;
+}
+
+size_t VolumetricVideoResource::valid_vertices_count(size_t idFrame, size_t idCamera){
+    if(idCamera < m_p->camData.size()){
+        if(idFrame < m_p->camData[idCamera].frames.size()){
+            return m_p->camData[idCamera].frames[idFrame].data->validVerticesCount;
+        }
+    }
+    return 0;
+}
+
+std::int64_t VolumetricVideoResource::start_time(size_t idCamera) const{
+    if(idCamera < m_p->camData.size()){
+        if(m_p->camData[idCamera].frames.size() > 0){
+            return m_p->camData[idCamera].frames[0].timeStamp;
+        }
+    }
+    return -1;
+}
+
+int64_t VolumetricVideoResource::end_time(size_t idCamera) const{
+    if(idCamera < m_p->camData.size()){
+        if(m_p->camData[idCamera].frames.size() > 0){
+            return m_p->camData[idCamera].frames[m_p->camData[idCamera].frames.size()-1].timeStamp;
+        }
+    }
+    return -1;
+}
+
+void VolumetricVideoResource::set_transform(size_t idCamera, geo::Mat4d tr){
+    if(idCamera < m_p->camData.size()){
+        m_p->camData[idCamera].transform = tr;
+        return;
+    }
+    Logger::error("[VolumetricVideoResource] Cannot set transform, invalid camera id.\n");
+}
+
+tool::geo::Mat4d VolumetricVideoResource::get_transform(size_t idCamera) const{
+    if(idCamera < m_p->camData.size()){
+        return m_p->camData[idCamera].transform;
+    }
+    Logger::error("[VolumetricVideoResource] Cannot get transform, invalid camera id.\n");
+    return geo::Mat4d::identity();
+}
+
+void VolumetricVideoResource::add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame){
+    if(idCamera >= m_p->camData.size()){
+        m_p->camData.resize(idCamera+1);
+    }
+    auto idFrame = m_p->camData[idCamera].frames.size();
+    m_p->camData[idCamera].frames.emplace_back(FrameData{idFrame, timestamp, frame});
+}
+
+void VolumetricVideoResource::clean_frames(){
+    m_p->camData.clear();
+}
+
+
+bool VolumetricVideoResource::save_to_file(const std::string &path){
+
+    if(path.length() == 0){
+        Logger::error("[VolumetricVideoResource] Invalid path.\n");
+        return false;
+    }
+
+    if(m_p->camData.size() == 0){
+        Logger::error("[VolumetricVideoResource] No frames added.\n");
+        return false;
+    }
+
+    std::ofstream file;
+    file.open(path, std::ios_base::binary);
+    if(!file.is_open()){
+        Logger::error(std::format("[VolumetricVideoResource] Cannot save compressed frames to {}.\n", path));
+        return false;
+    }
+
+    m_p->write_file(file);
+
+    file.close();
+
+    return true;
+}
+
+bool VolumetricVideoResource::load_from_file(const std::string &path){
+
+
+    if(path.length() == 0){
+        Logger::error("[CompressedFramesManager] Invalid path.\n");
+        return false;
+    }
+
+    std::ifstream file(path, std::ios_base::binary);
+    if(!file.is_open()){
+        Logger::error(std::format("[CompressedFramesManager] Cannot open compressed frames file: {}.\n", path));
+        return false;
+    }
+
+    // clean data
+    clean_frames();
+
+    m_p->read_file(file);
+
+    return true;
+}
+
+
+
+struct VolumetricVideoManager::Impl{
+
+    VolumetricVideoResource *vv = nullptr;
 
     tjhandle jpegUncompressor;
     data::IntegersEncoder integerUncompressor;
-
-    std::vector<geo::Mat4d> transforms;
-    std::vector<std::vector<std::tuple<size_t, std::int64_t, std::shared_ptr<CompressedDataFrame>>>> framesPerCamera;
 
     // # k4 images
     k4a::image depthImage;
@@ -76,319 +433,15 @@ struct CompressedFramesManager::Impl{
     }
 };
 
-CompressedFramesManager::CompressedFramesManager() : m_p(std::make_unique<CompressedFramesManager::Impl>()){
-
+VolumetricVideoManager::VolumetricVideoManager(VolumetricVideoResource *volumetricVideo) : m_p(std::make_unique<VolumetricVideoManager::Impl>()){
+    m_p->vv = volumetricVideo;
 }
 
-void CompressedFramesManager::add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame){
-    if(idCamera >= m_p->framesPerCamera.size()){
-
-        m_p->framesPerCamera.resize(idCamera+1);
-        while(m_p->transforms.size() != (idCamera+1)){
-            m_p->transforms.push_back(geo::Mat4d::identity());
-        }
-
-    }
-    auto idFrame = m_p->framesPerCamera[idCamera].size();
-    m_p->framesPerCamera[idCamera].push_back(std::make_tuple(idFrame, timestamp, frame));
-}
-
-
-CompressedFramesManager::~CompressedFramesManager(){
+VolumetricVideoManager::~VolumetricVideoManager(){
     tjDestroy(m_p->jpegUncompressor);
 }
 
-size_t CompressedFramesManager::nb_cameras() const noexcept{return m_p->framesPerCamera.size();}
-
-size_t CompressedFramesManager::nb_frames(size_t idCamera) const noexcept {
-    if(idCamera < m_p->framesPerCamera.size()){
-        return m_p->framesPerCamera[idCamera].size();
-    }
-//    Logger::error("[CompressedFramesManager] Cannot get frame count, invalid camera id .\n");
-    return 0;
-}
-
-CompressedDataFrame *CompressedFramesManager::get_frame(size_t idFrame, size_t idCamera){
-    if(idCamera < m_p->framesPerCamera.size()){
-        if(idFrame < m_p->framesPerCamera[idCamera].size()){
-            return std::get<2>(m_p->framesPerCamera[idCamera][idFrame]).get();
-        }
-        Logger::error("[CompressedFramesManager] Cannot get frame, invalid frame id.\n");
-        return nullptr;
-    }
-    Logger::error("[CompressedFramesManager] Cannot get frame, invalid camera id.\n");
-    return nullptr;
-}
-
-size_t CompressedFramesManager::frame_id(size_t idCamera, float timeMs){
-
-    const auto start = start_time(idCamera);
-    size_t idFrame = 0;
-    for(const auto &frame : m_p->framesPerCamera[idCamera]){
-        auto frameTimeMs = (std::get<1>(frame)-start)*0.000001f;
-        if(timeMs < frameTimeMs){
-            return idFrame;
-        }
-        idFrame = std::get<0>(frame);
-    }
-    return idFrame;
-}
-
-size_t CompressedFramesManager::valid_vertices_count(size_t idFrame, size_t idCamera){
-    if(idCamera < m_p->framesPerCamera.size()){
-        if(idFrame < m_p->framesPerCamera[idCamera].size()){
-            auto data = std::get<2>(m_p->framesPerCamera[idCamera][idFrame]);
-            return data->validVerticesCount;
-        }
-    }
-    return 0;
-}
-
-void CompressedFramesManager::set_transform(size_t idCamera, geo::Mat4d tr){
-    if(idCamera < m_p->transforms.size()){
-        m_p->transforms[idCamera] = tr;
-        return;
-    }
-    Logger::error("[CompressedFramesManager] Cannot set transform, invalid camera id.\n");
-}
-
-tool::geo::Mat4d CompressedFramesManager::get_transform(size_t idCamera) const{    
-    if(idCamera < m_p->transforms.size()){
-        return m_p->transforms[idCamera];
-    }
-    Logger::error("[CompressedFramesManager] Cannot get transform, invalid camera id.\n");
-    return geo::Mat4d::identity();
-}
-
-std::int64_t CompressedFramesManager::start_time(size_t idCamera) const{
-    if(idCamera < m_p->framesPerCamera.size()){
-        if(m_p->framesPerCamera[idCamera].size() > 0){
-            return std::get<1>(m_p->framesPerCamera[idCamera][0]);
-        }
-    }
-    return -1;
-}
-
-int64_t CompressedFramesManager::end_time(size_t idCamera) const{
-    if(idCamera < m_p->framesPerCamera.size()){
-        if(m_p->framesPerCamera[idCamera].size() > 0){
-            return std::get<1>(m_p->framesPerCamera[idCamera][m_p->framesPerCamera[idCamera].size()-1]);
-        }
-    }
-    return -1;
-}
-
-//auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-
-bool CompressedFramesManager::save_to_file(const std::string &path){
-
-    if(path.length() == 0){
-        Logger::error("[CompressedFramesManager] Invalid path.\n");
-        return false;
-    }
-
-    if(m_p->framesPerCamera.size() == 0){
-        Logger::error("[CompressedFramesManager] No frames added.\n");
-        return false;
-    }
-
-    std::ofstream file;
-    file.open(path, std::ios_base::binary);
-    if(!file.is_open()){
-        Logger::error(std::format("[CompressedFramesManager] Cannot save compressed frames to {}.\n", path));
-        return false;
-    }
-
-    // write nb of cameras
-    write(file, static_cast<std::int8_t>(m_p->framesPerCamera.size()));       // std::int8_t
-
-    // write infos per camera
-    size_t idCamera = 0;
-    for(const auto &frames : m_p->framesPerCamera){
-        // nb frames
-        write(file, static_cast<std::int32_t>(frames.size()));           // std::int32_t * cameras count
-        // calibration matrix
-        write_array(file, m_p->transforms[idCamera++].array.data(), 16);      // double * 16
-    }
-
-    // writes frames
-    for(const auto &frames : m_p->framesPerCamera){
-        for(const auto &frame : frames){
-            // write frame
-            size_t idFrame = std::get<0>(frame);
-            std::int64_t timestamp = std::get<1>(frame);
-            auto data = std::get<2>(frame);
-            // # write frame info
-            write(file, static_cast<std::int32_t>(idFrame));                         // std::int32_t
-            write(file, timestamp);                                                  // std::int64_t
-            write(file, static_cast<std::int32_t>(data->mode));                      // std::int32_t
-            write_array(file, reinterpret_cast<char*>(&data->calibration),
-                               sizeof (k4a_calibration_t));                          // sizeof(k4a_calibration_t)
-            write(file, static_cast<std::int32_t>(data->validVerticesCount));        // std::int32_t
-            // # write color
-            write(file, static_cast<std::int16_t>(data->colorWidth));                // std::int16_t
-            write(file, static_cast<std::int16_t>(data->colorHeight));               // std::int16_t
-            write(file, static_cast<std::int32_t>(data->colorBuffer.size()));        // std::int32_t
-            write_array(file, data->colorBuffer.data(), data->colorBuffer.size());   // buffer size * std::int8_t
-            // # write depth
-            write(file, static_cast<std::int16_t>(data->depthWidth));                // std::int16_t
-            write(file, static_cast<std::int16_t>(data->depthHeight));               // std::int16_t
-            write(file, static_cast<std::int32_t>(data->depthBuffer.size()));        // std::int32_t
-            write_array(file, data->depthBuffer.data(), data->depthBuffer.size());   // buffer size * std::int32_t
-            // # write infra
-            write(file, static_cast<std::int16_t>(data->infraWidth));                // std::int16_t
-            write(file, static_cast<std::int16_t>(data->infraHeight));               // std::int16_t
-            write(file, static_cast<std::int32_t>(data->infraBuffer.size()));        // std::int32_t
-            write_array(file, data->infraBuffer.data(), data->infraBuffer.size());   // buffer size * std::int32_t
-            // # write audio
-            write(file, static_cast<std::int32_t>(data->audioFrames.size()));        // std::int32_t
-            if(data->audioFrames.size() > 0){
-                write_array(file, reinterpret_cast<float*>(data->audioFrames.data()),
-                                   data->audioFrames.size()*7);                             // buffer size * 7 * float
-            }
-            // # write imu
-            write_array(file, reinterpret_cast<char*>(&data->imuSample), sizeof (ImuSample));
-        }
-    }
-
-    file.close();
-
-    return true;
-}
-
-bool CompressedFramesManager::load_from_file(const std::string &path){
-
-    if(path.length() == 0){
-        Logger::error("[CompressedFramesManager] Invalid path.\n");
-        return false;
-    }
-
-    std::ifstream file(path, std::ios_base::binary);
-    if(!file.is_open()){
-        Logger::error(std::format("[CompressedFramesManager] Cannot open compressed frames file: {}.\n", path));
-        return false;
-    }
-
-    // clean data
-    clean_frames();
-
-    // read nb of cameras
-    std::int8_t nbCameras;
-    read(file, &nbCameras);
-
-    if(nbCameras < 1){
-        Logger::error(std::format("[CompressedFramesManager] Invalid cameras number from file: {}.\n", path));
-        return false;
-    }
-
-    m_p->framesPerCamera.resize(nbCameras);
-    m_p->transforms.resize(nbCameras);
-
-    // read infos per camera
-    size_t idCamera = 0;
-    std::int32_t nbFrames;
-    for(auto &frames : m_p->framesPerCamera){
-
-        // read nb frames
-        read(file, &nbFrames);
-
-        // create frames
-        frames.reserve(nbFrames);
-        for(size_t ii = 0; ii < static_cast<size_t>(nbFrames); ++ii){
-            frames.emplace_back(std::make_tuple(0,0, std::make_shared<CompressedDataFrame>()));
-        }
-
-        // calibration matrix
-        read_array(file, m_p->transforms[idCamera++].array.data(), 16);
-    }
-
-    // read frames
-    size_t totalColorCompressed   = 0;
-    size_t totalColorUncompressed = 0;
-    size_t totalDepthCompressed   = 0;
-    size_t totalDepthUncompressed = 0;
-    size_t totalInfraCompressed   = 0;
-    size_t totalInfraUncompressed = 0;
-
-    for(auto &frames : m_p->framesPerCamera){
-        for(auto &frame : frames){
-
-            auto data = std::get<2>(frame);
-
-            std::int32_t idFrame;
-            std::int64_t timestamp;
-            // # read frame info
-            read(file, &idFrame);
-            std::get<0>(frame) = idFrame;
-            read(file, &timestamp);
-            std::get<1>(frame) = timestamp;
-            read(file, &data->mode);
-            //Logger::message(std::format("id frame {} ts {}\n", idFrame, timestamp));
-            read_array(file, reinterpret_cast<char*>(&data->calibration), sizeof (k4a_calibration_t));
-            std::int32_t validVerticesCount;
-            read(file, &validVerticesCount);
-            data->validVerticesCount = validVerticesCount;
-            // # read color
-            std::int16_t colorWidth, colorHeight;
-            std::int32_t colorBufferSize;
-            read(file, &colorWidth);
-            read(file, &colorHeight);
-            read(file, &colorBufferSize);
-//            Logger::message(std::format("colors sizes {} {} {} \n", (int)colorWidth, (int)colorHeight, colorBufferSize));
-            data->colorWidth  = colorWidth;
-            data->colorHeight = colorHeight;
-            data->colorBuffer.resize(colorBufferSize);
-            totalColorUncompressed += colorWidth*colorHeight;
-            totalColorCompressed   += colorBufferSize;
-            read_array(file, data->colorBuffer.data(), data->colorBuffer.size());
-            // # read depth
-            std::int16_t depthWidth, depthHeight;
-            std::int32_t depthBufferSize;
-            read(file, &depthWidth);
-            read(file, &depthHeight);
-            read(file, &depthBufferSize);
-//            Logger::message(std::format("depth sizes {} {} {} \n", (int)depthWidth, (int)depthHeight, depthBufferSize));
-            data->depthWidth  = depthWidth;
-            data->depthHeight = depthHeight;
-            data->depthBuffer.resize(depthBufferSize);
-            totalDepthUncompressed += depthWidth*depthHeight;
-            totalDepthCompressed   += depthBufferSize;
-            read_array(file, data->depthBuffer.data(), data->depthBuffer.size());
-            // # read infra
-            std::int16_t infraWidth, infraHeight;
-            std::int32_t infraBufferSize;
-            read(file, &infraWidth);
-            read(file, &infraHeight);
-            read(file, &infraBufferSize);
-//            Logger::message(std::format("infra sizes {} {} {} \n", (int)infraWidth, (int)infraHeight, infraBufferSize));
-            data->infraWidth  = infraWidth;
-            data->infraHeight = infraHeight;
-            data->infraBuffer.resize(infraBufferSize);
-            totalInfraUncompressed += infraWidth*infraHeight;
-            totalInfraCompressed   += infraBufferSize;
-            read_array(file, data->infraBuffer.data(), data->infraBuffer.size());
-            // # read audio
-            std::int32_t audioBufferSize;
-            read(file, &audioBufferSize);
-            data->audioFrames.resize(audioBufferSize);
-            read_array(file, reinterpret_cast<float*>(data->audioFrames.data()),audioBufferSize*7);
-            Logger::message(std::format("audio frames sizes {} \n", (int)audioBufferSize));
-            // # read imu
-            read_array(file, reinterpret_cast<char*>(&data->imuSample), sizeof (ImuSample));
-        }
-    }
-
-    if(totalColorUncompressed != 0 && totalDepthUncompressed != 0 && totalInfraUncompressed != 0){
-        auto colCompressionFactor   = (1.0*totalColorCompressed)/totalColorUncompressed;
-        auto depthCompressionFactor = (1.0*totalDepthCompressed)/totalDepthUncompressed;
-        auto infraCompressionFactor = (1.0*totalInfraCompressed)/totalInfraUncompressed;
-        Logger::message(std::format("Compression rates {} {} {}\n", colCompressionFactor, depthCompressionFactor, infraCompressionFactor));
-    }
-
-    return true;
-}
-
-bool CompressedFramesManager::uncompress_color(CompressedDataFrame *cFrame, std::vector<uint8_t> &uncompressedColor){
+bool VolumetricVideoManager::uncompress_color(CompressedDataFrame *cFrame, std::vector<uint8_t> &uncompressedColor){
 
     // resize uncompressed buffer
     const size_t uncomressedColorSize = cFrame->colorWidth * cFrame->colorHeight*4;
@@ -417,7 +470,7 @@ bool CompressedFramesManager::uncompress_color(CompressedDataFrame *cFrame, std:
     return true;
 }
 
-bool CompressedFramesManager::uncompress_depth(CompressedDataFrame *cFrame, std::vector<uint16_t> &uncompressedDepth){
+bool VolumetricVideoManager::uncompress_depth(CompressedDataFrame *cFrame, std::vector<uint16_t> &uncompressedDepth){
 
     // resize uncompressed buffer
     const size_t uncomressedDepthSize = cFrame->depthWidth*cFrame->depthHeight;
@@ -441,7 +494,7 @@ bool CompressedFramesManager::uncompress_depth(CompressedDataFrame *cFrame, std:
     return true;
 }
 
-bool CompressedFramesManager::uncompress_infra(CompressedDataFrame *cFrame, std::vector<uint16_t> &uncompressedInfra){
+bool VolumetricVideoManager::uncompress_infra(CompressedDataFrame *cFrame, std::vector<uint16_t> &uncompressedInfra){
 
     // resize uncompressed buffer
     const size_t uncomressedInfraSize = cFrame->infraWidth*cFrame->infraHeight;
@@ -465,86 +518,52 @@ bool CompressedFramesManager::uncompress_infra(CompressedDataFrame *cFrame, std:
     return true;
 }
 
-void CompressedFramesManager::audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer){
+void VolumetricVideoManager::audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer){
 
-    const auto &frames = m_p->framesPerCamera[idCamera];
+    auto frames = m_p->vv->get_frames(idCamera);
 
     size_t samplesCount = 0;
-    for(const auto &frame : frames){
-        auto data = std::get<2>(frame);
-        samplesCount += data->audioFrames.size();
+    for(const auto &frame : *frames){
+        samplesCount += frame.data->audioFrames.size();
     }
-
 
     audioBuffer.resize(7);
     for(auto &channelAudioBuffer : audioBuffer){
         channelAudioBuffer.reserve(samplesCount);
     }
 
-    for(const auto &frame : frames){
-        auto data = std::get<2>(frame);
+    for(const auto &frame : *frames){
         for(size_t idChannel = 0; idChannel < 7; ++idChannel){
-            for(const auto &channelsData : data->audioFrames){
+            for(const auto &channelsData : frame.data->audioFrames){
                 audioBuffer[idChannel].push_back(channelsData[idChannel]);
             }
         }
     }
 }
 
-void CompressedFramesManager::audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer){
+void VolumetricVideoManager::audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer){
 
-    const auto &frames = m_p->framesPerCamera[idCamera];
+    auto frames = m_p->vv->get_frames(idCamera);
     size_t samplesCount = 0;
-    for(const auto &frame : frames){
-        auto data = std::get<2>(frame);
-        samplesCount += data->audioFrames.size();
+    for(const auto &frame : *frames){
+        samplesCount += frame.data->audioFrames.size();
     }
-
 
     audioBuffer.resize(samplesCount*7);
 
     size_t id = 0;
-    for(const auto &frame : frames){
-        auto data = std::get<2>(frame);
-        for(const auto &channelsData : data->audioFrames){
+    for(const auto &frame : *frames){
+
+        for(const auto &channelsData : frame.data->audioFrames){
             for(size_t idChannel = 0; idChannel < 7; ++idChannel){
                 audioBuffer[id++] = channelsData[idChannel];
             }
         }
-
-//        for(size_t idChannel = 0; idChannel < 7; ++idChannel){
-//            for(const auto &channelsData : data->audioFrames){
-//                audioBuffer[id++] = channelsData[idChannel];
-//            }
-//        }
     }
 }
 
-//std::vector<float> CompressedFramesManager::audio_samples(size_t idCamera, size_t idChannel){
 
-//    const auto &frames = m_p->framesPerCamera[idCamera];
-
-//    size_t count = 0;
-//    for(const auto &frame : frames){
-//        auto data = std::get<2>(frame);
-//        count += data->audioFrames.size();
-//    }
-
-//    std::vector<float> audioData;
-//    audioData.reserve(count);
-
-//    for(const auto &frame : frames){
-//        const auto &data = std::get<2>(frame);
-//        for(const auto &channelValue : data->audioFrames){
-//            audioData.push_back(channelValue[idChannel]);
-//        }
-//    }
-
-
-//    return audioData;
-//}
-
-void CompressedFramesManager::convert_to_depth_image(Mode mode, CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth, std::vector<uint8_t> &imageDepth){
+void VolumetricVideoManager::convert_to_depth_image(Mode mode, CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth, std::vector<uint8_t> &imageDepth){
 
     // resize image buffer
     size_t imageDepthSize = cFrame->depthWidth * cFrame->depthHeight*4;
@@ -580,7 +599,7 @@ void CompressedFramesManager::convert_to_depth_image(Mode mode, CompressedDataFr
 
 }
 
-void CompressedFramesManager::convert_to_infra_image(CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedInfra, std::vector<uint8_t> &imageInfra){
+void VolumetricVideoManager::convert_to_infra_image(CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedInfra, std::vector<uint8_t> &imageInfra){
 
     // resize image buffer
     size_t imageInfraSize = cFrame->infraWidth * cFrame->infraHeight*4;
@@ -605,7 +624,7 @@ void CompressedFramesManager::convert_to_infra_image(CompressedDataFrame *cFrame
     }
 }
 
-void CompressedFramesManager::generate_cloud(CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth){
+void VolumetricVideoManager::generate_cloud(CompressedDataFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth){
 
     // reset k4a transformation if necessary
     if(!std::get<1>(m_p->tr).has_value() || (cFrame->mode != std::get<0>(m_p->tr))){
@@ -653,7 +672,7 @@ void CompressedFramesManager::generate_cloud(CompressedDataFrame *cFrame, const 
 
 }
 
-void CompressedFramesManager::process_open3d_cloud(const std::vector<uint8_t> &uncompressedColor){
+void VolumetricVideoManager::process_open3d_cloud(const std::vector<uint8_t> &uncompressedColor){
 
     const size_t width  = m_p->pointCloudImage.get_width_pixels();
     const size_t height = m_p->pointCloudImage.get_height_pixels();
@@ -679,7 +698,7 @@ void CompressedFramesManager::process_open3d_cloud(const std::vector<uint8_t> &u
 //    }
 }
 
-size_t CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
+size_t VolumetricVideoManager::convert_to_cloud(size_t validVerticesCount,
         const std::vector<uint8_t> &uncompressedColor, const std::vector<std::uint16_t> &uncompressedDepth, ColoredCloudFrame &cloud){
 
     auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
@@ -722,7 +741,7 @@ size_t CompressedFramesManager::convert_to_cloud(size_t validVerticesCount,
     return idV;
 }
 
-size_t CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
+size_t VolumetricVideoManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
         geo::Pt3f *vertices, geo::Pt3f *colors){
 
     // resize depth indices
@@ -755,7 +774,7 @@ size_t CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &unc
     return idV;
 }
 
-size_t CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth, geo::Pt3f *vertices, geo::Pt4f *colors){
+size_t VolumetricVideoManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth, geo::Pt3f *vertices, geo::Pt4f *colors){
     // resize depth indices
     if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
         m_p->indicesDepths1D.resize(uncompressedDepth.size());
@@ -787,9 +806,9 @@ size_t CompressedFramesManager::convert_to_cloud(const std::vector<uint8_t> &unc
     return idV;
 }
 
-void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize){
+void VolumetricVideoManager::register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize){
 
-    if(idCamera >= nb_cameras() || startFrame >= endFrame){
+    if(idCamera >= m_p->vv->nb_cameras() || startFrame >= endFrame){
         Logger::error("[CompressedFramesManager::voxelize_all_frames] Invalid input\n");
         return;
     }
@@ -801,14 +820,13 @@ void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame
     std::shared_ptr<open3d::geometry::PointCloud> previousDownSampledCloud = nullptr;
     geo::Mat4d totalTr = geo::Mat4d::identity();
 
-    const auto &frames = m_p->framesPerCamera[idCamera];
+    std::vector<FrameData> *frames = m_p->vv->get_frames(idCamera);
 
     // count total vertices
     size_t totalFramesVertices = 0;
     for(size_t ii = startFrame; ii < endFrame; ++ii){
-        const auto &frame = frames[ii];
-        auto data = std::get<2>(frame).get();
-        totalFramesVertices += data->validVerticesCount;
+        const auto &frame = (*frames)[ii];
+        totalFramesVertices += frame.data->validVerticesCount;
 //        Logger::message(std::format("frame {} {} \n", data->validVerticesCount, totalFramesVertices));
     }
     // init total cloud
@@ -819,14 +837,12 @@ void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame
 //    Logger::message("process frames\n");
     size_t currentVerticesId = 0;
     for(size_t ii = startFrame; ii < endFrame; ++ii){
-        const auto &frame = frames[ii];
-        auto data = std::get<2>(frame).get();
-        uncompress_color(data, uncompressedColor);
-        uncompress_depth(data, uncompressedDepth);
-        generate_cloud(data, uncompressedDepth);
+        const auto &frame = (*frames)[ii];
+        uncompress_color(frame.data.get(), uncompressedColor);
+        uncompress_depth(frame.data.get(), uncompressedDepth);
+        generate_cloud(frame.data.get(), uncompressedDepth);
 
         auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
-
 
         // resize depth indices
         if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
@@ -835,8 +851,8 @@ void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame
         }
 
         // resize cloud
-        frameCloud.points_.resize(data->validVerticesCount);
-        frameCloud.colors_.resize(data->validVerticesCount);
+        frameCloud.points_.resize(frame.data->validVerticesCount);
+        frameCloud.colors_.resize(frame.data->validVerticesCount);
 
         // update cloud values
         size_t idV = 0;
@@ -898,18 +914,18 @@ void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame
 
 //        Logger::message("add transformed points to total cloud\n");
         // add tranformed points to total cloud
-        for(size_t ii = 0; ii < data->validVerticesCount; ++ii){
+        for(size_t ii = 0; ii < frame.data->validVerticesCount; ++ii){
             const auto &p = frameCloud.points_[ii];
             auto trP = totalTr.multiply_point(geo::Pt3d{p.x(),p.y(),p.z()});
             m_p->totalCloud.points_[currentVerticesId]   = Eigen::Vector3d{trP.x(), trP.y(), trP.z()};
             m_p->totalCloud.colors_[currentVerticesId++] = frameCloud.colors_[ii];
         }
 
-        size_t start = currentVerticesId - data->validVerticesCount;
+        size_t start = currentVerticesId - frame.data->validVerticesCount;
         size_t end  = currentVerticesId;
-        std::string trFrameCloudStr = std::format("./tr_cloud_part_{}.obj", std::get<0>(frame));
-        std::string frameCloudStr = std::format("./frame_cloud_part_{}.obj", std::get<0>(frame));
-        std::string downSampledFrameCloudStr = std::format("./down_sampled_frame_cloud_part_{}.obj", std::get<0>(frame));
+        std::string trFrameCloudStr = std::format("./tr_cloud_part_{}.obj", frame.idFrame);
+        std::string frameCloudStr = std::format("./frame_cloud_part_{}.obj", frame.idFrame);
+        std::string downSampledFrameCloudStr = std::format("./down_sampled_frame_cloud_part_{}.obj",frame.idFrame);
 
 //        auto startDP = reinterpret_cast<geo::Pt3d*>(totalCloud.points_.data());
 //        auto startDC = reinterpret_cast<geo::Pt3d*>(totalCloud.colors_.data());
@@ -927,7 +943,7 @@ void CompressedFramesManager::register_frames(size_t idCamera, size_t startFrame
     }
 }
 
-void CompressedFramesManager::voxelize(double voxelSize, ColoredCloudFrame &cloud){
+void VolumetricVideoManager::voxelize(double voxelSize, ColoredCloudFrame &cloud){
 
     // voxelize
     auto voxelGrid = open3d::geometry::VoxelGrid::CreateFromPointCloudWithinBounds(
@@ -967,8 +983,6 @@ void CompressedFramesManager::voxelize(double voxelSize, ColoredCloudFrame &clou
     Logger::message(std::format("gridSize {}\n", gridSize));
 }
 
-void CompressedFramesManager::clean_frames(){
-    m_p->framesPerCamera.clear();
-}
+
 
 
