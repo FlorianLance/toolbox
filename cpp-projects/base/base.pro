@@ -173,6 +173,7 @@ HEADERS += \
     utility/array.hpp \
     utility/benchmark.hpp \
     utility/constants.hpp \
+    utility/export.hpp \
     utility/io.hpp \
     utility/math.hpp \
     utility/string.hpp \
@@ -219,6 +220,8 @@ SOURCES += \
     # main
     base_main.cpp \
     # files
+    exvr/ex_component.cpp \
+    exvr/ex_resource.cpp \
     files/assimp_loader.cpp \
     files/cloud_io.cpp \
     # graphics

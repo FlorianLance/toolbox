@@ -1,5 +1,6 @@
 
 
+
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -25,42 +26,45 @@
 **                                                                            **
 ********************************************************************************/
 
-#pragma once
+#include "ex_resource.hpp"
 
-// std
-#include <array>
-
-typedef void (__stdcall * StackTraceCB)(const char*);
-typedef void (__stdcall * LogCB)(const char*);
-typedef void (__stdcall * LogWarningCB)(const char*);
-typedef void (__stdcall * LogErrorCB)(const char*);
-typedef long (__stdcall * EllapsedTimeExpMsCB)();
-typedef long (__stdcall * EllapsedTimeRoutineMsCB)();
-typedef int (__stdcall * GetCB)(const char*);
-typedef int (__stdcall * IsInitializedCB)(int);
-typedef int (__stdcall * IsVisibleCB)(int);
-typedef int (__stdcall * IsUpdatingCB)(int);
-typedef int (__stdcall * IsClosedCB)(int);
-typedef void (__stdcall * NextCB)();
-typedef void (__stdcall * PreviousCB)();
-typedef void (__stdcall * CloseCB)(int);
-typedef void (__stdcall * SignalBoolCB)(int, int,int);
-typedef void (__stdcall * SignalIntCB)(int, int,int);
-typedef void (__stdcall * SignalFloatCB)(int, int,float);
-typedef void (__stdcall * SignalDoubleCB)(int, int,double);
-typedef void (__stdcall * SignalStringCB)(int, int,const char*);
+using namespace tool::ex;
 
 
-namespace tool::ex {
+int ExResource::get_array_size(const std::string &name){
+    std::unique_lock<std::mutex> lock(containerLocker);
+    if(dynamicArray.count(name) != 0){
+        return std::get<1>(dynamicArray[name]);
+    }
+    return 0;
+}
 
-    enum class ParametersContainer : int {
-        InitConfig=0, CurrentConfig=1, Dynamic=2
-    };
+void ExResource::log_warning(std::string warningMessage){
+    if(logWarningCB){
+        (*logWarningCB)(warningMessage.c_str());
+    }else{
+        std::cerr << warningMessage << "\n";
+    }
+}
 
+void ExResource::log_error(std::string errorMessage){
+    if(logErrorCB){
+        (*logErrorCB)(errorMessage.c_str());
+    }else{
+        std::cerr << errorMessage << "\n";
+    }
+}
 
-    static constexpr std::array<std::tuple<ParametersContainer, const char*>,static_cast<size_t>(3)> mapping ={{
-        {ParametersContainer::InitConfig,       "init"},
-        {ParametersContainer::CurrentConfig,    "current"},
-        {ParametersContainer::Dynamic,          "dynamic"}
-    }};
+void ExResource::log(std::string message){
+    if(logCB){
+        (*logCB)(message.c_str());
+    }else{
+        std::cout << message << "\n";
+    }
+}
+
+void ExResource::stack_trace_log(std::string stackTraceMessage){
+    if(stackTraceCB){
+        (*stackTraceCB)(stackTraceMessage.c_str());
+    }
 }

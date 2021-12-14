@@ -291,7 +291,7 @@ std::vector<FrameData> *VolumetricVideoResource::get_frames(size_t idCamera){
     return nullptr;
 }
 
-size_t VolumetricVideoResource::frame_id(size_t idCamera, float timeMs){
+size_t VolumetricVideoResource::frame_id(size_t idCamera, float timeMs) const{
 
     const auto start = start_time(idCamera);
     size_t idFrame = 0;
@@ -305,7 +305,7 @@ size_t VolumetricVideoResource::frame_id(size_t idCamera, float timeMs){
     return idFrame;
 }
 
-size_t VolumetricVideoResource::valid_vertices_count(size_t idFrame, size_t idCamera){
+size_t VolumetricVideoResource::valid_vertices_count(size_t idFrame, size_t idCamera) const{
     if(idCamera < m_p->camData.size()){
         if(idFrame < m_p->camData[idCamera].frames.size()){
             return m_p->camData[idCamera].frames[idFrame].data->validVerticesCount;

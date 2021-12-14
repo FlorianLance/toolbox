@@ -57,8 +57,8 @@ public:
     CompressedDataFrame *get_frame(size_t idFrame, size_t idCamera = 0);
     std::vector<FrameData> *get_frames(size_t idCamera = 0);
 
-    size_t frame_id(size_t idCamera, float timeMs);
-    size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0);
+    size_t frame_id(size_t idCamera, float timeMs) const;
+    size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0) const;
     std::int64_t start_time(size_t idCamera) const;
     std::int64_t end_time(size_t idCamera) const;
     void set_transform(size_t idCamera, geo::Mat4d tr);

@@ -36,22 +36,6 @@
 #include <array>
 #include <mutex>
 
-typedef long (__stdcall * EllapsedTimeExpMsCB)();
-typedef long (__stdcall * EllapsedTimeRoutineMsCB)();
-typedef int (__stdcall * GetCB)(const char*);
-typedef int (__stdcall * IsInitializedCB)(int);
-typedef int (__stdcall * IsVisibleCB)(int);
-typedef int (__stdcall * IsUpdatingCB)(int);
-typedef int (__stdcall * IsClosedCB)(int);
-typedef void (__stdcall * NextCB)();
-typedef void (__stdcall * PreviousCB)();
-typedef void (__stdcall * CloseCB)(int);
-typedef void (__stdcall * SignalBoolCB)(int, int,int);
-typedef void (__stdcall * SignalIntCB)(int, int,int);
-typedef void (__stdcall * SignalFloatCB)(int, int,float);
-typedef void (__stdcall * SignalDoubleCB)(int, int,double);
-typedef void (__stdcall * SignalStringCB)(int, int,const char*);
-
 // local
 #include "ex_utility.hpp"
 #include "utility/vector.hpp"
@@ -61,25 +45,6 @@ namespace tool::ex {
 class ExComponent{
 
 public:
-
-    enum class ParametersContainer : int {
-        InitConfig=0, CurrentConfig=1, Dynamic=2
-    };
-
-    static constexpr std::array<std::tuple<ParametersContainer, const char*>,static_cast<size_t>(3)> mapping ={{
-        {ParametersContainer::InitConfig,       "init"},
-        {ParametersContainer::CurrentConfig,    "current"},
-        {ParametersContainer::Dynamic,          "dynamic"}
-    }};
-
-    static constexpr const char *get_name(ParametersContainer c) {
-        for (auto& p : mapping) {
-            if (c == std::get<0>(p)) {
-                return std::get<1>(p);
-            }
-        }
-        return "";
-    }
 
     virtual ~ExComponent(){}
 
@@ -111,6 +76,8 @@ public:
 
     virtual void slot(int index){static_cast<void>(index);}
 
+    static constexpr const char *get_name(ParametersContainer c);
+
     template<typename T>
     void update_parameter(ParametersContainer container, const std::string &name, T value){
         std::unique_lock<std::mutex> lock(containerLocker);
@@ -136,7 +103,6 @@ public:
         std::unique_lock<std::mutex> lock(containerLocker);
         auto m = get_container(container);
         if(m->count(name) == 0){
-//            log_error("Get: "  + std::string(get_name(container)) + std::string( " does not contain: ") + name);
             return T{};
         }
 
@@ -172,7 +138,6 @@ public:
         std::unique_lock<std::mutex> lock(containerLocker);
         auto m = get_array_container(container);
         if(m->count(name) == 0){
-//            log_error("GetArray: "  + std::string(get_name(container)) + std::string( " does not contain: ") + name);
             return std_v1<T>{};
         }
 
@@ -185,145 +150,35 @@ public:
         return std_v1<T>{};
     }
 
-    int get_array_size(ParametersContainer container, const std::string &name){
-
-        std::unique_lock<std::mutex> lock(containerLocker);
-        auto m = get_array_container(container);
-        if(m->count(name) != 0){
-            return std::get<1>((*m)[name]);
-        }
-
-//        log_error("GetArraySize: "  + std::string(get_name(container)) + std::string( " does not contain: ") + name);
-        return 0;
-    }
+    int get_array_size(ParametersContainer container, const std::string &name);
 
     // callbacks
-    bool is_initialized(int key){
-        if(isInitializedCB){
-            return (*isInitializedCB)(key);
-        }
-        return false;
-    }
+    bool is_initialized(int key);
+    bool is_visible(int key);
+    bool is_updating(int key);
+    bool is_closed(int key);
+    void next();
+    void previous();
+    void close(int key);
 
-    bool is_visible(int key){
-        if(isVisibleCB){
-            return (*isVisibleCB)(key);
-        }
-        return false;
-    }
+    void log_warning(std::string warningMessage);
+    void log_error(std::string errorMessage);
+    void log(std::string message);
+    void stack_trace_log(std::string stackTraceMessage);
 
-    bool is_updating(int key){
-        if(isUpdatingCB){
-            return (*isUpdatingCB)(key);
-        }
-        return false;
-    }
+    long ellapsed_time_exp_ms();
+    long ellapsed_time_routine_ms();
 
-    bool is_closed(int key){
-        if(isClosedCB){
-            return (*isClosedCB)(key);
-        }
-        return false;
-    }
+    int component_key(std::string componentName);
 
-    void next(){
-        if(nextCB){
-            (*nextCB)();
-        }
-    }
-
-    void previous(){
-        if(previousCB){
-            (*previousCB)();
-        }
-    }
-
-    void close(int key){
-        if(closeCB){
-            (*closeCB)(key);
-        }
-    }
-
-    void log_warning(std::string warningMessage){
-        if(logWarningCB){
-            (*logWarningCB)(warningMessage.c_str());
-        }else{
-            std::cerr << warningMessage << "\n";
-        }
-    }
-
-    void log_error(std::string errorMessage){
-        if(logErrorCB){
-            (*logErrorCB)(errorMessage.c_str());
-        }else{
-            std::cerr << errorMessage << "\n";
-        }
-    }
-
-    void log(std::string message){
-        if(logCB){
-            (*logCB)(message.c_str());
-        }else{
-            std::cerr << message << "\n";
-        }
-    }
-
-    void stack_trace_log(std::string stackTraceMessage){
-        if(strackTraceCB){
-            (*strackTraceCB)(stackTraceMessage.c_str());
-        }
-    }
+    void signal_bool(int key, int index, bool value);
+    void signal_int(int key, int index, int value);
+    void signal_float(int key, int index, float value);
+    void signal_double(int key, int index, double value);
+    void signal_string(int key, int index, std::string value);
 
 
-    long ellapsed_time_exp_ms(){
-        if(ellapsedTimeExpMsCB){
-            return (*ellapsedTimeExpMsCB)();
-        }
-        return 0;
-    }
-
-    long ellapsed_time_routine_ms(){
-        if(ellapsedTimeRoutineMsCB){
-            return (*ellapsedTimeRoutineMsCB)();
-        }
-        return 0;
-    }
-
-    int component_key(std::string componentName){
-        if(getCB){
-            return  (*getCB)(componentName.c_str());
-        }
-        return -1;
-    }
-
-    void signal_bool(int key, int index, bool value){
-        if(signalBoolCB){
-            (*signalBoolCB)(key, index, value ? 1 : 0);
-        }
-    }
-    void signal_int(int key, int index, int value){
-        if(signalIntCB){
-            (*signalIntCB)(key, index, value);
-        }
-    }
-    void signal_float(int key, int index, float value){
-        if(signalFloatCB){
-            (*signalFloatCB)(key, index, value);
-        }
-    }
-    void signal_double(int key, int index, double value){
-        if(signalDoubleCB){
-            (*signalDoubleCB)(key, index, value);
-        }
-    }
-    void signal_string(int key, int index, std::string value){
-        if(signalStringCB){
-            (*signalStringCB)(key, index, value.c_str());
-        }
-    }
-
-
-    std::unique_ptr<StrackTraceCB> strackTraceCB = nullptr;
+    std::unique_ptr<StackTraceCB> stackTraceCB = nullptr;
     std::unique_ptr<LogCB> logCB = nullptr;
     std::unique_ptr<LogWarningCB> logWarningCB = nullptr;
     std::unique_ptr<LogErrorCB> logErrorCB= nullptr;
@@ -346,39 +201,8 @@ public:
 
 private:
 
-    std::map<std::string, std::any> *get_container(ParametersContainer container){
-
-        std::map<std::string, std::any> *m = nullptr;
-        switch (container) {
-            case ParametersContainer::InitConfig:
-                m = &initC;
-            break;
-            case ParametersContainer::CurrentConfig:
-                m = &currentC;
-                break;
-            case ParametersContainer::Dynamic:
-                m = &dynamic;
-                break;
-        }
-        return m;
-    }
-
-    std::map<std::string, std::tuple<std::any,int>> *get_array_container(ParametersContainer container){
-
-        std::map<std::string, std::tuple<std::any,int>> *m = nullptr;
-        switch (container) {
-            case ParametersContainer::InitConfig:
-                m = &initCArray;
-            break;
-            case ParametersContainer::CurrentConfig:
-                m = &currentCArray;
-                break;
-            case ParametersContainer::Dynamic:
-                m = &dynamicArray;
-                break;
-        }
-        return m;
-    }
+    std::map<std::string, std::any> *get_container(ParametersContainer container);
+    std::map<std::string, std::tuple<std::any,int>> *get_array_container(ParametersContainer container);
 
 protected:
 
