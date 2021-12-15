@@ -118,9 +118,10 @@ LIBS += \
 ####################################### PROJECT FILES
 
 HEADERS += \
-    # files
+    # exvr
     exvr/ex_resource.hpp \
     exvr/ex_utility.hpp \
+    # files
     files/cloud_io.hpp \
     files/assimp_loader.hpp \
     # geometry
@@ -219,9 +220,10 @@ HEADERS += \
 SOURCES += \
     # main
     base_main.cpp \
-    # files
+    # exvr
     exvr/ex_component.cpp \
     exvr/ex_resource.cpp \
+    # files
     files/assimp_loader.cpp \
     files/cloud_io.cpp \
     # graphics

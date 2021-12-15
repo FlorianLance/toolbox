@@ -125,6 +125,17 @@ public:
         geo::Pt3f *vertices, geo::Pt4f *colors);
 
 
+    size_t convert_to_cloud(
+        const std::vector<std::uint8_t> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        geo::Pt3f *vertices, geo::Pt4<std::uint8_t> *colors);
+
+    size_t convert_to_cloud(
+        const std::vector<std::uint8_t> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        VertexMeshData *vertices);
+
+
     void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);
     void voxelize(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);
 

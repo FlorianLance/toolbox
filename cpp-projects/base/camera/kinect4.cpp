@@ -125,6 +125,12 @@ struct Kinect4::Impl{
         std::optional<k4a::image> depthImage,
         std::optional<k4a::image> infraredImage);
 
+    std::shared_ptr<CompressedDataFrame2> generate_compressed_data_frame2(
+        K4::Mode mode,
+        std::optional<k4a::image> colorImage,
+        std::optional<k4a::image> depthImage,
+        std::optional<k4a::image> cloud);
+
     void update_display_data_frame(K4::Mode mode, DisplayDataFrame *dFrame, const Parameters &p,
         std::optional<k4a::image> color,
         std::optional<k4a::image> depth,
@@ -856,6 +862,7 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             // compress frame
             tool::Bench::start("[Kinect4] Generate compressed data frame");
             auto compressedFrame = generate_compressed_data_frame(mode, colorImage, depthImage, infraredImage);
+//            auto compressedFrame2 = generate_compressed_data_frame2(mode, colorImage, depthImage, pointCloudImage);
             tool::Bench::stop();
 
             // send frame
@@ -1222,6 +1229,181 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
         }
         // Logger::message(std::format("size compressed {} {}\n", infraSize, sizeInfraCompressed));
     }
+
+    // copy audio frames
+    if(lastFrameCount > 0){
+        cFrame->audioFrames.resize(lastFrameCount);
+        auto ad1 = reinterpret_cast<float*>(audioFrames.data());
+        auto ad2 = reinterpret_cast<float*>(cFrame->audioFrames.data());
+        std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
+    }
+
+    // copy imu sample
+    cFrame->imuSample = imuSample;
+
+    return cFrame;
+}
+
+
+std::shared_ptr<CompressedDataFrame2> Kinect4::Impl::generate_compressed_data_frame2(
+    K4::Mode mode, std::optional<k4a::image> colorImage, std::optional<k4a::image> depthImage, std::optional<k4a::image> cloud){
+
+    if(!colorImage.has_value() || depthImage.has_value() || cloud.has_value()){
+        return nullptr;
+    }
+
+    auto cFrame = std::make_shared<CompressedDataFrame2>();
+
+    auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(cloud->get_buffer());
+    auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(colorImage->get_buffer());
+    auto depthBuffer = reinterpret_cast<const uint16_t*>(depthImage->get_buffer());
+
+    cFrame->validVerticesCount = validDepthValues;
+
+    std::vector<PData> buffer;
+    buffer.reserve(cFrame->validVerticesCount);
+
+    size_t idV = 0;
+    for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
+
+        if(depthBuffer[id] == invalid_depth_value){
+            return;
+        }
+
+        PData p;
+
+        auto x = -cloudBuffer[id].x();
+//        std::clamp x*1000
+
+        p.r = colorBuffer[id].z();
+        p.g = colorBuffer[id].y();
+        p.b = colorBuffer[id].x();
+
+
+        buffer.push_back(p);
+
+//        cFrame->buffer
+
+//        dFrame->cloud.vertices[idV]= geo::Pt3f{
+//                                          static_cast<float>(-cloudBuffer[id].x()),
+//                                          static_cast<float>(-cloudBuffer[id].y()),
+//                                          static_cast<float>( cloudBuffer[id].z())
+//                                      }*0.01f;
+//        dFrame->cloud.colors[idV] = geo::Pt3f{
+//                                        static_cast<float>(colorBuffer[id].z()),
+//                                        static_cast<float>(colorBuffer[id].y()),
+//                                        static_cast<float>(colorBuffer[id].x())
+//                                    }/255.f;
+
+        ++idV;
+    });
+
+    cFrame->buffer.resize(idV + 1024, 0);
+
+    // fill buffer
+    std::fill(std::begin(cFrame->buffer), std::end(cFrame->buffer), 0);
+
+    // encode buffer
+    size_t sizeDepthCompressed = integerCompressor.encode(
+        reinterpret_cast<uint32_t*>(buffer.data()), idV*2,
+        cFrame->buffer.data(),  idV*2 + 1024
+    );
+
+
+
+//    if(colorImage.has_value()){
+
+//        // init buffer
+//        cFrame->colorWidth  = colorImage->get_width_pixels();
+//        cFrame->colorHeight = colorImage->get_height_pixels();
+
+//        const int jpegQuality = parameters.jpegCompressionRate;
+//        // Logger::message(std::format("jpeg compression {} {} {}\n", frame->colorWidth, frame->colorHeight, colorImage->get_size()));
+
+//        long unsigned int jpegColorSize = 0;
+
+//        if(tjCompressedImage == nullptr){
+//            tjCompressedImage = tjAlloc(cFrame->colorHeight*cFrame->colorWidth*4);
+//            // Logger::message(std::format("alloc {}\n", frame->colorHeight*frame->colorWidth*4));
+//        }
+
+//        int ret = tjCompress2(jpegCompressor,
+//                              reinterpret_cast<const unsigned char*>(colorImage->get_buffer()), cFrame->colorWidth, 0, cFrame->colorHeight,
+//                              TJPF_BGRA,
+//                              &tjCompressedImage, &jpegColorSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT);
+
+//        if(ret == -1){
+//            Logger::error(std::format("[Kinect4] tjCompress2 error with code: {}\n", tjGetErrorStr2(jpegCompressor)));
+//            return nullptr;
+//        }
+
+//        cFrame->colorBuffer.resize(jpegColorSize);
+//        std::copy(tjCompressedImage, tjCompressedImage + jpegColorSize, std::begin(cFrame->colorBuffer));
+
+//    }else{
+//        cFrame->colorWidth  = 0;
+//        cFrame->colorHeight = 0;
+//        cFrame->colorBuffer = {};
+//    }
+
+
+//    if(depthImage.has_value()){
+
+//        cFrame->validVerticesCount = validDepthValues;
+
+//        // init buffer
+//        cFrame->depthWidth  = depthImage->get_width_pixels();
+//        cFrame->depthHeight = depthImage->get_height_pixels();
+//        auto depthSize = cFrame->depthWidth*cFrame->depthHeight/2;
+//        cFrame->depthBuffer.resize(depthSize + 1024, 0);
+
+//        // fill buffer
+//        std::fill(std::begin(cFrame->depthBuffer), std::end(cFrame->depthBuffer), 0);
+
+//        // encode buffer
+//        size_t sizeDepthCompressed = integerCompressor.encode(
+//            reinterpret_cast<uint32_t*>(depthImage->get_buffer()), depthSize,
+//            cFrame->depthBuffer.data(),                   depthSize + 1024
+//            );
+
+//        if(sizeDepthCompressed == 0){
+//            Logger::error("[Kinect4] depth compress error\n");
+//            return nullptr;
+//        }
+//        if(cFrame->depthBuffer.size() != sizeDepthCompressed){
+//            cFrame->depthBuffer.resize(sizeDepthCompressed);
+//        }
+//        // Logger::message(std::format("size compressed {} {}\n", depthSize, sizeDepthCompressed));
+
+//    }
+
+
+//    if(infraredImage.has_value()){
+
+//        // init buffer
+//        cFrame->infraWidth  = infraredImage->get_width_pixels();
+//        cFrame->infraHeight = infraredImage->get_height_pixels();
+//        auto infraSize = cFrame->infraWidth*cFrame->infraHeight/2;
+//        cFrame->infraBuffer.resize(infraSize + 1024, 0);
+
+//        // fill buffer
+//        std::fill(std::begin(cFrame->infraBuffer), std::end(cFrame->infraBuffer), 0);
+
+//        // encode buffer
+//        size_t sizeInfraCompressed = integerCompressor.encode(
+//            reinterpret_cast<uint32_t*>(infraredImage->get_buffer()), infraSize,
+//            cFrame->infraBuffer.data(), infraSize + 1024
+//            );
+
+//        if(sizeInfraCompressed == 0){
+//            Logger::error("[Kinect4] infra compress error\n");
+//            return nullptr;
+//        }
+//        if(cFrame->infraBuffer.size() != sizeInfraCompressed){
+//            cFrame->infraBuffer.resize(sizeInfraCompressed);
+//        }
+//        // Logger::message(std::format("size compressed {} {}\n", infraSize, sizeInfraCompressed));
+//    }
 
     // copy audio frames
     if(lastFrameCount > 0){

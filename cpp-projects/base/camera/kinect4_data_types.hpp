@@ -244,7 +244,15 @@ namespace tool::camera::K4{
     struct VoxelData{
         std::int64_t idX : 13, idY : 13, idZ : 14, r : 8, g : 8, b : 8;
     };
+    struct PData{
+        std::int64_t x : 16, y : 16, z : 14, r : 8, g : 8, b : 8;
+    };
 
+
+    struct VertexMeshData{
+        geo::Pt3f pos;
+        geo::Pt4<std::uint8_t> col;
+    };
 
     // display
     // # image display data (color,depth,infrared)
@@ -294,6 +302,14 @@ namespace tool::camera::K4{
 
         size_t voxelsCount = 0;
         std::vector<std::uint32_t> voxelsBuffer;
+    };
+
+    struct CompressedDataFrame2{
+        size_t validVerticesCount = 0;
+//        std::vector<PData> buffer;
+        std::vector<std::uint32_t> buffer;
+        std::vector<std::array<float, 7>> audioFrames;
+        ImuSample imuSample;
     };
 
     // uncompressed
