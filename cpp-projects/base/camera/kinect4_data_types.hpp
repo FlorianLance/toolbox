@@ -244,9 +244,76 @@ namespace tool::camera::K4{
     struct VoxelData{
         std::int64_t idX : 13, idY : 13, idZ : 14, r : 8, g : 8, b : 8;
     };
+
     struct PData{
-        std::int64_t x : 16, y : 16, z : 14, r : 8, g : 8, b : 8;
+        std::int64_t x : 14, y : 13, z : 13, r : 8, g : 8, b : 8;
+
+        void pack(const tool::geo::Pt3<std::int16_t> &p, const tool::geo::Pt4<std::uint8_t> &c) noexcept{
+            x = std::clamp(static_cast<std::int16_t>(-p.x()), minX, maxX);
+            y = std::clamp(static_cast<std::int16_t>(-p.y()), minY, maxY);
+            z = std::clamp(p.z(), minZ, maxZ) - depthD;
+            r = c.x()-128;
+            g = c.y()-128;
+            b = c.z()-128;
+        }
+
+        constexpr tool::geo::Pt3f unpack_pos_f() const noexcept {
+            return {x*0.001f, y*0.001f, (0.001f*z)+4.096f};
+        }
+
+        constexpr tool::geo::Pt3<std::int16_t> unpack_pos_i16() const noexcept {
+            return tool::geo::Pt3<std::int16_t>{
+                static_cast<std::int16_t>(x),
+                static_cast<std::int16_t>(y),
+                static_cast<std::int16_t>(z+depthD)
+            };
+        }
+
+        constexpr tool::geo::Pt3<std::uint8_t> unpack_col_3ui8() const noexcept {
+            return {
+                static_cast<std::uint8_t>(static_cast<std::int16_t>(r)+128),
+                static_cast<std::uint8_t>(static_cast<std::int16_t>(g)+128),
+                static_cast<std::uint8_t>(static_cast<std::int16_t>(b)+128)
+            };
+        }
+
+        constexpr tool::geo::Pt4<std::uint8_t> unpack_col_4ui8() const noexcept {
+            return {
+                static_cast<std::uint8_t>(static_cast<std::int16_t>(r)+128),
+                static_cast<std::uint8_t>(static_cast<std::int16_t>(g)+128),
+                static_cast<std::uint8_t>(static_cast<std::int16_t>(b)+128),
+                255
+            };
+        }
+
+        constexpr tool::geo::Pt3f unpack_col_3f() const noexcept {
+            return {
+                ((static_cast<float>(r)+128.f))/255.f,
+                ((static_cast<float>(g)+128.f))/255.f,
+                ((static_cast<float>(b)+128.f))/255.f
+            };
+        }
+
+        constexpr tool::geo::Pt4f unpack_col_4f() const noexcept {
+            return {
+                ((static_cast<float>(r)+128.f))/255.f,
+                ((static_cast<float>(g)+128.f))/255.f,
+                ((static_cast<float>(b)+128.f))/255.f,
+                1.f
+            };
+        }
+
+    private:
+
+        static constexpr std::int16_t depthD = 4096;
+        static constexpr std::int16_t minX = -4096;
+        static constexpr std::int16_t maxX = +4095;
+        static constexpr std::int16_t minY = -4096;
+        static constexpr std::int16_t maxY = +4095;
+        static constexpr std::int16_t minZ = 0;
+        static constexpr std::int16_t maxZ = +8191;
     };
+
 
 
     struct VertexMeshData{
@@ -306,8 +373,14 @@ namespace tool::camera::K4{
 
     struct CompressedDataFrame2{
         size_t validVerticesCount = 0;
-//        std::vector<PData> buffer;
-        std::vector<std::uint32_t> buffer;
+        Mode mode;
+        size_t colorWidth = 0;
+        size_t colorHeight = 0;
+        size_t depthWidth = 0;
+        size_t depthHeight = 0;
+
+        std::vector<std::uint32_t> cloudBuffer; // PData
+
         std::vector<std::array<float, 7>> audioFrames;
         ImuSample imuSample;
     };
