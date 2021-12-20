@@ -105,7 +105,8 @@ struct Kinect4::Impl{
     // # jpeg compressor
     tjhandle jpegCompressor = nullptr;
     unsigned char *tjCompressedImage = nullptr;
-    std::vector<PData> pDataBuffer;
+    std::vector<std::uint32_t> pDataBuffer1;
+    std::vector<std::uint32_t> pDataBuffer2;
 
     // display frames
     size_t currentDisplayFramesId = 0;
@@ -862,19 +863,19 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
             // compress frame
             tool::Bench::start("[Kinect4] Generate compressed data frame1");
-//            auto compressedFrame = generate_compressed_data_frame(mode, colorImage, depthImage, infraredImage);
+            auto compressedFrame = generate_compressed_data_frame(mode, colorImage, depthImage, infraredImage);
             tool::Bench::stop();
-            tool::Bench::start("[Kinect4] Generate compressed data frame2");
-            auto compressedFrame2 = generate_compressed_data_frame2(mode, colorImage, depthImage, pointCloudImage);
-            tool::Bench::stop();
+//            tool::Bench::start("[Kinect4] Generate compressed data frame2");
+//            auto compressedFrame2 = generate_compressed_data_frame2(mode, colorImage, depthImage, pointCloudImage);
+//            tool::Bench::stop();
 
             // send frame
-//            if(compressedFrame1 != nullptr){
-//                kinect4->new_compressed_data_frame_signal(compressedFrame);
+            if(compressedFrame != nullptr){
+                kinect4->new_compressed_data_frame_signal(compressedFrame);
+            }
+//            if(compressedFrame2 != nullptr){
+//                kinect4->new_compressed_data_frame_signal2(compressedFrame2);
 //            }
-            if(compressedFrame2 != nullptr){
-                kinect4->new_compressed_data_frame_signal2(compressedFrame2);
-            }            
         }
         times.compressFrameTS = nanoseconds_since_epoch();
 
@@ -1204,7 +1205,7 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
         if(cFrame->depthBuffer.size() != sizeDepthCompressed){
             cFrame->depthBuffer.resize(sizeDepthCompressed);
         }
-        // Logger::message(std::format("size compressed {} {}\n", depthSize, sizeDepthCompressed));
+         Logger::message(std::format("size compressed {} {}\n", depthSize, sizeDepthCompressed));
 
     }
 
@@ -1275,39 +1276,62 @@ std::shared_ptr<CompressedDataFrame2> Kinect4::Impl::generate_compressed_data_fr
 
 
     // resize pdata buffer if necessary
-    if(pDataBuffer.size() < cFrame->validVerticesCount){
-        pDataBuffer.resize(cFrame->validVerticesCount);
+    if(pDataBuffer1.size() < cFrame->validVerticesCount){
+        pDataBuffer1.resize(cFrame->validVerticesCount);
+        pDataBuffer2.resize(cFrame->validVerticesCount);
     }
 
-    size_t idV = 0;
+    // fill valid id
+    std::vector<size_t> validId;
+    validId.reserve(cFrame->validVerticesCount);
     for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
-
-        if(depthBuffer[id] == invalid_depth_value){
-            return;
-        }
-
-        // pack data
-        pDataBuffer[idV++].pack(cloudBuffer[id], colorBuffer[id]);
-
-        if(idV < 30){
-            auto p = reinterpret_cast<std::int64_t*>(pDataBuffer.data());
-            Logger::message(std::to_string(p[idV-1]) + " " );
+        if(depthBuffer[id] != invalid_depth_value){
+            validId.push_back(id);
         }
     });
 
+    std::vector<size_t> validId2(validId.size());
+    std::iota(validId2.begin(), validId2.end(), 0);
+
+    // pack data
+
+
+//    for_each(std::execution::unseq, std::begin(validId2), std::end(validId2), [&](size_t id){
+//        auto pack = PackedVoxel::pack(cloudBuffer[validId[id]], colorBuffer[validId[id]]);
+//        pDataBuffer1[id] = 15345;//std::get<0>(pack);
+//        pDataBuffer2[id] = std::get<1>(pack);
+//    });
+
+    size_t idV = 0;
+    for(size_t ii = 0; ii < indicesDepths1D.size(); ++ii){
+        if(depthBuffer[ii] == invalid_depth_value){
+            continue;
+        }
+        auto pack = PackedVoxel::pack(cloudBuffer[ii], colorBuffer[ii]);
+        pDataBuffer1[idV]   = std::get<0>(pack);
+        pDataBuffer2[idV++] = std::get<1>(pack);
+    }
+
     // resize compressed buffer
-    cFrame->cloudBuffer.resize(cFrame->validVerticesCount*2 + 1024);
+    cFrame->pData1.resize(cFrame->validVerticesCount + 1024);
+    cFrame->pData2.resize(cFrame->validVerticesCount + 1024);
 
     // fill compressed buffer
-    std::fill(std::begin(cFrame->cloudBuffer), std::end(cFrame->cloudBuffer), 0);
+    std::fill(std::begin(cFrame->pData1), std::end(cFrame->pData1), 0);
+    std::fill(std::begin(cFrame->pData2), std::end(cFrame->pData2), 0);
 
     // encode compressed buffer
-    size_t sizeCompressed = integerCompressor.encode(
-        reinterpret_cast<uint32_t*>(pDataBuffer.data()), cFrame->validVerticesCount*2,
-        cFrame->cloudBuffer.data(),  cFrame->cloudBuffer.size()
+    size_t sizeCompressed1 = integerCompressor.encode(
+        pDataBuffer1.data(),    cFrame->validVerticesCount,
+        cFrame->pData1.data(),  cFrame->pData1.size()
+    );
+    size_t sizeCompressed2 = integerCompressor.encode(
+        pDataBuffer2.data(),    cFrame->validVerticesCount,
+        cFrame->pData2.data(),  cFrame->pData2.size()
     );
 
-    Logger::message(std::format("sizes {} {} {} {}\n", pDataBuffer.size(), idV, cFrame->cloudBuffer.size(), sizeCompressed));
+    Logger::message(std::format("sizes1 {} {} {} {}\n", pDataBuffer1.size(), idV, cFrame->pData1.size(), sizeCompressed1));
+    Logger::message(std::format("sizes2 {} {} {} {}\n", pDataBuffer2.size(), idV, cFrame->pData2.size(), sizeCompressed2));
 
     // copy audio frames
     if(lastFrameCount > 0){

@@ -44,6 +44,7 @@ struct IntegersEncoder::Impl{
     Impl(){}
 };
 
+
 IntegersEncoder::IntegersEncoder() : m_p(std::make_unique<IntegersEncoder::Impl>()){
     m_p->codec = std::shared_ptr<FastPForLib::IntegerCODEC>(new FastPForLib::CompositeCodec<FastPForLib::SIMDFastPFor<8>, FastPForLib::VariableByte>());
 }

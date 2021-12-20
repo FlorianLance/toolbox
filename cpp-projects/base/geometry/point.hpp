@@ -34,6 +34,7 @@
 
 // local
 #include "utility/array.hpp"
+#include "utility/math.hpp"
 
 namespace tool::geo {
 
