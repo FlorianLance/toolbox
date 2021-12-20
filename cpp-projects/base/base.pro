@@ -221,6 +221,7 @@ SOURCES += \
     # main
     base_main.cpp \
     # exvr
+    camera/kinect4_data_types.cpp \
     exvr/ex_component.cpp \
     exvr/ex_resource.cpp \
     # files

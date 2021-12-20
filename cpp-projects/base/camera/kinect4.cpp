@@ -862,16 +862,18 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
             // compress frame
             tool::Bench::start("[Kinect4] Generate compressed data frame1");
-            auto compressedFrame = generate_compressed_data_frame(mode, colorImage, depthImage, infraredImage);
+//            auto compressedFrame = generate_compressed_data_frame(mode, colorImage, depthImage, infraredImage);
             tool::Bench::stop();
             tool::Bench::start("[Kinect4] Generate compressed data frame2");
             auto compressedFrame2 = generate_compressed_data_frame2(mode, colorImage, depthImage, pointCloudImage);
             tool::Bench::stop();
 
             // send frame
-            if(compressedFrame != nullptr){
-                kinect4->new_compressed_data_frame_signal(compressedFrame);
-//                kinect4->new_compressed_data_frame_signal2(compressedFrame2);
+//            if(compressedFrame1 != nullptr){
+//                kinect4->new_compressed_data_frame_signal(compressedFrame);
+//            }
+            if(compressedFrame2 != nullptr){
+                kinect4->new_compressed_data_frame_signal2(compressedFrame2);
             }            
         }
         times.compressFrameTS = nanoseconds_since_epoch();
