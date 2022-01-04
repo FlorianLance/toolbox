@@ -135,6 +135,8 @@ public:
         const std::vector<std::uint16_t> &uncompressedDepth,
         VertexMeshData *vertices);
 
+    geo::Pt3<int16_t>* cloud_data();
+
 
     void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);
     void voxelize(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);

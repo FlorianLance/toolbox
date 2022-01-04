@@ -169,7 +169,7 @@ struct VolumetricVideoResource::Impl{
                 read(file, &audioBufferSize);
                 fData->audioFrames.resize(audioBufferSize);
                 read_array(file, reinterpret_cast<float*>(fData->audioFrames.data()),audioBufferSize*7);
-                Logger::message(std::format("audio frames sizes {} \n", (int)audioBufferSize));
+                //Logger::message(std::format("audio frames sizes {} \n", (int)audioBufferSize));
                 // # read imu
                 read_array(file, reinterpret_cast<char*>(&fData->imuSample), sizeof (ImuSample));
             }
@@ -668,8 +668,7 @@ void VolumetricVideoManager::generate_cloud(CompressedDataFrame *cFrame, const s
         m_p->depthImage.handle(),
         K4A_CALIBRATION_TYPE_DEPTH,
         m_p->pointCloudImage.handle()
-    );
-
+    );        
 }
 
 void VolumetricVideoManager::process_open3d_cloud(const std::vector<uint8_t> &uncompressedColor){
@@ -877,6 +876,13 @@ size_t VolumetricVideoManager::convert_to_cloud(const std::vector<uint8_t> &unco
 
 }
 
+Pt3<int16_t> *VolumetricVideoManager::cloud_data(){
+    if(m_p->pointCloudImage.is_valid()){
+        return reinterpret_cast<Pt3<int16_t>*>(m_p->pointCloudImage.get_buffer());
+    }
+    return nullptr;
+}
+
 void VolumetricVideoManager::register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize){
 
     if(idCamera >= m_p->vv->nb_cameras() || startFrame >= endFrame){
@@ -1008,7 +1014,7 @@ void VolumetricVideoManager::register_frames(size_t idCamera, size_t startFrame,
 
         auto startDP = reinterpret_cast<geo::Pt3d*>(opend3dDownCloud->points_.data());
         auto startDC = reinterpret_cast<geo::Pt3d*>(opend3dDownCloud->colors_.data());
-        files::CloudIO::save_cloud(downSampledFrameCloudStr, startDP, startDC, opend3dDownCloud->points_.size());
+        //files::CloudIO::save_cloud(downSampledFrameCloudStr, startDP, startDC, opend3dDownCloud->points_.size());
 
         Logger::message("end frame\n");
     }

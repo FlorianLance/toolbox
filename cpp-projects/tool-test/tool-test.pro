@@ -62,8 +62,6 @@ INCLUDEPATH += \
     $$BASE_INCLUDES\
     # opengl-utility
     $$OPENGL_UTILITY_INCLUDES\
-    # qt-utility
-#    $$QT_UTILITY_INCLUDES\
     # thirdparty
     $$GLEW_INCLUDES\
     $$GLFW_INCLUDES\
@@ -71,6 +69,15 @@ INCLUDEPATH += \
     $$ASSIMP_INCLUDES\
     $$GLM_INCLUDES\
     $$CATCH_INCLUDES\
+    $$KINECT4_INCLUDES\
+    $$TURBOJPG_INCLUDES\
+    $$FASTPFOR_INCLUDES\
+    $$OPEN3D_INCLUDES \
+    $$AUDIOFILE_INCLUDES \
+    $$LIBSOUNDIO_INCLUDES \
+    $$QOI_INCLUDES\
+    $$SIGNALS_INCLUDES\
+    $$TURBOPFOR_INCLUDES \
 
 ####################################### LIBRAIRIES
 
@@ -79,23 +86,27 @@ LIBS +=\
     $$BASE_LIB\
     # opengl-utility
     $$OPENGL_UTILITY_LIB \
-    # qt-utility
-#    $$QT_UTILITY_LIB \
     # thirdparty
     $$GLEW_LIBS \
     $$GLFW_LIBS \
     $$SFML_LIBS \
     $$ASSIMP_LIBS\
     $$GLM_LIBS\
+    $$KINECT4_LIBS \
+    $$TURBOJPG_LIBS\
+    $$FASTPFOR_LIBS\
+    $$OPEN3D_LIBS \
+    $$LIBSOUNDIO_LIBS \
+    $$TURBOPFOR_LIBS \
 
 ####################################### PROJECT FILES
 
 SOURCES += \
+    camera_tests.cpp \
     main.cpp \       
     geometry_tests.cpp \
 
 HEADERS += \
-   geometry_tests.hpp \
 
 DISTFILES += \
     CREDITS.md \

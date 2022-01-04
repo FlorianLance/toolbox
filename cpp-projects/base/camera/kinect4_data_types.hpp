@@ -246,10 +246,12 @@ namespace tool::camera::K4{
         std::int64_t idX : 13, idY : 13, idZ : 14, r : 8, g : 8, b : 8;
     };
 
-
     struct PackedVoxel{
         static std::tuple<std::uint32_t,std::uint32_t> pack(const geo::Pt3<std::int16_t> &pos, const geo::Pt4<std::uint8_t> &col) noexcept;
         static void unpack(std::uint32_t p1, std::uint32_t p2, geo::Pt3<std::int16_t> &pos, geo::Pt3<std::uint8_t> &col) noexcept;
+        static std::uint64_t pack64(const geo::Pt3<std::int16_t> &pos, const geo::Pt4<std::uint8_t> &col);
+        static void unpack64(std::uint64_t p, geo::Pt3<std::int16_t> &pos, geo::Pt4<std::uint8_t> &col);
+        static geo::Pt4<std::uint8_t> pack_xy(std::int16_t x, std::int16_t y);
     };
 
 

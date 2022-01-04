@@ -119,6 +119,15 @@ LIBS += \
 
 HEADERS += \
     # exvr
+    data/FastDifferentialCoding/fastdelta.h \
+    data/simdcomp/avx512bitpacking.h \
+    data/simdcomp/avxbitpacking.h \
+    data/simdcomp/portability.h \
+    data/simdcomp/simdbitpacking.h \
+    data/simdcomp/simdcomp.h \
+    data/simdcomp/simdcomputil.h \
+    data/simdcomp/simdfor.h \
+    data/simdcomp/simdintegratedbitpacking.h \
     exvr/ex_resource.hpp \
     exvr/ex_utility.hpp \
     # files
@@ -222,6 +231,15 @@ SOURCES += \
     base_main.cpp \
     # exvr
     camera/kinect4_data_types.cpp \
+    data/FastDifferentialCoding/fastdelta.c \
+    data/simdcomp/avx512bitpacking.c \
+    data/simdcomp/avxbitpacking.c \
+    data/simdcomp/simdbitpacking.c \
+    data/simdcomp/simdcomputil.c \
+    data/simdcomp/simdfor.c \
+    data/simdcomp/simdintegratedbitpacking.c \
+    data/simdcomp/simdpackedsearch.c \
+    data/simdcomp/simdpackedselect.c \
     exvr/ex_component.cpp \
     exvr/ex_resource.cpp \
     # files

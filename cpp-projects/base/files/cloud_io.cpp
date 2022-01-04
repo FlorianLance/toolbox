@@ -53,125 +53,47 @@ bool CloudIO::check_bufers_sizes(size_t sizeVertices, size_t sizeColors){
     return true;
 }
 
-bool CloudIO::check_input_values(size_t size, bool hasVertices, int dimension, int nbChannels){
+bool CloudIO::check_input_values(size_t size, bool hasVertices, bool hasColors, int dimension, int nbChannels){
 
-    if(size == 0 || dimension < 2 || dimension > 3 || !hasVertices || nbChannels < 3 || nbChannels > 4){
+    bool isValid = true;
+    if(size == 0 || dimension < 2 || dimension > 3 || !hasVertices){
+        isValid = false;
+    }
+    if(hasColors && (nbChannels < 3 || nbChannels > 4)){
+        isValid = false;
+    }
+
+    if(!isValid){
         Logger::error("[CloudIO::save_cloud] Invalid inputs values.\n");
-        return false;
     }
-    return true;
+    return isValid;
 }
 
+//void CloudIO::write_line(std::ostream &file, int16_t v1, int16_t v2, int16_t v3){
+//    file << std::format(line3, v1, v2, v3);
+//}
 
-void CloudIO::write_to_file(std::ostream &file, geo::Pt3f *vertices, geo::Pt3f *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {} {}\n", v.x(), v.y(), v.z(), c.x(), c.y(), c.z());
-    }
+//void CloudIO::write_line(std::ostream &file, int16_t v1, int16_t v2, int16_t v3){
+//    file << std::format(line3, v1, v2, v3);
+//}
+
+void CloudIO::write(std::ostream &file, float v1, float v2){
+    file << std::format(line2, v1, v2);
 }
 
-void CloudIO::write_to_file(std::ostream &file, geo::Pt3f *vertices, geo::Pt4f *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {} {} {}\n", v.x(), v.y(), v.z(), c.x(), c.y(), c.z(), c.w());
-    }
+void CloudIO::write(std::ostream &file, float v1, float v2, float v3){
+    file << std::format(line3, v1, v2, v3);
 }
 
-void CloudIO::write_to_file(std::ostream &file, geo::Pt2f *vertices, geo::Pt3f *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {}\n", v.x(), v.y(), c.x(), c.y(), c.z());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt2f *vertices, geo::Pt4f *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {} {}\n", v.x(), v.y(), c.x(), c.y(), c.z(), c.w());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt2f *vertices, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        file << std::format("v {} {}\n", v.x(), v.y());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt3f *vertices, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        file << std::format("v {} {} {}\n", v.x(), v.y(), v.z());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt3d *vertices, geo::Pt3d *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {} {}\n", v.x(), v.y(), v.z(), c.x(), c.y(), c.z());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt3d *vertices, geo::Pt4d *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {} {} {}\n", v.x(), v.y(), v.z(), c.x(), c.y(), c.z(), c.w());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt2d *vertices, geo::Pt3d *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {}\n", v.x(), v.y(), c.x(), c.y(), c.z());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt2d *vertices, geo::Pt4d *colors, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        const auto &c = colors[ii];
-        file << std::format("v {} {} {} {} {} {}\n", v.x(), v.y(), c.x(), c.y(), c.z(), c.w());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt2d *vertices, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        file << std::format("v {} {}\n", v.x(), v.y());
-    }
-}
-
-void CloudIO::write_to_file(std::ostream &file, geo::Pt3d *vertices, size_t size){
-    for(size_t ii = 0; ii < size; ++ii){
-        const auto &v = vertices[ii];
-        file << std::format("v {} {} {}\n", v.x(), v.y(), v.z());
-    }
-}
-
-void CloudIO::write_line(std::ostream &file, float v1, float v2){
-    file << std::format(line5, v1, v2);
-}
-
-void CloudIO::write_line(std::ostream &file, float v1, float v2, float v3){
-    file << std::format(line5, v1, v2, v3);
-}
-
-void CloudIO::write_line(std::ostream &file, float v1, float v2, float v3, float v4, float v5){
+void CloudIO::write(std::ostream &file, float v1, float v2, float v3, float v4, float v5){
     file << std::format(line5, v1, v2, v3, v4, v5);
 }
 
-void CloudIO::write_line(std::ostream &file, float v1, float v2, float v3, float v4, float v5, float v6){
+void CloudIO::write(std::ostream &file, float v1, float v2, float v3, float v4, float v5, float v6){
     file << std::format(line6, v1, v2, v3, v4, v5, v6);
 }
 
-void CloudIO::write_line(std::ostream &file, float v1, float v2, float v3, float v4, float v5, float v6, float v7){
+void CloudIO::write(std::ostream &file, float v1, float v2, float v3, float v4, float v5, float v6, float v7){
     file << std::format(line7, v1, v2, v3, v4, v5, v6, v7);
 }
 

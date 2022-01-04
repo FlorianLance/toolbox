@@ -1,4 +1,29 @@
 
+/*******************************************************************************
+** tool-test                                                                  **
+** MIT License                                                                **
+** Copyright (c) [2018] [Florian Lance]                                       **
+**                                                                            **
+** Permission is hereby granted, free of charge, to any person obtaining a    **
+** copy of this software and associated documentation files (the "Software"), **
+** to deal in the Software without restriction, including without limitation  **
+** the rights to use, copy, modify, merge, publish, distribute, sublicense,   **
+** and/or sell copies of the Software, and to permit persons to whom the      **
+** Software is furnished to do so, subject to the following conditions:       **
+**                                                                            **
+** The above copyright notice and this permission notice shall be included in **
+** all copies or substantial portions of the Software.                        **
+**                                                                            **
+** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR **
+** IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,   **
+** FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL    **
+** THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER **
+** LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING    **
+** FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER        **
+** DEALINGS IN THE SOFTWARE.                                                  **
+**                                                                            **
+********************************************************************************/
+
 // catch
 #include "catch.hpp"
 
@@ -168,7 +193,7 @@ TEST_CASE("glm mat4x4 comparison with geometry::Mat4"){
         REQUIRE(geo::equals(dm1,from_glm(glmdm1)));
         REQUIRE(dm1.determinant() == glm::determinant(glmdm1));
     }
-    return;
+//    return;
 
     SECTION("Look at"){
         auto lightView1 = from_glm(glm::lookAt(
@@ -546,238 +571,3 @@ TEST_CASE("glm mat4x4 comparison with geometry::Mat4"){
         REQUIRE(to_quaternion(to_mat4(q4)) == from_glm(gq4));
     }
 }
-
-
-
-
-//int main(int argc, char *argv[]){
-
-//    auto rot = tool::geo::Mat3f::rotation_matrix({
-//        tool::deg_2_rad(50.f),
-//        tool::deg_2_rad(89.f),
-//        tool::deg_2_rad(-30.f)
-//    });
-//    auto invRot = rot.inverse();
-
-//    auto rot2 = tool::geo::Mat4f::rotation_matrix({
-//        tool::deg_2_rad(50.f),
-//        tool::deg_2_rad(89.f),
-//        tool::deg_2_rad(-30.f)
-//    });
-//    auto invRot2 = rot2.inverse();
-
-
-//    std::cout << rot2 << "\n";
-//    std::cout << invRot2 << "\n";
-//    std::cout << rot2*invRot2 << "\n";
-//    std::cout << invRot2*rot2 << "\n";
-//    std::cout << tool::geo::Mat3f::y_rotation_matrix(50.f)*
-//                     tool::geo::Mat3f::x_rotation_matrix(89.f)*
-//                     tool::geo::Mat3f::z_rotation_matrix(-30.f) << "\n";
-
-//    std::cout << "rot " << (rot.to_hpr_angles().x()) << "\n";
-//    std::cout << "rot " << (rot.to_hpr_angles().y()) << "\n";
-//    std::cout << "rot " << (rot.to_hpr_angles().z()) << "\n";
-
-
-
-
-//    std::cout << "scale:\n" << tool::geo::Mat4<float>::scale(tool::geo::Mat4<float>::identity(), {2.f,2.f,2.f}) << "\n";
-//    std::cout << "scale:\n" << tool::geo::Mat4<float>::scale_matrix({2.f,2.f,2.f}) << "\n";
-
-//    static_cast<void>(argc);
-//    static_cast<void>(argv);
-
-//    BaseSfmlGlWindow scene("Render", 1600,1200);
-//    scene.init();
-//    scene.start();
-
-//    return 0;
-//}
-
-
-
-
-
-
-
-//std_v1<Test> tests;
-//for(int ii = 0; ii < 10; ++ii){
-//    tests.emplace_back(Test{ii});
-//}
-
-
-//int *f = &tests[0].a;
-//for(int ii = 0; ii < 10; ++ii){
-//    std::cout << f[ii] << "\n";
-//}
-
-//return 0;
-
-
-//for(const auto & v : tool::graphics::textureTypes){
-//    std::cout << std::get<1>(v) << '\n';
-//}
-
-////    constexpr TupleMap2<3, int, float, double> m ={
-////        {1, 0, 5},
-////        {2, 0, 0},
-////    };
-
-//std::cout << "ok\n";
-
-//return 0;
-//io::AiLoader::load_model("E:/DATA/Meshes/crysis-nano-suit-2/scene.fbx");
-//std::cout << "nok\n";
-
-//return 0;
-
-
-
-//auto m3x = Mat3d::x_rotation_matrix(90.);
-//auto m3y = Mat3d::y_rotation_matrix(90.);
-//auto m3z = Mat3d::z_rotation_matrix(90.);
-
-//auto m4x = Mat4d::x_rotation_matrix(90.);
-//auto m4y = Mat4d::y_rotation_matrix(90.);
-//auto m4z = Mat4d::z_rotation_matrix(90.);
-
-//auto m4xb = Mat4d{m3x};
-//auto m4yb = Mat4d{m3y};
-//auto m4zb = Mat4d{m3z};
-
-////    std::cout << m4x << m4y << m4z << "\n";
-////    std::cout << m4xb << m4yb << m4zb << "\n";
-
-//auto m3 = Mat3d::rotation_matrix({10.,20.,30.});
-//auto m4 = Mat4d::rotation_matrix({10.,20.,30.});
-////    std::cout << m3 << "\n";
-////    std::cout << m4 << "\n";
-//auto m3A1 = Mat3d::axis_angle({1.,0.,0.}, 20.);
-//auto m3A2 = Mat3d::axis_angle({0.,1.,0.}, 30.);
-//auto m3A3 = Mat3d::axis_angle({0.,0.,1.}, 40.);
-//auto m3A4 = Mat3d::axis_angle({1.,0.,1.}, 50.);
-
-//std::cout << "m3A1 euler: " << m3A1.to_euler() << "\n";
-//std::cout << "m3A2 euler: " << m3A2.to_euler() << "\n";
-//std::cout << "m3A3 euler: " << m3A3.to_euler() << "\n";
-//std::cout << "m3A4 euler: " << m3A4.to_euler() << "\n";
-
-//std::cout << "m3x euler: " << m3x.to_euler() << "\n";
-//std::cout << "m3y euler: " << m3y.to_euler() << "\n";
-//std::cout << "m3z euler: " << m3z.to_euler() << "\n";
-
-////    std::cout << "m4x euler: " << m4x.to_euler() << "\n";
-////    std::cout << "m4y euler: " << m4y.to_euler() << "\n";
-////    std::cout << "m4z euler: " << m4z.to_euler() << "\n";
-
-////    std::cout << "m4xb euler: " << m4xb.to_euler() << "\n";
-////    std::cout << "m4yb euler: " << m4yb.to_euler() << "\n";
-////    std::cout << "m4zb euler: " << m4zb.to_euler() << "\n";
-
-////    std::cout << "m3 euler: " << m3.to_euler() << "\n";
-////    std::cout << "m4 euler: " << m4.to_euler() << "\n";
-
-//return 0;
-
-//Quaternion<double> q0;
-//Quaternion<double> q1{0,0,0,1};
-//Quaternion<double> q2{{1,0,0},50};
-//Quaternion<double> q3{{0,1,0},90};
-
-//std::cout << Mat3d::z_rotation_matrix(90.) << "\n";
-//std::cout << Mat4d::z_rotation_matrix(90.) << "\n";
-
-
-//auto rx = Mat4d::x_rotation_matrix(90.);
-//auto ry = Mat4d::y_rotation_matrix(90.);
-//auto rz = Mat4d::z_rotation_matrix(90.);
-//std::cout << "to euler: \n";
-////    std::cout << (rx.to_euler()) << "\n";
-////    std::cout << (ry.to_euler()) << "\n";
-////    std::cout << (rz.to_euler()) << "\n";
-
-////    rx = Mat4d::axis_angle({1,0,0}, 90.);
-////    ry = Mat4d::axis_angle({0,1,0}, 90.);
-////    rz = Mat4d::axis_angle({0,0,1}, 90.);
-//std::cout << "to euler: \n";
-////    std::cout << (rx.to_euler()) << "\n";
-////    std::cout << (ry.to_euler()) << "\n";
-////    std::cout << (rz.to_euler()) << "\n";
-
-//std::cout << "Check rotation: " << Vec3d{170,-45,37} << "\n";
-//auto rM = Mat4d::rotation_matrix({170,-45,37});
-////    std::cout << rM << rM.rotation() << rM.to_euler()<< "\n";
-//std::cout << rM.r(0) << " " << rM.r(1) << " " << rM.r(2) << " " << rM.r(3) << " " << rM.r(4) << " "
-//          << rM.r(5) << " " << rM.r(6) << " " << rM.r(7) << " " << rM.r(8) << "\n\n";
-//std::cout << "Check scaling: " << Vec3d{2,3,4} << "\n";
-//auto sM = Mat4d::scale_matrix({2,3,4});
-//std::cout << sM << sM.s(0) << " " << sM.s(1) << " " << sM.s(2) << "\n\n";
-
-//std::cout << "Check translation: " << Vec3d{10,20,30} << "\n";
-//auto tM = Mat4d::translation_matrix({10,20,30});
-//std::cout << tM;
-//std::cout << tM.translation() << "\n";
-//std::cout << tM.t(0) << " " << tM.t(1) << " " << tM.t(2) << "\n\n";
-
-//return 0;
-////    std::cout << math::rad_2_deg(r1.to_euler().x()) << "\n";
-////    std::cout << math::rad_2_deg(r1.to_euler().y()) << "\n";
-////    std::cout << math::rad_2_deg(r1.to_euler().z()) << "\n\n";
-
-//{
-//    auto [axis, angle] = q2.to_angle_and_axis();
-//    std::cout << "-> " << axis << " " << rad_2_deg(angle) << "\n";
-//}
-//{
-//    auto [axis, angle] = q3.to_angle_and_axis();
-//    std::cout << "-> " << axis << " " << rad_2_deg(angle) << "\n";
-//}
-
-//auto proj = Mat4d::projection(60.,1.,0.5,1000.);
-//auto q4 = to_quaternion(proj);
-
-//const auto m1 = to_matrix(q2);
-//std::cout << m1 << "\n";
-//auto q5 = to_quaternion(m1);
-//std::cout << to_matrix(q5) << "\n";
-
-//std::cout << q5 << "\n";
-//std::cout << Quatd::inverse(q5) << "\n";
-//std::cout << Quatd::inverse(Quatd::inverse(q5)) << "\n";
-
-//Vec3<float> rUp        = {0.,1.,0.};
-//Vec3<float> rDirection = {1.,0.,0.};
-//auto right = geo::normalized(geo::cross(rUp, rDirection));
-//std::cout << "R: " << right << "\n";
-
-//Vec3d eulerA{90.,15,47};
-//std::cout << eulerA << "\n";
-//Quatd q6(eulerA);
-//std::cout << q6 << "\n";
-////    std::cout << "-> " << to_matrix(q6).to_euler() << "\n";
-//std::cout << rad_2_deg(q6.to_euler_angles().x()) << "\n";
-//std::cout << rad_2_deg(q6.to_euler_angles().y()) << "\n";
-//std::cout << rad_2_deg(q6.to_euler_angles().z()) << "\n";
-
-////    std::cout << (q2*q3).convert_to_matrix() << "\n";
-
-
-//graphics::Screen screen;
-//graphics::Camera camera(&screen);
-
-//Pt3<size_t> a;
-//Pt3<size_t> b;
-
-//a += b;
-//a += 5;
-
-
-//graphics::Material mat;
-
-
-
-////    read_ply_file("G:/DEV/Clouds/grass_house_01.ply", true);
-////    do_tests();
-
-//return 0;

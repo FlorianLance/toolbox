@@ -1205,7 +1205,7 @@ std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_fra
         if(cFrame->depthBuffer.size() != sizeDepthCompressed){
             cFrame->depthBuffer.resize(sizeDepthCompressed);
         }
-         Logger::message(std::format("size compressed {} {}\n", depthSize, sizeDepthCompressed));
+         Logger::message(std::format("size compressed {} {} {}\n", depthSize, sizeDepthCompressed, 1.f*sizeDepthCompressed/depthSize));
 
     }
 

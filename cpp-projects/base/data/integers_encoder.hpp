@@ -37,10 +37,14 @@ namespace tool::data {
     public:
 
         IntegersEncoder();
+        IntegersEncoder(int nbBits);
         ~IntegersEncoder();
 
         size_t encode(std::uint32_t *inputData, size_t sizeInput, std::uint32_t *compressedData, size_t outputFullSize);
         size_t decode(std::uint32_t *codedData, size_t sizeCoded, std::uint32_t *decodedData, size_t sizeOriginalData);
+
+        size_t encode(std::uint64_t *inputData, size_t sizeInput, std::uint32_t *compressedData, size_t outputFullSize);
+        size_t decode(std::uint32_t *codedData, size_t sizeCoded, std::uint64_t *decodedData, size_t sizeOriginalData);
 
     private:
         struct Impl;

@@ -8,6 +8,8 @@ TINYPLY_INCLUDES                     = $$TOOLBOX_CPP_THIRDPARTY_DIR"/tinyply"
 IMGUI_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/imgui-master"
 CATCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/catch"
 AUDIOFILE_INCLUDES                   = $$TOOLBOX_CPP_THIRDPARTY_DIR"/audiofile"
+QOI_INCLUDES                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/qoi"
+#OROCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/oroch/include"
 ############################ third-party others
 TURBOJPG_DIR                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libjpeg-turbo-2.0.3"
 FASTPFOR_DIR                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/FastPFor"
@@ -27,8 +29,18 @@ LIBUSB_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libusb"
 OPEN3D_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/Open3D-0.13" # Open3D-0.8.0
 EIGEN_DIR                            = $$TOOLBOX_CPP_THIRDPARTY_DIR"/eigen-3.4-rc1"
 LIBPNG_DIR                           = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libpng"
+TURBOPFOR_DIR                        = $$TOOLBOX_CPP_THIRDPARTY_DIR"/TurboPFor-Integer-Compression"
+#SIMDCOMP_DIR                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/SIMDCOMP"
 
 ########################################################## INCLUDES
+
+############################# SIMDCOMP
+#SIMDCOMP_INCLUDES = \
+#    $$SIMDCOMP_DIR"/include" \
+
+############################# TURBOPFOR_DIR
+TURBOPFOR_INCLUDES = \
+    $$TURBOPFOR_DIR"/include" \
 
 ############################# EIGEN
 EIGEN_INCLUDES = \
@@ -163,6 +175,16 @@ equals(COMPILER, "vs"){
 
 ########################################################## RELEASE LIBS
     equals(CFG, "release"){
+
+############################# SIMDCOMP
+#    SIMDCOMP_LIBS =\
+#        -L$$SIMDCOMP_DIR"/lib" \
+#        -lsimdcomp \
+
+############################# TURBOPFOR
+    TURBOPFOR_LIBS =\
+        -L$$TURBOPFOR_DIR"/lib" \
+        -llibic \
 
 ############################ OPENCV
         OPENCV_LIBS = \
