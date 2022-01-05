@@ -28,6 +28,7 @@
 #include <format>
 #include <iostream>
 #include <execution>
+#include <map>
 
 // catch
 #include <catch.hpp>
@@ -200,7 +201,7 @@ TEST_CASE("Kinect4 camera"){
 
     VolumetricVideoResource video;
 
-    const std::string filePath = "E:/ttt.kvid";
+    const std::string filePath = "D:/compress_test.kvid";
     REQUIRE(video.load_from_file(filePath));
 
     VolumetricVideoManager manager(&video);
@@ -215,6 +216,11 @@ TEST_CASE("Kinect4 camera"){
 
     std::vector<std::uint8_t> uncompressedColorFrame;
     std::vector<std::uint16_t> uncompressedDepthFrame;
+
+//    std::cout << "int16 " << std::numeric_limits<std::int16_t>::min() << " " << std::numeric_limits<std::int16_t>::max() << "\n";
+//    std::cout << "int32 " << std::numeric_limits<std::int32_t>::min() << " " << std::numeric_limits<std::int32_t>::max() << "\n";
+
+    std::map<std::string, std::vector<std::tuple<float, size_t>>> scores;
 
     for(size_t ii = 0; ii < video.nb_frames(0); ++ii){ // 1; ++ii){//
 
@@ -263,116 +269,337 @@ TEST_CASE("Kinect4 camera"){
         Bench::stop();
 
         std::vector<std::uint16_t> depth16(cloudSize);
-        std::vector<std::uint32_t> depth(cloudSize);
-        for(size_t jj= 0; jj < cloudSize; ++jj){
-            depth[jj] = uncompressedDepthFrame[jj];
-            depth16[jj] = uncompressedDepthFrame[jj];
-        }
+        std::vector<std::uint32_t> depth32(cloudSize);
 
-        std::vector<std::uint32_t> xyz, uxyz;
+
+        std::vector<std::uint32_t> xyz32, uxyz32;
         std::vector<std::uint16_t> xyz16, uxyz16;
-        xyz.resize(idV*3);
+        xyz32.resize(idV*3);
         xyz16.resize(idV*3);
-
-        uxyz.resize(idV*3);
+        uxyz32.resize(idV*3);
         uxyz16.resize(idV*3);
 
-        Bench::start("fill");
-        for_each(std::execution::par_unseq, std::begin(indices), std::begin(indices) + idV, [&](size_t id){
-            xyz[id]         = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloud[vIndices[id]].x())+4096);
-            xyz[idV   + id] = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloud[vIndices[id]].y())+4096);
-            xyz[2*idV + id] = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloud[vIndices[id]].z()));
+        Bench::start("fill arrays");
 
-            xyz16[id]         = cloud[vIndices[id]].x();
-            xyz16[idV   + id] = cloud[vIndices[id]].y();
-            xyz16[2*idV + id] = cloud[vIndices[id]].z();
+        for(size_t jj= 0; jj < cloudSize; ++jj){
+            depth32[jj] = uncompressedDepthFrame[jj];
+            depth16[jj] = uncompressedDepthFrame[jj];
+
+            REQUIRE(uncompressedDepthFrame[jj] >= 0);
+            REQUIRE(uncompressedDepthFrame[jj] < 10000);
+        }
+
+        for_each(std::execution::par_unseq, std::begin(indices), std::begin(indices) + idV, [&](size_t id){
+
+            REQUIRE(cloud[vIndices[id]].x() >= -4096);
+            REQUIRE(cloud[vIndices[id]].y() >= -4096);
+            REQUIRE(cloud[vIndices[id]].z() >= 0);
+
+            xyz32[id]         = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloud[vIndices[id]].x())+4096);
+            xyz32[idV   + id] = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloud[vIndices[id]].y())+4096);
+            xyz32[2*idV + id] = static_cast<std::uint32_t>(cloud[vIndices[id]].z());
+
+            REQUIRE(static_cast<std::int32_t>(cloud[vIndices[id]].x()) == xyz32[id] - 4096);
+            REQUIRE(static_cast<std::int32_t>(cloud[vIndices[id]].y()) == xyz32[idV   + id] - 4096);
+            REQUIRE(static_cast<std::int32_t>(cloud[vIndices[id]].z()) == xyz32[2*idV + id]);
+
+            xyz16[id]         = static_cast<std::uint16_t>(static_cast<std::int32_t>(cloud[vIndices[id]].x())+4096);
+            xyz16[idV   + id] = static_cast<std::uint16_t>(static_cast<std::int32_t>(cloud[vIndices[id]].y())+4096);
+            xyz16[2*idV + id] = static_cast<std::uint16_t>(cloud[vIndices[id]].z());
         });
         for_each(std::execution::par_unseq, std::begin(indices), std::begin(indices) + idV, [&](size_t id){
-            uxyz[id*3+0] = static_cast<std::uint32_t>(cloud[vIndices[id]].x()+4096);
-            uxyz[id*3+1] = static_cast<std::uint32_t>(cloud[vIndices[id]].y()+4096);
-            uxyz[id*3+2] = static_cast<std::uint32_t>(cloud[vIndices[id]].z());
+            uxyz32[id*3+0] = static_cast<std::uint32_t>(cloud[vIndices[id]].x()+4096);
+            uxyz32[id*3+1] = static_cast<std::uint32_t>(cloud[vIndices[id]].y()+4096);
+            uxyz32[id*3+2] = static_cast<std::uint32_t>(cloud[vIndices[id]].z());
 
-            uxyz16[id*3+0] = cloud[vIndices[id]].x();
-            uxyz16[id*3+1] = cloud[vIndices[id]].y();
-            uxyz16[id*3+2] = cloud[vIndices[id]].z();
+            uxyz16[id*3+0] = static_cast<std::uint16_t>(static_cast<std::int32_t>(cloud[vIndices[id]].x())+4096);
+            uxyz16[id*3+1] = static_cast<std::uint16_t>(static_cast<std::int32_t>(cloud[vIndices[id]].y())+4096);
+            uxyz16[id*3+2] = static_cast<std::uint16_t>(cloud[vIndices[id]].z());
         });
         Bench::stop();
 
-//        continue;
-        std::vector<unsigned char> out;
 
+        Bench::start("check arrays");
 
+        for_each(std::execution::par_unseq, std::begin(indices), std::begin(indices) + idV, [&](size_t id){
+            auto x = static_cast<std::int16_t>(static_cast<std::int32_t>(xyz32[id]) - 4096);
+            auto y = static_cast<std::int16_t>(static_cast<std::int32_t>(xyz32[idV   + id]) - 4096);
+            auto z = static_cast<std::int16_t>(xyz32[2*idV + id]);
 
-        auto insize = cloudSize;
-        out.resize(insize*2);
-        auto outsize = p4nenc128v16(depth16.data(), insize, out.data());
-        std::cout << "p4nenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nenc128v16(depth16.data(), insize, out.data());
-        std::cout << "p4nenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nd1enc128v16(depth16.data(), insize, out.data());
-        std::cout << "p4nd1enc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nzenc128v16(depth16.data(), insize, out.data());
-        std::cout << "p4nzenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n\n";
+            REQUIRE(x == cloud[vIndices[id]].x());
+            REQUIRE(y == cloud[vIndices[id]].y());
+            REQUIRE(z == cloud[vIndices[id]].z());
 
-        // NOT THE GOOD INPUT SIZE
-        // NEED PADDING
+        });
 
-        xyz16.resize(xyz16.size() + (128-(xyz16.size()%128)));
-        std::cout << "MOD " << xyz16.size()%128 << "\n";
+        for_each(std::execution::par_unseq, std::begin(indices), std::begin(indices) + idV, [&](size_t id){
+            auto x = static_cast<std::int16_t>(static_cast<std::int32_t>(uxyz32[id*3+0]) - 4096);
+            auto y = static_cast<std::int16_t>(static_cast<std::int32_t>(uxyz32[id*3+1]) - 4096);
+            auto z = static_cast<std::int16_t>(uxyz32[id*3+2]);
 
-        insize = xyz16.size();
-        out.resize(insize*2);
-        outsize = p4nenc128v16(xyz16.data(), insize, out.data());
-        std::cout << "xyz16 p4nenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nenc128v16(xyz16.data(), insize, out.data());
-        std::cout << "xyz16 p4nenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nd1enc128v16(xyz16.data(), insize, out.data());
-        std::cout << "xyz16 p4nd1enc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nzenc128v16(xyz16.data(), insize, out.data());
-        std::cout << "xyz16 p4nzenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n\n";
+            REQUIRE(x == cloud[vIndices[id]].x());
+            REQUIRE(y == cloud[vIndices[id]].y());
+            REQUIRE(z == cloud[vIndices[id]].z());
+        });
+        Bench::stop();
 
-        std::vector<std::uint16_t> bxyz16(xyz16.size());
-        auto size2 = p4nzdec128v16(out.data(), outsize, bxyz16.data());
+        Bench::stop();
 
-        std::cout << "size2 " << size2 << " " << insize << "\n";
-        for(size_t jj = 0; jj < bxyz16.size(); ++jj){
-            if(bxyz16[jj] != xyz16[jj]){
-                std::cout << "JJ " << jj << "\n";
-            }
-            REQUIRE(bxyz16[jj] == xyz16[jj]);
+        // set data
+        std::uint16_t *inputData16 = nullptr;
+        std::uint32_t *inputData32 = nullptr;
+        std::vector<unsigned char> encoded;
+        std::vector<uint16_t> decoded16;
+        std::vector<uint32_t> decoded32;
+        size_t insize = 0, beforePaddingSize = 0,encodedBytesNb = 0, decodedBytesNb = 0;;
+
+        // depth16
+        insize = depth16.size();
+        encoded.resize(insize*2);
+        decoded16.resize(insize);
+        inputData16 = depth16.data();
+
+        Bench::start("p4nenc128v16");
+        encodedBytesNb = p4nenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4ndec128v16");
+        decodedBytesNb = p4ndec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < cloudSize; ++jj){
+            REQUIRE(depth16[jj] == decoded16[jj]);
         }
+        scores["depth16-p4nenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
 
+        Bench::start("p4ndenc128v16");
+        encodedBytesNb = p4ndenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nddec128v16");
+        decodedBytesNb = p4nddec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < cloudSize; ++jj){
+            REQUIRE(depth16[jj] == decoded16[jj]);
+        }
+        scores["depth16-p4ndenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nd1enc128v16");
+        encodedBytesNb = p4nd1enc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nd1dec128v16");
+        decodedBytesNb = p4nd1dec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < cloudSize; ++jj){
+            REQUIRE(depth16[jj] == decoded16[jj]);
+        }
+        scores["depth16-p4nd1enc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nzenc128v16");
+        encodedBytesNb = p4nzenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nzdec128v16");
+        decodedBytesNb = p4nzdec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < cloudSize; ++jj){
+            REQUIRE(depth16[jj] == decoded16[jj]);
+        }
+        scores["depth16-p4nzenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        // xyz16
+        beforePaddingSize = xyz16.size();
+        xyz16.resize(xyz16.size() + (128-(xyz16.size()%128)));
+        std::fill(xyz16.begin() + beforePaddingSize, xyz16.end(), 0);
+        insize = xyz16.size();
+        inputData16 = xyz16.data();
+
+        encoded.resize(insize*2);
+        decoded16.resize(insize);
+
+        Bench::start("p4nenc128v16");
+        encodedBytesNb = p4nenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4ndec128v16");
+        decodedBytesNb = p4ndec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["xyz16-p4nenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4ndenc128v16");
+        encodedBytesNb = p4ndenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nddec128v16");
+        decodedBytesNb = p4nddec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["xyz16-p4ndenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nd1enc128v16");
+        encodedBytesNb = p4nd1enc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nd1dec128v16");
+        decodedBytesNb = p4nd1dec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["xyz16-p4nd1enc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nzenc128v16");
+        encodedBytesNb = p4nzenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nzdec128v16");
+        decodedBytesNb = p4nzdec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["xyz16-p4nzenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
+
+        // uxyz16
+        beforePaddingSize = uxyz16.size();
         uxyz16.resize(uxyz16.size() + (128-(uxyz16.size()%128)));
-        std::cout << "MOD " << uxyz16.size()%128 << "\n";
-
+        std::fill(uxyz16.begin() + beforePaddingSize, uxyz16.end(), 0);
         insize = uxyz16.size();
-        out.resize(insize*2);
-        outsize = p4nenc128v16(uxyz16.data(), insize, out.data());
-        std::cout << "uxyz16 p4nenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nenc128v16(uxyz16.data(), insize, out.data());
-        std::cout << "uxyz16 p4nenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nd1enc128v16(uxyz16.data(), insize, out.data());
-        std::cout << "uxyz16 p4nd1enc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n";
-        outsize = p4nzenc128v16(uxyz16.data(), insize, out.data());
-        std::cout << "uxyz16 p4nzenc128v16 " << insize << " " << outsize << " " << (0.5f*outsize/insize)  << "\n\n";
+        inputData16 = uxyz16.data();
 
+        encoded.resize(insize*2);
+        decoded16.resize(insize);
 
-        // DECODE / TEST
+        Bench::start("p4nenc128v16");
+        encodedBytesNb = p4nenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4ndec128v16");
+        decodedBytesNb = p4ndec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["uxyz16-p4nenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
 
+        Bench::start("p4ndenc128v16");
+        encodedBytesNb = p4ndenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nddec128v16");
+        decodedBytesNb = p4nddec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["uxyz16-p4ndenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
 
-//        out.resize(xyz16.size()*2);
-//        outsize = p4nenc128v16(xyz16.data(), xyz16.size(), out.data());
-//        std::cout << "xyz16 p4nenc128v16 " << xyz16.size() << " " << outsize << " " << (1.f*outsize/xyz16.size())  << "\n";
-//        outsize = p4nenc128v16(xyz16.data(), xyz16.size(), out.data());
-//        std::cout << "xyz16 p4nenc128v16 " << xyz16.size() << " " << outsize << " " << (1.f*outsize/xyz16.size())  << "\n";
-//        outsize = p4nd1enc128v16(xyz16.data(), xyz16.size(), out.data());
-//        std::cout << "xyz16 p4nd1enc128v16 " << xyz16.size() << " " << outsize << " " << (1.f*outsize/xyz16.size())  << "\n";
-//        outsize = p4nzenc128v16(xyz16.data(), xyz16.size(), out.data());
-//        std::cout << "xyz16 p4nzenc128v16 " << xyz16.size() << " " << outsize << " " << (1.f*outsize/xyz16.size())  << "\n\n";
+        Bench::start("p4nd1enc128v16");
+        encodedBytesNb = p4nd1enc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nd1dec128v16");
+        decodedBytesNb = p4nd1dec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["uxyz16-p4nd1enc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
 
+        Bench::start("p4nzenc128v16");
+        encodedBytesNb = p4nzenc128v16(inputData16, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nzdec128v16");
+        decodedBytesNb = p4nzdec128v16(encoded.data(), insize, decoded16.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData16[jj] == decoded16[jj]);
+        }
+        scores["uxyz16-p4nzenc128v16"].emplace_back(0.5f*encodedBytesNb/insize, encodedBytesNb);
 
+        // xyz32
+        beforePaddingSize = xyz32.size();
+        xyz32.resize(xyz32.size() + (128-(xyz32.size()%128)));
+        std::fill(xyz32.begin() + beforePaddingSize, xyz32.end(), 0);
+        insize = xyz32.size();
+        inputData32 = xyz32.data();
 
+        encoded.resize(insize*4);
+        decoded32.resize(insize);
 
+        Bench::start("p4nenc128v32");
+        encodedBytesNb = p4nenc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4ndec128v32");
+        decodedBytesNb = p4ndec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["xyz32-p4nenc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4ndenc128v32");
+        encodedBytesNb = p4ndenc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nddec128v32");
+        decodedBytesNb = p4nddec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["xyz32-p4ndenc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nd1enc128v32");
+        encodedBytesNb = p4nd1enc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nd1dec128v32");
+        decodedBytesNb = p4nd1dec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["xyz32-p4nd1enc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nzenc128v32");
+        encodedBytesNb = p4nzenc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nzdec128v32");
+        decodedBytesNb = p4nzdec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["xyz32-p4nzenc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        // uxyz32
+        beforePaddingSize = uxyz32.size();
+        uxyz32.resize(uxyz32.size() + (128-(uxyz32.size()%128)));
+        std::fill(uxyz32.begin() + beforePaddingSize, uxyz32.end(), 0);
+        insize = uxyz32.size();
+        inputData32 = uxyz32.data();
+
+        encoded.resize(insize*4);
+        decoded32.resize(insize);
+
+        Bench::start("p4nenc128v32");
+        encodedBytesNb = p4nenc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4ndec128v32");
+        decodedBytesNb = p4ndec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["uxyz32-p4nenc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4ndenc128v32");
+        encodedBytesNb = p4ndenc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nddec128v32");
+        decodedBytesNb = p4nddec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["uxyz32-p4ndenc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nd1enc128v32");
+        encodedBytesNb = p4nd1enc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nd1dec128v32");
+        decodedBytesNb = p4nd1dec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["uxyz32-p4nd1enc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        Bench::start("p4nzenc128v32");
+        encodedBytesNb = p4nzenc128v32(inputData32, insize, encoded.data()); Bench::stop();
+        Bench::start("p4nzdec128v32");
+        decodedBytesNb = p4nzdec128v32(encoded.data(), insize, decoded32.data()); Bench::stop();
+        REQUIRE(encodedBytesNb == decodedBytesNb);
+        for(size_t jj= 0; jj < insize; ++jj){
+            REQUIRE(inputData32[jj] == decoded32[jj]);
+        }
+        scores["uxyz32-p4nzenc128v32"].emplace_back(0.25f*encodedBytesNb/insize, encodedBytesNb);
+
+        continue;
 
 
         // Get the memory space required to encode the arrays.
@@ -383,13 +610,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("integerCompressor_depth");
         {
-            std::vector<std::uint32_t> cBuffer(depth.size()+1024);
+            std::vector<std::uint32_t> cBuffer(depth32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(depth.data()), depth.size(),
+                reinterpret_cast<uint32_t*>(depth32.data()), depth32.size(),
                 cBuffer.data(), cBuffer.size()
             );
-            std::cout << "integerCompressor_depth " << depth.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(depth.size()) << "\n";
+            std::cout << "integerCompressor_depth " << depth32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(depth32.size()) << "\n";
         }
         Bench::stop();
 
@@ -422,13 +649,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("integerCompressor_xyz");
         {
-            std::vector<std::uint32_t> cBuffer(xyz.size()+1024);
+            std::vector<std::uint32_t> cBuffer(xyz32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(xyz.data()), xyz.size(),
+                reinterpret_cast<uint32_t*>(xyz32.data()), xyz32.size(),
                 cBuffer.data(), cBuffer.size()
             );
-            std::cout << "integerCompressor_xyz " << xyz.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(xyz.size()) << "\n";
+            std::cout << "integerCompressor_xyz " << xyz32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(xyz32.size()) << "\n";
         }
         Bench::stop();
 
@@ -446,13 +673,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("integerCompressor_uxyz");
         {
-            std::vector<std::uint32_t> cBuffer(uxyz.size()+1024);
+            std::vector<std::uint32_t> cBuffer(uxyz32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(uxyz.data()), uxyz.size(),
+                reinterpret_cast<uint32_t*>(uxyz32.data()), uxyz32.size(),
                 cBuffer.data(), cBuffer.size()
             );
-            std::cout << "integerCompressor_uxyz " << uxyz.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(uxyz.size()) << "\n";
+            std::cout << "integerCompressor_uxyz " << uxyz32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(uxyz32.size()) << "\n";
         }
         Bench::stop();
 
@@ -469,10 +696,10 @@ TEST_CASE("Kinect4 camera"){
         Bench::stop();
 
 
-        compute_deltas_inplace(xyz.data(),idV*3,0);
-        compute_deltas_inplace(uxyz.data(),idV*3,0);
+        compute_deltas_inplace(xyz32.data(),idV*3,0);
+        compute_deltas_inplace(uxyz32.data(),idV*3,0);
 
-        compute_deltas_inplace(depth.data(),cloudSize,0);
+        compute_deltas_inplace(depth32.data(),cloudSize,0);
         compute_deltas_inplace(reinterpret_cast<std::uint32_t*>(depth16.data()),cloudSize/2,0);
 
 
@@ -488,13 +715,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("delta_integerCompressor_depth");
         {
-            std::vector<std::uint32_t> cBuffer(depth.size()+1024);
+            std::vector<std::uint32_t> cBuffer(depth32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(depth.data()), depth.size(),
+                reinterpret_cast<uint32_t*>(depth32.data()), depth32.size(),
                 cBuffer.data(), cBuffer.size()
                 );
-            std::cout << "delta_integerCompressor_depth " << depth.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(depth.size()) << "\n";
+            std::cout << "delta_integerCompressor_depth " << depth32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(depth32.size()) << "\n";
         }
         Bench::stop();
 
@@ -514,13 +741,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("delta_integerCompressor_xyz");
         {
-            std::vector<std::uint32_t> cBuffer(xyz.size()+1024);
+            std::vector<std::uint32_t> cBuffer(xyz32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(xyz.data()), xyz.size(),
+                reinterpret_cast<uint32_t*>(xyz32.data()), xyz32.size(),
                 cBuffer.data(), cBuffer.size()
                 );
-            std::cout << "delta_integerCompressor_xyz " << xyz.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(xyz.size()) << "\n";
+            std::cout << "delta_integerCompressor_xyz " << xyz32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(xyz32.size()) << "\n";
         }
         Bench::stop();
 
@@ -538,13 +765,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("delta_integerCompressor_uxyz");
         {
-            std::vector<std::uint32_t> cBuffer(uxyz.size()+1024);
+            std::vector<std::uint32_t> cBuffer(uxyz32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(uxyz.data()), uxyz.size(),
+                reinterpret_cast<uint32_t*>(uxyz32.data()), uxyz32.size(),
                 cBuffer.data(), cBuffer.size()
                 );
-            std::cout << "delta_integerCompressor_uxyz " << uxyz.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(uxyz.size()) << "\n";
+            std::cout << "delta_integerCompressor_uxyz " << uxyz32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(uxyz32.size()) << "\n";
         }
         Bench::stop();
 
@@ -572,24 +799,24 @@ TEST_CASE("Kinect4 camera"){
         }
         Bench::stop();
 
-        std::sort(std::execution::par_unseq, std::begin(depth), std::end(depth));
+        std::sort(std::execution::par_unseq, std::begin(depth32), std::end(depth32));
         std::sort(std::execution::par_unseq, std::begin(depth16), std::end(depth16));
 
         std::sort(std::execution::par_unseq, std::begin(packedBuffer), std::end(packedBuffer));
-        std::sort(std::execution::par_unseq, std::begin(xyz), std::end(xyz));
-        std::sort(std::execution::par_unseq, std::begin(uxyz), std::end(uxyz));
+        std::sort(std::execution::par_unseq, std::begin(xyz32), std::end(xyz32));
+        std::sort(std::execution::par_unseq, std::begin(uxyz32), std::end(uxyz32));
         std::sort(std::execution::par_unseq, std::begin(xyz16), std::end(xyz16));
         std::sort(std::execution::par_unseq, std::begin(uxyz16), std::end(uxyz16));
 
         Bench::start("sorted_delta_integerCompressor_depth");
         {
-            std::vector<std::uint32_t> cBuffer(depth.size()+1024);
+            std::vector<std::uint32_t> cBuffer(depth32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(depth.data()), depth.size(),
+                reinterpret_cast<uint32_t*>(depth32.data()), depth32.size(),
                 cBuffer.data(), cBuffer.size()
                 );
-            std::cout << "sorted_delta_integerCompressor_depth " << depth.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(depth.size()) << "\n";
+            std::cout << "sorted_delta_integerCompressor_depth " << depth32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(depth32.size()) << "\n";
         }
         Bench::stop();
 
@@ -608,13 +835,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("sorted_delta_integerCompressor_xyz");
         {
-            std::vector<std::uint32_t> cBuffer(xyz.size()+1024);
+            std::vector<std::uint32_t> cBuffer(xyz32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(xyz.data()), xyz.size(),
+                reinterpret_cast<uint32_t*>(xyz32.data()), xyz32.size(),
                 cBuffer.data(), cBuffer.size()
                 );
-            std::cout << "sorted_delta_integerCompressor_xyz " << xyz.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(xyz.size()) << "\n";
+            std::cout << "sorted_delta_integerCompressor_xyz " << xyz32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(xyz32.size()) << "\n";
         }
         Bench::stop();
 
@@ -632,13 +859,13 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("sorted_delta_integerCompressor_uxyz");
         {
-            std::vector<std::uint32_t> cBuffer(uxyz.size()+1024);
+            std::vector<std::uint32_t> cBuffer(uxyz32.size()+1024);
             size_t sizeCompressed = integerCompressor.encode(
-                reinterpret_cast<uint32_t*>(uxyz.data()), uxyz.size(),
+                reinterpret_cast<uint32_t*>(uxyz32.data()), uxyz32.size(),
                 cBuffer.data(), cBuffer.size()
                 );
-            std::cout << "sorted_delta_integerCompressor_uxyz " << uxyz.size() << " " << (sizeCompressed) << " " <<
-                (1.f*sizeCompressed)/(uxyz.size()) << "\n";
+            std::cout << "sorted_delta_integerCompressor_uxyz " << uxyz32.size() << " " << (sizeCompressed) << " " <<
+                (1.f*sizeCompressed)/(uxyz32.size()) << "\n";
         }
         Bench::stop();
 
@@ -939,7 +1166,7 @@ TEST_CASE("Kinect4 camera"){
 
         Bench::start("delta");
 
-        compute_deltas_inplace(xyz.data(),idV*3,0);
+        compute_deltas_inplace(xyz32.data(),idV*3,0);
         compute_deltas_inplace(reinterpret_cast<std::uint32_t*>(xyz16.data()),(idV*3)/2,0);
 //            for (size_t jj = 1; jj < idV*3; ++jj) {
 //                xyz[jj] += xyz[jj-1];
@@ -951,7 +1178,7 @@ TEST_CASE("Kinect4 camera"){
         cb.resize(idV*3 + 1024);
         Bench::start("compress");
         size_t sizeCloudCompressed1 = integerCompressor.encode(
-            xyz.data(), idV*3,
+            xyz32.data(), idV*3,
             cb.data(), cb.size()
         );
 
@@ -1111,6 +1338,16 @@ TEST_CASE("Kinect4 camera"){
     tjDestroy(jpegCompressor);
 
     Bench::display(BenchUnit::milliseconds);
+
+    for(auto &m : scores){
+        double total = 0.;
+        size_t totalB = 0;
+        for(auto &f : m.second){
+            total += std::get<0>(f);
+            totalB +=  std::get<1>(f);
+        }
+        std::cout << "mode : " << m.first << " " << total/m.second.size()<< " " << ((1.*totalB/m.second.size())/1024)/1024 << "\n";
+    }
 
 
 
