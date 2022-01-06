@@ -382,17 +382,12 @@ namespace tool::camera::K4{
     };
 
     struct CompressedDataFrame2{
+
         size_t validVerticesCount = 0;
-        Mode mode;
         size_t colorWidth = 0;
-        size_t colorHeight = 0;
-        size_t depthWidth = 0;
-        size_t depthHeight = 0;
-
-//        std::vector<std::uint32_t> cloudBuffer; // PData
-
-        std::vector<std::uint32_t> pData1; // PData
-        std::vector<std::uint32_t> pData2; // PData
+        size_t colorHeight = 0;        
+        std::vector<std::uint8_t> colorBuffer;
+        std::vector<std::uint8_t> cloudBuffer;
 
         std::vector<std::array<float, 7>> audioFrames;
         ImuSample imuSample;

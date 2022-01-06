@@ -89,6 +89,8 @@ INCLUDEPATH += \
     $$EIGEN_INCLUDES\
     # open3D
     $$OPEN3D_INCLUDES \
+    # turbopfor
+    $$TURBOPFOR_INCLUDES \
 
 ####################################### LIBRAIRIES
 LIBS += \
@@ -114,6 +116,8 @@ LIBS += \
     $$EIGEN_LIBS\
     # open3D
     $$OPEN3D_LIBS \
+    # turbopfor
+    $$TURBOPFOR_LIBS \
 
 ####################################### PROJECT FILES
 
