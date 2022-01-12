@@ -27,87 +27,40 @@
 #pragma once
 
 // local
-#include "kinect4_data_types.hpp"
+#include "volumetric_full_video_resource.hpp"
+#include "frame_uncompressor.hpp"
 
 namespace tool::camera::K4{
 
-enum class VolumetricVideoMode : std::int8_t{
-    Clouds = 0,Voxels
-};
-
-struct FrameData{
-    size_t idFrame;
-    std::int64_t timeStamp;
-    std::shared_ptr<CompressedDataFrame> data;
-};
-
-struct CameraData{
-    geo::Mat4d transform = geo::Mat4d::identity();
-    std::vector<FrameData> frames;
-};
-
-class VolumetricVideoResource{
+class VolumetricFullVideoManager{
 public:
-    VolumetricVideoResource();
-    ~VolumetricVideoResource();
 
-    VolumetricVideoMode mode() const noexcept;
-    size_t nb_cameras() const noexcept;
-    size_t nb_frames(size_t idCamera = 0) const noexcept;
-    CompressedDataFrame *get_frame(size_t idFrame, size_t idCamera = 0);
-    std::vector<FrameData> *get_frames(size_t idCamera = 0);
+    VolumetricFullVideoManager(VolumetricFullVideoResource *volumetricVideo);
+    ~VolumetricFullVideoManager();
 
-    size_t frame_id(size_t idCamera, float timeMs) const;
-    size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0) const;
-    std::int64_t start_time(size_t idCamera) const;
-    std::int64_t end_time(size_t idCamera) const;
-    void set_transform(size_t idCamera, geo::Mat4d tr);
-    geo::Mat4d get_transform(size_t idCamera) const;
+    // data
+    geo::Pt3<int16_t>* cloud_data();
 
-    void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedDataFrame> frame);
-    void clean_frames();
+    // uncompress full frame
+    bool uncompress_frame(CompressedFullFrame *cFrame, FullFrame &frame);
 
-    bool save_to_file(const std::string &path);
-    bool load_from_file(const std::string &path);
-
-
-
-private:
-    struct Impl;
-    std::unique_ptr<Impl> m_p = nullptr;
-};
-
-
-class VolumetricVideoManager{
-public:
-    VolumetricVideoManager(VolumetricVideoResource *volumetricVideo);
-    ~VolumetricVideoManager();
-
-
-    bool uncompress_color(CompressedDataFrame *cFrame, std::vector<std::uint8_t> &uncompressedColor);
-    bool uncompress_depth(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedDepth);
-    bool uncompress_infra(CompressedDataFrame *cFrame, std::vector<std::uint16_t> &uncompressedInfra);
-
+    // copy audio
     void audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer);
     void audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer);
 
-
+    // convert to images
     void convert_to_depth_image(
         Mode mode,
-        CompressedDataFrame *cFrame,
+        size_t depthWidth, size_t depthHeight,
         const std::vector<std::uint16_t> &uncompressedDepth,
         std::vector<std::uint8_t> &imageDepth);
 
     void convert_to_infra_image(
-        CompressedDataFrame *cFrame,
+        size_t infraWidth, size_t infraHeight,
         const std::vector<std::uint16_t> &uncompressedInfra,
         std::vector<std::uint8_t> &imageInfra);
 
-    void generate_cloud(CompressedDataFrame *cFrame,
-        const std::vector<std::uint16_t> &uncompressedDepth);
-
-    void process_open3d_cloud(const std::vector<std::uint8_t> &uncompressedColor);
-
+    // convert to cloud
     size_t convert_to_cloud(
         size_t validVerticesCount,
         const std::vector<std::uint8_t> &uncompressedColor,
@@ -124,7 +77,6 @@ public:
         const std::vector<std::uint16_t> &uncompressedDepth,
         geo::Pt3f *vertices, geo::Pt4f *colors);
 
-
     size_t convert_to_cloud(
         const std::vector<std::uint8_t> &uncompressedColor,
         const std::vector<std::uint16_t> &uncompressedDepth,
@@ -135,16 +87,19 @@ public:
         const std::vector<std::uint16_t> &uncompressedDepth,
         VertexMeshData *vertices);
 
-    geo::Pt3<int16_t>* cloud_data();
-
-
+    // process
+    void process_open3d_cloud(const std::vector<std::uint8_t> &uncompressedColor);
     void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);
-    void voxelize(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);
+    void voxelize_registered_frames(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);
+
+
+    VolumetricFullVideoResource *vv = nullptr;
+    FullFrameUncompressor ffu;
 
 private:
+
     struct Impl;
     std::unique_ptr<Impl> m_p = nullptr;
-
     static constexpr std::array<geo::Pt3f, 5> depthGradient ={
         geo::Pt3f{0.f,0.f,1.f},
         {0.f,1.f,1.f},
@@ -153,5 +108,4 @@ private:
         {1.f,0.f,0.f},
     };
 };
-
 }

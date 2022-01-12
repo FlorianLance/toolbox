@@ -32,12 +32,6 @@
 #include <execution>
 #include <format>
 
-// turbojpg
-#include <turbojpeg.h>
-
-// turbopfor
-#include "TurboPFor/vp4.h"
-
 // kinect4
 #include <k4a/k4a.hpp>
 
@@ -53,8 +47,8 @@
 #include "utility/vector.hpp"
 // # geometry
 #include "geometry/point4.hpp"
-// # data
-#include "data/integers_encoder.hpp"
+// # camera
+#include "camera/frame_compressor.hpp"
 
 using namespace tool;
 using namespace tool::geo;
@@ -76,6 +70,17 @@ struct Kinect4::Impl{
     k4a::transformation transformation;    
     k4a_device_configuration_t k4aConfig;
     K4::Config config;
+    std::unique_ptr<k4a::capture> capture = nullptr;
+
+    // images
+    // # capture
+    std::optional<k4a::image> colorImage      = std::nullopt;
+    std::optional<k4a::image> depthImage      = std::nullopt;
+    std::optional<k4a::image> infraredImage   = std::nullopt;
+    std::optional<k4a::image> pointCloudImage = std::nullopt;
+    // # processing
+    std::optional<k4a::image> convertedColorImage = std::nullopt;
+    std::optional<k4a::image> depthSizedColorImage = std::nullopt;
 
     // audio
     std::shared_ptr<k4a::K4AMicrophone> microphone = nullptr;
@@ -89,11 +94,21 @@ struct Kinect4::Impl{
     // parameters
     Parameters parameters;
 
+    // infos
+    size_t colorWidth   = 0;
+    size_t colorHeight  = 0;
+    size_t colorSize    = 0;
+    size_t depthWidth   = 0;
+    size_t depthHeight  = 0;
+    size_t depthSize    = 0;
+    ColorResolution colorResolution;
+    ImageFormat imageFormat;
+    DepthMode depthMode;
+
     // state
     std::atomic_bool readFramesFromCameras = false;
     float temperature = 0.f;
     size_t validDepthValues = 0;
-    FrameReadingTimings times;
 
     // arrays indices
     std_v1<size_t> indicesDepths1D;
@@ -103,63 +118,38 @@ struct Kinect4::Impl{
     std_v1<bool> depthMask;
 
     // compression
-    // # integer compressor
-    data::IntegersEncoder integerCompressor;
-    // # jpeg compressor
-    tjhandle jpegCompressor = nullptr;
-    unsigned char *tjCompressedImage = nullptr;
-    std::vector<std::uint32_t> processedCloudBuffer;
-    std::vector<std::uint8_t> processedColorBuffer;
+    FullFrameCompressor ffc;
+    CloudFrameCompressor cfc;
 
     // display frames
     size_t currentDisplayFramesId = 0;
     std::vector<std::shared_ptr<DisplayDataFrame>> displayFrames;
-
-    // compressed frames
-    size_t currentCompressedFrame = 0;
-    std::vector<std::shared_ptr<CompressedDataFrame>> compressedFrames;
-    std::vector<std::shared_ptr<CompressedDataFrame2>> compressedFrames2;
 
     // thread/lockers
     std::mutex parametersM; /**< mutex for reading parameters at beginning of a new frame in thread function */
     std::unique_ptr<std::thread> frameReaderT = nullptr;
 
     // functions
-    std::shared_ptr<CompressedDataFrame> generate_compressed_data_frame(
-        K4::Mode mode,
-        std::optional<k4a::image> colorImage,
-        std::optional<k4a::image> depthImage,
-        std::optional<k4a::image> infraredImage);
-
-    std::shared_ptr<CompressedDataFrame2> generate_compressed_data_frame2(
-        std::optional<k4a::image> colorImage,
-        std::optional<k4a::image> depthImage,
-        std::optional<k4a::image> cloud);
-
-    void update_display_data_frame(K4::Mode mode, DisplayDataFrame *dFrame, const Parameters &p,
-        std::optional<k4a::image> color,
-        std::optional<k4a::image> depth,
-        std::optional<k4a::image> infra,
-        std::optional<k4a::image> cloud);
-
-    void filter_depth_image(const K4::Parameters &p,
-        K4::Mode mode,
-        k4a::image depthImage,
-        std::optional<k4a::image> colorImage,
-        std::optional<k4a::image> infraredImage);
-
-    void filter_color_image(const K4::Parameters &p,
-        k4a::image colorImage,
-        std::optional<k4a::image> depthImage,
-        std::optional<k4a::image> infraredImage);
-
-    void filter_infrared_image(const K4::Parameters &p,
-        k4a::image infraredImage,
-        std::optional<k4a::image> colorImage,
-        std::optional<k4a::image> depthImage);
-
-
     void read_frames(K4::Mode mode);
+    // # init data
+    void init_data(K4::Mode mode);
+    // # read data
+    void read_from_microphones();
+    void read_from_imu();
+    // # get images
+    bool get_color_image();
+    bool get_depth_image();
+    bool get_infra_image(Mode mode);
+    // # processing
+    void convert_color_image(const Parameters &p);
+    void resize_color_to_fit_depth();
+    void filter_depth_image(const K4::Parameters &p, K4::Mode mode);
+    void filter_color_image(const K4::Parameters &p);
+    void filter_infrared_image(const K4::Parameters &p);
+    void generate_cloud(Mode mode);
+    void compress_cloud_frame();
+    void compress_full_frame(Mode mode);
+    void display_frame(const Parameters &p, Mode mode);
 };
 
 
@@ -277,12 +267,6 @@ Kinect4::~Kinect4(){
         stop_cameras();
         close();
     }
-
-    // clean jpeg compressor
-    if(i->tjCompressedImage != nullptr){
-        tjFree(i->tjCompressedImage);
-    }
-    tjDestroy(i->jpegCompressor);
 }
 
 bool Kinect4::open(uint32_t deviceId){
@@ -461,173 +445,29 @@ void Kinect4::stop_cameras(){
 
 void Kinect4::Impl::read_frames(K4::Mode mode){
 
-    const int32_t timeoutMs = 300;
-
+    // check device
     if(!device.is_valid() || readFramesFromCameras){
         Logger::error("[Kinect4] Cannot start reading frames.\n");
         return;
     }
 
-    // init compressor
-    if(jpegCompressor == nullptr){
-        jpegCompressor = tjInitCompress();
-    }
-
-    if(tjCompressedImage != nullptr){
-        tjFree(tjCompressedImage);
-        tjCompressedImage = nullptr;
-    }
-
-    // init capture
-    k4a::capture capture;
-
-    // init transform
-    k4a::transformation transformation(calibration);
-
-    // init images
-    // # capture
-    std::optional<k4a::image> colorImage      = std::nullopt;
-    std::optional<k4a::image> depthImage      = std::nullopt;
-    std::optional<k4a::image> infraredImage   = std::nullopt;
-    std::optional<k4a::image> pointCloudImage = std::nullopt;
-    // # processing
-    std::optional<k4a::image> convertedColorImage = std::nullopt;
-    std::optional<k4a::image> depthSizedColorImage = std::nullopt;
-
-
-    size_t colorWidth  = 0;
-    size_t colorHeight = 0;
-    size_t colorSize   = 0;
-    size_t depthWidth = 0;
-    size_t depthHeight = 0;
-    size_t depthSize = 0;
-
-    const auto colorResolution = color_resolution(mode);
-    const auto imageFormat  = image_format(mode);
-    if(colorResolution != ColorResolution::OFF){
-
-        // retrieve colors dimensions
-        const auto colorDims     = k4a::GetColorDimensions(static_cast<k4a_color_resolution_t>(colorResolution));
-        colorWidth  = std::get<0>(colorDims);
-        colorHeight = std::get<1>(colorDims);
-        colorSize   = colorWidth*colorHeight;
-
-        if(imageFormat == ImageFormat::YUY2){
-            convertedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
-                colorWidth,
-                colorHeight,
-                static_cast<int32_t>(colorWidth * 4 * sizeof(uint8_t))
-            );
-        }
-
-        // set color indices
-        indicesColors1D.resize(colorSize);
-        std::iota(std::begin(indicesColors1D), std::end(indicesColors1D), 0);       
-    }
-
-    const auto depthMode = depth_mode(mode);
-    if(depthMode != DepthMode::OFF){
-
-        // retrieve depth dimensions
-        auto depthRes = depth_resolution(mode);
-        depthWidth  = depthRes.x();
-        depthHeight  = depthRes.y();
-        depthSize   = depthWidth*depthHeight;
-
-        Logger::message(std::format("depthframe {} {} \n", depthWidth, depthHeight));
-
-        // init resized color image
-        if(colorResolution != ColorResolution::OFF){
-            depthSizedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
-                depthWidth,
-                depthHeight,
-                static_cast<int32_t>(depthWidth * 4 * sizeof(uint8_t))
-            );                        
-        }
-
-        // set depth indices
-        depthMask.resize(depthSize);
-        indicesDepths1D.resize(depthSize);
-        std::iota(std::begin(indicesDepths1D), std::end(indicesDepths1D), 0);                
-        indicesDepths3D.resize(depthSize);
-        indicesDepths1DNoBorders.reserve((depthWidth-2)*(depthHeight-2));
-        size_t id = 0;
-        for(size_t ii = 0; ii < depthHeight; ++ii){
-            for(size_t jj = 0; jj < depthWidth; ++jj){
-                indicesDepths3D[id] = {id,ii,jj};
-                if(ii > 0 && ii < depthHeight-1 && jj > 0 && jj < depthWidth-1 ){
-                    indicesDepths1DNoBorders.push_back(id);
-                }
-                ++id;
-            }
-        }
-
-        // init cloud image
-        if(has_cloud(mode)){
-            pointCloudImage = k4a::image::create(K4A_IMAGE_FORMAT_CUSTOM,
-                depthWidth,
-                depthHeight,
-                static_cast<int32_t>(depthWidth * 3 * sizeof(int16_t))
-            );
-        }
-
-        Logger::message(std::format("depth {} {} \n", depthWidth, depthHeight));
-    }
-
-    // init display frames
-    displayFrames.resize(10);
-    currentDisplayFramesId = 0;
-    for(auto &frame : displayFrames){
-
-        frame = std::make_shared<DisplayDataFrame>();
-
-        if(depthSize > 0){
-            frame->depthFrame.width  = depthWidth;
-            frame->depthFrame.height = depthHeight;
-            frame->depthFrame.pixels.resize(depthSize);
-
-            if(has_infrared(mode)){
-                frame->infraredFrame.width  = depthWidth;
-                frame->infraredFrame.height = depthHeight;
-                frame->infraredFrame.pixels.resize(depthSize);
-            }
-
-            if(has_cloud(mode)){
-                frame->cloud.vertices.resize(depthSize);
-                frame->cloud.colors.resize(depthSize);
-                frame->cloud.validVerticesCount = 0;
-            }
-        }
-
-        if(color_resolution(mode) != K4::ColorResolution::OFF){
-            if(mode == K4::Mode::Cloud_1024x1024 || mode == K4::Mode::Full_frame_1024x1024){
-                frame->colorFrame.width  = depthWidth;
-                frame->colorFrame.height = depthHeight;
-                frame->colorFrame.pixels.resize(depthSize);
-            }else{
-
-                frame->colorFrame.width  = colorWidth;
-                frame->colorFrame.height = colorHeight;
-                frame->colorFrame.pixels.resize(colorSize);
-            }
-        }
-    }
+    // initialization
+    init_data(mode);
 
     // start loop
     readFramesFromCameras = true;
     while(readFramesFromCameras){
 
-        //tool::Bench::reset();
-
+        // copy parameters
         parametersM.lock();
         const auto p = parameters;
         parametersM.unlock();
 
-        // get a capture
-        times.startFrameReadingTS = nanoseconds_since_epoch();
+        // read data from device
         try {
             Bench::start("[Kinect4] Device get_capture");
-            bool success = device.get_capture(&capture, std::chrono::milliseconds(timeoutMs));
+            const int32_t timeoutMs = 300;
+            bool success = device.get_capture(capture.get(), std::chrono::milliseconds(timeoutMs));
             Bench::stop();
 
             if(!success){
@@ -635,281 +475,59 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
                 continue;
             }
 
+            read_from_microphones();
+            read_from_imu();
+            temperature = capture->get_temperature_c();
+
         }  catch (std::runtime_error error) {
             Logger::error(std::format("[Kinect4] get_capture error: {}\n", error.what()));
             readFramesFromCameras = false;
             break;
         }
-        times.afterCaptureTS = nanoseconds_since_epoch();
 
-        // imu
-        k4a_imu_sample_t sample;
-        if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
-            imuSample.temperature = sample.temperature;
-            const auto &dAcc = sample.acc_sample.xyz;
-            imuSample.acc ={dAcc.x,dAcc.y,dAcc.z};
-            imuSample.accTsMs = sample.acc_timestamp_usec;
-            const auto &dGyr = sample.gyro_sample.xyz;
-            imuSample.gyr = {dGyr.x,dGyr.y,dGyr.z};
-            imuSample.gyrTsMs = sample.gyro_timestamp_usec;
+        // get images
+        if(!get_color_image()){
+            continue;
+        }
+        if(!get_depth_image()){
+            continue;
+        }
+        if(!get_infra_image(mode)){
+            continue;
         }
 
-        // microphones
-        lastFrameCount = 0;
-        if(audioListener != nullptr){
+        // process
+        convert_color_image(p);
+        resize_color_to_fit_depth();
+        filter_depth_image(p, mode);
+        filter_color_image(p);
+        filter_infrared_image(p);
+        generate_cloud(mode);
 
-            // process audio frame
-            audioListener->ProcessFrames([&](k4a::K4AMicrophoneFrame *frame, const size_t frameCount) {
-
-                // store last count
-                lastFrameCount = frameCount;                
-                if(lastFrameCount == 0){
-                    return lastFrameCount;
-                }
-
-                // resize audio buffer
-                if(audioFrames.size() < lastFrameCount){
-                    audioFrames.resize(lastFrameCount);
-                }
-
-                // copy data
-                std::copy(frame, frame + lastFrameCount, audioFrames.begin());
-
-                return lastFrameCount;
-            });
-
-            if (audioListener->GetStatus() != SoundIoErrorNone){
-                Logger::error(std::format("Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
-            }else if (audioListener->Overflowed()){
-                Logger::warning(std::format("Warning: sound overflow detected!\n"));
-                audioListener->ClearOverflowed();
-            }
+        // send frames
+        if(p.sendCompressedCloudFrame){
+            compress_cloud_frame();
         }
-
-        // get a color image
-        if(colorResolution != ColorResolution::OFF){
-
-            Bench::start("[Kinect4] Capture get_color_image");
-            colorImage = capture.get_color_image();
-            Bench::stop();
-
-            if (!colorImage->is_valid()){
-                 Logger::error("Failed to get color image from capture\n");
-                continue;
-            }            
-        }
-        times.getColorTS = nanoseconds_since_epoch();//colorImage->get_system_timestamp();
-
-        // get a depth image
-        if(depthMode != DepthMode::OFF){
-
-            Bench::start("[Kinect4] Capture get_depth_image");
-            depthImage = capture.get_depth_image();
-            Bench::stop();
-
-            if (!depthImage->is_valid()){
-                Logger::error("Failed to get depth image from capture\n");
-                continue;
-            }            
-        }
-        times.getDepthTS = nanoseconds_since_epoch();//depthImage->get_system_timestamp();
-
-        // get an infrared image
-        if(has_infrared(mode)){
-
-            Bench::start("[Kinect4] Capture get_ir_image");
-            infraredImage = capture.get_ir_image();
-            Bench::stop();
-
-            if (!infraredImage->is_valid()){
-                Logger::error("Failed to get infrared image from capture\n");
-                continue;
-            }            
-        }
-        times.getInfraTS = nanoseconds_since_epoch();//infraredImage->get_system_timestamp();
-
-        // get temperature
-        temperature = capture.get_temperature_c();
-
-
-        // convert color image format
-        if(colorResolution != ColorResolution::OFF){
-            if(imageFormat == ImageFormat::YUY2 ){
-
-                Bench::start("[Kinect4] YUY2 convert");
-
-                auto colorsYuy2 = reinterpret_cast<geo::Pt4<std::uint8_t>*>(colorImage->get_buffer());
-                auto colorsBGRA = reinterpret_cast<geo::Pt4<std::uint8_t>*>(convertedColorImage->get_buffer());
-
-                for_each(std::execution::par_unseq, std::begin(indicesColors1D), std::end(indicesColors1D), [&](size_t oidC){
-
-                    auto idC = oidC;
-                    if(idC%2 == 0){
-
-                        auto &currentPixel = colorsBGRA[idC];
-                        idC = idC/2;
-
-                        const Pt4<uint8_t> &yuy2 = colorsYuy2[idC];
-
-                        // convert to rgb
-                        const int y0 = std::clamp(static_cast<int>(p.yFactor*yuy2.x()), 0, 255);
-                        auto ci = 298 * (y0 - 16);
-
-                        const int u0 = std::clamp(static_cast<int>(p.uFactor*yuy2.y()), 0, 255);
-                        const auto d = u0 - 128;
-
-                        const int v0 = std::clamp(static_cast<int>(p.vFactor*yuy2.w()), 0, 255);
-                        const auto e = v0 - 128;
-
-                        currentPixel = geo::Pt4<uint8_t>{
-                            static_cast<uint8_t>(std::clamp((ci + (516 * d) + 128)              >> 8, 0, 255)), // blue
-                            static_cast<uint8_t>(std::clamp((ci + (-100 * d) - (208 * e) + 128) >> 8, 0, 255)), // green
-                            static_cast<uint8_t>(std::clamp((ci + (409 * e) + 128)              >> 8, 0, 255)), // red
-                            255
-                        };
-
-                    }else{
-
-                        auto &currentPixel = colorsBGRA[idC];
-                        idC = (idC-1)/2;
-
-                        const Pt4<uint8_t> &color = colorsYuy2[idC];
-                        const int y0 = std::clamp(static_cast<int>(p.yFactor*color.x()), 0, 255);
-                        const int u0 = std::clamp(static_cast<int>(p.uFactor*color.y()), 0, 255);
-                        const int y1 = std::clamp(static_cast<int>(p.yFactor*color.z()), 0, 255);
-                        const int v0 = std::clamp(static_cast<int>(p.vFactor*color.w()), 0, 255);
-
-                        // convert to rgb
-                        auto c = y0 - 16;
-                        const auto d = u0 - 128;
-                        const auto e = v0 - 128;
-
-                        auto ci = 298 * c;
-                        const auto v1 = (516 * d) + 128;
-                        const auto v2 = (-100 * d) - (208 * e) + 128;
-                        const auto v3 = (409 * e) + 128;
-
-                        c = y1 - 16;
-                        ci = 298 * c;
-
-                        currentPixel = geo::Pt4<uint8_t>{
-                            static_cast<uint8_t>(std::clamp((ci + v1) >> 8, 0, 255)), // blue
-                            static_cast<uint8_t>(std::clamp((ci + v2) >> 8, 0, 255)), // green
-                            static_cast<uint8_t>(std::clamp((ci + v3) >> 8, 0, 255)), // red
-                            255
-                        };
-                    }
-                });
-
-                colorImage = convertedColorImage;
-
-                Bench::stop();
-
-            }else if(imageFormat == ImageFormat::NV12){
-                // ... not managed
-            }else if(imageFormat == ImageFormat::MJPEG){
-                // ... not managed
-            }else if(imageFormat == ImageFormat::BGRA32){
-                // nothing to do
-            }           
-        }
-        times.convertColorTS = nanoseconds_since_epoch();
-
-        // resize color image to fit depth
-        if(colorImage.has_value() && depthImage.has_value()){
-
-            Bench::start("[Kinect4] Transformation color_image_to_depth_camera");
-            transformation.color_image_to_depth_camera(
-                depthImage.value(),
-                colorImage.value(),
-                &depthSizedColorImage.value());
-
-            colorImage = depthSizedColorImage;
-            Bench::stop();            
-        }
-        times.resizeColorTS = nanoseconds_since_epoch();
-
-        // filter depth image
-        if(depthImage.has_value()){
-            Bench::start("[Kinect4] Filter depth");
-            filter_depth_image(p, mode, depthImage.value(), colorImage, infraredImage);
-            Bench::stop();            
-        }        
-
-        // filter color image
-        if(colorImage.has_value()){
-            Bench::start("[Kinect4] Filter color");
-            filter_color_image(p, colorImage.value(), depthImage, infraredImage);
-            Bench::stop();
-        }
-
-        // filter infra image
-        if(infraredImage.has_value()){
-            Bench::start("[Kinect4] Filter infra");
-            filter_infrared_image(p, infraredImage.value(), colorImage, depthImage);
-            Bench::stop();
-        }
-
-        times.filteringTS = nanoseconds_since_epoch();
-
-        // generate cloud from depth image
-        if(has_cloud(mode) && pointCloudImage.has_value()){
-            Bench::start("[Kinect4] Transformation depth_image_to_point_cloud");
-            transformation.depth_image_to_point_cloud(depthImage.value(), K4A_CALIBRATION_TYPE_DEPTH, &pointCloudImage.value());
-            Bench::stop();            
-        }
-        times.cloudGenerationTS = nanoseconds_since_epoch();
-
-
-        // compressed frame
-        if(p.sendCompressedDataFrame && (colorImage.has_value() || depthImage.has_value() || infraredImage.has_value())){
-
-            // compress frame
-//            tool::Bench::start("[Kinect4] Generate compressed data frame1");
-//            auto compressedFrame = generate_compressed_data_frame(mode, colorImage, depthImage, infraredImage);
-//            tool::Bench::stop();
-            tool::Bench::start("[Kinect4] Generate compressed data frame2");
-            auto compressedFrame2 = generate_compressed_data_frame2(colorImage, depthImage, pointCloudImage);
-            tool::Bench::stop();
-
-            // send frame
-//            if(compressedFrame != nullptr){
-//                kinect4->new_compressed_data_frame_signal(compressedFrame);
-//            }
-            if(compressedFrame2 != nullptr){
-                kinect4->new_compressed_data_frame_signal2(compressedFrame2);
-            }
-        }
-        times.compressFrameTS = nanoseconds_since_epoch();
-
-        // display frame        
+        if(p.sendCompressedFullFrame){
+            compress_full_frame(mode);
+        }            
         if(p.sendDisplayColorFrame || p.sendDisplayDepthFrame || p.sendDisplayInfraredFrame || p.sendDisplayCloud){
-
-            // write frame
-            tool::Bench::start("[Kinect4] Write display data frame");
-            auto currDisplayFrame = displayFrames[currentDisplayFramesId++];
-            currentDisplayFramesId = currentDisplayFramesId%displayFrames.size();
-            update_display_data_frame(mode, currDisplayFrame.get(), p, colorImage, depthImage, infraredImage, pointCloudImage);
-            tool::Bench::stop();
-
-            kinect4->new_display_frame_signal(currDisplayFrame);
+            display_frame(p, mode);
         }
-        times.displayFrameTS    = nanoseconds_since_epoch();
-        times.endFrameReadingTS = nanoseconds_since_epoch();
-
-        kinect4->new_times_signal(times);
-        //tool::Bench::display(BenchUnit::milliseconds, 0, true);
     }
     readFramesFromCameras = false;
-
-    //tool::Bench::display(BenchUnit::milliseconds, 0, true);
 }
 
-void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
-    k4a::image depthImage, std::optional<k4a::image> colorImage, std::optional<k4a::image> infraredImage){
+void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
+
+    if(!depthImage.has_value()){
+        return;
+    }
+
+    Bench::start("[Kinect4] Filter depth");
 
     // retrieve buffers
-    auto depthBuffer = reinterpret_cast<int16_t*>(depthImage.get_buffer());
+    auto depthBuffer = reinterpret_cast<int16_t*>(depthImage->get_buffer());
     geo::Pt4<uint8_t>* colorBuffer = colorImage.has_value() ? reinterpret_cast<geo::Pt4<uint8_t>*>(colorImage.value().get_buffer()) : nullptr;
     uint16_t* infraredBuffer = infraredImage.has_value() ? reinterpret_cast<uint16_t*>(infraredImage.value().get_buffer()) : nullptr;
 
@@ -1086,19 +704,24 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode,
         // increment counter
 //        validDepthValues.fetch_add(1, std::memory_order_relaxed);
     });
+
+    Bench::stop();
 }
 
-void Kinect4::Impl::filter_color_image(const K4::Parameters &p,
-    k4a::image colorImage,
-    std::optional<k4a::image> depthImage,
-    std::optional<k4a::image> infraredImage){
+void Kinect4::Impl::filter_color_image(const K4::Parameters &p){
+
+    if(!colorImage.has_value()){
+        return;
+    }
 
     if(!depthImage.has_value() && !infraredImage.has_value()){
         return;
     }
 
+    Bench::start("[Kinect4] Filter color");
+
     // retrieve buffers
-    geo::Pt4<uint8_t>* colorBuffer = reinterpret_cast<geo::Pt4<uint8_t>*>(colorImage.get_buffer());
+    geo::Pt4<uint8_t>* colorBuffer = reinterpret_cast<geo::Pt4<uint8_t>*>(colorImage->get_buffer());
     int16_t*  depthBuffer    = depthImage.has_value() ? reinterpret_cast<int16_t*>(depthImage.value().get_buffer()) : nullptr;
     uint16_t* infraredBuffer = infraredImage.has_value() ? reinterpret_cast<uint16_t*>(infraredImage.value().get_buffer()) : nullptr;
 
@@ -1112,19 +735,23 @@ void Kinect4::Impl::filter_color_image(const K4::Parameters &p,
         }
     });
 
+    Bench::stop();
 }
 
-void Kinect4::Impl::filter_infrared_image(const K4::Parameters &p,
-    k4a::image infraredImage,
-    std::optional<k4a::image> colorImage,
-    std::optional<k4a::image> depthImage){
+void Kinect4::Impl::filter_infrared_image(const K4::Parameters &p){
+
+    if(!infraredImage.has_value()){
+        return;
+    }
 
     if(!colorImage.has_value() && !depthImage.has_value()){
         return;
     }
 
+    Bench::start("[Kinect4] Filter infra");
+
     // retrieve buffers
-    uint16_t* infraredBuffer = reinterpret_cast<uint16_t*>(infraredImage.get_buffer());
+    uint16_t* infraredBuffer = reinterpret_cast<uint16_t*>(infraredImage->get_buffer());
     geo::Pt4<uint8_t>* colorBuffer = colorImage.has_value() ? reinterpret_cast<geo::Pt4<uint8_t>*>(colorImage.value().get_buffer()) : nullptr;
     int16_t*  depthBuffer         = depthImage.has_value() ? reinterpret_cast<int16_t*>(depthImage.value().get_buffer()) : nullptr;
 
@@ -1137,229 +764,94 @@ void Kinect4::Impl::filter_infrared_image(const K4::Parameters &p,
             }
         }
     });
+
+    Bench::stop();
 }
 
-std::shared_ptr<CompressedDataFrame> Kinect4::Impl::generate_compressed_data_frame(
-    K4::Mode mode, std::optional<k4a::image> colorImage, std::optional<k4a::image> depthImage, std::optional<k4a::image> infraredImage){
+void Kinect4::Impl::generate_cloud(Mode mode){
 
-    auto cFrame = std::make_shared<CompressedDataFrame>();
-    cFrame->mode = mode;
-    cFrame->calibration = calibration;    
-
-    if(colorImage.has_value()){
-
-        // init buffer
-        cFrame->colorWidth  = colorImage->get_width_pixels();
-        cFrame->colorHeight = colorImage->get_height_pixels();
-
-        const int jpegQuality = parameters.jpegCompressionRate;
-        // Logger::message(std::format("jpeg compression {} {} {}\n", frame->colorWidth, frame->colorHeight, colorImage->get_size()));
-
-        long unsigned int jpegColorSize = 0;
-
-        if(tjCompressedImage == nullptr){
-            tjCompressedImage = tjAlloc(cFrame->colorHeight*cFrame->colorWidth*4);
-            // Logger::message(std::format("alloc {}\n", frame->colorHeight*frame->colorWidth*4));
-        }
-
-        int ret = tjCompress2(jpegCompressor,
-            reinterpret_cast<const unsigned char*>(colorImage->get_buffer()), cFrame->colorWidth, 0, cFrame->colorHeight,
-            TJPF_BGRA,
-            &tjCompressedImage, &jpegColorSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT);
-
-        if(ret == -1){
-            Logger::error(std::format("[Kinect4] tjCompress2 error with code: {}\n", tjGetErrorStr2(jpegCompressor)));
-            return nullptr;
-        }
-
-        cFrame->colorBuffer.resize(jpegColorSize);
-        std::copy(tjCompressedImage, tjCompressedImage + jpegColorSize, std::begin(cFrame->colorBuffer));
-
-    }else{
-        cFrame->colorWidth  = 0;
-        cFrame->colorHeight = 0;
-        cFrame->colorBuffer = {};
+    if(has_cloud(mode) && pointCloudImage.has_value()){
+        Bench::start("[Kinect4] Transformation depth_image_to_point_cloud");
+        transformation.depth_image_to_point_cloud(depthImage.value(), K4A_CALIBRATION_TYPE_DEPTH, &pointCloudImage.value());
+        Bench::stop();
     }
-
-
-    if(depthImage.has_value()){
-
-        cFrame->validVerticesCount = validDepthValues;
-
-        // init buffer
-        cFrame->depthWidth  = depthImage->get_width_pixels();
-        cFrame->depthHeight = depthImage->get_height_pixels();
-        auto depthSize = cFrame->depthWidth*cFrame->depthHeight/2;
-        cFrame->depthBuffer.resize(depthSize + 1024, 0);
-
-        // fill buffer
-        std::fill(std::begin(cFrame->depthBuffer), std::end(cFrame->depthBuffer), 0);
-
-        // encode buffer
-        size_t sizeDepthCompressed = integerCompressor.encode(
-            reinterpret_cast<uint32_t*>(depthImage->get_buffer()), depthSize,
-            cFrame->depthBuffer.data(),                   depthSize + 1024
-        );
-
-        if(sizeDepthCompressed == 0){
-            Logger::error("[Kinect4] depth compress error\n");
-            return nullptr;
-        }
-        if(cFrame->depthBuffer.size() != sizeDepthCompressed){
-            cFrame->depthBuffer.resize(sizeDepthCompressed);
-        }
-         Logger::message(std::format("size compressed {} {} {}\n", depthSize, sizeDepthCompressed, 1.f*sizeDepthCompressed/depthSize));
-
-    }
-
-
-    if(infraredImage.has_value()){
-
-        // init buffer
-        cFrame->infraWidth  = infraredImage->get_width_pixels();
-        cFrame->infraHeight = infraredImage->get_height_pixels();
-        auto infraSize = cFrame->infraWidth*cFrame->infraHeight/2;
-        cFrame->infraBuffer.resize(infraSize + 1024, 0);
-
-        // fill buffer
-        std::fill(std::begin(cFrame->infraBuffer), std::end(cFrame->infraBuffer), 0);
-
-        // encode buffer
-        size_t sizeInfraCompressed = integerCompressor.encode(
-            reinterpret_cast<uint32_t*>(infraredImage->get_buffer()), infraSize,
-            cFrame->infraBuffer.data(), infraSize + 1024
-        );
-
-        if(sizeInfraCompressed == 0){
-            Logger::error("[Kinect4] infra compress error\n");
-            return nullptr;
-        }
-        if(cFrame->infraBuffer.size() != sizeInfraCompressed){
-            cFrame->infraBuffer.resize(sizeInfraCompressed);
-        }
-        // Logger::message(std::format("size compressed {} {}\n", infraSize, sizeInfraCompressed));
-    }
-
-    // copy audio frames
-    if(lastFrameCount > 0){
-        cFrame->audioFrames.resize(lastFrameCount);
-        auto ad1 = reinterpret_cast<float*>(audioFrames.data());
-        auto ad2 = reinterpret_cast<float*>(cFrame->audioFrames.data());
-        std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
-    }
-
-    // copy imu sample
-    cFrame->imuSample = imuSample;
-
-    return cFrame;
 }
 
+void Kinect4::Impl::compress_cloud_frame(){
 
-
-std::shared_ptr<CompressedDataFrame2> Kinect4::Impl::generate_compressed_data_frame2(
-    std::optional<k4a::image> colorImage, std::optional<k4a::image> depthImage, std::optional<k4a::image> cloud){
-
-    if(!colorImage.has_value() || !depthImage.has_value() || !cloud.has_value()){
-        return nullptr;
+    if(!colorImage.has_value() || !depthImage.has_value()){
+        return;
     }
 
-    // create compressed frame
-    auto cFrame = std::make_shared<CompressedDataFrame2>();
-    cFrame->validVerticesCount = validDepthValues;
-    cFrame->colorWidth  = colorImage->get_width_pixels();
-    cFrame->colorHeight = colorImage->get_height_pixels();
+    tool::Bench::start("[Kinect4] Generate compressed cloud frame");
+    auto compressedCloudFrame = cfc.compress(
+        validDepthValues,
+        parameters.jpegCompressionRate,
+        colorImage, depthImage, pointCloudImage);
 
-    // get buffers
-    auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(cloud->get_buffer());   
-    auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(colorImage->get_buffer());
-    auto depthBuffer = reinterpret_cast<const uint16_t*>(depthImage->get_buffer());
-
-    // fill valid id
-    std::vector<size_t> validId;
-    validId.reserve(cFrame->validVerticesCount);
-    for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
-        if(depthBuffer[id] != invalid_depth_value){
-            validId.push_back(id);
+    if(compressedCloudFrame != nullptr){
+        // add imu
+        compressedCloudFrame->imuSample   = imuSample;
+        // add audio frames
+        if(lastFrameCount > 0){
+            compressedCloudFrame->audioFrames.resize(lastFrameCount);
+            auto ad1 = reinterpret_cast<float*>(audioFrames.data());
+            auto ad2 = reinterpret_cast<float*>(compressedCloudFrame->audioFrames.data());
+            std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
         }
-    });
+    }
+    tool::Bench::stop();
 
-    // resize processed data
-    const auto idV = cFrame->validVerticesCount;
-//    size_t sizeBeforePadding = idV*3;
-//    if(sizeBeforePadding%128 != 0){
-//        size_t paddedSize = sizeBeforePadding + (128-(sizeBeforePadding%128));
-//        if(processedCloudBuffer.size() < paddedSize){
-//            processedCloudBuffer.resize(paddedSize);
-//        }
-//    }else{
-//        if(processedCloudBuffer.size() < sizeBeforePadding){
-//            processedCloudBuffer.resize(sizeBeforePadding);
-//        }
-//    }
-    size_t diff = 128-((idV*3)%128);
-    processedCloudBuffer.resize(idV*3 + diff);
-    std::fill(processedColorBuffer.begin(), processedColorBuffer.end(), 0);
-//    processedCloudBuffer.resize(processedCloudBuffer.size()+32);
-//    size_t cloudBufferSize = processedCloudBuffer.size();
-
-    // process cloud buffer
-    for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::begin(indicesDepths1D) + cFrame->validVerticesCount, [&](size_t id){
-        processedCloudBuffer[id]         = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloudBuffer[validId[id]].x())+4096);
-        processedCloudBuffer[idV   + id] = static_cast<std::uint32_t>(static_cast<std::int32_t>(cloudBuffer[validId[id]].y())+4096);
-        processedCloudBuffer[2*idV + id] = static_cast<std::uint32_t>(cloudBuffer[validId[id]].z());
-
-//        processedColorBuffer[id*3+0]     = colorBuffer[validId[id]].x();
-//        processedColorBuffer[id*3+1]     = colorBuffer[validId[id]].y();
-//        processedColorBuffer[id*3+2]     = colorBuffer[validId[id]].z();
-    });
-
-    // compress cloud buffer
-    cFrame->cloudBuffer.resize(processedCloudBuffer.size()*4);
-    size_t encodedBytesNb = p4nzenc128v32(processedCloudBuffer.data(), processedCloudBuffer.size(), cFrame->cloudBuffer.data());
-    cFrame->cloudBuffer.resize(encodedBytesNb);
-;
-
-//    if(tjCompressedImage == nullptr){
-//        tjCompressedImage = tjAlloc(cFrame->colorHeight*cFrame->colorWidth*3);
-//    }
-
-//    // compress color buffer
-//    const int jpegQuality = parameters.jpegCompressionRate;
-////    cFrame->colorBuffer.resize(cFrame->validVerticesCount*3);
-//    long unsigned int jpegSize = 0;
-//    int ret = tjCompress2(jpegCompressor,
-//        processedColorBuffer.data(), cFrame->colorWidth, 0, cFrame->colorHeight,
-//        TJPF_BGR,
-//        &tjCompressedImage, &jpegSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT);
-
-//    if(ret == -1){
-//        Logger::error(std::format("[Kinect4] tjCompress2 error with code: {}\n", tjGetErrorStr2(jpegCompressor)));
-//        return nullptr;
-//    }
-//    cFrame->colorBuffer.resize(jpegSize);
-//    std::copy(tjCompressedImage, tjCompressedImage + jpegSize, cFrame->colorBuffer.begin());
-
-//    // copy audio frames
-//    if(lastFrameCount > 0){
-//        cFrame->audioFrames.resize(lastFrameCount);
-//        auto ad1 = reinterpret_cast<float*>(audioFrames.data());
-//        auto ad2 = reinterpret_cast<float*>(cFrame->audioFrames.data());
-//        std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
-//    }
-
-//    // copy imu sample
-//    cFrame->imuSample = imuSample;
-
-    return cFrame;
+    // send
+    if(compressedCloudFrame != nullptr){
+        kinect4->new_compressed_cloud_frame_signal(compressedCloudFrame);
+    }
 }
 
+void Kinect4::Impl::compress_full_frame(Mode mode){
 
+    if(!colorImage.has_value() || !depthImage.has_value() || !infraredImage.has_value()){
+        return;
+    }
 
-void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *dFrame, const Parameters &p,
-    std::optional<k4a::image> color,
-    std::optional<k4a::image> depth,
-    std::optional<k4a::image> infra,
-    std::optional<k4a::image> cloud){
+    tool::Bench::start("[Kinect4] Generate compressed full frame");
+
+    auto compressedFullFrame = ffc.compress(
+        validDepthValues,
+        parameters.jpegCompressionRate,
+        colorImage, depthImage, infraredImage);
+
+    if(compressedFullFrame != nullptr){
+        // add infos
+        compressedFullFrame->mode        = mode;
+        compressedFullFrame->calibration = calibration;
+        // add imu
+        compressedFullFrame->imuSample   = imuSample;
+        // add audio frames
+        if(lastFrameCount > 0){
+            compressedFullFrame->audioFrames.resize(lastFrameCount);
+            auto ad1 = reinterpret_cast<float*>(audioFrames.data());
+            auto ad2 = reinterpret_cast<float*>(compressedFullFrame->audioFrames.data());
+            std::copy(ad1, ad1 + 7*lastFrameCount, ad2);
+        }
+    }
+    tool::Bench::stop();
+
+    // send
+    if(compressedFullFrame != nullptr){
+        kinect4->new_compressed_full_frame_signal(compressedFullFrame);
+    }
+}
+
+void Kinect4::Impl::display_frame(const Parameters &p, Mode mode){
+
+    // write frame
+    tool::Bench::start("[Kinect4] Write display data frame");
+
+    auto currDisplayFrame = displayFrames[currentDisplayFramesId++];
+    currentDisplayFramesId = currentDisplayFramesId%displayFrames.size();
+
+    auto dFrame = currDisplayFrame.get();
 
     // init depth frame
     const std_v1<Pt3f> depthGradient ={
@@ -1380,25 +872,25 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
     }
 
     // send color frame
-    if(p.sendDisplayColorFrame && color.has_value()){
+    if(p.sendDisplayColorFrame && colorImage.has_value()){
 
         tool::Bench::start("[Kinect4] sendDisplayColorFrame");
 
         size_t width, height;
-        if(depth.has_value()){
-            width = depth->get_width_pixels();
-            height = depth->get_height_pixels();
+        if(depthImage.has_value()){
+            width = depthImage->get_width_pixels();
+            height = depthImage->get_height_pixels();
         }else{
-            width = color->get_width_pixels();
-            height = color->get_height_pixels();
+            width = colorImage->get_width_pixels();
+            height = colorImage->get_height_pixels();
         }
 
         dFrame->colorFrame.width  = width;
         dFrame->colorFrame.height = height;
 
-        auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(color->get_buffer());
+        auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(colorImage->get_buffer());
         std::vector<size_t> *ids;
-        if(depth.has_value()){
+        if(depthImage.has_value()){
             ids = &indicesDepths1D;
         }else{
             ids = &indicesColors1D;
@@ -1416,16 +908,16 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
     }
 
     // send depth frame
-    if(p.sendDisplayDepthFrame && depth.has_value()){
+    if(p.sendDisplayDepthFrame && depthImage.has_value()){
 
         tool::Bench::start("[Kinect4] sendDisplayDepthFrame");
 
-        const size_t width = depth->get_width_pixels();
-        const size_t height = depth->get_height_pixels();
+        const size_t width = depthImage->get_width_pixels();
+        const size_t height = depthImage->get_height_pixels();
         dFrame->depthFrame.width  = width;
         dFrame->depthFrame.height = height;
 
-        auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
+        auto depthBuffer = reinterpret_cast<const uint16_t*>(depthImage->get_buffer());
         const auto dRange = range(mode)*1000.f;
         const auto diff = dRange.y() - dRange.x();
 
@@ -1453,16 +945,16 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
     }
 
     // send infrared frame
-    if(p.sendDisplayInfraredFrame && infra.has_value()){
+    if(p.sendDisplayInfraredFrame && infraredImage.has_value()){
 
         tool::Bench::start("[Kinect4] sendDisplayInfraredFrame");
 
-        const size_t width = infra->get_width_pixels();
-        const size_t height = infra->get_height_pixels();
+        const size_t width = infraredImage->get_width_pixels();
+        const size_t height = infraredImage->get_height_pixels();
         dFrame->infraredFrame.width  = width;
         dFrame->infraredFrame.height = height;
 
-        auto infraBuffer = reinterpret_cast<const uint16_t*>(infra->get_buffer());
+        auto infraBuffer = reinterpret_cast<const uint16_t*>(infraredImage->get_buffer());
 
         const float max = 2000;
         for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
@@ -1482,11 +974,11 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
         tool::Bench::stop();
     }
 
-    if(p.sendDisplayCloud && cloud.has_value() && color.has_value() && depth.has_value()){
+    if(p.sendDisplayCloud && pointCloudImage.has_value() && colorImage.has_value() && depthImage.has_value()){
 
-        auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(cloud->get_buffer());
-        auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(color->get_buffer());
-        auto depthBuffer = reinterpret_cast<const uint16_t*>(depth->get_buffer());
+        auto cloudBuffer = reinterpret_cast<geo::Pt3<int16_t>*>(pointCloudImage->get_buffer());
+        auto colorBuffer = reinterpret_cast<const geo::Pt4<uint8_t>*>(colorImage->get_buffer());
+        auto depthBuffer = reinterpret_cast<const uint16_t*>(depthImage->get_buffer());
 
         dFrame->cloud.validVerticesCount = validDepthValues;
 
@@ -1514,411 +1006,348 @@ void Kinect4::Impl::update_display_data_frame(K4::Mode mode, DisplayDataFrame *d
 
     // copy imu sample
     dFrame->imuSample = imuSample;
+
+    tool::Bench::stop();
+
+    kinect4->new_display_frame_signal(currDisplayFrame);
+}
+
+
+void Kinect4::Impl::init_data(K4::Mode mode){
+
+    // init capture
+    capture = std::make_unique<k4a::capture>();
+
+    // init transform
+    transformation = k4a::transformation(calibration);
+
+    // reset images
+    // # capture
+    colorImage           = std::nullopt;
+    depthImage           = std::nullopt;
+    infraredImage        = std::nullopt;
+    pointCloudImage      = std::nullopt;
+    // # processing
+    convertedColorImage  = std::nullopt;
+    depthSizedColorImage = std::nullopt;
+
+    // reset sizes
+    colorWidth           = 0;
+    colorHeight          = 0;
+    colorSize            = 0;
+    depthWidth           = 0;
+    depthHeight          = 0;
+    depthSize            = 0;
+    colorResolution      = color_resolution(mode);
+    imageFormat          = image_format(mode);
+    depthMode            = depth_mode(mode);
+
+    if(colorResolution != ColorResolution::OFF){
+
+        // retrieve colors dimensions
+        const auto colorDims     = k4a::GetColorDimensions(static_cast<k4a_color_resolution_t>(colorResolution));
+        colorWidth  = std::get<0>(colorDims);
+        colorHeight = std::get<1>(colorDims);
+        colorSize   = colorWidth*colorHeight;
+
+        if(imageFormat == ImageFormat::YUY2){
+            convertedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
+                colorWidth,
+                colorHeight,
+                static_cast<int32_t>(colorWidth * 4 * sizeof(uint8_t))
+            );
+        }
+
+        // set color indices
+        indicesColors1D.resize(colorSize);
+        std::iota(std::begin(indicesColors1D), std::end(indicesColors1D), 0);
+    }
+
+
+    if(depthMode != DepthMode::OFF){
+
+        // retrieve depth dimensions
+        auto depthRes = depth_resolution(mode);
+        depthWidth  = depthRes.x();
+        depthHeight  = depthRes.y();
+        depthSize   = depthWidth*depthHeight;
+
+        Logger::message(std::format("depthframe {} {} \n", depthWidth, depthHeight));
+
+        // init resized color image
+        if(colorResolution != ColorResolution::OFF){
+            depthSizedColorImage = k4a::image::create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
+                depthWidth,
+                depthHeight,
+                static_cast<int32_t>(depthWidth * 4 * sizeof(uint8_t))
+            );
+        }
+
+        // set depth indices
+        depthMask.resize(depthSize);
+        indicesDepths1D.resize(depthSize);
+        std::iota(std::begin(indicesDepths1D), std::end(indicesDepths1D), 0);
+        indicesDepths3D.resize(depthSize);
+        indicesDepths1DNoBorders.reserve((depthWidth-2)*(depthHeight-2));
+        size_t id = 0;
+        for(size_t ii = 0; ii < depthHeight; ++ii){
+            for(size_t jj = 0; jj < depthWidth; ++jj){
+                indicesDepths3D[id] = {id,ii,jj};
+                if(ii > 0 && ii < depthHeight-1 && jj > 0 && jj < depthWidth-1 ){
+                    indicesDepths1DNoBorders.push_back(id);
+                }
+                ++id;
+            }
+        }
+
+        // init cloud image
+        if(has_cloud(mode)){
+            pointCloudImage = k4a::image::create(K4A_IMAGE_FORMAT_CUSTOM,
+                depthWidth,
+                depthHeight,
+                static_cast<int32_t>(depthWidth * 3 * sizeof(int16_t))
+            );
+        }
+
+        Logger::message(std::format("depth {} {} \n", depthWidth, depthHeight));
+    }
+
+    // init display frames
+    displayFrames.resize(10);
+    currentDisplayFramesId = 0;
+    for(auto &frame : displayFrames){
+
+        frame = std::make_shared<DisplayDataFrame>();
+
+        if(depthSize > 0){
+            frame->depthFrame.width  = depthWidth;
+            frame->depthFrame.height = depthHeight;
+            frame->depthFrame.pixels.resize(depthSize);
+
+            if(has_infrared(mode)){
+                frame->infraredFrame.width  = depthWidth;
+                frame->infraredFrame.height = depthHeight;
+                frame->infraredFrame.pixels.resize(depthSize);
+            }
+
+            if(has_cloud(mode)){
+                frame->cloud.vertices.resize(depthSize);
+                frame->cloud.colors.resize(depthSize);
+                frame->cloud.validVerticesCount = 0;
+            }
+        }
+
+        if(color_resolution(mode) != K4::ColorResolution::OFF){
+            if(mode == K4::Mode::Cloud_1024x1024 || mode == K4::Mode::Full_frame_1024x1024){
+                frame->colorFrame.width  = depthWidth;
+                frame->colorFrame.height = depthHeight;
+                frame->colorFrame.pixels.resize(depthSize);
+            }else{
+
+                frame->colorFrame.width  = colorWidth;
+                frame->colorFrame.height = colorHeight;
+                frame->colorFrame.pixels.resize(colorSize);
+            }
+        }
+    }
+}
+
+void Kinect4::Impl::read_from_microphones(){
+
+    lastFrameCount = 0;
+    if(audioListener != nullptr){
+
+        // process audio frame
+        audioListener->ProcessFrames([&](k4a::K4AMicrophoneFrame *frame, const size_t frameCount) {
+
+            // store last count
+            lastFrameCount = frameCount;
+            if(lastFrameCount == 0){
+                return lastFrameCount;
+            }
+
+            // resize audio buffer
+            if(audioFrames.size() < lastFrameCount){
+                audioFrames.resize(lastFrameCount);
+            }
+
+            // copy data
+            std::copy(frame, frame + lastFrameCount, audioFrames.begin());
+
+            return lastFrameCount;
+        });
+
+        if (audioListener->GetStatus() != SoundIoErrorNone){
+            Logger::error(std::format("Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
+        }else if (audioListener->Overflowed()){
+            Logger::warning(std::format("Warning: sound overflow detected!\n"));
+            audioListener->ClearOverflowed();
+        }
+    }
+}
+
+void Kinect4::Impl::read_from_imu(){
+    k4a_imu_sample_t sample;
+    if(device.get_imu_sample(&sample, std::chrono::milliseconds(1))){
+        imuSample.temperature = sample.temperature;
+        const auto &dAcc = sample.acc_sample.xyz;
+        imuSample.acc ={dAcc.x,dAcc.y,dAcc.z};
+        imuSample.accTsMs = sample.acc_timestamp_usec;
+        const auto &dGyr = sample.gyro_sample.xyz;
+        imuSample.gyr = {dGyr.x,dGyr.y,dGyr.z};
+        imuSample.gyrTsMs = sample.gyro_timestamp_usec;
+    }
+}
+
+bool Kinect4::Impl::get_color_image(){
+    if(colorResolution != ColorResolution::OFF){
+
+        Bench::start("[Kinect4] Capture get_color_image");
+        colorImage = capture->get_color_image();
+        Bench::stop();
+
+        if (!colorImage->is_valid()){
+            Logger::error("Failed to get color image from capture\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Kinect4::Impl::get_depth_image(){
+
+    if(depthMode != DepthMode::OFF){
+
+        Bench::start("[Kinect4] Capture get_depth_image");
+        depthImage = capture->get_depth_image();
+        Bench::stop();
+
+        if (!depthImage->is_valid()){
+            Logger::error("Failed to get depth image from capture\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Kinect4::Impl::get_infra_image(Mode mode){
+
+    if(has_infrared(mode)){
+
+        Bench::start("[Kinect4] Capture get_ir_image");
+        infraredImage = capture->get_ir_image();
+        Bench::stop();
+
+        if (!infraredImage->is_valid()){
+            Logger::error("Failed to get infrared image from capture\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Kinect4::Impl::convert_color_image(const Parameters &p){
+
+    if(colorResolution == ColorResolution::OFF){
+        return;
+    }
+
+    if(imageFormat == ImageFormat::YUY2 ){
+
+        Bench::start("[Kinect4] YUY2 convert");
+
+        auto colorsYuy2 = reinterpret_cast<geo::Pt4<std::uint8_t>*>(colorImage->get_buffer());
+        auto colorsBGRA = reinterpret_cast<geo::Pt4<std::uint8_t>*>(convertedColorImage->get_buffer());
+
+        for_each(std::execution::par_unseq, std::begin(indicesColors1D), std::end(indicesColors1D), [&](size_t oidC){
+
+            auto idC = oidC;
+            if(idC%2 == 0){
+
+                auto &currentPixel = colorsBGRA[idC];
+                idC = idC/2;
+
+                const Pt4<uint8_t> &yuy2 = colorsYuy2[idC];
+
+                // convert to rgb
+                const int y0 = std::clamp(static_cast<int>(p.yFactor*yuy2.x()), 0, 255);
+                auto ci = 298 * (y0 - 16);
+
+                const int u0 = std::clamp(static_cast<int>(p.uFactor*yuy2.y()), 0, 255);
+                const auto d = u0 - 128;
+
+                const int v0 = std::clamp(static_cast<int>(p.vFactor*yuy2.w()), 0, 255);
+                const auto e = v0 - 128;
+
+                currentPixel = geo::Pt4<uint8_t>{
+                    static_cast<uint8_t>(std::clamp((ci + (516 * d) + 128)              >> 8, 0, 255)), // blue
+                    static_cast<uint8_t>(std::clamp((ci + (-100 * d) - (208 * e) + 128) >> 8, 0, 255)), // green
+                    static_cast<uint8_t>(std::clamp((ci + (409 * e) + 128)              >> 8, 0, 255)), // red
+                    255
+                };
+
+            }else{
+
+                auto &currentPixel = colorsBGRA[idC];
+                idC = (idC-1)/2;
+
+                const Pt4<uint8_t> &color = colorsYuy2[idC];
+                const int y0 = std::clamp(static_cast<int>(p.yFactor*color.x()), 0, 255);
+                const int u0 = std::clamp(static_cast<int>(p.uFactor*color.y()), 0, 255);
+                const int y1 = std::clamp(static_cast<int>(p.yFactor*color.z()), 0, 255);
+                const int v0 = std::clamp(static_cast<int>(p.vFactor*color.w()), 0, 255);
+
+                // convert to rgb
+                auto c = y0 - 16;
+                const auto d = u0 - 128;
+                const auto e = v0 - 128;
+
+                auto ci = 298 * c;
+                const auto v1 = (516 * d) + 128;
+                const auto v2 = (-100 * d) - (208 * e) + 128;
+                const auto v3 = (409 * e) + 128;
+
+                c = y1 - 16;
+                ci = 298 * c;
+
+                currentPixel = geo::Pt4<uint8_t>{
+                    static_cast<uint8_t>(std::clamp((ci + v1) >> 8, 0, 255)), // blue
+                    static_cast<uint8_t>(std::clamp((ci + v2) >> 8, 0, 255)), // green
+                    static_cast<uint8_t>(std::clamp((ci + v3) >> 8, 0, 255)), // red
+                    255
+                };
+            }
+        });
+
+        colorImage = convertedColorImage;
+
+        Bench::stop();
+
+    }else if(imageFormat == ImageFormat::NV12){
+        // ... not managed
+    }else if(imageFormat == ImageFormat::MJPEG){
+        // ... not managed
+    }else if(imageFormat == ImageFormat::BGRA32){
+        // nothing to do
+    }
+}
+
+void Kinect4::Impl::resize_color_to_fit_depth(){
+
+    if(colorImage.has_value() && depthImage.has_value()){
+
+        Bench::start("[Kinect4] Transformation color_image_to_depth_camera");
+        transformation.color_image_to_depth_camera(
+            depthImage.value(),
+            colorImage.value(),
+            &depthSizedColorImage.value());
+
+        colorImage = depthSizedColorImage;
+        Bench::stop();
+    }
 }
 
 
 
-//void Kinect4::process_display_data(){
-
-////    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(nanoseconds_since_epoch()).count();
-
-//    // transforms images
-//    i->transformation.depth_image_to_color_camera(i->depthImage, &i->resizedDepthImage);
-
-////    auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(nanoseconds_since_epoch()).count();
-
-//    i->transformation.depth_image_to_point_cloud(i->resizedDepthImage, K4A_CALIBRATION_TYPE_COLOR, &i->pointCloudImage);
-
-////    auto d3 = std::chrono::duration_cast<std::chrono::microseconds>(nanoseconds_since_epoch()).count();
-
-//    // retrieve buffers
-//    auto pointCloudImageData      = reinterpret_cast<geo::Pt3<int16_t>*>(i->pointCloudImage.get_buffer());
-
-//    // get current point cloud image size
-//    i->pointCloudImageWidth    = i->pointCloudImage.get_width_pixels();
-//    i->pointCloudImageHeight   = i->pointCloudImage.get_height_pixels();
-//    i->pointCloudImageSize     = i->pointCloudImageWidth*i->pointCloudImageHeight;
-
-//    i->validVerticesCount = 0;
-//    for (size_t ii = 0; ii < i->pointCloudImageSize; ii++){
-//        if(pointCloudImageData[ii].z() == 0){
-//            i->colorCloudCorr[ii] = -1;
-//        }else{
-//            i->colorCloudCorr[ii] = i->validVerticesCount++;
-//        }
-//    }
-
-////    auto d4 = std::chrono::duration_cast<std::chrono::microseconds>(nanoseconds_since_epoch()).count();
-////    std::cout << "d time: " << (d2 - d1) << " " << (d3 - d2) << " " << (d4 - d3) <<  "\n";
-//}
-//std::shared_ptr<K4ColoredCloud> Kinect4::Impl::generate_cloud(){
-
-//    // retrieve buffers
-//    auto *pointCloudImageData = reinterpret_cast<const geo::Pt3<int16_t>*>(pointCloudImage.get_buffer());
-//    auto *colorImageData      = reinterpret_cast<const geo::Pt4<uint8_t>*>(uncompressedColorImage.get_buffer());
-
-//    auto cloud = std::make_shared<K4ColoredCloud>();
-//    cloud->vertices.reserve(validVerticesCount);
-//    cloud->colors.reserve(validVerticesCount);
-
-//    for(size_t ii = 0; ii < pointCloudImageSize; ++ii){
-
-//        if(pointCloudImageData[ii].z() == 0){
-//            continue;
-//        }
-
-//        cloud->vertices.emplace_back(geo::Pt3f{
-//             static_cast<float>(-pointCloudImageData[ii].x()),
-//             static_cast<float>(-pointCloudImageData[ii].y()),
-//             static_cast<float>( pointCloudImageData[ii].z())
-//         }*0.01f);
-
-//        cloud->colors.emplace_back(geo::Pt3f{
-//           static_cast<float>(colorImageData[ii].z()),
-//           static_cast<float>(colorImageData[ii].y()),
-//           static_cast<float>(colorImageData[ii].x())
-//       }/255.f);
-//    }
-//    return cloud;
-//}
-
-
-//std::shared_ptr<K4PixelsFrame> Kinect4::Impl::generate_original_size_color_frame(){
-
-//    // retrieve buffers
-//    auto *colorImageData = reinterpret_cast<const uint8_t*>(uncompressedColorImage.get_buffer());
-
-//    auto colorFrame = std::make_shared<K4PixelsFrame>();
-//    colorFrame->width  = uncompressedColorImage.get_width_pixels();
-//    colorFrame->height = uncompressedColorImage.get_height_pixels();
-//    const auto size    = colorFrame->width*colorFrame->height;
-//    colorFrame->pixels.resize(size);
-//    for(size_t ii = 0; ii < size; ++ii){
-//        colorFrame->pixels[ii] = {
-//            (colorImageData[4 * ii + 2]/255.f),
-//            (colorImageData[4 * ii + 1]/255.f),
-//            (colorImageData[4 * ii + 0]/255.f)
-//        };
-//    }
-//    return colorFrame;
-//}
-
-
-//std::shared_ptr<K4PixelsFrame> Kinect4::Impl::generate_depth_filtered_color_frame(){
-//    return nullptr;
-//}
-
-//std::shared_ptr<K4PixelsFrame> Kinect4::Impl::generate_infrared_frame(){
-//    return nullptr;
-//}
-
-//std::shared_ptr<K4PixelsFrame> Kinect4::Impl::generate_depth_frame(){
-
-//    // retrieve buffers
-//    auto buffer    = reinterpret_cast<const std::uint16_t*>(resizedDepthImage.get_buffer());
-
-//    auto depthFrame = std::make_shared<K4PixelsFrame>();
-//    depthFrame->width  = resizedDepthImage.get_width_pixels();
-//    depthFrame->height = resizedDepthImage.get_height_pixels();
-
-//    const auto size = depthFrame->width*depthFrame->height;
-//    depthFrame->pixels.resize(size);
-//    std::fill(std::begin(depthFrame->pixels), std::end(depthFrame->pixels), geo::Pt3f{0.f,0.f,0.f});
-
-//    // find min/max
-//    const auto [min, max] = std::minmax_element(buffer,buffer + size);
-//    const auto diff = (*max-*min);
-
-//    std_v1<Pt3f> depthGradient ={
-//        {0.f,0.f,1.f},
-//        {0.f,1.f,1.f},
-//        {0.f,1.f,0.f},
-//        {1.f,1.f,0.f},
-//        {1.f,0.f,0.f},
-//    };
-
-//    for(size_t ii = 0; ii < size; ++ii){
-//        if(buffer[ii] == 0){
-//            continue;
-//        }else{
-//            float vF = static_cast<float>(buffer[ii] - (*min))/diff;
-//            float intPart;
-//            float decPart = std::modf((vF*(depthGradient.size()-1)), &intPart);
-//            size_t id = static_cast<size_t>(intPart);
-//            depthFrame->pixels[ii] = depthGradient[id]*(1.f-decPart) + depthGradient[id+1]*decPart;
-//        }
-//    }
-
-//    return depthFrame;
-//}
-
-
-// not used
-
-//void Kinect4::Impl::create_xy_table(const k4a::calibration &calibration, k4a::image &xyTable){
-
-//    k4a_float2_t *tableData = reinterpret_cast<k4a_float2_t*>(xyTable.get_buffer());
-//    const int width   = calibration.depth_camera_calibration.resolution_width;
-//    const int height  = calibration.depth_camera_calibration.resolution_height;
-
-//    k4a_float2_t point;
-//    k4a_float3_t ray;
-//    bool valid;
-
-//    for (int y = 0, idx = 0; y < height; y++){
-
-//        point.xy.y = static_cast<float>(y);
-//        for (int x = 0; x < width; x++, idx++){
-//            point.xy.x = static_cast<float>(x);
-
-//            // Transform a 2D pixel coordinate with an associated depth value of the source camera into a 3D point
-//            // of the target coordinate system.
-//            valid = calibration.convert_2d_to_3d(
-//                point,
-//                1.f,
-//                K4A_CALIBRATION_TYPE_DEPTH,
-//                K4A_CALIBRATION_TYPE_DEPTH,
-//                &ray
-//                );
-
-//            if (valid){
-//                tableData[idx].xy.x = ray.xyz.x;
-//                tableData[idx].xy.y = ray.xyz.y;
-//            }else{
-//                tableData[idx].xy.x = nanf("");
-//                tableData[idx].xy.y = nanf("");
-//            }
-//        }
-//    }
-//}
-
-//int Kinect4::Impl::generate_point_cloud(k4a::image &depthImage, k4a::image &xyTable, k4a::image &pointCloud){
-
-//    const int width   = depthImage.get_width_pixels();
-//    const int height  = depthImage.get_height_pixels();
-
-//    uint16_t     *depthData      = reinterpret_cast<uint16_t*>(depthImage.get_buffer());
-//    k4a_float2_t *xyTableData    = reinterpret_cast<k4a_float2_t*>(xyTable.get_buffer());
-//    k4a_float3_t *pointCloudData = reinterpret_cast<k4a_float3_t*>(pointCloud.get_buffer());
-
-//    int pointCount = 0;
-//    for (int ii = 0; ii < width * height; ii++){
-//        if (depthData[ii] != 0 && !isnan(xyTableData[ii].xy.x) && !isnan(xyTableData[ii].xy.y)){
-//            pointCloudData[ii].xyz.x = xyTableData[ii].xy.x * (float)depthData[ii];
-//            pointCloudData[ii].xyz.y = xyTableData[ii].xy.y * (float)depthData[ii];
-//            pointCloudData[ii].xyz.z = static_cast<float>(depthData[ii]);
-//            ++pointCount;
-//        }else{
-//            pointCloudData[ii].xyz.x = nanf("");
-//            pointCloudData[ii].xyz.y = nanf("");
-//            pointCloudData[ii].xyz.z = nanf("");
-//        }
-//    }
-//    return pointCount;
-//}
-
-
-
-//bool Kinect4::Impl::write_point_cloud(const std::string &fileName, const k4a::image &pointCloud, int pointCount){
-
-//    const int width   = pointCloud.get_width_pixels();
-//    const int height  = pointCloud.get_height_pixels();
-//    const k4a_float3_t *pointCloudData = reinterpret_cast<const k4a_float3_t*>(pointCloud.get_buffer());
-
-//    // save to the ply file
-//    std::ofstream ofs;
-//    ofs.open(fileName);
-//    if(!ofs.is_open()){
-//        return false;
-//    }
-
-//    ofs << "ply\n";
-//    ofs << "format ascii 1.0\n";
-//    ofs << "element vertex " << pointCount << "\n";
-//    ofs << "property float x\n";
-//    ofs << "property float y\n";
-//    ofs << "property float z\n";
-//    ofs << "end_header\n";
-//    ofs.close();
-
-//    std::stringstream ss;
-//    for (int ii = 0; ii < width * height; ii++){
-
-//        if (isnan(pointCloudData[ii].xyz.x) || isnan(pointCloudData[ii].xyz.y) || isnan(pointCloudData[ii].xyz.z)){
-//            continue;
-//        }
-
-//        ss << static_cast<float>(pointCloudData[ii].xyz.x) << " "
-//           << static_cast<float>(pointCloudData[ii].xyz.y) << " "
-//           << static_cast<float>(pointCloudData[ii].xyz.z) << "\n";
-//    }
-
-//    std::ofstream ofsText(fileName, std::ios::out | std::ios::app);
-//    ofsText.write(ss.str().c_str(), (std::streamsize)ss.str().length());
-
-//    return true;
-//}
-
-//bool Kinect4::Impl::tranformation_helpers_write_point_cloud(const k4a::image &pointCloudImage, const k4a::image &colorImage, const std::string &fileName){
-
-//    std::vector<color_point_t> points;
-
-//    const int width  = pointCloudImage.get_width_pixels();
-//    const int height = pointCloudImage.get_height_pixels();
-
-//    const int16_t *pointCloudImageData = reinterpret_cast<const int16_t*>(pointCloudImage.get_buffer());
-//    const uint8_t *colorImageData      = reinterpret_cast<const uint8_t*>(colorImage.get_buffer());
-
-//    for (int ii = 0; ii < width * height; ii++){
-
-//        color_point_t point;
-//        point.xyz[0] = pointCloudImageData[3 * ii + 0];
-//        point.xyz[1] = pointCloudImageData[3 * ii + 1];
-//        point.xyz[2] = pointCloudImageData[3 * ii + 2];
-//        if (point.xyz[2] == 0){
-//            continue;
-//        }
-
-//        point.rgb[0] = colorImageData[4 * ii + 0];
-//        point.rgb[1] = colorImageData[4 * ii + 1];
-//        point.rgb[2] = colorImageData[4 * ii + 2];
-//        uint8_t alpha = colorImageData[4 * ii + 3];
-
-//        if (point.rgb[0] == 0 && point.rgb[1] == 0 && point.rgb[2] == 0 && alpha == 0){
-//            continue;
-//        }
-
-//        points.push_back(point);
-//    }
-
-//    // save to the ply file
-//    std::ofstream ofs;
-//    ofs.open(fileName);
-//    if(!ofs.is_open()){
-//        return false;
-//    }
-
-//    ofs << "ply\n";
-//    ofs << "format ascii 1.0\n";
-//    ofs << "element vertex " << points.size() << "\n";
-//    ofs << "property float x\n";
-//    ofs << "property float y\n";
-//    ofs << "property float z\n";
-//    ofs << "property uchar red\n";
-//    ofs << "property uchar green\n";
-//    ofs << "property uchar blue\n";
-//    ofs << "end_header\n";
-//    ofs.close();
-
-//    std::stringstream ss;
-//    for (size_t ii = 0; ii < points.size(); ++ii){
-
-//        // image data is BGR
-//        ss << (float)points[ii].xyz[0] << " " << (float)points[ii].xyz[1] << " " << (float)points[ii].xyz[2];
-//        ss << " " << (float)points[ii].rgb[2] << " " << (float)points[ii].rgb[1] << " " << (float)points[ii].rgb[0];
-//        ss << std::endl;
-//    }
-//    std::ofstream ofs_text(fileName, std::ios::out | std::ios::app);
-//    ofs_text.write(ss.str().c_str(), (std::streamsize)ss.str().length());
-
-//    return true;
-//}
-
-//bool Kinect4::Impl::point_cloud_depth_to_color(
-//    const k4a::transformation &transformationHandle,
-//    const k4a::image &depthImage,
-//    const k4a::image &colorImage,
-//    const std::string &fileName){
-
-//    k4a::image transformedDepthImage = transformationHandle.depth_image_to_color_camera(depthImage);
-//    k4a::image pointCloudImage       = transformationHandle.depth_image_to_point_cloud(
-//        transformedDepthImage,
-//        K4A_CALIBRATION_TYPE_COLOR
-//    );
-//    return tranformation_helpers_write_point_cloud(pointCloudImage, colorImage, fileName);
-//}
-
-
-
-//bool Kinect4::Impl::write_color_bgra_image(const std::string &pathImage, const k4a::image &colorImage){
-
-//    std_v1<unsigned char> data;
-//    data.resize(colorImage.get_size());
-
-//    auto buffer = colorImage.get_buffer();
-//    for(size_t ii = 0; ii < colorImage.get_size()/4; ++ii){
-//        const size_t id = ii*4;
-//        data[id+0] = buffer[id+2];
-//        data[id+1] = buffer[id+1];
-//        data[id+2] = buffer[id+0];
-//        data[id+3] = buffer[id+3];
-//    }
-
-//    tool::graphics::Texture texColor;
-//    texColor.copy_2d_data(
-//        colorImage.get_width_pixels(),
-//        colorImage.get_height_pixels(),
-//        4,
-//        data
-//    );
-
-//    return texColor.write_2d_image_file_data(pathImage);
-//}
-
-//bool Kinect4::Impl::write_depth_image(const std::string &pathImage, const k4a::image &depthImage){
-
-//    const size_t w =depthImage.get_width_pixels();
-//    const size_t h =depthImage.get_height_pixels();
-//    auto buffer = reinterpret_cast<const std::int16_t*>(depthImage.get_buffer());
-
-//    // find min/max
-//    std::int16_t min = 10000;
-//    std::int16_t max = -10000;
-//    for(size_t ii = 0; ii < h*w; ++ii){
-//        if(buffer[ii] == 0){
-//            continue;
-//        }
-//        if(buffer[ii] < min){
-//            min = buffer[ii];
-//        }
-//        if(buffer[ii] > max){
-//            max = buffer[ii];
-//        }
-//    }
-
-//    // cap max
-//    if(max > 4000){
-//        max = 4000;
-//    }
-
-//    // resize data
-//    std_v1<unsigned char> dData;
-//    dData.resize(3*w*h);
-//    std::fill(std::begin(dData), std::end(dData), 0);
-
-//    for(size_t ii = 0; ii < h*w; ++ii){
-//        if(buffer[ii] == 0){
-//            continue;
-//        }else{
-//            std::int16_t v = buffer[ii];
-//            if(v > max){
-//                v = max;
-//            }
-//            v = v-min;
-//            float vF = 1.f*v/(max-min);
-//            std::int8_t vI  = vF*255.f;
-//            dData[ii*3+0] = vI;
-//            dData[ii*3+1] = vI;
-//            dData[ii*3+2] = vI;
-//        }
-//    }
-
-//    tool::graphics::Texture texDetph;
-//    texDetph.copy_2d_data(
-//        depthImage.get_width_pixels(),
-//        depthImage.get_height_pixels(),
-//        3,
-//        dData
-//    );
-//    return texDetph.write_2d_image_file_data(pathImage);
-//}

@@ -1,4 +1,5 @@
 
+
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -26,63 +27,56 @@
 
 #pragma once
 
-// signals
-#include "lsignal.h"
-
 // local
 #include "kinect4_data.hpp"
+#include "geometry/matrix4.hpp"
 
-namespace tool::camera {
+namespace tool::camera::K4{
 
-class Kinect4 {
+struct FrameData{
+    size_t idFrame;
+    std::int64_t timeStamp;
+    std::shared_ptr<CompressedFrame> data = nullptr;
+};
+
+struct CameraData{
+    geo::Mat4d transform = geo::Mat4d::identity();
+    std::vector<FrameData> frames;
+};
+
+class VolumetricVideoResource{
 
 public:
+    size_t nb_cameras() const noexcept;
+    size_t nb_frames(size_t idCamera = 0) const noexcept;
+    size_t frame_id(size_t idCamera, float timeMs) const;
+    size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0) const;
 
-    static k4a_device_configuration_t generate_config(const K4::Config &config);
+    std::int64_t start_time(size_t idCamera) const;
+    std::int64_t end_time(size_t idCamera) const;
 
-    static k4a_device_configuration_t generate_config(
-        K4::ImageFormat colFormat,
-        K4::ColorResolution colResolution,
-        K4::DepthMode depthMode = K4::DepthMode::NFOV_UNBINNED,
-        K4::Framerate fps = K4::Framerate::F30,
-        bool synchronizeColorAndDepth = true,
-        int delayBetweenColorAndDepthUsec = 0,
-        K4::SynchronisationMode synchMode = K4::SynchronisationMode::Standalone,
-        int subordinateDelayUsec = 0,
-        bool disableLED = false);
+    void set_transform(size_t idCamera, geo::Mat4d tr);
+    geo::Mat4d get_transform(size_t idCamera) const;
 
-    Kinect4();
-    ~Kinect4();
+    CompressedFrame *get_frame(size_t idFrame, size_t idCamera = 0);
+    std::vector<FrameData> *get_frames(size_t idCamera = 0);
 
-    // devices
-    bool open(uint32_t deviceId);
-    void close();
+    void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<CompressedFrame> frame);
+    void remove_frames_until(size_t idFrame);
+    void remove_frames_after(size_t idFrame);
+    void clean_frames();
 
-    // getters
-    bool is_opened() const;
-    bool is_reading_frames()const;
+    bool save_to_file(const std::string &path);
+    bool load_from_file(const std::string &path);
 
-    // cameras
-    bool start_cameras(const K4::Config &config);
-    bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
-    void stop_cameras();
-
-    // reading
-    void start_reading();
-    void stop_reading();
-
-    // settings
-    void set_parameters(const K4::Parameters &parameters);
-
-// signals
-    lsignal::signal<void(std::shared_ptr<K4::DisplayDataFrame> cloud)> new_display_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedFullFrame> frame)> new_compressed_full_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
+    std::vector<CameraData> camData;
 
 private:
+    virtual bool read_file(std::ifstream &file) = 0;
+    virtual void write_file(std::ofstream &file) = 0;
 
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
 };
-}
 
+
+
+}

@@ -123,15 +123,25 @@ LIBS += \
 
 HEADERS += \
     # exvr
+    camera/frame_compressor.hpp \
+    camera/frame_uncompressor.hpp \
+    camera/kinect4.hpp \
+    camera/kinect4_data.hpp \
+    camera/kinect4_types.hpp \
+    camera/volumetric_cloud_video_manager.hpp \
+    camera/volumetric_cloud_video_resource.hpp \
+    camera/volumetric_full_video_manager.hpp \
+    camera/volumetric_full_video_resource.hpp \
+    camera/volumetric_video_resource.hpp \
     data/FastDifferentialCoding/fastdelta.h \
-    data/simdcomp/avx512bitpacking.h \
-    data/simdcomp/avxbitpacking.h \
-    data/simdcomp/portability.h \
-    data/simdcomp/simdbitpacking.h \
-    data/simdcomp/simdcomp.h \
-    data/simdcomp/simdcomputil.h \
-    data/simdcomp/simdfor.h \
-    data/simdcomp/simdintegratedbitpacking.h \
+#    data/simdcomp/avx512bitpacking.h \
+#    data/simdcomp/avxbitpacking.h \
+#    data/simdcomp/portability.h \
+#    data/simdcomp/simdbitpacking.h \
+#    data/simdcomp/simdcomp.h \
+#    data/simdcomp/simdcomputil.h \
+#    data/simdcomp/simdfor.h \
+#    data/simdcomp/simdintegratedbitpacking.h \
     exvr/ex_resource.hpp \
     exvr/ex_utility.hpp \
     # files
@@ -214,12 +224,9 @@ HEADERS += \
     camera/k4a/k4amicrophonelistener.h \
     camera/k4a/k4asoundio_util.h \
     camera/kinect2_settings_files.hpp \
-    camera/kinect4_utility.hpp \
     camera/kinect2_data_types.hpp \
     camera/kinect2_network_types.hpp \
-    camera/kinect4_data_types.hpp \
     camera/k4a/k4astaticimageproperties.h \
-    camera/kinect4.hpp \    
     camera/kinect2.hpp \
     camera/kinect2_manager.hpp \
     # data
@@ -234,16 +241,24 @@ SOURCES += \
     # main
     base_main.cpp \
     # exvr
-    camera/kinect4_data_types.cpp \
+    camera/frame_compressor.cpp \
+    camera/frame_uncompressor.cpp \
+    camera/kinect4.cpp \
+    camera/kinect4_data.cpp \
+    camera/volumetric_cloud_video_manager.cpp \
+    camera/volumetric_cloud_video_resource.cpp \
+    camera/volumetric_full_video_manager.cpp \
+    camera/volumetric_full_video_resource.cpp \
+    camera/volumetric_video_resource.cpp \
     data/FastDifferentialCoding/fastdelta.c \
-    data/simdcomp/avx512bitpacking.c \
-    data/simdcomp/avxbitpacking.c \
-    data/simdcomp/simdbitpacking.c \
-    data/simdcomp/simdcomputil.c \
-    data/simdcomp/simdfor.c \
-    data/simdcomp/simdintegratedbitpacking.c \
-    data/simdcomp/simdpackedsearch.c \
-    data/simdcomp/simdpackedselect.c \
+#    data/simdcomp/avx512bitpacking.c \
+#    data/simdcomp/avxbitpacking.c \
+#    data/simdcomp/simdbitpacking.c \
+#    data/simdcomp/simdcomputil.c \
+#    data/simdcomp/simdfor.c \
+#    data/simdcomp/simdintegratedbitpacking.c \
+#    data/simdcomp/simdpackedsearch.c \
+#    data/simdcomp/simdpackedselect.c \
     exvr/ex_component.cpp \
     exvr/ex_resource.cpp \
     # files
@@ -262,9 +277,7 @@ SOURCES += \
     camera/k4a/k4amicrophone.cpp \
     camera/k4a/k4amicrophonelistener.cpp \
     camera/kinect2_settings_files.cpp \
-    camera/kinect4_utility.cpp \
     camera/kinect2_data_types.cpp \
-    camera/kinect4.cpp \
     camera/kinect2_manager.cpp \
     camera/kinect2.cpp \
     # network

@@ -26,63 +26,48 @@
 
 #pragma once
 
-// signals
-#include "lsignal.h"
-
 // local
 #include "kinect4_data.hpp"
 
-namespace tool::camera {
+namespace tool::camera::K4{
 
-class Kinect4 {
 
-public:
+struct CloudFrameUncompressor{
 
-    static k4a_device_configuration_t generate_config(const K4::Config &config);
+    CloudFrameUncompressor();
+    ~CloudFrameUncompressor();
 
-    static k4a_device_configuration_t generate_config(
-        K4::ImageFormat colFormat,
-        K4::ColorResolution colResolution,
-        K4::DepthMode depthMode = K4::DepthMode::NFOV_UNBINNED,
-        K4::Framerate fps = K4::Framerate::F30,
-        bool synchronizeColorAndDepth = true,
-        int delayBetweenColorAndDepthUsec = 0,
-        K4::SynchronisationMode synchMode = K4::SynchronisationMode::Standalone,
-        int subordinateDelayUsec = 0,
-        bool disableLED = false);
-
-    Kinect4();
-    ~Kinect4();
-
-    // devices
-    bool open(uint32_t deviceId);
-    void close();
-
-    // getters
-    bool is_opened() const;
-    bool is_reading_frames()const;
-
-    // cameras
-    bool start_cameras(const K4::Config &config);
-    bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
-    void stop_cameras();
-
-    // reading
-    void start_reading();
-    void stop_reading();
-
-    // settings
-    void set_parameters(const K4::Parameters &parameters);
-
-// signals
-    lsignal::signal<void(std::shared_ptr<K4::DisplayDataFrame> cloud)> new_display_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedFullFrame> frame)> new_compressed_full_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
+    bool uncompress_color(CompressedCloudFrame *cFrame, std::vector<uint8_t> &uncompressedColor);
+    bool uncompress(CompressedCloudFrame *cFrame, CloudFrame &frame);
 
 private:
+    struct Impl;
+    std::unique_ptr<Impl> i = nullptr;
+};
 
+struct FullFrameUncompressor{
+
+    FullFrameUncompressor();
+    ~FullFrameUncompressor();
+
+    bool uncompress_color(CompressedFullFrame *cFrame, std::vector<uint8_t> &uncompressedColor);
+    bool uncompress_depth(CompressedFullFrame *cFrame, std::vector<uint16_t> &uncompressedDepth);
+    bool uncompress_infra(CompressedFullFrame *cFrame, std::vector<uint16_t> &uncompressedInfra);
+    void generate_cloud(CompressedFullFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth);
+
+    geo::Pt3<int16_t>* cloud_data();
+
+private:
     struct Impl;
     std::unique_ptr<Impl> i = nullptr;
 };
 }
+
+
+
+
+
+
+
+
 

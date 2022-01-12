@@ -1,5 +1,5 @@
 
-/*******************************************************************************
+    /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
@@ -26,63 +26,32 @@
 
 #pragma once
 
-// signals
-#include "lsignal.h"
-
 // local
-#include "kinect4_data.hpp"
+#include "volumetric_cloud_video_resource.hpp"
+#include "camera/frame_uncompressor.hpp"
 
-namespace tool::camera {
 
-class Kinect4 {
+namespace tool::camera::K4{
 
+class VolumetricCloudVideoManager{
 public:
 
-    static k4a_device_configuration_t generate_config(const K4::Config &config);
+    VolumetricCloudVideoManager(VolumetricCloudVideoResource *volumetricVideo);
+    ~VolumetricCloudVideoManager();
 
-    static k4a_device_configuration_t generate_config(
-        K4::ImageFormat colFormat,
-        K4::ColorResolution colResolution,
-        K4::DepthMode depthMode = K4::DepthMode::NFOV_UNBINNED,
-        K4::Framerate fps = K4::Framerate::F30,
-        bool synchronizeColorAndDepth = true,
-        int delayBetweenColorAndDepthUsec = 0,
-        K4::SynchronisationMode synchMode = K4::SynchronisationMode::Standalone,
-        int subordinateDelayUsec = 0,
-        bool disableLED = false);
+    // uncompress cloud frame
+    bool uncompress_frame(CompressedCloudFrame *cFrame, CloudFrame &frame);
 
-    Kinect4();
-    ~Kinect4();
+    // copy audio
+    void audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer);
+    void audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer);
 
-    // devices
-    bool open(uint32_t deviceId);
-    void close();
-
-    // getters
-    bool is_opened() const;
-    bool is_reading_frames()const;
-
-    // cameras
-    bool start_cameras(const K4::Config &config);
-    bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
-    void stop_cameras();
-
-    // reading
-    void start_reading();
-    void stop_reading();
-
-    // settings
-    void set_parameters(const K4::Parameters &parameters);
-
-// signals
-    lsignal::signal<void(std::shared_ptr<K4::DisplayDataFrame> cloud)> new_display_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedFullFrame> frame)> new_compressed_full_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
-
+    VolumetricCloudVideoResource *vv = nullptr;
+    CloudFrameUncompressor cfu;
 private:
 
     struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+    std::unique_ptr<Impl> m_p = nullptr;
+
 };
 }
-

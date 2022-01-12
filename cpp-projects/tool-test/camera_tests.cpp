@@ -53,11 +53,17 @@
 
 // base
 #include "graphics/texture.hpp"
-#include "camera/kinect4_utility.hpp"
+#include "camera/kinect4_types.hpp"
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
 #include "data/integers_encoder.hpp"
 #include "files/cloud_io.hpp"
+
+#include "camera/volumetric_full_video_manager.hpp"
+
+#include "camera/frame_compressor.hpp"
+#include "camera/frame_uncompressor.hpp"
+
 
 using namespace tool;
 using namespace tool::camera::K4;
@@ -67,13 +73,22 @@ using namespace tool::camera::K4;
 
 TEST_CASE("Kinect4 camera"){
 
-    VolumetricVideoResource video;
+//    CloudFrameCompressor cc;
+//    FullFrameCompressor fc;
+//    CloudFrameUncompressor cu;
+//    FullFrameUncompressor fu;
 
-    const std::string filePath = "E:/ttt.kvid";
-//    const std::string filePath = "D:/compress_test.kvid";
+//    CloudFrame dd;
+//    CompressedCloudFrame f;
+//    cu.uncompress(&f, dd);
+
+    VolumetricFullVideoResource video;
+
+//    const std::string filePath = "E:/ttt.kvid";
+    const std::string filePath = "D:/compress_test.kvid";
     REQUIRE(video.load_from_file(filePath));
 
-    VolumetricVideoManager manager(&video);
+    VolumetricFullVideoManager manager(&video);
 
     auto jpegCompressor = tjInitCompress();
     tjhandle jpegUncompressor = tjInitDecompress();    
@@ -434,26 +449,18 @@ return;
     };
 
     std::cout << "start " <<  video.nb_frames(0) << "\n";
+    FullFrame fFrame;
     for(size_t ii = 0; ii < 79; ++ii){//video.nb_frames(0); ++ii){
 
-
-
         // use only lossless for depth/cloud values
-        auto frame = video.get_frame(ii,0);
+        auto frame = video.get_full_frame(ii,0);
 
         std::cout << "frame " << ii << " " << frame->colorWidth << " " << frame->colorHeight << "\n";
 
-        Bench::start("uncompress_color1");
-        REQUIRE (manager.uncompress_color(frame,  uncompressedColorFrame));
+        Bench::start("uncompress_frame");
+        REQUIRE (manager.uncompress_frame(frame, fFrame));
         Bench::stop();
 
-        Bench::start("uncompress_depth1");
-        REQUIRE(manager.uncompress_depth(frame,  uncompressedDepthFrame));
-        Bench::stop();
-
-        Bench::start("generate_cloud");
-        manager.generate_cloud(frame, uncompressedDepthFrame);
-        Bench::stop();
 
         geo::Pt3<std::int16_t> *cloud = manager.cloud_data();
         auto cloudSize = (frame->depthWidth*frame->depthHeight);

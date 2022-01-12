@@ -26,63 +26,57 @@
 
 #pragma once
 
-// signals
-#include "lsignal.h"
+// kinect
+#include "k4a/k4a.hpp"
 
 // local
 #include "kinect4_data.hpp"
 
-namespace tool::camera {
+namespace tool::camera::K4{
 
-class Kinect4 {
+struct CloudFrameCompressor{
 
-public:
+    CloudFrameCompressor();
+    ~CloudFrameCompressor();
 
-    static k4a_device_configuration_t generate_config(const K4::Config &config);
+    std::shared_ptr<CompressedCloudFrame> compress(
+        size_t validDepthValues,
+        int jpegQuality,
+        std::optional<k4a::image> colorImage,
+        std::optional<k4a::image> depthImage,
+        std::optional<k4a::image> cloud);
 
-    static k4a_device_configuration_t generate_config(
-        K4::ImageFormat colFormat,
-        K4::ColorResolution colResolution,
-        K4::DepthMode depthMode = K4::DepthMode::NFOV_UNBINNED,
-        K4::Framerate fps = K4::Framerate::F30,
-        bool synchronizeColorAndDepth = true,
-        int delayBetweenColorAndDepthUsec = 0,
-        K4::SynchronisationMode synchMode = K4::SynchronisationMode::Standalone,
-        int subordinateDelayUsec = 0,
-        bool disableLED = false);
-
-    Kinect4();
-    ~Kinect4();
-
-    // devices
-    bool open(uint32_t deviceId);
-    void close();
-
-    // getters
-    bool is_opened() const;
-    bool is_reading_frames()const;
-
-    // cameras
-    bool start_cameras(const K4::Config &config);
-    bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
-    void stop_cameras();
-
-    // reading
-    void start_reading();
-    void stop_reading();
-
-    // settings
-    void set_parameters(const K4::Parameters &parameters);
-
-// signals
-    lsignal::signal<void(std::shared_ptr<K4::DisplayDataFrame> cloud)> new_display_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedFullFrame> frame)> new_compressed_full_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4::CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
 
 private:
-
     struct Impl;
     std::unique_ptr<Impl> i = nullptr;
 };
+
+struct FullFrameCompressor{
+
+    FullFrameCompressor();
+    ~FullFrameCompressor();
+
+    std::shared_ptr<CompressedFullFrame> compress(
+        size_t validDepthValues,
+        int jpegQuality,
+        std::optional<k4a::image> colorImage,
+        std::optional<k4a::image> depthImage,
+        std::optional<k4a::image> infraredImage);
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> i = nullptr;
+};
+
+
 }
+
+
+
+
+
+
+
+
 

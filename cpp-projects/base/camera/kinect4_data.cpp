@@ -26,14 +26,11 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "kinect4_data_types.hpp"
+#include "kinect4_data.hpp"
 
 using namespace tool::geo;
 using namespace tool::camera::K4;
 
-ImageFormat image_format(Mode m) {
-    return modes.at<0,1>(m);
-}
 
 std::tuple<std::uint32_t,std::uint32_t> PackedVoxel::pack(const geo::Pt3<int16_t> &pos, const geo::Pt4<uint8_t> &col) noexcept{
 

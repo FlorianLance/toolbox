@@ -26,35 +26,28 @@
 
 #pragma once
 
-// std
-#include <memory>
-#include <chrono>
-#include <mutex>
-#include <bitset>
-
 // kinect4
 #include <k4a/k4atypes.h>
 
-// base
-#include "utility/tuple_array.hpp"
+// local
 #include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
 #include "geometry/point4.hpp"
-#include "geometry/matrix4.hpp"
+#include "utility/tuple_array.hpp"
 
-namespace tool::camera::K4{
+namespace tool::camera::K4 {
 
     enum class ImageFormat : int {
         MJPEG    = K4A_IMAGE_FORMAT_COLOR_MJPG,   // The buffer for each image is encoded as a JPEG and can be decoded by a JPEG decoder.
         NV12     = K4A_IMAGE_FORMAT_COLOR_NV12,   // NV12 images separate the luminance and chroma data such that all the luminance is at the
-                                                  // beginning of the buffer, and the chroma lines follow immediately after.
+        // beginning of the buffer, and the chroma lines follow immediately after.
         YUY2     = K4A_IMAGE_FORMAT_COLOR_YUY2,   // YUY2 stores chroma and luminance data in interleaved pixels.
         BGRA32   = K4A_IMAGE_FORMAT_COLOR_BGRA32, // Each pixel of BGRA32 data is four bytes. The first three bytes represent Blue, Green,
-                                                  // and Red data. The fourth byte is the alpha channel and is unused in the Azure Kinect APIs.
+        // and Red data. The fourth byte is the alpha channel and is unused in the Azure Kinect APIs.
         IR16     = K4A_IMAGE_FORMAT_IR16,         // Each pixel of IR16 data is two bytes of little endian unsigned depth data.
-                                                  // The value of the data represents brightness.
+        // The value of the data represents brightness.
         DEPTH16  = K4A_IMAGE_FORMAT_DEPTH16,      // Each pixel of DEPTH16 data is two bytes of little endian unsigned depth data.
-                                                  // The unit of the data is in millimeters from the origin of the camera.
+        // The unit of the data is in millimeters from the origin of the camera.
         CUSTOM   = K4A_IMAGE_FORMAT_CUSTOM,       // Used in conjunction with user created images or images packing non-standard data.
         CUSTOM8  = K4A_IMAGE_FORMAT_CUSTOM8,      // Each pixel of CUSTOM8 is a single channel one byte of unsigned data.
         CUSTOM16 = K4A_IMAGE_FORMAT_CUSTOM16      // Each pixel of CUSTOM16 is a single channel two bytes of little endian unsigned data.
@@ -71,12 +64,12 @@ namespace tool::camera::K4{
     };
 
     enum class DepthMode : int {
-         OFF            = K4A_DEPTH_MODE_OFF ,              // Depth sensor will be turned off with this setting.
-         NFOV_2X2BINNED = K4A_DEPTH_MODE_NFOV_2X2BINNED,    // Depth captured at 320x288. Passive IR is also captured at 320x288.
-         NFOV_UNBINNED  = K4A_DEPTH_MODE_NFOV_UNBINNED,     // Depth captured at 640x576. Passive IR is also captured at 640x576.
-         WFOV_2X2BINNED = K4A_DEPTH_MODE_WFOV_2X2BINNED,    // Depth captured at 512x512. Passive IR is also captured at 512x512.
-         WFOV_UNBINNED  = K4A_DEPTH_MODE_WFOV_UNBINNED,     // Depth captured at 1024x1024. Passive IR is also captured at 1024x1024.
-         PASSIVE_IR     = K4A_DEPTH_MODE_PASSIVE_IR,        // Passive IR only, captured at 1024x1024.
+        OFF            = K4A_DEPTH_MODE_OFF ,              // Depth sensor will be turned off with this setting.
+        NFOV_2X2BINNED = K4A_DEPTH_MODE_NFOV_2X2BINNED,    // Depth captured at 320x288. Passive IR is also captured at 320x288.
+        NFOV_UNBINNED  = K4A_DEPTH_MODE_NFOV_UNBINNED,     // Depth captured at 640x576. Passive IR is also captured at 640x576.
+        WFOV_2X2BINNED = K4A_DEPTH_MODE_WFOV_2X2BINNED,    // Depth captured at 512x512. Passive IR is also captured at 512x512.
+        WFOV_UNBINNED  = K4A_DEPTH_MODE_WFOV_UNBINNED,     // Depth captured at 1024x1024. Passive IR is also captured at 1024x1024.
+        PASSIVE_IR     = K4A_DEPTH_MODE_PASSIVE_IR,        // Passive IR only, captured at 1024x1024.
     };
 
     enum class Framerate : int{
@@ -88,10 +81,10 @@ namespace tool::camera::K4{
     enum class SynchronisationMode : int{
         Standalone  = K4A_WIRED_SYNC_MODE_STANDALONE, // Neither 'Sync In' or 'Sync Out' connections are used.
         Master      = K4A_WIRED_SYNC_MODE_MASTER,     // The 'Sync Out' jack is enabled and synchronization data it driven out the connected wire.
-                                                      // While in master mode the color camera must be enabled as part of the multi device sync signalling logic.
-                                                      // Even if the color image is not needed, the color camera must be running.
+        // While in master mode the color camera must be enabled as part of the multi device sync signalling logic.
+        // Even if the color image is not needed, the color camera must be running.
         Subordinate = K4A_WIRED_SYNC_MODE_SUBORDINATE // The 'Sync In' jack is used for synchronization and 'Sync Out' is driven for the
-                                                      // next device in the chain. 'Sync Out' is a mirror of 'Sync In' for this mode.
+        // next device in the chain. 'Sync Out' is a mirror of 'Sync In' for this mode.
     };
 
     enum class Mode : std::int32_t {
@@ -129,7 +122,7 @@ namespace tool::camera::K4{
     using CRes = Resolution;
 
     using TMode = std::tuple<
-        Mode,                     IF,         CR,         DM,                 FPS,      Range,          DRes, CE,    ME,    IE>;
+        Mode,                     IF,         CR,         DM,                 FPS,      Range,          DRes,       CE,    ME,    IE>;
     static constexpr TupleArray<Mode::SizeEnum, TMode> modes = {{
         // cloud
         TMode
@@ -150,6 +143,7 @@ namespace tool::camera::K4{
         {M::Only_color_3840x2160, IF::BGRA32, CR::R2160P, DM::OFF,            FPS::F30, {0,0},          {0,0},      false, false, false},
         {M::Only_color_4096x3072, IF::BGRA32, CR::R3072P, DM::OFF,            FPS::F15, {0,0},          {0,0},      false, false, false},
     }};
+
 
     [[maybe_unused]] static constexpr ImageFormat image_format(Mode m) {
         return modes.at<0,1>(m);
@@ -191,7 +185,15 @@ namespace tool::camera::K4{
     [[maybe_unused]] static constexpr std::int16_t invalid_depth_value = 0;
     [[maybe_unused]] static constexpr std::int16_t invalid_infra_value = 0;
     [[maybe_unused]] static constexpr geo::Pt4<std::uint8_t> invalid_color_value = {0,0,0,0};
-    static constexpr Mode defaultMode = K4::Mode::Cloud_640x576;
+    [[maybe_unused]] static constexpr Mode defaultMode = K4::Mode::Cloud_640x576;
+
+    struct ImuSample{
+        float temperature;     /**< Temperature reading of this sample (Celsius). */
+        geo::Pt3f acc;         /**< Accelerometer sample in meters per second squared. */
+        std::int64_t accTsMs;  /**< Timestamp of the accelerometer in microseconds. */
+        geo::Pt3f gyr;         /**< Gyro sample in radians per second. */
+        std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
+    };
 
     struct Parameters{
 
@@ -221,216 +223,18 @@ namespace tool::camera::K4{
         unsigned char minNeighboursLoops = 1;
 
         // flogs
-        bool filterDepthWithColor = false;
+        bool filterDepthWithColor     = false;
         bool invalidateColorFromDepth = false;
         bool invalidateInfraFromDepth = false;
 
         // send
-        bool sendCompressedDataFrame    = false;
+        bool sendCompressedFullFrame    = false;
+        bool sendCompressedCloudFrame   = false;
+
         bool sendDisplayColorFrame      = true;
         bool sendDisplayDepthFrame      = true;
         bool sendDisplayInfraredFrame   = true;
         bool sendDisplayCloud           = true;
         bool sendAudio                  = true;
     };
-
-    struct ImuSample{
-        float temperature;     /**< Temperature reading of this sample (Celsius). */
-        geo::Pt3f acc;         /**< Accelerometer sample in meters per second squared. */
-        std::int64_t accTsMs;  /**< Timestamp of the accelerometer in microseconds. */
-        geo::Pt3f gyr;         /**< Gyro sample in radians per second. */
-        std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
-    };
-
-    struct VoxelData{
-        std::int64_t idX : 13, idY : 13, idZ : 14, r : 8, g : 8, b : 8;
-    };
-
-    struct PackedVoxel{
-        static std::tuple<std::uint32_t,std::uint32_t> pack(const geo::Pt3<std::int16_t> &pos, const geo::Pt4<std::uint8_t> &col) noexcept;
-        static void unpack(std::uint32_t p1, std::uint32_t p2, geo::Pt3<std::int16_t> &pos, geo::Pt3<std::uint8_t> &col) noexcept;
-        static std::uint64_t pack64(const geo::Pt3<std::int16_t> &pos, const geo::Pt4<std::uint8_t> &col);
-        static void unpack64(std::uint64_t p, geo::Pt3<std::int16_t> &pos, geo::Pt4<std::uint8_t> &col);
-        static geo::Pt4<std::uint8_t> pack_xy(std::int16_t x, std::int16_t y);
-    };
-
-
-//    struct PData{
-//        std::int64_t x : 14, y : 13, z : 13, r : 8, g : 8, b : 8;
-
-//        void pack(const geo::Pt3<std::int16_t> &p, const geo::Pt4<std::uint8_t> &c) noexcept{
-//            x = std::clamp(static_cast<std::int16_t>(-p.x()), minX, maxX);
-//            y = std::clamp(static_cast<std::int16_t>(-p.y()), minY, maxY);
-//            z = std::clamp(p.z(), minZ, maxZ) - depthD;
-//            r = c.x()-128;
-//            g = c.y()-128;
-//            b = c.z()-128;
-//        }
-
-//        constexpr geo::Pt3f unpack_pos_f() const noexcept {
-//            return {x*0.001f, y*0.001f, (0.001f*z)+4.096f};
-//        }
-
-//        constexpr geo::Pt3<std::int16_t> unpack_pos_i16() const noexcept {
-//            return geo::Pt3<std::int16_t>{
-//                static_cast<std::int16_t>(x),
-//                static_cast<std::int16_t>(y),
-//                static_cast<std::int16_t>(z+depthD)
-//            };
-//        }
-
-//        constexpr geo::Pt3<std::uint8_t> unpack_col_3ui8() const noexcept {
-//            return {
-//                static_cast<std::uint8_t>(static_cast<std::int16_t>(r)+128),
-//                static_cast<std::uint8_t>(static_cast<std::int16_t>(g)+128),
-//                static_cast<std::uint8_t>(static_cast<std::int16_t>(b)+128)
-//            };
-//        }
-
-//        constexpr geo::Pt4<std::uint8_t> unpack_col_4ui8() const noexcept {
-//            return {
-//                static_cast<std::uint8_t>(static_cast<std::int16_t>(r)+128),
-//                static_cast<std::uint8_t>(static_cast<std::int16_t>(g)+128),
-//                static_cast<std::uint8_t>(static_cast<std::int16_t>(b)+128),
-//                255
-//            };
-//        }
-
-//        constexpr geo::Pt3f unpack_col_3f() const noexcept {
-//            return {
-//                ((static_cast<float>(r)+128.f))/255.f,
-//                ((static_cast<float>(g)+128.f))/255.f,
-//                ((static_cast<float>(b)+128.f))/255.f
-//            };
-//        }
-
-//        constexpr geo::Pt4f unpack_col_4f() const noexcept {
-//            return {
-//                ((static_cast<float>(r)+128.f))/255.f,
-//                ((static_cast<float>(g)+128.f))/255.f,
-//                ((static_cast<float>(b)+128.f))/255.f,
-//                1.f
-//            };
-//        }
-
-//    private:
-
-//        static constexpr std::int16_t depthD = 4096;
-//        static constexpr std::int16_t minX = -4096;
-//        static constexpr std::int16_t maxX = +4095;
-//        static constexpr std::int16_t minY = -4096;
-//        static constexpr std::int16_t maxY = +4095;
-//        static constexpr std::int16_t minZ = 0;
-//        static constexpr std::int16_t maxZ = +8191;
-//    };
-
-
-
-    struct VertexMeshData{
-        geo::Pt3f pos;
-        geo::Pt4<std::uint8_t> col;
-    };
-
-    // display
-    // # image display data (color,depth,infrared)
-    struct PixelsFrame{
-        size_t width = 0;
-        size_t height = 0;
-        std::vector<geo::Pt3<std::uint8_t>> pixels;
-    };
-
-    // colored cloud display data
-    struct ColoredCloudFrame{
-        size_t validVerticesCount = 0;
-        std::vector<geo::Pt3f> vertices;
-        std::vector<geo::Pt3f> colors;
-        // std::vector<geo::Pt3f> normals;
-    };
-
-    // # display data frame (to be displayed in a client)
-    struct DisplayDataFrame{
-        PixelsFrame colorFrame;
-        PixelsFrame depthFrame;
-        PixelsFrame infraredFrame;
-        ColoredCloudFrame cloud;
-        std::vector<std::array<float, 7>> audioFrames;
-        ImuSample imuSample;
-    };
-
-
-    // compressed data (to be sended throught network)
-    struct CompressedDataFrame{
-
-        Mode mode;
-        k4a_calibration_t calibration;
-
-        size_t validVerticesCount = 0;
-        size_t colorWidth = 0;
-        size_t colorHeight = 0;
-        std::vector<std::uint8_t> colorBuffer;
-        size_t depthWidth = 0;
-        size_t depthHeight = 0;
-        std::vector<std::uint32_t> depthBuffer;
-        size_t infraWidth = 0;
-        size_t infraHeight = 0;
-        std::vector<std::uint32_t> infraBuffer;
-        std::vector<std::array<float, 7>> audioFrames;
-        ImuSample imuSample;
-
-        size_t voxelsCount = 0;
-        std::vector<std::uint32_t> voxelsBuffer;
-    };
-
-    struct CompressedDataFrame2{
-
-        size_t validVerticesCount = 0;
-        size_t colorWidth = 0;
-        size_t colorHeight = 0;        
-        std::vector<std::uint8_t> colorBuffer;
-        std::vector<std::uint8_t> cloudBuffer;
-
-        std::vector<std::array<float, 7>> audioFrames;
-        ImuSample imuSample;
-    };
-
-    // uncompressed
-    struct UncompressedDataFrame{
-        // uncompressed data
-        std::vector<std::uint8_t> colorData;
-        std::vector<std::uint16_t> depthData;
-        std::vector<std::uint16_t> infraData;
-        // # cloud data
-        tool::camera::K4::ColoredCloudFrame cloud;
-    };
-
-
-    // to be removed?
-    struct FrameReadingTimings{
-        std::chrono::nanoseconds startFrameReadingTS;
-        std::chrono::nanoseconds afterCaptureTS;
-
-        std::chrono::nanoseconds getColorTS;
-        std::chrono::nanoseconds getDepthTS;
-        std::chrono::nanoseconds getInfraTS;
-
-        std::chrono::nanoseconds convertColorTS;
-        std::chrono::nanoseconds resizeColorTS;
-
-        std::chrono::nanoseconds filteringTS;
-        std::chrono::nanoseconds cloudGenerationTS;
-
-        std::chrono::nanoseconds compressFrameTS;
-        std::chrono::nanoseconds displayFrameTS;
-
-        std::chrono::nanoseconds endFrameReadingTS;
-    };
 }
-
-
-
-
-
-
-
-
-
