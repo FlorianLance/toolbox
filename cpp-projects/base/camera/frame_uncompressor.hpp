@@ -31,35 +31,122 @@
 
 namespace tool::camera::K4{
 
+struct FrameUncompressor{
 
-struct CloudFrameUncompressor{
+    FrameUncompressor();
+    ~FrameUncompressor();
 
-    CloudFrameUncompressor();
-    ~CloudFrameUncompressor();
+    // uncompress
+    bool uncompress_color(
+        size_t colorWidth, size_t colorHeight,
+        const std::vector<std::uint8_t> &encoded,
+        std::vector<geo::Pt3<uint8_t>> &uncompressedColor);
 
-    bool uncompress_color(CompressedCloudFrame *cFrame, std::vector<uint8_t> &uncompressedColor);
-    bool uncompress(CompressedCloudFrame *cFrame, CloudFrame &frame);
+    // convert
+    void convert_to_depth_image(Mode mode, size_t depthWidth, size_t depthHeight,
+        const std::vector<uint16_t> &uncompressedDepth,
+        std::vector<geo::Pt3<uint8_t>> &imageDepth);
+
+    void convert_to_infra_image(
+        size_t infraWidth, size_t infraHeight,
+        const std::vector<uint16_t> &uncompressedInfra,
+        std::vector<geo::Pt3<uint8_t>> &imageInfra);
+
+    static constexpr std::array<geo::Pt3f, 5> depthGradient ={
+        geo::Pt3f{0.f,0.f,1.f},
+        {0.f,1.f,1.f},
+        {0.f,1.f,0.f},
+        {1.f,1.f,0.f},
+        {1.f,0.f,0.f},
+    };
+
+protected:
+    std::vector<size_t> indicesDepths1D;
 
 private:
     struct Impl;
     std::unique_ptr<Impl> i = nullptr;
 };
 
-struct FullFrameUncompressor{
+
+struct CloudFrameUncompressor : public FrameUncompressor{
+
+    // all steps
+    bool uncompress(CompressedCloudFrame *cFrame, CloudFrame &uFrame);
+    bool uncompress(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt3f *colors);
+    bool uncompress(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt4f *colors);
+    bool uncompress(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt3<std::uint8_t> *colors);
+    bool uncompress(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt4<std::uint8_t> *colors);
+    bool uncompress(CompressedCloudFrame *cFrame, VertexMeshData *vertices);
+
+private:
+
+    // process
+    bool uncompress_color(CompressedCloudFrame *cFrame, std::vector<geo::Pt3<uint8_t>> &uncompressedColor);
+    bool uncompress_vertices(CompressedCloudFrame *cFrame, std::vector<std::uint16_t> &decodedVertices);
+    bool uncompress(CompressedCloudFrame *cFrame);
+    // convert
+    void update_id_array(size_t idV);
+    void convert_to_cloud(CompressedCloudFrame *cFrame, CloudFrame &uFrame);
+    void convert_to_cloud(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt3f *colors);
+    void convert_to_cloud(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt4f *colors);
+    void convert_to_cloud(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt3<std::uint8_t> *colors);
+    void convert_to_cloud(CompressedCloudFrame *cFrame, geo::Pt3f *vertices, geo::Pt4<std::uint8_t> *colors);
+    void convert_to_cloud(CompressedCloudFrame *cFrame, VertexMeshData *vertices);
+
+    std::vector<size_t> indicesValid1D;
+    std::vector<std::uint16_t> decodedVerticesData;
+    std::vector<geo::Pt3<std::uint8_t>> decodedColorData;
+};
+
+struct FullFrameUncompressor : public FrameUncompressor{
 
     FullFrameUncompressor();
     ~FullFrameUncompressor();
 
-    bool uncompress_color(CompressedFullFrame *cFrame, std::vector<uint8_t> &uncompressedColor);
+    // per step
+    bool uncompress_color(CompressedFullFrame *cFrame, std::vector<geo::Pt3<uint8_t>> &uncompressedColor);
     bool uncompress_depth(CompressedFullFrame *cFrame, std::vector<uint16_t> &uncompressedDepth);
     bool uncompress_infra(CompressedFullFrame *cFrame, std::vector<uint16_t> &uncompressedInfra);
     void generate_cloud(CompressedFullFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth);
 
+    // all steps
+    bool uncompress(CompressedFullFrame *cFrame, FullFrame &fframe);
+
     geo::Pt3<int16_t>* cloud_data();
 
+    size_t convert_to_cloud(
+        size_t validVerticesCount,
+        const std::vector<geo::Pt3<std::uint8_t>> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        tool::camera::K4::ColoredCloudFrame &cloud);
+
+    size_t convert_to_cloud(
+        const std::vector<geo::Pt3<std::uint8_t>> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        geo::Pt3f *vertices, geo::Pt3f *colors);
+
+    size_t convert_to_cloud(
+        const std::vector<geo::Pt3<std::uint8_t>> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        geo::Pt3f *vertices, geo::Pt4f *colors);
+
+    size_t convert_to_cloud(
+        const std::vector<geo::Pt3<std::uint8_t>> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        geo::Pt3f *vertices, geo::Pt4<std::uint8_t> *colors);
+
+    size_t convert_to_cloud(
+        const std::vector<geo::Pt3<std::uint8_t>> &uncompressedColor,
+        const std::vector<std::uint16_t> &uncompressedDepth,
+        VertexMeshData *vertices);
+
+
 private:
+
     struct Impl;
     std::unique_ptr<Impl> i = nullptr;
+
 };
 }
 

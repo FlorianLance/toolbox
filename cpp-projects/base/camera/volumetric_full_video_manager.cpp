@@ -48,8 +48,28 @@ struct VolumetricFullVideoManager::Impl{
 
     std::vector<size_t> indicesDepths1D;
 
-    open3d::geometry::PointCloud open3dPointCloud;
     open3d::geometry::PointCloud totalCloud;
+
+    void convert_cloud_frame_to_open3d_point_cloud(const tool::camera::K4::ColoredCloudFrame &cloudFrame, open3d::geometry::PointCloud &open3dPC){
+
+        open3dPC.points_.resize(cloudFrame.validVerticesCount);
+        open3dPC.colors_.resize(cloudFrame.validVerticesCount);
+
+        for(size_t ii = 0; ii < cloudFrame.vertices.size(); ++ii){
+            const auto &pt = cloudFrame.vertices[ii];
+            const auto &c  = cloudFrame.colors[ii];
+            open3dPC.points_[ii] = Eigen::Vector3d{
+                static_cast<double>(pt.x()),
+                static_cast<double>(pt.y()),
+                static_cast<double>(pt.z())
+            };
+            open3dPC.colors_[ii] = Eigen::Vector3d{
+                static_cast<double>(c.x()),
+                static_cast<double>(c.y()),
+                static_cast<double>(c.z())
+            };
+        }
+    }
 
     Impl(){
     }
@@ -104,299 +124,13 @@ void VolumetricFullVideoManager::audio_samples_all_channels(size_t idCamera, std
     }
 }
 
-void VolumetricFullVideoManager::convert_to_depth_image(Mode mode, size_t depthWidth, size_t depthHeight, const std::vector<uint16_t> &uncompressedDepth, std::vector<uint8_t> &imageDepth){
-
-    // resize image buffer
-    size_t imageDepthSize = depthWidth * depthHeight*4;
-    if(imageDepth.size() != imageDepthSize){
-        imageDepth.resize(imageDepthSize);
-    }
-
-    const auto dRange = range(mode)*1000.f;
-    const auto diff = dRange.y() - dRange.x();
-
-    // convert data
-    for(size_t ii = 0; ii < uncompressedDepth.size(); ++ii){
-
-        if(uncompressedDepth[ii] == K4::invalid_depth_value){
-            imageDepth[ii*4+0] = 0;
-            imageDepth[ii*4+1] = 0;
-            imageDepth[ii*4+2] = 0;
-            imageDepth[ii*4+3] = 255;
-            continue;;
-        }
-
-        float vF = (static_cast<float>(uncompressedDepth[ii]) - dRange.x())/diff;
-        float intPart;
-        float decPart = std::modf((vF*(depthGradient.size()-1)), &intPart);
-        size_t idG = static_cast<size_t>(intPart);
-
-        auto col = depthGradient[idG]*(1.f-decPart) + depthGradient[idG+1]*decPart;
-        imageDepth[ii*4+0] = static_cast<std::uint8_t>(255*col.x());
-        imageDepth[ii*4+1] = static_cast<std::uint8_t>(255*col.y());
-        imageDepth[ii*4+2] = static_cast<std::uint8_t>(255*col.z());
-        imageDepth[ii*4+3] = 255;
-    }
-
-}
-
-void VolumetricFullVideoManager::convert_to_infra_image(size_t infraWidth, size_t infraHeight, const std::vector<uint16_t> &uncompressedInfra, std::vector<uint8_t> &imageInfra){
-
-    // resize image buffer
-    size_t imageInfraSize = infraWidth * infraHeight*4;
-    if(imageInfra.size() != imageInfraSize){
-        imageInfra.resize(imageInfraSize);
-    }
-
-    // convert data
-    const float max = 2000;
-    for(size_t ii = 0; ii < uncompressedInfra.size(); ++ii){
-
-        float vF = static_cast<float>(uncompressedInfra[ii]);
-        if(vF > max){
-            vF = max;
-        }
-        vF/=max;
-
-        imageInfra[ii*4+0] = static_cast<std::uint8_t>(255*vF);
-        imageInfra[ii*4+1] = static_cast<std::uint8_t>(255*vF);
-        imageInfra[ii*4+2] = static_cast<std::uint8_t>(255*vF);
-        imageInfra[ii*4+3] = 255;
-    }
-}
-
-
-
-void VolumetricFullVideoManager::process_open3d_cloud(const std::vector<uint8_t> &uncompressedColor){
-
-    //    auto &pc = m_p->open3dPointCloud;
-    //    pc.points_.resize(cloudFrame.validVerticesCount);
-    //    pc.colors_.resize(cloudFrame.validVerticesCount);
-
-    //    for(size_t ii = 0; ii < cloudFrame.vertices.size(); ++ii){
-    //        const auto &pt = cloudFrame.vertices[ii];
-    //        const auto &c  = cloudFrame.colors[ii];
-    //        open3dPC.points_[ii] = Eigen::Vector3d{
-    //            static_cast<double>(pt.x()),
-    //            static_cast<double>(pt.y()),
-    //            static_cast<double>(pt.z())
-    //        };
-    //        open3dPC.colors_[ii] = Eigen::Vector3d{
-    //            static_cast<double>(c.x()),
-    //            static_cast<double>(c.y()),
-    //            static_cast<double>(c.z())
-    //        };
-    //    }
-}
-
-size_t VolumetricFullVideoManager::convert_to_cloud(size_t validVerticesCount,
-    const std::vector<uint8_t> &uncompressedColor, const std::vector<std::uint16_t> &uncompressedDepth, ColoredCloudFrame &cloud){
-
-    auto cloudBuffer = cloud_data();
-
-    // resize cloud if necessary
-    if(cloud.validVerticesCount < validVerticesCount){
-        cloud.vertices.resize(validVerticesCount);
-        cloud.colors.resize(validVerticesCount);
-    }
-    cloud.validVerticesCount = validVerticesCount;
-
-    // resize depth indices
-    if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
-        m_p->indicesDepths1D.resize(uncompressedDepth.size());
-        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
-    }
-
-
-    // update cloud values
-    size_t idV = 0;
-    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), [&](size_t id){
-
-        if(uncompressedDepth[id] == invalid_depth_value){
-            return;
-        }
-
-        cloud.vertices[idV]= geo::Pt3f{
-            static_cast<float>(-cloudBuffer[id].x()),
-            static_cast<float>(-cloudBuffer[id].y()),
-            static_cast<float>( cloudBuffer[id].z())
-        }*0.01f;
-        cloud.colors[idV] = geo::Pt3f{
-            static_cast<float>(uncompressedColor[id*4+0]),
-            static_cast<float>(uncompressedColor[id*4+1]),
-            static_cast<float>(uncompressedColor[id*4+2])
-        }/255.f;
-
-        ++idV;
-    });
-    return idV;
-}
-
-size_t VolumetricFullVideoManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth,
-    geo::Pt3f *vertices, geo::Pt3f *colors){
-
-    // resize depth indices
-    if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
-        m_p->indicesDepths1D.resize(uncompressedDepth.size());
-        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
-    }
-
-    auto cloudBuffer = cloud_data();
-    size_t idV = 0;
-    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), [&](size_t id){
-
-        if(uncompressedDepth[id] == invalid_depth_value){
-            return;
-        }
-
-        vertices[idV]= geo::Pt3f{
-            static_cast<float>(-cloudBuffer[id].x()),
-            static_cast<float>(-cloudBuffer[id].y()),
-            static_cast<float>( cloudBuffer[id].z())
-        }*0.01f;
-        colors[idV] = geo::Pt3f{
-            static_cast<float>(uncompressedColor[id*4+0]),
-            static_cast<float>(uncompressedColor[id*4+1]),
-            static_cast<float>(uncompressedColor[id*4+2])
-        }/255.f;
-
-        ++idV;
-    });
-    return idV;
-}
-
-size_t VolumetricFullVideoManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth, geo::Pt3f *vertices, geo::Pt4f *colors){
-
-    // resize depth indices
-    if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
-        m_p->indicesDepths1D.resize(uncompressedDepth.size());
-        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
-    }
-
-    auto cloudBuffer = cloud_data();
-    size_t idV = 0;
-    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), [&](size_t id){
-
-        if(uncompressedDepth[id] == invalid_depth_value){
-            return;
-        }
-
-        vertices[idV]= geo::Pt3f{
-            static_cast<float>(-cloudBuffer[id].x()),
-            static_cast<float>(-cloudBuffer[id].y()),
-            static_cast<float>( cloudBuffer[id].z())
-        }*0.01f;
-        colors[idV] = geo::Pt4f{
-            static_cast<float>(uncompressedColor[id*4+0]),
-            static_cast<float>(uncompressedColor[id*4+1]),
-            static_cast<float>(uncompressedColor[id*4+2]),
-            255.f
-        }/255.f;
-
-        ++idV;
-    });
-    return idV;
-}
-
-size_t VolumetricFullVideoManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth, geo::Pt3f *vertices, geo::Pt4<uint8_t> *colors){
-
-    // resize depth indices
-    if(m_p->indicesDepths1D.size() != uncompressedDepth.size()){
-        m_p->indicesDepths1D.resize(uncompressedDepth.size());
-        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
-    }
-
-    auto cloudBuffer = cloud_data();
-    size_t idV = 0;
-
-    auto uColors = reinterpret_cast<const geo::Pt4<std::uint8_t>*>(uncompressedColor.data());
-
-    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), [&](size_t id){
-
-        if(uncompressedDepth[id] == invalid_depth_value){
-            return;
-        }
-
-        vertices[idV] = geo::Pt3f{
-            static_cast<float>(-cloudBuffer[id].x()),
-            static_cast<float>(-cloudBuffer[id].y()),
-            static_cast<float>( cloudBuffer[id].z())
-        }*0.01f;
-
-        colors[idV] = uColors[id];/* geo::Pt4<std::uint8_t>{
-            uncompressedColor[id*4+0],
-            uncompressedColor[id*4+1],
-            uncompressedColor[id*4+2],
-            255
-        };*/
-
-        ++idV;
-    });
-    return idV;
-}
-
-size_t VolumetricFullVideoManager::convert_to_cloud(const std::vector<uint8_t> &uncompressedColor, const std::vector<uint16_t> &uncompressedDepth, VertexMeshData *vertices){
-
-    // resize depth indices
-    if(m_p->indicesDepths1D.size() < uncompressedDepth.size()){
-        m_p->indicesDepths1D.resize(uncompressedDepth.size());
-        std::iota(std::begin(m_p->indicesDepths1D), std::end(m_p->indicesDepths1D), 0);
-    }
-
-    auto cloudBuffer = cloud_data();
-    size_t idV = 0;
-
-    auto uColors = reinterpret_cast<const geo::Pt4<std::uint8_t>*>(uncompressedColor.data());
-    for_each(std::execution::unseq, std::begin(m_p->indicesDepths1D), std::begin(m_p->indicesDepths1D) + uncompressedDepth.size(), [&](size_t id){
-
-        if(uncompressedDepth[id] == invalid_depth_value){
-            return;
-        }
-
-        vertices[idV].pos = geo::Pt3f{
-            static_cast<float>(-cloudBuffer[id].x()),
-            static_cast<float>(-cloudBuffer[id].y()),
-            static_cast<float>( cloudBuffer[id].z())
-        }*0.01f;
-        vertices[idV].col = uColors[id];
-
-        ++idV;
-    });
-
-    return idV;
-}
 
 Pt3<int16_t> *VolumetricFullVideoManager::cloud_data(){
     return ffu.cloud_data();
 }
 
 bool VolumetricFullVideoManager::uncompress_frame(CompressedFullFrame *cFrame, FullFrame &frame){
-
-    // color
-    if(cFrame->colorBuffer.size() > 0){
-        if(!ffu.uncompress_color(cFrame, frame.imageColorData)){
-            return false;
-        }
-    }
-    // depth
-    if(cFrame->depthBuffer.size() > 0){
-        if(!ffu.uncompress_depth(cFrame, frame.rawDepthData)){
-            return false;
-        }
-        convert_to_depth_image(cFrame->mode, cFrame->depthWidth, cFrame->depthHeight, frame.rawDepthData, frame.imageDepthData);
-    }
-    // infra
-    if(cFrame->infraBuffer.size() > 0){
-        ffu.uncompress_infra(cFrame, frame.rawInfraData);
-        convert_to_infra_image(cFrame->infraWidth, cFrame->infraHeight, frame.rawInfraData, frame.imageInfraData);
-    }
-    // cloud
-    if(cFrame->depthBuffer.size() > 0){
-        ffu.generate_cloud(cFrame, frame.rawDepthData);
-        convert_to_cloud(cFrame->validVerticesCount, frame.imageColorData, frame.rawDepthData, frame.cloud);
-    }
-
-    return true;
+    return ffu.uncompress(cFrame,frame);
 }
 
 
@@ -407,7 +141,7 @@ void VolumetricFullVideoManager::register_frames(size_t idCamera, size_t startFr
         return;
     }
 
-    std::vector<uint8_t> uncompressedColor;
+    std::vector<geo::Pt3<uint8_t>> uncompressedColor;
     std::vector<uint16_t> uncompressedDepth;
     open3d::geometry::PointCloud frameCloud;
 
@@ -443,7 +177,6 @@ void VolumetricFullVideoManager::register_frames(size_t idCamera, size_t startFr
 
         ffu.uncompress_color(data, uncompressedColor);
         ffu.uncompress_depth(data, uncompressedDepth);
-//        m_p->ffu.uncompress_infra(data, uncompressedInfra);
         ffu.generate_cloud(data, uncompressedDepth);
 
         auto cloudBuffer =  cloud_data();
@@ -472,9 +205,9 @@ void VolumetricFullVideoManager::register_frames(size_t idCamera, size_t startFr
                 static_cast<double>( cloudBuffer[id].z())
             }*0.01;
             frameCloud.colors_[idV] = Eigen::Vector3d{
-                static_cast<double>(uncompressedColor[id*4+0]),
-                static_cast<double>(uncompressedColor[id*4+1]),
-                static_cast<double>(uncompressedColor[id*4+2])
+                static_cast<double>(uncompressedColor[id].x()),
+                static_cast<double>(uncompressedColor[id].y()),
+                static_cast<double>(uncompressedColor[id].z())
             }/255.0;
 
             ++idV;
@@ -585,6 +318,32 @@ void VolumetricFullVideoManager::voxelize_registered_frames(double voxelSize, Co
     cloud.validVerticesCount = gridSize;
 
     Logger::message(std::format("gridSize {}\n", gridSize));
+}
+
+void VolumetricFullVideoManager::voxelize(FullFrame &frame, float gridVoxelSize){
+
+    open3d::geometry::PointCloud pc;
+    m_p->convert_cloud_frame_to_open3d_point_cloud(frame.cloud, pc);
+
+    auto res = open3d::geometry::VoxelGrid::CreateFromPointCloudWithinBounds(
+        pc, static_cast<double>(gridVoxelSize),
+        Eigen::Vector3d{-1,-1,-1},
+        Eigen::Vector3d{1,1,1}
+    );
+    geo::Pt3f min{1.f,1.f,1.f};
+
+    Logger::message(std::format("voxelize {} {} \n", res->voxels_.size(),pc.points_.size() ));
+
+    size_t id = 0;
+    const auto voxels = res->GetVoxels();
+    for(const auto &v : voxels){
+        const auto &gi = v.grid_index_;
+        const auto &c = v.color_;
+        frame.cloud.vertices[id] = (min + geo::Pt3f{static_cast<float>(gi.x()), static_cast<float>(gi.y()), static_cast<float>(gi.z())}) * gridVoxelSize;
+        frame.cloud.colors[id++] = {static_cast<float>(c.x()), static_cast<float>(c.y()), static_cast<float>(c.z())};
+    }
+    frame.cloud.validVerticesCount = voxels.size();
+
 }
 
 

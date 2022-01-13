@@ -79,16 +79,18 @@ namespace tool::camera::K4{
     // compressed common frame
     struct CompressedFrame{
         size_t validVerticesCount = 0;
+
         size_t colorWidth = 0;
         size_t colorHeight = 0;
-        std::vector<std::uint8_t> colorBuffer;
+        std::vector<std::uint8_t> encodedColorData;
+
         std::vector<std::array<float, 7>> audioFrames;
         ImuSample imuSample;
     };
 
     // compressed cloud frame (to be sended throught network or saved)
     struct CompressedCloudFrame : public CompressedFrame{
-        std::vector<std::uint8_t> cloudBuffer;
+        std::vector<std::uint8_t> encodedCloudData;
     };
 
     // compressed full frame (to be saved)
@@ -99,19 +101,14 @@ namespace tool::camera::K4{
 
         size_t depthWidth = 0;
         size_t depthHeight = 0;
-        std::vector<std::uint32_t> depthBuffer;
+        std::vector<std::uint8_t> encodedDepthData;
+
         size_t infraWidth = 0;
         size_t infraHeight = 0;
-        std::vector<std::uint32_t> infraBuffer;
-
-        size_t voxelsCount = 0;
-        std::vector<std::uint32_t> voxelsBuffer;
+        std::vector<std::uint8_t> encodedInfraData;
     };
 
-    struct CloudFrame{
-        // uncompressed data
-        std::vector<std::uint8_t> colorData;
-        // # cloud data
+    struct CloudFrame{        
         tool::camera::K4::ColoredCloudFrame cloud;
     };
 
@@ -121,9 +118,9 @@ namespace tool::camera::K4{
         std::vector<std::uint16_t> rawDepthData;
         std::vector<std::uint16_t> rawInfraData;
         // image
-        std::vector<std::uint8_t> imageColorData;
-        std::vector<std::uint8_t> imageDepthData;
-        std::vector<std::uint8_t> imageInfraData;
+        std::vector<geo::Pt3<std::uint8_t>> imageColorData;
+        std::vector<geo::Pt3<std::uint8_t>> imageDepthData;
+        std::vector<geo::Pt3<std::uint8_t>> imageInfraData;
         // # cloud data
         tool::camera::K4::ColoredCloudFrame cloud;
     };

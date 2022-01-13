@@ -48,50 +48,10 @@ public:
     void audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer);
     void audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer);
 
-    // convert to images
-    void convert_to_depth_image(
-        Mode mode,
-        size_t depthWidth, size_t depthHeight,
-        const std::vector<std::uint16_t> &uncompressedDepth,
-        std::vector<std::uint8_t> &imageDepth);
-
-    void convert_to_infra_image(
-        size_t infraWidth, size_t infraHeight,
-        const std::vector<std::uint16_t> &uncompressedInfra,
-        std::vector<std::uint8_t> &imageInfra);
-
-    // convert to cloud
-    size_t convert_to_cloud(
-        size_t validVerticesCount,
-        const std::vector<std::uint8_t> &uncompressedColor,
-        const std::vector<std::uint16_t> &uncompressedDepth,
-        tool::camera::K4::ColoredCloudFrame &cloud);
-
-    size_t convert_to_cloud(
-        const std::vector<std::uint8_t> &uncompressedColor,
-        const std::vector<std::uint16_t> &uncompressedDepth,
-        geo::Pt3f *vertices, geo::Pt3f *colors);
-
-    size_t convert_to_cloud(
-        const std::vector<std::uint8_t> &uncompressedColor,
-        const std::vector<std::uint16_t> &uncompressedDepth,
-        geo::Pt3f *vertices, geo::Pt4f *colors);
-
-    size_t convert_to_cloud(
-        const std::vector<std::uint8_t> &uncompressedColor,
-        const std::vector<std::uint16_t> &uncompressedDepth,
-        geo::Pt3f *vertices, geo::Pt4<std::uint8_t> *colors);
-
-    size_t convert_to_cloud(
-        const std::vector<std::uint8_t> &uncompressedColor,
-        const std::vector<std::uint16_t> &uncompressedDepth,
-        VertexMeshData *vertices);
-
     // process
-    void process_open3d_cloud(const std::vector<std::uint8_t> &uncompressedColor);
     void register_frames(size_t idCamera, size_t startFrame, size_t endFrame, double voxelDownSampleSize);
     void voxelize_registered_frames(double voxelSize, tool::camera::K4::ColoredCloudFrame &cloud);
-
+    void voxelize(FullFrame &frame, float gridVoxelSize);
 
     VolumetricFullVideoResource *vv = nullptr;
     FullFrameUncompressor ffu;
@@ -100,12 +60,6 @@ private:
 
     struct Impl;
     std::unique_ptr<Impl> m_p = nullptr;
-    static constexpr std::array<geo::Pt3f, 5> depthGradient ={
-        geo::Pt3f{0.f,0.f,1.f},
-        {0.f,1.f,1.f},
-        {0.f,1.f,0.f},
-        {1.f,1.f,0.f},
-        {1.f,0.f,0.f},
-    };
+
 };
 }

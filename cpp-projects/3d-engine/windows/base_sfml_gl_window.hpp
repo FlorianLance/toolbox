@@ -100,7 +100,7 @@ protected:
     virtual void keyboard_keyrelease_event(sf::Event::KeyEvent event){static_cast<void>(event);}
 
     // imgui events
-    virtual void check_imgui_inputs();
+//    virtual void check_imgui_inputs();
 
     // camera
     virtual void update_camera_with_mouse_button_event(sf::Event::MouseButtonEvent event, bool pressed);
@@ -129,7 +129,9 @@ protected:
     graphics::Screen m_screen;
 
     // camera
-    double m_cameraSpeed = 0.2;
+    double cameraMovingSpeed   = 0.2;
+    double cameraScrollSpeed   = 0.05;
+    double cameraRotationSpeed = 0.05;
     graphics::Camera m_camera;
 
     // time

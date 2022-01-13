@@ -59,11 +59,9 @@ VolumetricCloudVideoManager::VolumetricCloudVideoManager(VolumetricCloudVideoRes
 VolumetricCloudVideoManager::~VolumetricCloudVideoManager(){
 }
 
-bool VolumetricCloudVideoManager::uncompress_frame(CompressedCloudFrame *cFrame, CloudFrame &frame){
-
-    return true;
+bool VolumetricCloudVideoManager::uncompress_frame(CompressedCloudFrame *cFrame, CloudFrame &uFrame){
+    return cfu.uncompress(cFrame, uFrame);
 }
-
 
 
 void VolumetricCloudVideoManager::audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer){

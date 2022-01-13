@@ -34,11 +34,6 @@ namespace tool::camera::K4{
 class VolumetricFullVideoResource : public VolumetricVideoResource{
 public:
 
-    enum class Mode : std::int8_t{
-        Clouds = 0,Voxels
-    };
-
-    Mode mode = Mode::Clouds;
     CompressedFullFrame *get_full_frame(size_t idFrame, size_t idCamera = 0);
 
 private:

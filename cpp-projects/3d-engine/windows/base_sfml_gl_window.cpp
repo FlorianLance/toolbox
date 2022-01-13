@@ -104,14 +104,15 @@ void BaseSfmlGlWindow::start(){
         imguiMouse    = io.WantCaptureMouse;
         imguiKeyboard = io.WantCaptureKeyboard;
 
-
         Bench::start("main_loop");
 
         currentFrame = std::chrono::high_resolution_clock::now();
 
         // retrieve sfml events
         sf::Event event;
+
         while (m_scene.pollEvent(event)){
+
             ImGui::SFML::ProcessEvent(event);
             switch (event.type) {
             case sf::Event::Closed: // The window requested to be closed
@@ -260,6 +261,7 @@ void BaseSfmlGlWindow::mouse_button_released_event(sf::Event::MouseButtonEvent e
     }
 }
 
+
 void BaseSfmlGlWindow::mouse_moved_event(sf::Event::MouseMoveEvent event){
     if(!imguiMouse){
         update_camera_with_mouse_moved_event(event);
@@ -275,39 +277,40 @@ void BaseSfmlGlWindow::mouse_wheel_scroll_event(sf::Event::MouseWheelScrollEvent
 }
 
 void BaseSfmlGlWindow::keyboard_keypress_event(sf::Event::KeyEvent event){
+
     if(!imguiMouse && !imguiKeyboard){
         update_camera_with_keyboardpress_event(event);
     }
 }
 
-void BaseSfmlGlWindow::check_imgui_inputs(){
+//void BaseSfmlGlWindow::check_imgui_inputs(){
 
-//    if (!ImGui::IsItemHovered()){
-//        return;
-//    }
+////    if (!ImGui::IsItemHovered()){
+////        return;
+////    }
 
-    ImGuiIO& io = ImGui::GetIO();
-    if(io.WantCaptureMouse){
+//    ImGuiIO& io = ImGui::GetIO();
+//    if(io.WantCaptureMouse){
 
-        auto mPos = geo::Pt2f{io.MousePos.x, io.MousePos.y};
-        auto preMPos = geo::Pt2f{io.MousePosPrev.x, io.MousePosPrev.y};
-        if(square_norm(mPos - preMPos) != 0){
-            Logger::message(std::format("%f %f\n", io.MouseDelta.x, io.MouseDelta.y));
-        }
-
-//        if(io.MousePos - io.MousePosPrev){
-
+//        auto mPos = geo::Pt2f{io.MousePos.x, io.MousePos.y};
+//        auto preMPos = geo::Pt2f{io.MousePosPrev.x, io.MousePosPrev.y};
+//        if(square_norm(mPos - preMPos) != 0){
+//            Logger::message(std::format("%f %f\n", io.MouseDelta.x, io.MouseDelta.y));
 //        }
 
+////        if(io.MousePos - io.MousePosPrev){
 
-//        ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
-//        ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (io.MouseDownDuration[i] >= 0.0f)   { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
-//        ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))          { ImGui::SameLine(); ImGui::Text("b%d", i); }
-//        ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i))    { ImGui::SameLine(); ImGui::Text("b%d", i); }
-//        ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))         { ImGui::SameLine(); ImGui::Text("b%d", i); }
-//        ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
-    }
-}
+////        }
+
+
+////        ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
+////        ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (io.MouseDownDuration[i] >= 0.0f)   { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
+////        ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))          { ImGui::SameLine(); ImGui::Text("b%d", i); }
+////        ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i))    { ImGui::SameLine(); ImGui::Text("b%d", i); }
+////        ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))         { ImGui::SameLine(); ImGui::Text("b%d", i); }
+////        ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
+//    }
+//}
 
 void BaseSfmlGlWindow::update_camera_with_mouse_button_event(sf::Event::MouseButtonEvent event, bool pressed){
 
@@ -351,16 +354,16 @@ void BaseSfmlGlWindow::update_camera_with_keyboardpress_event(sf::Event::KeyEven
 
     switch (event.code) {
     case sf::Keyboard::Key::Up:
-        m_camera.move_front(m_cameraSpeed);
+        m_camera.move_front(cameraMovingSpeed);
         break;
     case sf::Keyboard::Key::Left:
-        m_camera.move_left(m_cameraSpeed);
+        m_camera.move_left(cameraMovingSpeed);
         break;
     case sf::Keyboard::Key::Right:
-        m_camera.move_right(m_cameraSpeed);
+        m_camera.move_right(cameraMovingSpeed);
         break;
     case sf::Keyboard::Key::Down:
-        m_camera.move_back(m_cameraSpeed);
+        m_camera.move_back(cameraMovingSpeed);
         break;
     case sf::Keyboard::Key::R:
         m_camera.reset_init_values();
@@ -380,7 +383,7 @@ void BaseSfmlGlWindow::update_camera_with_keyboardpress_event(sf::Event::KeyEven
 void BaseSfmlGlWindow::update_camera_with_mouse_scroll_event(sf::Event::MouseWheelScrollEvent event){
 
     if(event.wheel == 0){
-        m_camera.move_front(static_cast<double>(event.delta) *0.05);
+        m_camera.move_front(static_cast<double>(event.delta) * cameraScrollSpeed);
     }
 }
 
@@ -396,7 +399,7 @@ void BaseSfmlGlWindow::update_camera_with_mouse_moved_event(sf::Event::MouseMove
     lastX = event.x;
     lastY = event.y;
 
-    double sensitivity = 0.05;
+    double sensitivity = cameraRotationSpeed;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
