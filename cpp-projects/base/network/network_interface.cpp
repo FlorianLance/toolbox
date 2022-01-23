@@ -28,14 +28,53 @@
 
 #include "network_interface.hpp"
 
-// std
-#include <iostream>
-
 // boost
 #include <boost/asio.hpp>
 
+// local
+#include "utility/logger.hpp"
 
+using namespace boost::asio;
 using namespace tool::network;
+
+//Endpoint UDP::query(std::string targetName, std::string port){
+
+//    io_service ioService;
+//    ip::udp::resolver resolver(ioService);
+
+//    ip::basic_resolver_results<ip::udp> endPointRes;
+//    try{
+//        if(ip::host_name() == targetName){
+//            endPointRes = resolver.resolve(
+//                ip::udp::resolver::query(
+//                    targetName = "localhost",
+//                    port,
+//                    ip::udp::resolver::canonical_name
+//                )
+//            );
+//        }else{
+//            endPointRes = resolver.resolve(
+//                    ip::udp::resolver::query(
+//                    targetName,
+//                    port
+//                )
+//            );
+//        }
+//    }catch (const boost::system::system_error &error){
+//        Logger::error(std::format("UDP::query: Cannot solve target name {}, error message: {}\n", targetName, error.what()));
+//    }
+
+//    ioService.stop();
+
+//    auto endPoint = endPointRes->endpoint();
+//    return {
+//        endPoint.address().is_v6() ? Protocol::ipv6 : (endPoint.address().is_v4() ? Protocol::ipv4 : Protocol::unknow),
+//        endPoint.address().to_string(),
+//        endPoint.port()
+//    };
+//}
+
+
 
 std::vector<Interface> Interface::list_local_interfaces(Protocol protocol){
 
@@ -56,9 +95,10 @@ std::vector<Interface> Interface::list_local_interfaces(Protocol protocol){
                 interfaces.emplace_back(Interface{protocol,addr.to_string()});
             }
         }
-    }catch (const boost::system::system_error&){
-        std::cerr << "NetworkUtility::list_local_interfaces\n";
+    }catch (const boost::system::system_error &error){
+        Logger::error(std::format("list_local_interfaces: Cannot list interfaces, error message: {}\n", error.what()));
     }
 
+    ioService.stop();
     return interfaces;
 }

@@ -1,5 +1,4 @@
 
-
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -25,33 +24,83 @@
 **                                                                            **
 ********************************************************************************/
 
-
 #pragma once
 
 // std
-#include <string>
-#include <vector>
+#include <memory>
+
+// signals
+#include "lsignal.h"
 
 namespace tool::network{
 
-enum class Protocol : std::uint8_t{
-    ipv4, ipv6, unknow
+class UdpSender {
+
+public:
+
+    UdpSender();
+    ~UdpSender();
+
+    // socket
+    bool init_socket(std::string tagetName, std::string writingPort);//, size_t readingInterface);//, int readingPort);
+    void clean_socket();
+
+    // send
+    //void send_data(std::int8_t *data, std::int32_t size);
+
+    // signals
+    lsignal::signal<void(bool)> connection_state_signal;
+
+private:
+
+    struct Impl;
+    std::unique_ptr<Impl> i = nullptr;
 };
-
-//struct Endpoint{
-//    Protocol protocol;
-//    std::string ipAddress;
-//    int port;
-//};
-
-//struct UDP{
-//    static Endpoint query(std::string targetName, std::string port);
-//};
-
-struct Interface{
-    Protocol protocol;
-    std::string ipAddress;
-    static std::vector<Interface> list_local_interfaces(Protocol protocol);
-};
-
 }
+
+//#pragma once
+
+//// Qt
+//#include <QObject>
+
+//// scaner
+//#include "network/tcp_data.hpp"
+
+
+//namespace tool::network{
+
+//class UdpSenderWorker;
+//using UdpSenderWorkerUP = std::unique_ptr<UdpSenderWorker>;
+
+//class UdpSenderWorker : public QObject{
+//    Q_OBJECT
+//public:
+
+//    UdpSenderWorker();
+//    ~UdpSenderWorker();
+//    void set_grabber_id(std::uint8_t id);
+
+//public slots:
+
+//    void enable_writing(QString writingAddress, int writingPort);
+//    void disable_writing();
+//    void send_frame(network::TcpPacket command, std::shared_ptr<camera::K2Frame> frame);
+
+//signals:
+
+//    void connected_state_signal(QString writingAddress, int writingPort, bool state);
+//    void nb_bytes_sent_signal(qint64 timeStamp, size_t nbBytes);
+//    void packets_failure_signal(size_t count);
+//    void frame_sent_signal(std::int64_t time);
+
+//private:
+
+//    bool init_socket(QString address, quint16 port);
+//    void clean_socket();
+
+//private:
+
+//    struct Impl;
+//    std::unique_ptr<Impl> m_p = nullptr;
+//};
+//}

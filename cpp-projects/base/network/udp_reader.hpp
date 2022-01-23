@@ -1,5 +1,4 @@
 
-
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -25,33 +24,42 @@
 **                                                                            **
 ********************************************************************************/
 
-
 #pragma once
 
-// std
-#include <string>
-#include <vector>
+// signal
+#include "lsignal.h"
 
 namespace tool::network{
 
-enum class Protocol : std::uint8_t{
-    ipv4, ipv6, unknow
+class UdpReader {
+
+public:
+
+    UdpReader();
+    ~UdpReader();
+
+    // slots
+    bool init_socket(std::string readingAdress, int readingPort);
+    void clean_socket();
+
+    // reading thread
+    void start_reading();
+    void stop_reading();
+
+    virtual void process_packet(std::vector<char> *packet, size_t nbBytes);
+
+    bool is_reading() const noexcept;
+    bool is_connected() const noexcept;
+
+    // signals
+    lsignal::signal<void(bool)> connection_state_signal;
+    lsignal::signal<void()> timeout_packet_signal;
+
+private :
+
+    void read_data();
+
+    struct Impl;
+    std::unique_ptr<Impl> i = nullptr;
 };
-
-//struct Endpoint{
-//    Protocol protocol;
-//    std::string ipAddress;
-//    int port;
-//};
-
-//struct UDP{
-//    static Endpoint query(std::string targetName, std::string port);
-//};
-
-struct Interface{
-    Protocol protocol;
-    std::string ipAddress;
-    static std::vector<Interface> list_local_interfaces(Protocol protocol);
-};
-
 }

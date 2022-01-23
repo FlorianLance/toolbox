@@ -194,6 +194,10 @@ HEADERS += \
     # network
     network/network_interface.hpp \
     # utility    
+    network/tcp_reader.hpp \
+    network/tcp_sender.hpp \
+    network/udp_reader.hpp \
+    network/udp_sender.hpp \
     utility/array.hpp \
     utility/benchmark.hpp \
     utility/constants.hpp \
@@ -267,6 +271,10 @@ SOURCES += \
     # graphics
     graphics/texture.cpp \
     # utility    
+    network/tcp_reader.cpp \
+    network/tcp_sender.cpp \
+    network/udp_reader.cpp \
+    network/udp_sender.cpp \
     utility/benchmark.cpp \
     utility/logger.cpp \
     # camera
