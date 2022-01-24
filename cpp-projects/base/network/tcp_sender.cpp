@@ -44,7 +44,7 @@ using namespace boost::asio;
 using namespace tool;
 using namespace tool::network;
 
-struct ScanerTcpSender::Impl{
+struct TcpSender::Impl{
 
     // tcp
     io_service ioService;
@@ -54,15 +54,15 @@ struct ScanerTcpSender::Impl{
     bool connectionValid = false;
 };
 
-ScanerTcpSender::ScanerTcpSender(): i(std::make_unique<Impl>()){
+TcpSender::TcpSender(): i(std::make_unique<Impl>()){
 }
 
-ScanerTcpSender::~ScanerTcpSender(){
+TcpSender::~TcpSender(){
     clean_socket();
 }
 
 
-bool ScanerTcpSender::init_socket(std::string targetName, std::string writingPort){
+bool TcpSender::init_socket(std::string targetName, std::string writingPort){
 
     // reset socket if necessary
     if(i->connectionValid){
@@ -105,7 +105,7 @@ bool ScanerTcpSender::init_socket(std::string targetName, std::string writingPor
     return true;
 }
 
-void ScanerTcpSender::clean_socket(){
+void TcpSender::clean_socket(){
 
     if(i->socket){
         try{
@@ -125,7 +125,7 @@ void ScanerTcpSender::clean_socket(){
     }
 }
 
-void ScanerTcpSender::send_data(std::int8_t *data, std::int32_t size){
+void TcpSender::send_data(std::int8_t *data, std::int32_t size){
 
     try{
         i->socket->send(boost::asio::buffer(&size, 4));

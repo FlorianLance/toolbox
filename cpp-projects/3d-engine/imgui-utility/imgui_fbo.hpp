@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-3d-engine                                                          **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -26,37 +26,46 @@
 
 #pragma once
 
-// std
-#include <memory>
-
-// signals
-#include "lsignal.h"
-
 // base
-#include "network/network_interface.hpp"
+#include "graphics/camera.hpp"
 
-namespace tool::network{
+// opengl-utility
+#include "opengl/buffer/framebuffer_object.hpp"
+#include "opengl/gl_texture.hpp"
 
-class TcpSender {
+namespace tool::graphics {
+
+class ImguiFboDrawer{
 
 public:
 
-    TcpSender();
-    ~TcpSender();
+    ImguiFboDrawer() : m_camera(&m_screen, {0,0,0}, {0,0,1}){
+        m_camera.set_fov(60.);
+    }
 
-    // socket
-    bool init_socket(std::string tagetName, std::string writingPort);
-    void clean_socket();
+    void initialize_gl(const geo::Pt2<int> &size);
+    void resize_texture(const geo::Pt2<int> &size);
+    void update_viewport();
+    void draw_texture(bool invert = false);
 
-    // send
-    void send_data(std::int8_t *data, std::int32_t size);
+    inline void bind(){fbo.bind();}
+    inline void unbind(){fbo.unbind();}
+    inline graphics::Camera *camera(){return &m_camera;}
 
-    // signals
-    lsignal::signal<void(bool)> connection_state_signal;
+    double rotationSpeed = 0.05;
+    float scrollSpeed = 0.1f;
+    float movingSpeed = 0.05f;
+    float translateSpeed = 0.01f;
 
 private:
 
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+    void check_inputs();
+
+    gl::FBO fbo;
+    gl::Texture2D texture;
+    gl::RBO depthTexture;
+
+    graphics::Camera m_camera;
+    graphics::Screen m_screen;
 };
 }

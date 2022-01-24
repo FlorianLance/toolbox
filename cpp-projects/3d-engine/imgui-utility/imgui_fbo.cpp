@@ -1,0 +1,158 @@
+
+/*******************************************************************************
+** Toolbox-3d-engine                                                          **
+** MIT License                                                                **
+** Copyright (c) [2018] [Florian Lance]                                       **
+**                                                                            **
+** Permission is hereby granted, free of charge, to any person obtaining a    **
+** copy of this software and associated documentation files (the "Software"), **
+** to deal in the Software without restriction, including without limitation  **
+** the rights to use, copy, modify, merge, publish, distribute, sublicense,   **
+** and/or sell copies of the Software, and to permit persons to whom the      **
+** Software is furnished to do so, subject to the following conditions:       **
+**                                                                            **
+** The above copyright notice and this permission notice shall be included in **
+** all copies or substantial portions of the Software.                        **
+**                                                                            **
+** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR **
+** IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,   **
+** FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL    **
+** THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER **
+** LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING    **
+** FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER        **
+** DEALINGS IN THE SOFTWARE.                                                  **
+**                                                                            **
+********************************************************************************/
+
+
+#include "imgui_fbo.hpp"
+
+// local
+#include "imgui/imgui.h"
+
+using namespace tool::graphics;
+
+
+void ImguiFboDrawer::initialize_gl(const geo::Pt2<int> &size){
+    fbo.clean();
+    fbo.generate();
+    resize_texture(size);
+}
+
+void ImguiFboDrawer::resize_texture(const geo::Pt2<int> &size){
+
+    if(texture.width() == size.x() && texture.height() == size.y()){
+        return;
+    }
+
+    m_screen.resize(size.x(), size.y());
+    m_camera.update_projection();
+
+
+    fbo.bind();
+
+    texture.clean();
+    texture.init_image_8ui(size.x(),size.y(), 3);
+
+    TextureOptions options;
+    options.minFilter = TextureMinFilter::linear;
+    options.magFilter = TextureMagFilter::linear;
+    texture.set_texture_options(options);
+
+    depthTexture.clean();
+    depthTexture.generate();
+    depthTexture.bind();
+    depthTexture.set_data_storage(size.x(), size.y());
+
+    fbo.attach_colors_textures({
+        &texture
+    });
+
+        fbo.attach_depth_buffer(depthTexture);
+
+        fbo.set_draw_buffers({
+                              tool::gl::FrameBufferAttachment::color0,
+                              });
+
+    fbo.unbind();
+}
+
+void ImguiFboDrawer::update_viewport(){
+    glViewport(0,0, texture.width(), texture.height());
+}
+
+
+void ImguiFboDrawer::draw_texture(bool invert){
+
+    auto vMin    = ImGui::GetWindowContentRegionMin();
+    auto vMax    = ImGui::GetWindowContentRegionMax();
+    auto sizeW   = ImVec2(vMax.x-vMin.x, vMax.y-vMin.y);
+    float scale  = std::min(1.f*sizeW.y / texture.height(),  1.f*sizeW.x / texture.width());
+    auto sizeI   = ImVec2(static_cast<int>(texture.width() * scale),static_cast<int>(texture.height() * scale));
+    sizeI.x -= 0;
+    sizeI.y -= 50;
+
+    auto uv1     = ImVec2(0,0);
+    auto uv2     = ImVec2(1,1);
+    auto uv3     = ImVec2(0,1);
+    auto uv4     = ImVec2(1,0);
+
+    if(texture.id() == 0){
+        ImGui::Text("Texture not initialized.");
+    }else{
+        if(invert){
+            ImGui::Image(texture.id(), sizeI,  uv3, uv4);
+        }else{
+            ImGui::Image(texture.id(), sizeI,  uv1, uv2);
+        }
+    }
+
+    check_inputs();
+
+}
+
+void ImguiFboDrawer::check_inputs(){
+
+    ImGuiIO& io = ImGui::GetIO();
+    if(ImGui::IsItemHovered()){
+
+        const double xoffset = io.MouseDelta.x;
+        const double yoffset = -io.MouseDelta.y;
+        const double wheel   = io.MouseWheel;
+
+        if(ImGui::IsMouseDown(0)){
+            m_camera.set_direction(rotationSpeed*xoffset,rotationSpeed*yoffset,0.);
+        }
+        if(ImGui::IsMouseDown(1)){
+            m_camera.set_direction(0.,0.,rotationSpeed*xoffset);
+        }
+        if(ImGui::IsMouseDown(2)){
+            m_camera.move_up(translateSpeed*yoffset);
+            m_camera.move_right(translateSpeed*xoffset);
+        }
+        if(io.MouseWheel != 0.f){
+            m_camera.move_front(scrollSpeed*wheel);
+        }
+
+        // up key
+        if(ImGui::IsKeyDown(73)){
+            m_camera.move_front(movingSpeed);
+        }
+        // down key
+        if(ImGui::IsKeyDown(74)){
+            m_camera.move_back(movingSpeed);
+        }
+        // left key
+        if(ImGui::IsKeyDown(71)){
+            m_camera.move_left(movingSpeed);
+        }
+        // right key
+        if(ImGui::IsKeyDown(72)){
+            m_camera.move_right(movingSpeed);
+        }
+        // R key
+        if(ImGui::IsKeyPressed(17, false)){
+            m_camera.reset_init_values();
+        }
+    }
+}

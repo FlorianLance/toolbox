@@ -1,6 +1,7 @@
 
+
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-3d-engine                                                          **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -27,36 +28,43 @@
 #pragma once
 
 // std
-#include <memory>
+#include <vector>
+#include <string>
 
-// signals
-#include "lsignal.h"
+// imgui
+#include "imgui/imgui.h"
 
-// base
-#include "network/network_interface.hpp"
+namespace ImGui{
 
-namespace tool::network{
-
-class TcpSender {
-
-public:
-
-    TcpSender();
-    ~TcpSender();
-
-    // socket
-    bool init_socket(std::string tagetName, std::string writingPort);
-    void clean_socket();
-
-    // send
-    void send_data(std::int8_t *data, std::int32_t size);
-
-    // signals
-    lsignal::signal<void(bool)> connection_state_signal;
-
-private:
-
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+static auto vector_getter = [](void* vec, int idx, const char** out_text){
+    auto& vector = *static_cast<std::vector<std::string>*>(vec);
+    if (idx < 0 || idx >= static_cast<int>(vector.size())) {
+        return false;
+    }
+    *out_text = vector.at(idx).c_str();
+    return true;
 };
+
+[[maybe_unused]] static bool Combo(const char* label, int* currIndex, std::vector<std::string>& values){
+    if (values.empty()) {
+        return false;
+    }
+    return Combo(label, currIndex, vector_getter,static_cast<void*>(&values), values.size());
+}
+
+[[maybe_unused]] static bool ListBox(const char* label, int* currIndex, std::vector<std::string>& values){
+    if (values.empty()) {
+        return false;
+    }
+    return ListBox(label, currIndex, vector_getter,static_cast<void*>(&values), values.size());
+}
+
+[[maybe_unused]] static void Text(const std::string &text){
+    auto d = text.c_str();
+    ImGui::Text(d, d + text.size());
+}
+
+
+
+
 }

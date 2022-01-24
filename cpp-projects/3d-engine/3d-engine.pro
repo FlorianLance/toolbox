@@ -93,9 +93,6 @@ LIBS +=\
 
 HEADERS += \
     # ui
-    imgui/extra/ImGuiFileDialog.h \
-    imgui/extra/ImGuiFileDialogConfig.h \
-    imgui/misc/cpp/imgui_stdlib.h \
     immediate_ui.hpp \
     # resources
     resources.hpp \
@@ -114,10 +111,11 @@ HEADERS += \
     imgui/imstb_rectpack.h \
     imgui/imstb_textedit.h \
     imgui/imstb_truetype.h \
+    imgui/misc/cpp/imgui_stdlib.h \
+    # imgui-extra
     imgui/extra/imgui_markdown.h \
     imgui/extra/implot/implot.h \
     imgui/extra/implot/implot_internal.h \
-    # imgui-extra
     imgui/extra/imgui-node-editor/crude_json.h \
     imgui/extra/imgui-node-editor/imgui_bezier_math.h \
     imgui/extra/imgui-node-editor/imgui_bezier_math.inl \
@@ -127,16 +125,18 @@ HEADERS += \
     imgui/extra/imgui-node-editor/imgui_node_editor.h \
     imgui/extra/imgui-node-editor/imgui_node_editor_internal.h \
     imgui/extra/imgui-node-editor/imgui_node_editor_internal.inl \
+    imgui/extra/ImGuiFileDialog.h \
+    imgui/extra/ImGuiFileDialogConfig.h \
     # imgui-sfml
     imgui-sfml/imgui-SFML.h \
     imgui-sfml/imgui-SFML_export.h \
     # imgui-utility
-    imgui/imgui_utility.hpp \
+    imgui-utility/imgui_fbo.hpp \
+    imgui-utility/imgui_std.hpp \
+
 
 SOURCES += \
     # main
-    imgui/extra/ImGuiFileDialog.cpp \
-    imgui/misc/cpp/imgui_stdlib.cpp \
     main.cpp \
     # resources
     resources/resources.cpp \
@@ -152,16 +152,19 @@ SOURCES += \
     imgui/imgui_draw.cpp \
     imgui/imgui_widgets.cpp \
     imgui/imgui_tables.cpp \
+    imgui/misc/cpp/imgui_stdlib.cpp \
     # imgui-extra
     imgui/extra/implot/implot.cpp \
     imgui/extra/implot/implot_items.cpp \
     imgui/extra/imgui-node-editor/crude_json.cpp \
     imgui/extra/imgui-node-editor/imgui_canvas.cpp \
     imgui/extra/imgui-node-editor/imgui_node_editor.cpp \
-    imgui/extra/imgui-node-editor/imgui_node_editor_api.cpp \
+    imgui/extra/imgui-node-editor/imgui_node_editor_api.cpp \    
+    imgui/extra/ImGuiFileDialog.cpp \
     # imgui-sfml
     imgui-sfml/imgui-SFML.cpp \
-
+    # imgui-utility
+    imgui-utility/imgui_fbo.cpp \
 
 #DISTFILES += \
 
