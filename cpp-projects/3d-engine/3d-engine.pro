@@ -93,6 +93,8 @@ LIBS +=\
 
 HEADERS += \
     # ui
+    imgui-utility/imgui_logs.hpp \
+    imgui-utility/imgui_texture.hpp \
     immediate_ui.hpp \
     # resources
     resources.hpp \
@@ -137,6 +139,8 @@ HEADERS += \
 
 SOURCES += \
     # main
+    imgui-utility/imgui_logs.cpp \
+    imgui-utility/imgui_texture.cpp \
     main.cpp \
     # resources
     resources/resources.cpp \

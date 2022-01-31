@@ -32,6 +32,7 @@
 // opengl-utility
 #include "opengl/buffer/framebuffer_object.hpp"
 #include "opengl/gl_texture.hpp"
+#include "opengl/drawer.hpp"
 
 namespace tool::graphics {
 
@@ -56,6 +57,9 @@ public:
     float scrollSpeed = 0.1f;
     float movingSpeed = 0.05f;
     float translateSpeed = 0.01f;
+
+    void update_texture_with_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud, float gridVoxelSize);
+    void update_texture_with_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
 
 private:
 

@@ -68,11 +68,11 @@ void ImguiFboDrawer::resize_texture(const geo::Pt2<int> &size){
         &texture
     });
 
-        fbo.attach_depth_buffer(depthTexture);
+    fbo.attach_depth_buffer(depthTexture);
 
-        fbo.set_draw_buffers({
-                              tool::gl::FrameBufferAttachment::color0,
-                              });
+    fbo.set_draw_buffers({
+        tool::gl::FrameBufferAttachment::color0,
+    });
 
     fbo.unbind();
 }
@@ -109,6 +109,77 @@ void ImguiFboDrawer::draw_texture(bool invert){
 
     check_inputs();
 
+}
+
+void ImguiFboDrawer::update_texture_with_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud, float gridVoxelSize){
+
+    // get current viewport
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    bind();
+    update_viewport();
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    geo::Mat4<double> model(true);
+
+    shader->use();
+    shader->set_uniform("view", camera()->view().conv<float>());
+    shader->set_uniform("model", (model).conv<float>());
+    shader->set_uniform("projection", camera()->projection().conv<float>());
+    shader->set_uniform("size_pt", sizePtsCloud);
+    shader->set_uniform("enable_unicolor", false);
+    shader->set_uniform("Size2", 0.5f* gridVoxelSize);
+    drawer->draw();
+
+    // restore
+    gl::FBO::unbind();
+    //        glViewport(0, 0, static_cast<GLsizei>(m_camera->screen()->width()), static_cast<GLsizei>(m_camera->screen()->height()));
+    glViewport(
+        static_cast<GLsizei>(viewport[0]),
+        static_cast<GLsizei>(viewport[1]),
+        static_cast<GLsizei>(viewport[2]),
+        static_cast<GLsizei>(viewport[3])
+    );
+}
+
+void ImguiFboDrawer::update_texture_with_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud){
+
+    // get current viewport
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    bind();
+    update_viewport();
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    geo::Mat4<double> model(true);
+
+    shader->use();
+    shader->set_uniform("view", camera()->view().conv<float>());
+    shader->set_uniform("model", (model).conv<float>());
+    shader->set_uniform("projection", camera()->projection().conv<float>());
+    shader->set_uniform("size_pt", sizePtsCloud);
+    shader->set_uniform("camera_position", camera()->position().conv<float>());
+    shader->set_uniform("enable_unicolor", false);
+    //    shader->set_uniform("Size2", 0.5f*gridVoxelSize);
+    drawer->draw();
+
+    // restore
+    gl::FBO::unbind();
+//    glViewport(0, 0, static_cast<GLsizei>(m_camera->screen()->width()), static_cast<GLsizei>(m_camera->screen()->height()));
+    glViewport(
+        static_cast<GLsizei>(viewport[0]),
+        static_cast<GLsizei>(viewport[1]),
+        static_cast<GLsizei>(viewport[2]),
+        static_cast<GLsizei>(viewport[3])
+    );
 }
 
 void ImguiFboDrawer::check_inputs(){

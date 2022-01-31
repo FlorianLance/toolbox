@@ -322,6 +322,10 @@ void VolumetricFullVideoManager::voxelize_registered_frames(double voxelSize, Co
 
 void VolumetricFullVideoManager::voxelize(FullFrame &frame, float gridVoxelSize){
 
+    if(frame.cloud.validVerticesCount == 0){
+        return;
+    }
+
     open3d::geometry::PointCloud pc;
     m_p->convert_cloud_frame_to_open3d_point_cloud(frame.cloud, pc);
 
@@ -332,7 +336,7 @@ void VolumetricFullVideoManager::voxelize(FullFrame &frame, float gridVoxelSize)
     );
     geo::Pt3f min{1.f,1.f,1.f};
 
-    Logger::message(std::format("voxelize {} {} \n", res->voxels_.size(),pc.points_.size() ));
+    // Logger::message(std::format("voxelize {} {} \n", res->voxels_.size(),pc.points_.size() ));
 
     size_t id = 0;
     const auto voxels = res->GetVoxels();

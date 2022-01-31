@@ -27,36 +27,79 @@
 #pragma once
 
 // std
-#include <memory>
+#include <array>
+#include <string>
 
-// signals
-#include "lsignal.h"
+// local
+#include "kinect4_types.hpp"
 
-// base
-#include "network/network_utility.hpp"
+namespace tool::camera::K4 {
 
-namespace tool::network{
-
-class TcpSender {
-
-public:
-
-    TcpSender();
-    ~TcpSender();
-
-    // socket
-    bool init_socket(std::string tagetName, std::string writingPort);
-    void clean_socket();
-
-    // send
-    void send_data(std::int8_t *data, std::int32_t size);
-
-    // signals
-    lsignal::signal<void(bool)> connection_state_signal;
-
-private:
-
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+enum MessageType : std::int8_t {
+    manager_id = 0,
+    start_cameras,
+    stop_cameras,
+    settings,
+    ask_frame,
+    quit,
+    quit_and_shutdown,
+    feedback,
+    data
 };
+
+enum Feedback : std::int8_t{
+    valid,
+    timeout
+};
+
+struct Header{
+    MessageType type;
+    std::uint32_t totalSizeBytes = 0;
+    std::uint16_t totalNumberPackets = 0;
+    std::uint16_t currentPacketId = 0;
+    std::uint16_t currentPacketSizeBytes = 0;
+    std::uint32_t currentPacketTime = 0;
+    std::uint32_t dataOffset = 0;
+};
+
+struct UdpMessage{
+};
+
+struct UdpInitFromManager : UdpMessage{
+
+    UdpInitFromManager() = default;
+    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket) : port(port), maxSizeUdpPacket(maxSizeUdpPacket){
+        std::fill(ipAdress.begin(), ipAdress.end(), ' ');
+        if(ipAdressStr.size() <= 45){
+            std::copy(std::begin(ipAdressStr), std::end(ipAdressStr), ipAdress.begin());
+        }
+    }
+
+    std::array<char, 45> ipAdress;
+    std::uint16_t port;
+    std::uint16_t maxSizeUdpPacket;
+};
+
+struct UdpStartCameras : UdpMessage{
+    Mode mode;
+};
+
+struct UdpStopCameras : UdpMessage{
+};
+
+struct UdpAskForFrame : UdpMessage{
+};
+
+
+
+struct UdpFeedbackMessage : UdpMessage{
+    MessageType receivedMessageType;
+    Feedback feedback;
+};
+
+struct DataMessage : UdpMessage{
+    //    std::vector<Header> headers;
+    //    std::vector<std::vector<std::int16_t>> data;
+};
+
 }

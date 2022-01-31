@@ -1,7 +1,6 @@
 
-
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-3d-engine                                                          **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -25,33 +24,37 @@
 **                                                                            **
 ********************************************************************************/
 
-
 #pragma once
 
-// std
-#include <string>
-#include <vector>
+// local
+#include "imgui/imgui.h"
 
-namespace tool::network{
 
-enum class Protocol : std::uint8_t{
-    ipv4, ipv6, unknow
+namespace tool::graphics {
+
+struct ImguiLogs{
+
+    ImGuiTextBuffer buffer;
+    ImGuiTextFilter filter;
+    ImVector<int> lineOffsets; // Index to lines offset. We maintain this with AddLog() calls.
+    bool autoScroll = true;  // Keep scrolling if already at the bottom.
+
+    ImguiLogs();
+    void clear();
+
+    void add_log(const char* fmt, ...) IM_FMTARGS(2){
+        int old_size = buffer.size();
+        va_list args;
+        va_start(args, fmt);
+        buffer.appendfv(fmt, args);
+        va_end(args);
+        for (int new_size = buffer.size(); old_size < new_size; old_size++){
+            if (buffer[old_size] == '\n'){
+                lineOffsets.push_back(old_size + 1);
+            }
+        }
+    }
+
+    void draw(const char* title, bool* p_open = NULL);
 };
-
-//struct Endpoint{
-//    Protocol protocol;
-//    std::string ipAddress;
-//    int port;
-//};
-
-//struct UDP{
-//    static Endpoint query(std::string targetName, std::string port);
-//};
-
-struct Interface{
-    Protocol protocol;
-    std::string ipAddress;
-    static std::vector<Interface> list_local_interfaces(Protocol protocol);
-};
-
 }

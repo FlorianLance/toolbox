@@ -1,4 +1,5 @@
 
+
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -24,39 +25,40 @@
 **                                                                            **
 ********************************************************************************/
 
+
 #pragma once
 
 // std
-#include <memory>
-
-// signals
-#include "lsignal.h"
-
-// base
-#include "network/network_utility.hpp"
+#include <string>
+#include <vector>
 
 namespace tool::network{
 
-class TcpSender {
-
-public:
-
-    TcpSender();
-    ~TcpSender();
-
-    // socket
-    bool init_socket(std::string tagetName, std::string writingPort);
-    void clean_socket();
-
-    // send
-    void send_data(std::int8_t *data, std::int32_t size);
-
-    // signals
-    lsignal::signal<void(bool)> connection_state_signal;
-
-private:
-
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+enum class Protocol : std::uint8_t{
+    ipv4, ipv6, unknow
 };
+
+//struct Endpoint{
+//    Protocol protocol;
+//    std::string ipAddress;
+//    int port;
+//};
+
+//struct UDP{
+//    static Endpoint query(std::string targetName, std::string port);
+//};
+
+struct Host{
+    [[maybe_unused]] static std::string get_name();
+};
+
+
+
+
+struct Interface{
+    Protocol protocol;
+    std::string ipAddress;
+    static std::vector<Interface> list_local_interfaces(Protocol protocol);
+};
+
 }

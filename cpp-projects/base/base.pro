@@ -127,6 +127,7 @@ HEADERS += \
     camera/frame_uncompressor.hpp \
     camera/kinect4.hpp \
     camera/kinect4_data.hpp \
+    camera/kinect4_network.hpp \
     camera/kinect4_types.hpp \
     camera/volumetric_cloud_video_manager.hpp \
     camera/volumetric_cloud_video_resource.hpp \
@@ -192,10 +193,11 @@ HEADERS += \
     input/mouse.hpp \
     input/keyboard.hpp \
     # network
-    network/network_interface.hpp \
     # utility    
+    network/network_utility.hpp \
     network/tcp_reader.hpp \
     network/tcp_sender.hpp \
+    network/tcp_server.hpp \
     network/udp_reader.hpp \
     network/udp_sender.hpp \
     utility/array.hpp \
@@ -271,8 +273,10 @@ SOURCES += \
     # graphics
     graphics/texture.cpp \
     # utility    
+    network/network_utility.cpp \
     network/tcp_reader.cpp \
     network/tcp_sender.cpp \
+    network/tcp_server.cpp \
     network/udp_reader.cpp \
     network/udp_sender.cpp \
     utility/benchmark.cpp \
@@ -289,7 +293,6 @@ SOURCES += \
     camera/kinect2_manager.cpp \
     camera/kinect2.cpp \
     # network
-    network/network_interface.cpp \
     # data
     data/integers_encoder.cpp \
     # thirdparty

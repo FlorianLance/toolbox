@@ -69,57 +69,84 @@ void Texture2D::load_projected_texture(tool::graphics::Texture2D *texture){
     TBO::load_texture(texture);
 }
 
-void Texture2D::init_render(GLsizei width, GLsizei height, int nbChannels){
+void Texture2D::init_render(GLsizei w, GLsizei h, int nbChannels){
     TBO::generate();
-    TBO::init_data_unsigned_8_bits(width, height, 1, nbChannels);
+    TBO::init_data_unsigned_8_bits(w, h, 1, nbChannels);
 }
 
-void Texture2D::init_hdr_render(GLsizei width, GLsizei height, int nbChannels){
+void Texture2D::init_hdr_render(GLsizei w, GLsizei h, int nbChannels){
     TBO::generate();
-    TBO::init_data_float_32_bits(width, height, 1, nbChannels);
+    TBO::init_data_float_32_bits(w, h, 1, nbChannels);
 }
 
-void Texture2D::init_image_8ui(GLsizei width, GLsizei height, int nbChannels){
+void Texture2D::init_image_8ui(GLsizei w, GLsizei h, int nbChannels){
     TBO::generate();
-    TBO::init_data_unsigned_8_bits(width, height, 1, nbChannels);
+    TBO::init_data_unsigned_8_bits(w, h, 1, nbChannels);
 }
 
-void Texture2D::init_image_32ui(GLsizei width, GLsizei height, int nbChannels){
+void Texture2D::init_image_32ui(GLsizei w, GLsizei h, int nbChannels){
     TBO::generate();
-    TBO::init_data_unsigned_32_bits(width, height, 1, nbChannels);
+    TBO::init_data_unsigned_32_bits(w, h, 1, nbChannels);
 }
 
-void Texture2D::init_image_32f(GLsizei width, GLsizei height, int nbChannels){
+void Texture2D::init_image_32f(GLsizei w, GLsizei h, int nbChannels){
     TBO::generate();
-    TBO::init_data_float_32_bits(width, height, 1, nbChannels);
+    TBO::init_data_float_32_bits(w, h, 1, nbChannels);
 }
 
-void Texture2D::update_image_8ui(GLubyte *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset){
-    TBO::update_data_unsigned_8_bits(data, width, height, 1, xOffset, yOffset, 0);
+void Texture2D::update_image_8ui(GLubyte *data, GLsizei w, GLsizei h, GLint xOffset, GLint yOffset){
+    TBO::update_data_unsigned_8_bits(data, w, h, 1, xOffset, yOffset, 0);
 }
 
-void Texture2D::update_image_32ui(GLuint *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset){
-    TBO::update_data_unsigned_32_bits(data, width, height, 1, xOffset, yOffset, 0);
+void Texture2D::update_image_32ui(GLuint *data, GLsizei w, GLsizei h, GLint xOffset, GLint yOffset){
+    TBO::update_data_unsigned_32_bits(data, w, h, 1, xOffset, yOffset, 0);
 }
 
-void Texture2D::update_image_32f(GLfloat *data, GLsizei width, GLsizei height, GLint xOffset, GLint yOffset){
-    TBO::update_data_float_32_bits(data, width, height, 1, xOffset, yOffset, 0);
+void Texture2D::update_image_32f(GLfloat *data, GLsizei w, GLsizei h, GLint xOffset, GLint yOffset){
+    TBO::update_data_float_32_bits(data, w, h, 1, xOffset, yOffset, 0);
 }
 
-void Texture2D::load_data(float *data, GLsizei width, GLsizei height, int nbChannels, bool useInternal16Bits, TextureOptions options){
+void Texture2D::init_or_update_8ui(GLsizei w, GLsizei h, int numChannels, geo::Pt3<uint8_t> *data){
+
+    if(id() == 0){
+        init_image_8ui(
+            static_cast<GLsizei>(w),
+            static_cast<GLsizei>(h),
+            numChannels
+        );
+    }else if(
+        (width()  != static_cast<GLsizei>(w)) ||
+        (height() != static_cast<GLsizei>(h))){
+
+        clean();
+        init_image_8ui(
+            static_cast<GLsizei>(w),
+            static_cast<GLsizei>(h),
+            numChannels
+        );
+    }
+
+    update_image_8ui(
+        reinterpret_cast<GLubyte*>(&data[0]),
+        static_cast<GLsizei>(w),
+        static_cast<GLsizei>(h), 0, 0
+    );
+}
+
+void Texture2D::load_data(float *data, GLsizei w, GLsizei h, int nbChannels, bool useInternal16Bits, TextureOptions options){
 
     TBO::generate();
     TBO::set_texture_options(options);
 
     if(useInternal16Bits){
-        TBO::load_data_float_16_bits(data, width, height, 1, nbChannels);
+        TBO::load_data_float_16_bits(data, w, h, 1, nbChannels);
     }else{
-        TBO::load_data_float_32_bits(data, width, height, 1, nbChannels);
+        TBO::load_data_float_32_bits(data, w, h, 1, nbChannels);
     }
 }
 
 
-void GeometryTexture2D::init_position(GLsizei width, GLsizei height){
+void GeometryTexture2D::init_position(GLsizei w, GLsizei h){
 
     TBO::generate();
 
@@ -132,10 +159,10 @@ void GeometryTexture2D::init_position(GLsizei width, GLsizei height){
 
     TBO::set_texture_options(options);
 
-    TBO::init_data_float_32_bits(width, height, 1, 3);
+    TBO::init_data_float_32_bits(w, h, 1, 3);
 }
 
-void GeometryTexture2D::init_color(GLsizei width, GLsizei height){
+void GeometryTexture2D::init_color(GLsizei w, GLsizei h){
 
     TBO::generate();
 
@@ -145,10 +172,10 @@ void GeometryTexture2D::init_color(GLsizei width, GLsizei height){
     options.maxLevel  = 0;
     TBO::set_texture_options(options);
 
-    TBO::init_data_unsigned_8_bits(width, height, 1, 3);
+    TBO::init_data_unsigned_8_bits(w, h, 1, 3);
 }
 
-void GeometryTexture2D::init_ao(GLsizei width, GLsizei height){
+void GeometryTexture2D::init_ao(GLsizei w, GLsizei h){
 
     TBO::generate();
 
@@ -158,10 +185,10 @@ void GeometryTexture2D::init_ao(GLsizei width, GLsizei height){
     options.maxLevel  = 0;
     TBO::set_texture_options(options);
 
-    TBO::init_data_float_16_bits(width, height, 1, 1);
+    TBO::init_data_float_16_bits(w, h, 1, 1);
 }
 
-void GeometryMultisampleTexture2D::init_color(GLsizei width, GLsizei height, GLsizei samples){
+void GeometryMultisampleTexture2D::init_color(GLsizei w, GLsizei h, GLsizei samples){
 
     TBO::generate();
 
@@ -171,10 +198,10 @@ void GeometryMultisampleTexture2D::init_color(GLsizei width, GLsizei height, GLs
     options.maxLevel  = 0;
     TBO::set_texture_options(options);
 
-    TBO::init_multisample_data_unsigned_8_bits(width, height, 1, 3, samples);
+    TBO::init_multisample_data_unsigned_8_bits(w, h, 1, 3, samples);
 }
 
-void GeometryMultisampleTexture2D::init_position(GLsizei width, GLsizei height, GLsizei samples){
+void GeometryMultisampleTexture2D::init_position(GLsizei w, GLsizei h, GLsizei samples){
 
     TBO::generate();
 
@@ -184,5 +211,5 @@ void GeometryMultisampleTexture2D::init_position(GLsizei width, GLsizei height, 
     options.maxLevel  = 0;
     TBO::set_texture_options(options);
 
-    TBO::init_multisample_data_float_32_bits(width, height, 1, 3, samples);
+    TBO::init_multisample_data_float_32_bits(w, h, 1, 3, samples);
 }

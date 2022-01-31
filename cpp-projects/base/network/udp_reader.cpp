@@ -173,56 +173,6 @@ void UdpReader::stop_reading(){
 }
 
 void UdpReader::process_packet(std::vector<char> *packet, size_t nbBytes){
-
-    //        struct RawFrameReceived{
-    //            std::vector<std::vector<char>*> buffers;
-    //            size_t received  = 0;
-    //            size_t totalToReceived = 0;
-    //            std::int64_t timeStamp = 0;
-    //        };
-
-    //        std::unordered_map<size_t, std::unordered_map<size_t,RawFrameReceived>> buffersToProcess;
-
-
-    // copy packet header
-    // std::copy(buffer->begin(), buffer->begin() + sizeof (i->header), reinterpret_cast<char*>(&i->header));
-
-    // packet received
-    //        const size_t idGrabber  = i->header.idGrabber;
-    //        const size_t idFrame    = i->header.frameId;
-
-    //        buffersToProcess[idGrabber][idFrame].buffers.emplace_back(buffer);
-    //        buffersToProcess[idGrabber][idFrame].received++;
-    //        buffersToProcess[idGrabber][idFrame].totalToReceived  = i->header.totalNbPackets;
-    //        buffersToProcess[idGrabber][idFrame].timeStamp        = i->header.timeStamp;
-    //        packet_received_signal(id(), idGrabber, idFrame);
-
-    //        if(buffersToProcess[idGrabber][idFrame].totalToReceived == buffersToProcess[idGrabber][idFrame].received){
-
-    //            // all packets received
-    //            all_packets_received_signal(id(), idGrabber, &buffersToProcess[idGrabber][idFrame].buffers);
-    //            // buffersToProcess[idGrabber].erase(idFrame);
-
-    //            // search for old frames
-    //            std_v1<size_t> framesToRemove;
-    //            for(auto &frame : buffersToProcess[idGrabber]){
-    //                if(frame.first < idFrame){
-    //                    framesToRemove.emplace_back(frame.first);
-    //                }
-    //            }
-    //            // remove them
-    //            for(const auto &frameToRemove : framesToRemove){
-    //                size_t droppedPackets = buffersToProcess[idGrabber][idFrame].totalToReceived - buffersToProcess[idGrabber][idFrame].received;
-    //                buffersToProcess[idGrabber].erase(frameToRemove);
-    //                if(droppedPackets != 0){
-    //                    frame_dropped_signal(id(), idGrabber, frameToRemove, droppedPackets);
-    //                }
-    //            }
-    //        }
-
-    //    lsignal::signal<void(size_t,size_t,size_t)> packet_received_signal;
-    //    lsignal::signal<void(size_t,size_t,size_t,size_t)> frame_dropped_signal;
-    //    lsignal::signal<void(size_t idInterface ,size_t idGrabber ,std::vector<std::vector<char>*> *packets)> all_packets_received_signal;
 }
 
 bool UdpReader::is_reading() const noexcept{return i->isReading;}
@@ -268,7 +218,9 @@ void UdpReader::read_data(){
 //        senderEndpoint.address().to_v6().to_bytes();
 //        senderEndpoint.protocol();
 //        endP.port();
-
+//        Logger::message(std::format("receive from {} {}\n"),
+//            senderEndpoint.address().to_v4().to_uint(),
+//            senderEndpoint.port());
         process_packet(buffer, nbBytesReceived);
     }
 

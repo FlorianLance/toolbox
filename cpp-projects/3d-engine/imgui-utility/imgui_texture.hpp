@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-3d-engine                                                          **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -26,37 +26,15 @@
 
 #pragma once
 
-// std
-#include <memory>
-
-// signals
-#include "lsignal.h"
-
 // base
-#include "network/network_utility.hpp"
+#include "geometry/point2.hpp"
 
-namespace tool::network{
+// opengl-utility
+#include "opengl/gl_texture.hpp"
 
-class TcpSender {
-
+namespace tool::graphics {
+class ImguiTextureDrawer{
 public:
-
-    TcpSender();
-    ~TcpSender();
-
-    // socket
-    bool init_socket(std::string tagetName, std::string writingPort);
-    void clean_socket();
-
-    // send
-    void send_data(std::int8_t *data, std::int32_t size);
-
-    // signals
-    lsignal::signal<void(bool)> connection_state_signal;
-
-private:
-
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+    static void draw_texture_tab_child(const std::string &windowName, geo::Pt2<int> sizeWindow, gl::TBO *texture, bool invert = false);
 };
 }

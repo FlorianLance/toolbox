@@ -11,7 +11,7 @@
 #include "utility/benchmark.hpp"
 
 // local
-#include "imgui/imgui_utility.hpp"
+#include "imgui-utility/imgui_std.hpp"
 #include "shaders_tests.hpp"
 #include "utility/logger.hpp"
 

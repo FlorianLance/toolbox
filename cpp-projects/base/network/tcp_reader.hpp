@@ -30,7 +30,49 @@
 // signal
 #include "lsignal.h"
 
+
 namespace tool::network{
+
+//class TcpClient{
+//public:
+//    TcpClient();
+//    ~TcpClient();
+
+//    bool connect_to_server(std::string serverName, int port);
+
+//    void start_reading();
+//    void stop_reading();
+
+//    void write_to_server(std::string_view message);
+
+//// signals
+//    lsignal::signal<void(std::string)> message_received_signal;
+
+//private :
+
+//    void read_data();
+
+//    struct Impl;
+//    std::unique_ptr<Impl> i = nullptr;
+//};
+
+
+//class TcpServer{
+//public:
+//    TcpServer();
+//    ~TcpServer();
+
+//    bool bind(int port);
+
+//    std::string read();
+//    void send(const std::string &message);
+
+//private :
+
+//    struct Impl;
+//    std::unique_ptr<Impl> i = nullptr;
+//};
+
 
 class TcpReader {
 
@@ -40,7 +82,7 @@ public:
     ~TcpReader();
 
     // slots
-    bool init_socket(std::string readingAdress, int readingPort);
+    bool init_socket(std::string serverName, int readingPort);
     void clean_socket();
 
     // reading thread

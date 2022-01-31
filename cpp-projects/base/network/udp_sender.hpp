@@ -46,10 +46,7 @@ public:
     void clean_socket();
 
     // send
-    //void send_data(std::int8_t *data, std::int32_t size);
-
-    // signals
-    lsignal::signal<void(bool)> connection_state_signal;
+    size_t send_packet(std::int8_t *data, std::int32_t size);
 
 private:
 

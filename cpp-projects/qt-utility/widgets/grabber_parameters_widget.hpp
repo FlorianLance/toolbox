@@ -33,7 +33,7 @@
 
 // base
 #include "geometry/matrix4.hpp"
-#include "network/network_interface.hpp"
+#include "network/network_utility.hpp"
 #include "camera/kinect2_settings_files.hpp"
 
 // ui

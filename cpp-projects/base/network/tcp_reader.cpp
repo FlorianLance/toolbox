@@ -27,6 +27,9 @@
 
 #include "tcp_reader.hpp"
 
+// std
+#include <iostream>
+
 // boost
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
@@ -43,6 +46,7 @@ using namespace boost::asio::ip;
 
 using namespace tool;
 using namespace tool::network;
+
 
 
 struct TcpReader::Impl{
@@ -77,7 +81,8 @@ TcpReader::~TcpReader(){
     }
 }
 
-bool TcpReader::init_socket(std::string readingAdress, int readingPort){
+
+bool TcpReader::init_socket(std::string serverName, int readingPort){
 
     if(is_reading()){
         Logger::error(std::format("TcpReader: Cannot init socket while reading thread is still active.\n"));
@@ -90,16 +95,33 @@ bool TcpReader::init_socket(std::string readingAdress, int readingPort){
     }
 
     try {
-        i->endpoint = tcp::endpoint(address::from_string(readingAdress), static_cast<unsigned short>(readingPort));
+
+
+        Logger::message("TCP query\n");
+        tcp::resolver::query query(serverName, std::to_string(readingPort));
+
+        tcp::resolver resolver(i->ioService);
+        Logger::message("TCP resolve\n");
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+
+        i->socket   = std::make_unique<tcp::socket>(i->ioService);
+
+        Logger::message(std::format("TCP connect {} {} \n", endpoint_iterator->service_name(), endpoint_iterator->host_name()));
+        boost::asio::connect(*i->socket, endpoint_iterator);
+
+
+        Logger::message("connect\n");
+//        i->endpoint = tcp::endpoint(address::from_string(readingAdress), static_cast<unsigned short>(readingPort));
+
 
         // bind socket
-        i->socket   = std::make_unique<tcp::socket>(i->ioService);
-        i->socket->set_option(tcp::socket::reuse_address(true));
-        i->socket->bind(i->endpoint);
+
+//        i->socket->bind(i->endpoint);
+
 
     }catch (const boost::system::system_error &error){
-        Logger::error(std::format("TcpReader: Cannot bind endpoint {}, {}, error message: {}.\n",
-            readingAdress, readingPort, error.what()));
+        Logger::error(std::format("TcpReader: Cannot connect {}, {}, error message: {}.\n",
+            serverName, readingPort, error.what()));
         clean_socket();
         return false;
     }
@@ -112,10 +134,8 @@ void TcpReader::clean_socket(){
 
     if(i->socket){
         try {
-            i->ioService.stop();
-            i->socket->shutdown(udp::socket::shutdown_receive);
-            std::this_thread::sleep_for (std::chrono::milliseconds(300));
             i->socket->close();
+            i->ioService.stop();
         }catch (const boost::system::system_error &error){
             Logger::error(std::format("TcpReader::clean_socket: Cannot shutdown socket, error message: {}.\n", error.what()));
         }
@@ -185,15 +205,21 @@ void TcpReader::read_data(){
 
         size_t nbBytesReceived = 0;
         tcp::endpoint senderEndpoint;
+        std::cout << "r";
+        boost::system::error_code err;
         try {
-            nbBytesReceived = read(*i->socket, boost::asio::buffer(buffer.data(),static_cast<size_t>(buffer.size())));
+            nbBytesReceived = i->socket->receive(boost::asio::buffer(buffer.data(),static_cast<size_t>(buffer.size())));
+//            nbBytesReceived = read(*i->socket, boost::asio::buffer(buffer.data(),static_cast<size_t>(buffer.size())));
 
         } catch (const boost::system::system_error &error) {
+
             if(error.code() == boost::asio::error::timed_out){
                 timeout_packet_signal();
             }else{
-                Logger::error("TcpReader::read_data: Cannot read from socket, error message: {}\n", error.what());
-                connection_state_signal(i->connectionValid = false);
+                Logger::error("TcpReader::read_data: Cannot read from socket, error message: {}  code: {}\n",
+                    error.what(),
+                    error.code().value());
+                 connection_state_signal(i->connectionValid = false);
             }
             continue;
         }
@@ -216,172 +242,129 @@ void TcpReader::read_data(){
 
 
 
-/*******************************************************************************
-** Toolbox-base                                                               **
-** MIT License                                                                **
-** Copyright (c) [2018] [Florian Lance]                                       **
-**                                                                            **
-** Permission is hereby granted, free of charge, to any person obtaining a    **
-** copy of this software and associated documentation files (the "Software"), **
-** to deal in the Software without restriction, including without limitation  **
-** the rights to use, copy, modify, merge, publish, distribute, sublicense,   **
-** and/or sell copies of the Software, and to permit persons to whom the      **
-** Software is furnished to do so, subject to the following conditions:       **
-**                                                                            **
-** The above copyright notice and this permission notice shall be included in **
-** all copies or substantial portions of the Software.                        **
-**                                                                            **
-** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR **
-** IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,   **
-** FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL    **
-** THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER **
-** LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING    **
-** FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER        **
-** DEALINGS IN THE SOFTWARE.                                                  **
-**                                                                            **
-********************************************************************************/
+//struct TcpClient::Impl{
 
-//#include "tcp_reader_worker.hpp"
+//    // udp connection
+//    io_service ioService;
+//    std::unique_ptr<tcp::socket> socket = nullptr;
+//    tcp::endpoint endpoint;
 
-//// Qt
-//#include <QTcpServer>
-//#include <QTcpSocket>
-//#include <QCoreApplication>
-//#include <QDataStream>
-//#include <QHostAddress>
+//    // reading thread
+//    std::unique_ptr<std::thread> thread = nullptr;
 
-//// qt-utility
-//#include "qt_process.hpp"
-//#include "qt_logger.hpp"
-
-//using namespace tool;
-//using namespace tool::network;
-
-
-//struct ConnectionBuffer{
-//    QByteArray buffer;
-//    qint32 size = 0;
+//    // states
+//    std::atomic_bool connectionValid = false;
+//    std::atomic_bool isReading = false;
 //};
 
+//TcpClient::TcpClient() : i(std::make_unique<Impl>()){
 
-//struct TcpReaderWorker::Impl{
-
-//    QHash<QTcpSocket*, std::shared_ptr<ConnectionBuffer>> messages;
-//    std::unique_ptr<QTcpServer> server = nullptr;
-//    int readingPort;
-//};
-
-//TcpReaderWorker::TcpReaderWorker() : m_p(std::make_unique<Impl>()){
 //}
 
-//TcpReaderWorker::~TcpReaderWorker(){
-//    disable_reading();
+
+//TcpClient::~TcpClient()
+//{
+
 //}
 
-//void TcpReaderWorker::clean_socket(){
+//bool TcpClient::connect_to_server(std::string serverName, int port){
 
-//    wait_process(20);
+//    try {
 
-//    if(i->server){
-//        i->server->close();
-//    }
-//    i->server = nullptr;
-//}
+//        tcp::resolver::query query(serverName, std::to_string(port));
+//        tcp::resolver resolver(i->ioService);
+//        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
-//bool TcpReaderWorker::enable_reading(int readingPort){
+//        i->socket   = std::make_unique<tcp::socket>(i->ioService);
+//        i->socket->connect(endpoint_iterator->endpoint());
 
-//    disable_reading();
-
-//    i->readingPort = readingPort;
-//    i->server = std::make_unique<QTcpServer>();
-//    connect(i->server.get(), &QTcpServer::newConnection, this, &TcpReaderWorker::new_connection);
-
-//    if(!i->server->listen(QHostAddress::Any, static_cast<quint16>(i->readingPort))){
-//        clean_socket();
-//        emit connected_state_signal("Any", i->readingPort, false);
+//    }catch (const boost::system::system_error &error){
+//        Logger::error(std::format("TcpReader: Cannot connect {}, {}, error message: {}.\n",
+//            serverName, port, error.what()));
+////        clean_socket();
 //        return false;
 //    }
 
-//    emit connected_state_signal("Any", i->readingPort, true);
-//    Logger::message("[TCP] Reading enabled");
+//    return false;
+//}
+
+//void TcpClient::start_reading()
+//{
+
+//}
+
+//void TcpClient::stop_reading()
+//{
+
+//}
+
+//void TcpClient::write_to_server(std::string_view message){
+
+//}
+
+//void TcpClient::read_data(){
+
+//}
+
+
+//struct TcpServer::Impl{
+
+//    // udp connection
+//    io_service ioService;
+//    std::unique_ptr<tcp::socket> socket = nullptr;
+//    std::unique_ptr<tcp::acceptor> acceptor = nullptr;
+////    tcp::endpoint endpoint;
+
+//    // reading thread
+////    std::unique_ptr<std::thread> thread = nullptr;
+
+//    // states
+////    std::atomic_bool connectionValid = false;
+////    std::atomic_bool isReading = false;
+//};
+
+//TcpServer::TcpServer() : i(std::make_unique<Impl>()){
+//}
+
+//TcpServer::~TcpServer(){
+//}
+
+
+//bool TcpServer::bind(int port){
+
+//    try {
+//        Logger::message("TCP SERVER 1\n");
+//        i->acceptor = std::make_unique<tcp::acceptor>(i->ioService, tcp::endpoint(tcp::v4(), port));
+//        Logger::message("TCP SERVER 2\n");
+//        i->socket   = std::make_unique<tcp::socket>(i->ioService);
+//        Logger::message("TCP SERVER 3\n");
+//        i->acceptor->accept(*i->socket);
+//        Logger::message("TCP SERVER 4\n");
+
+////        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
+////        i->acceptor = std::make_unique<tcp::acceptor>(i->ioService);
+
+////        i->acceptor->open(endpoint.protocol());
+////        i->acceptor->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+////        boost::system::error_code ec;
+////        i->acceptor->bind(endpoint, ec);
+
+//    }catch (const boost::system::system_error &error){
+//        Logger::error(std::format("TcpServer: Cannot init acceptor with port {}, error message: {}.\n",
+//            port, error.what()));
+//        //        clean_socket();
+//        return false;
+//    }
+
 //    return true;
 //}
 
-
-//void TcpReaderWorker::disable_reading(){
-
-//    emit connected_state_signal("Any", i->readingPort, false);
-//    clean_socket();
-//    Logger::message("[TCP] Reading disabled");
+//std::string TcpServer::read(){
+//    boost::asio::streambuf buf;
+//    boost::asio::read_until(*i->socket, buf, "\n" );
+//    return boost::asio::buffer_cast<const char*>(buf.data());
 //}
 
-//void TcpReaderWorker::new_connection(){
-
-//    while (i->server->hasPendingConnections()){
-
-//        QTcpSocket *socket = i->server->nextPendingConnection();
-//        connect(socket, &QTcpSocket::readyRead,    this, &TcpReaderWorker::ready_read);
-//        connect(socket, &QTcpSocket::disconnected, this, &TcpReaderWorker::disconnected);
-//        i->messages.insert(socket, std::make_shared<ConnectionBuffer>());
-//        emit new_connection_signal(socket->localAddress().toString(), QString::number(socket->localPort()));
-//    }
+//void TcpServer::send(const std::string &message){
+//    boost::asio::write(*i->socket, boost::asio::buffer(message));
 //}
-
-//void TcpReaderWorker::disconnected(){
-
-//    QTcpSocket *socket = static_cast<QTcpSocket*>(sender());
-//    i->messages.remove(socket);
-//    emit connection_ended_signal(socket->localAddress().toString(), QString::number(socket->localPort()));
-//}
-
-//qint32 array_to_int(QByteArray source){
-//    std::reverse(source.begin(), source.end());
-//    qint32 temp;
-//    QDataStream data(&source, QIODevice::ReadWrite);
-//    data >> temp;
-//    return temp;
-//}
-
-//void TcpReaderWorker::ready_read(){
-
-//    QTcpSocket *socket = static_cast<QTcpSocket*>(sender());
-
-//    if(!i->messages.contains(socket)){
-//        Logger::error("Cannot read packet, socket not registered in hash.");
-//        return;
-//    }
-
-//    ConnectionBuffer *message = i->messages.value(socket).get();
-//    QByteArray *buffer = &message->buffer;
-//    qint32 *s = &message->size;
-//    qint32 size = *s;
-
-//    while (socket->bytesAvailable() > 0){
-
-//        buffer->append(socket->readAll());
-//        while ((size == 0 && buffer->size() >= 4) || (size > 0 && buffer->size() >= size)){ //While can process data, process it
-
-//            if (size == 0 && buffer->size() >= 4){ //if size of data has received completely, then store it
-//                size = array_to_int(buffer->mid(0, 4));
-//                *s = size;
-//                buffer->remove(0, 4);
-//            }
-//            if (size > 0 && buffer->size() >= size){ // If data has received completely, then emit our SIGNAL with the data
-//                QByteArray data = buffer->mid(0, size);
-//                buffer->remove(0, size);
-//                size = 0;
-//                *s = size;
-
-//                // process data
-//                TcpPacket packet;
-//                std::move(data.begin(), data.begin()+ sizeof(packet), reinterpret_cast<char*>(&packet));
-//                emit tcp_packet_received_signal(packet);
-//            }
-//        }
-//    }
-//}
-
-
-//#include "moc_tcp_reader_worker.cpp"
-
-

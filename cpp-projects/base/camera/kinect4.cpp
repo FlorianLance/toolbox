@@ -216,18 +216,18 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
     i->kinect4 = this;
     i->deviceCount = k4a::device::get_installed_count();
     if(i->deviceCount == 0){
-        Logger::error("No K4A devices found\n");
+        Logger::error("[Kinect4] No K4A devices found\n");
     }else{
-        Logger::message(std::format("Devices found: {}\n", i->deviceCount));
+        Logger::message(std::format("[Kinect4] Devices found: {}\n", i->deviceCount));
     }
 
 
     const int audioInitStatus = k4a::K4AAudioManager::Instance().Initialize();
     if (audioInitStatus != SoundIoErrorNone){
-        Logger::error("Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
+        Logger::error("[Kinect4] Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
     }else{
         size_t nbDevices = k4a::K4AAudioManager::Instance().get_devices_count();
-        Logger::message(std::format("Audio devices count: {}\n", nbDevices));
+        Logger::message(std::format("[Kinect4] Audio devices count: {}\n", nbDevices));
 
         for(size_t ii = 0; ii < nbDevices; ++ii){
             std::string deviceName = k4a::K4AAudioManager::Instance().get_device_name(ii);
@@ -236,7 +236,7 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
                 Logger::message(std::format("Found Azure kinect microphones array.\n"));
                 i->microphone = k4a::K4AAudioManager::Instance().get_microphone_for_device(deviceName);
                 if(i->microphone == nullptr){
-                    Logger::error(std::format("Cannot init microphone.\n"));
+                    Logger::error(std::format("[Kinect4] Cannot init microphone.\n"));
                     i->audioListener = nullptr;
                     return;
                 }
@@ -244,11 +244,11 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
                 if(i->microphone->IsStarted()){
                     i->audioListener = i->microphone->CreateListener();
                 }else{
-                    Logger::error(std::format("Cannot start microphone.\n"));
+                    Logger::error(std::format("[Kinect4] Cannot start microphone.\n"));
                 }
 //                i->audioListener =  std::make_shared<k4a::K4AMicrophoneListener>(i->microphone);
                 if(i->audioListener == nullptr){
-                    Logger::error(std::format("Cannot init audio listener.\n"));
+                    Logger::error(std::format("[Kinect4] Cannot init audio listener.\n"));
                     return;
                 }
                 break;
@@ -259,20 +259,13 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
 }
 
 Kinect4::~Kinect4(){
-
-    if(is_opened()){
-        if(is_reading_frames()){
-            stop_reading();
-        }
-        stop_cameras();
-        close();
-    }
+    clean();
 }
 
 bool Kinect4::open(uint32_t deviceId){
 
     if(deviceId >= i->deviceCount){
-        Logger::error("Invalid device id\n");
+        Logger::error("[Kinect4] Invalid device id\n");
         return false;
     }
 
@@ -300,7 +293,7 @@ bool Kinect4::open(uint32_t deviceId){
         break;
     }
 
-    Logger::message("Opened device:\n");
+    Logger::message("[Kinect4] Device opened:\n");
     Logger::message(std::format("  Serialnum: {}\n", i->device.get_serialnum()));
     Logger::message("  Version:\n");
     Logger::message(std::format("      Firmware build: {}\n", (debugFB ? "[debug]" : "[release]")));
@@ -334,31 +327,42 @@ void Kinect4::close(){
     }
 
     if(i->readFramesFromCameras){
-        Logger::error("Reading must be stopped before closing the device.\n");
+        Logger::error("[Kinect4] Reading must be stopped before closing the device.\n");
         return;
     }
     i->device.close();
 }
 
 
-void Kinect4::start_reading(){
+void Kinect4::clean(){
+    if(is_opened()){
+        if(is_reading_frames()){
+            stop_reading();
+        }
+        stop_cameras();
+        close();
+    }
+}
+
+bool Kinect4::start_reading(){
 
     if(!is_opened()){
-        Logger::error("Device must be opened for reading.\n");
-        return;
+        Logger::error("[Kinect4] Device must be opened for reading.\n");
+        return false;
     }
 
     if(i->frameReaderT == nullptr){
-        Logger::message("Start reading frames.\n");
         i->frameReaderT = std::make_unique<std::thread>(&Kinect4::Impl::read_frames, i.get(), i->config.mode);
+        return true;
     }else{
-        Logger::error("Reading thread already started.\n");
+        Logger::error("[Kinect4] Reading thread already started.\n");
     }
+    return false;
 }
 
 void Kinect4::stop_reading(){
 
-    i->readFramesFromCameras = false;
+    i->readFramesFromCameras = false;   
     if(i->frameReaderT != nullptr){
         if(i->frameReaderT->joinable()){
             i->frameReaderT->join();
@@ -385,7 +389,7 @@ bool Kinect4::start_cameras(const k4a_device_configuration_t &k4aConfig){
 
     try {
 
-        Logger::message("[Kinect4] retrieve calibration\n");
+        Logger::message("[Kinect4] Retrieve calibration\n");
         i->calibration = i->device.get_calibration(i->k4aConfig.depth_mode, i->k4aConfig.color_resolution);
 
         const auto &c = i->calibration;
@@ -442,7 +446,6 @@ void Kinect4::stop_cameras(){
     i->device.stop_imu();
 }
 
-
 void Kinect4::Impl::read_frames(K4::Mode mode){
 
     // check device
@@ -479,7 +482,7 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
             read_from_imu();
             temperature = capture->get_temperature_c();
 
-        }  catch (std::runtime_error error) {
+        }   catch (std::runtime_error error) {
             Logger::error(std::format("[Kinect4] get_capture error: {}\n", error.what()));
             readFramesFromCameras = false;
             break;
@@ -510,13 +513,13 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         }
         if(p.sendCompressedFullFrame){
             compress_full_frame(mode);
-        }            
+        }
         if(p.sendDisplayColorFrame || p.sendDisplayDepthFrame || p.sendDisplayInfraredFrame || p.sendDisplayCloud){
             display_frame(p, mode);
         }
     }
-    readFramesFromCameras = false;
 }
+
 
 void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
 
@@ -537,14 +540,11 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
     auto minD = p.minDepthValue < dRange.x() ? static_cast<std::int16_t>(dRange.x()) : p.minDepthValue;
     auto maxD = p.maxDepthValue > dRange.y() ? static_cast<std::int16_t>(dRange.y()) : p.maxDepthValue;
 
-    const auto res = depth_resolution(mode);
-
-
     for_each(std::execution::par_unseq, std::begin(indicesDepths3D), std::end(indicesDepths3D), [&](const Pt3<size_t> &dIndex){
 
-        const size_t id = dIndex.x();
-        const size_t ii = dIndex.y();
-        const size_t jj = dIndex.z();
+        size_t id = dIndex.x();
+        size_t ii = dIndex.y();
+        size_t jj = dIndex.z();
 
         depthMask[id] = false;
         if(depthBuffer[id] == invalid_depth_value){
@@ -589,7 +589,9 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
         depthMask[id] = true;
     });
 
+
     const bool doLocalDiffFiltering = true;
+    const auto res = depth_resolution(mode);
     const size_t widthPlusOne  = res.x() +1;
     const size_t widthMinusOne = res.x() -1;
 
@@ -615,47 +617,6 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
             const size_t idF = id + widthMinusOne;
             const size_t idG = idF + 1;
             const size_t idH = idG + 1;
-
-
-            // B I G
-            // A I H
-            // F I C
-//            float diffH = -1.f; // D I E
-//            if(depthMask[idD] && depthMask[idE]){
-//                diffH = (abs(depthBuffer[idD]-currDepth) + abs(depthBuffer[idE]-currDepth))/3.f;
-//            }
-//            if(diffH > mLocal){
-//                depthMask[id] = false;
-//                return;
-//            }
-
-//            float diffV = -1.f; // B I G
-//            if(depthMask[idB] && depthMask[idG]){
-//                diffV = (abs(depthBuffer[idB]-currDepth) + abs(depthBuffer[idG]-currDepth))/3.f;
-//            }
-//            if(diffV > mLocal){
-//                depthMask[id] = false;
-//                return;
-//            }
-
-//            float diffD1 = -1.f; // A I H
-//            if(depthMask[idA] && depthMask[idH]){
-//                diffD1 = (abs(depthBuffer[idA]-currDepth) + abs(depthBuffer[idH]-currDepth))/3.f;
-//            }
-//            if(diffD1 > mLocal){
-//                depthMask[id] = false;
-//                return;
-//            }
-
-//            float diffD2 = -1.f; // F I C
-//            if(depthMask[idF] && depthMask[idC]){
-//                diffD2 = (abs(depthBuffer[idF]-currDepth) + abs(depthBuffer[idC]-currDepth))/3.f;
-//            }
-//            if(diffD2 > mLocal){
-//                depthMask[id] = false;
-//                return;
-//            }
-//            depthMask[id] = (count == 0) ? false : (1.*meanDiff/count < mLocal);
 
             if(depthMask[idA]){
                 meanDiff += abs(depthBuffer[idA]-currDepth);
@@ -694,6 +655,7 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
         });
     }
 
+    // count valid depth values
     validDepthValues = 0;
     for_each(std::execution::unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
         if(!depthMask[id]){
@@ -1072,7 +1034,7 @@ void Kinect4::Impl::init_data(K4::Mode mode){
         depthHeight  = depthRes.y();
         depthSize   = depthWidth*depthHeight;
 
-        Logger::message(std::format("depthframe {} {} \n", depthWidth, depthHeight));
+        // Logger::message(std::format("depthframe {} {} \n", depthWidth, depthHeight));
 
         // init resized color image
         if(colorResolution != ColorResolution::OFF){
@@ -1088,6 +1050,8 @@ void Kinect4::Impl::init_data(K4::Mode mode){
         indicesDepths1D.resize(depthSize);
         std::iota(std::begin(indicesDepths1D), std::end(indicesDepths1D), 0);
         indicesDepths3D.resize(depthSize);
+
+        indicesDepths1DNoBorders.clear();
         indicesDepths1DNoBorders.reserve((depthWidth-2)*(depthHeight-2));
         size_t id = 0;
         for(size_t ii = 0; ii < depthHeight; ++ii){
@@ -1109,7 +1073,7 @@ void Kinect4::Impl::init_data(K4::Mode mode){
             );
         }
 
-        Logger::message(std::format("depth {} {} \n", depthWidth, depthHeight));
+        // Logger::message(std::format("depth {} {} \n", depthWidth, depthHeight));
     }
 
     // init display frames
@@ -1178,9 +1142,9 @@ void Kinect4::Impl::read_from_microphones(){
         });
 
         if (audioListener->GetStatus() != SoundIoErrorNone){
-            Logger::error(std::format("Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
+            Logger::error(std::format("[Kinect4] Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
         }else if (audioListener->Overflowed()){
-            Logger::warning(std::format("Warning: sound overflow detected!\n"));
+            Logger::warning(std::format("[Kinect4] Warning: sound overflow detected!\n"));
             audioListener->ClearOverflowed();
         }
     }
@@ -1207,7 +1171,7 @@ bool Kinect4::Impl::get_color_image(){
         Bench::stop();
 
         if (!colorImage->is_valid()){
-            Logger::error("Failed to get color image from capture\n");
+            Logger::error("[Kinect4] Failed to get color image from capture\n");
             return false;
         }
     }
@@ -1223,7 +1187,7 @@ bool Kinect4::Impl::get_depth_image(){
         Bench::stop();
 
         if (!depthImage->is_valid()){
-            Logger::error("Failed to get depth image from capture\n");
+            Logger::error("[Kinect4] Failed to get depth image from capture\n");
             return false;
         }
     }
@@ -1240,7 +1204,7 @@ bool Kinect4::Impl::get_infra_image(Mode mode){
         Bench::stop();
 
         if (!infraredImage->is_valid()){
-            Logger::error("Failed to get infrared image from capture\n");
+            Logger::error("[Kinect4] Failed to get infrared image from capture\n");
             return false;
         }
     }

@@ -31,6 +31,15 @@
 
 namespace tool::network{
 
+class UdpServer{
+public:
+};
+
+class UdpClient{
+public:
+
+};
+
 class UdpReader {
 
 public:

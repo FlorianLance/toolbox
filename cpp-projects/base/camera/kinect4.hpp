@@ -57,6 +57,7 @@ public:
     // devices
     bool open(uint32_t deviceId);
     void close();
+    void clean();
 
     // getters
     bool is_opened() const;
@@ -68,7 +69,7 @@ public:
     void stop_cameras();
 
     // reading
-    void start_reading();
+    bool start_reading();
     void stop_reading();
 
     // settings

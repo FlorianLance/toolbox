@@ -93,6 +93,16 @@ static void replace_all2(std::string& source, const std::string& from, const std
     s.erase(pos);
 }
 
+[[maybe_unused]] static inline void remove_after_right(std::string &s, char delim){
+    auto pos = s.find_first_of(delim);
+    if(pos ==  std::string::npos){
+        return;
+    }
+    s.erase(pos);
+}
+
+
+
 [[maybe_unused]] static inline std::pair<std::string, std::string> split_path_and_filename(const std::string &s){
     auto pos1 = s.find_last_of('/');
     auto pos2 = s.find_last_of('\\');

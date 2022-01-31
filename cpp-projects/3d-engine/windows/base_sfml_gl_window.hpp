@@ -57,7 +57,7 @@ public:
             std::optional<sf::ContextSettings> context//,
             //std::optional<sf::Style> style
     );
-    ~BaseSfmlGlWindow();
+    virtual ~BaseSfmlGlWindow();
 
     bool init();
     void start();        
@@ -71,9 +71,6 @@ protected:
     // init
     virtual bool initialize_gl() = 0;
 
-    // clean
-    virtual void clean(){}
-
     // resize
     virtual void resize_windows(){}
 
@@ -82,12 +79,13 @@ protected:
     virtual void draw_sfml(){}
     virtual void draw_imgui(){}
 
-//    void check_hovering_imgui();
-
     // update
     virtual void pre_update(){}
     virtual void update(){}
     virtual void post_update(){}
+
+    // clean
+    virtual void clean();
 
     // sfml events
     // # mouse
@@ -98,9 +96,6 @@ protected:
     // # key
     virtual void keyboard_keypress_event(sf::Event::KeyEvent event);
     virtual void keyboard_keyrelease_event(sf::Event::KeyEvent event){static_cast<void>(event);}
-
-    // imgui events
-//    virtual void check_imgui_inputs();
 
     // camera
     virtual void update_camera_with_mouse_button_event(sf::Event::MouseButtonEvent event, bool pressed);

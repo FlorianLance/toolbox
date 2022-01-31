@@ -26,10 +26,11 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "network_interface.hpp"
+#include "network_utility.hpp"
 
 // boost
 #include <boost/asio.hpp>
+#include <boost/asio/ip/host_name.hpp>
 
 // local
 #include "utility/logger.hpp"
@@ -101,4 +102,8 @@ std::vector<Interface> Interface::list_local_interfaces(Protocol protocol){
 
     ioService.stop();
     return interfaces;
+}
+
+std::string Host::get_name(){
+    return boost::asio::ip::host_name();
 }

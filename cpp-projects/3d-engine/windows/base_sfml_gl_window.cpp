@@ -61,7 +61,6 @@ BaseSfmlGlWindow::BaseSfmlGlWindow(std::string title, Pt2<unsigned int> size,std
 }
 
 BaseSfmlGlWindow::~BaseSfmlGlWindow(){
-    clean();
     m_scene.close();
 }
 
@@ -174,13 +173,10 @@ void BaseSfmlGlWindow::start(){
 
         }
 
-
-
         // update
         pre_update();
         update();
         post_update();
-
 
         m_scene.clear(sf::Color::White);
 
@@ -218,6 +214,8 @@ void BaseSfmlGlWindow::start(){
         Bench::stop();
         // Bench::display();
     }
+
+    clean();
 
     ImGui::SFML::Shutdown();
 }
@@ -411,4 +409,7 @@ void BaseSfmlGlWindow::update_camera_with_mouse_moved_event(sf::Event::MouseMove
     }else if(mouseRightClickPressed){
         m_camera.set_direction(0.,0.,xoffset);
     }
+}
+
+void BaseSfmlGlWindow::clean(){
 }
