@@ -81,7 +81,7 @@ UdpReader::~UdpReader(){
     }
 }
 
-bool UdpReader::init_socket(std::string readingAdress, int readingPort){
+bool UdpReader::init_socket(std::string readingAdress, int port){
 
     if(is_reading()){
         Logger::error(std::format("UdpReader: Cannot init socket while reading thread is still active.\n"));
@@ -100,15 +100,15 @@ bool UdpReader::init_socket(std::string readingAdress, int readingPort){
         i->socket->open(udp::v4());
         i->socket->set_option(socket_option::integer<SOL_SOCKET, SO_RCVTIMEO>{500});
         i->socket->set_option(udp::socket::reuse_address(true));
-        i->socket->set_option(udp::socket::receive_buffer_size(9000));//*10));
+        i->socket->set_option(udp::socket::receive_buffer_size(9000*50));//*10));
 
         // bind socket
-        i->endPoint = udp::endpoint(address::from_string(readingAdress), static_cast<unsigned short>(readingPort));
+        i->endPoint = udp::endpoint(address::from_string(readingAdress), static_cast<unsigned short>(port));
         i->socket->bind(i->endPoint);
 
     }catch (const boost::system::system_error &error){
         Logger::error(std::format("UdpReader: Cannot bind endpoint {}, {}, error message: {}.\n",
-            readingAdress, readingPort, error.what()));
+            readingAdress, port, error.what()));
         clean_socket();
         return false;
     }

@@ -27,7 +27,6 @@
 #pragma once
 
 // std
-#include <array>
 #include <string>
 
 // local
@@ -35,21 +34,53 @@
 
 namespace tool::camera::K4 {
 
+using namespace std::literals::string_view_literals;
+
 enum MessageType : std::int8_t {
     manager_id = 0,
-    start_cameras,
-    stop_cameras,
-    settings,
-    ask_frame,
-    quit,
-    quit_and_shutdown,
+    update_device_settings,
+    update_filters_settings,
+    compressed_cloud_frame_data,
+    compressed_full_frame_data,
+    command,
     feedback,
-    data
+    SizeEnum
 };
 
+using Name = std::string_view;
+using TMessageTypes = std::tuple<
+    MessageType,                                Name>;
+static constexpr TupleArray<MessageType::SizeEnum, TMessageTypes> messageTypes = {{
+    // cloud
+    TMessageTypes
+    {MessageType::manager_id,                   "manager_id"sv},
+    {MessageType::update_device_settings,       "update_device_settings"sv},
+    {MessageType::update_filters_settings,      "update_filters_settings"sv},
+    {MessageType::compressed_cloud_frame_data,  "compressed_cloud_frame_data"sv},
+    {MessageType::compressed_full_frame_data,   "compressed_full_frame_data"sv},
+    {MessageType::command,                      "command"sv},
+    {MessageType::feedback,                     "feedback"sv},
+}};
+
+[[maybe_unused]] static Name to_string(MessageType m) {
+    return messageTypes.at<0,1>(m);
+}
+
 enum Feedback : std::int8_t{
-    valid,
+    valid = 0,
     timeout
+};
+
+enum CompressMode : std::int8_t{
+    Full= 0,
+    Cloud,
+    None
+};
+
+enum Command : std::int8_t{
+    Quit,
+    Shutdown,
+    Restart
 };
 
 struct Header{
@@ -60,6 +91,7 @@ struct Header{
     std::uint16_t currentPacketSizeBytes = 0;
     std::uint32_t currentPacketTime = 0;
     std::uint32_t dataOffset = 0;
+    std::int32_t idMessage = -1;
 };
 
 struct UdpMessage{
@@ -80,26 +112,49 @@ struct UdpInitFromManager : UdpMessage{
     std::uint16_t maxSizeUdpPacket;
 };
 
-struct UdpStartCameras : UdpMessage{
-    Mode mode;
+struct UdpCommand : UdpMessage{
+    Command command;
 };
 
-struct UdpStopCameras : UdpMessage{
+struct UdpUpdateDeviceSettings : UdpMessage{
+
+    // capture
+    bool startDevice   = true;
+    bool openCamera    = true;
+    Mode mode          = Mode::Cloud_640x576;
+    bool captureAudio  = true;
+    bool captureIMU    = true;
+    CompressMode compressMode  = CompressMode::Cloud;
+
+    // network
+    bool sendData      = true;
+
+    // record
+    bool record        = false;
+
+    // display
+    bool displayRGB    = false;
+    bool displayDepth  = false;
+    bool displayInfra  = false;
+    bool displayCloud  = false;
 };
 
-struct UdpAskForFrame : UdpMessage{
+struct UdpUpdateFiltersSettings : UdpMessage{
+    K4::Filters filters;
 };
-
-
 
 struct UdpFeedbackMessage : UdpMessage{
     MessageType receivedMessageType;
     Feedback feedback;
 };
 
-struct DataMessage : UdpMessage{
-    //    std::vector<Header> headers;
-    //    std::vector<std::vector<std::int16_t>> data;
-};
+//struct DataPacket{
+//    Header header;
+//    std::vector<std::int8_t> data;
+//};
+
+//struct DataMessage : UdpMessage{
+//    std::vector<DataPacket> packets;
+//};
 
 }

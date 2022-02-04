@@ -204,6 +204,7 @@ HEADERS += \
     utility/benchmark.hpp \
     utility/constants.hpp \
     utility/export.hpp \
+    utility/format.hpp \
     utility/io.hpp \
     utility/math.hpp \
     utility/string.hpp \

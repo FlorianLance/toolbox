@@ -59,7 +59,7 @@ UdpSender::~UdpSender(){
 }
 
 
-bool UdpSender::init_socket(std::string targetName, std::string writingPort){
+bool UdpSender::init_socket(std::string targetName, std::string port){
 
     // reset socket if necessary
     if(i->socket){
@@ -79,16 +79,16 @@ bool UdpSender::init_socket(std::string targetName, std::string writingPort){
 
         if(ip::host_name() == targetName){
             i->endpoint = resolver.resolve(ip::udp::resolver::query(
-                targetName = "localhost", writingPort, ip::udp::resolver::canonical_name));
+                targetName = "localhost", port, ip::udp::resolver::canonical_name));
         }else{
             i->endpoint = resolver.resolve(
-                ip::udp::resolver::query(targetName, writingPort));
+                ip::udp::resolver::query(targetName, port));
         }
 
     }catch (const boost::system::system_error& error){
 
         Logger::error(std::format("UdpSender: Cannot resolve target name {} with writing port {}, error message: {}.\n",
-            targetName, writingPort, error.what()));
+            targetName, port, error.what()));
         clean_socket();
         return false;
     }

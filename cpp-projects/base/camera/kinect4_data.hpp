@@ -84,7 +84,9 @@ namespace tool::camera::K4{
         size_t colorHeight = 0;
         std::vector<std::uint8_t> encodedColorData;
 
-        std::vector<std::array<float, 7>> audioFrames;
+//        std::vector<std::uint8_t> encodedAudioData; // todo
+
+        std::vector<std::array<float, 7>> audioFrames; // to be removed
         ImuSample imuSample;
     };
 

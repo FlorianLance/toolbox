@@ -42,7 +42,7 @@ struct ImguiLogs{
     ImguiLogs();
     void clear();
 
-    void add_log(const char* fmt, ...) IM_FMTARGS(2){
+    void add_log(const char* fmt, ...){// IM_FMTARGS(2){
         int old_size = buffer.size();
         va_list args;
         va_start(args, fmt);

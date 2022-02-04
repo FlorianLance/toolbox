@@ -74,25 +74,27 @@ INCLUDEPATH += \
     $$SFML_INCLUDES\
     $$ASSIMP_INCLUDES\
     $$SIGNALS_INCLUDES\
+    $$KINECT4_INCLUDES \
 
 ####################################### LIBRAIRIES
 
 LIBS +=\
+    # base
+    $$BASE_LIB\
+    # opengl-utility
+    $$OPENGL_UTILITY_LIB \    
     # thirdparty
     $$WINDOWS_LIBS \
     $$GLEW_LIBS \
     $$SFML_LIBS \
     $$ASSIMP_LIBS\
-    # base
-    $$BASE_LIB\
-    # opengl-utility
-    $$OPENGL_UTILITY_LIB \
-
+    $$KINECT4_LIBS \
 
 ####################################### PROJECT FILES
 
 HEADERS += \
     # ui
+    imgui-utility/imgui_k4_filters_tab_item_drawer.hpp \
     imgui-utility/imgui_logs.hpp \
     imgui-utility/imgui_texture.hpp \
     immediate_ui.hpp \
@@ -139,6 +141,7 @@ HEADERS += \
 
 SOURCES += \
     # main
+    imgui-utility/imgui_k4_filters_tab_item_drawer.cpp \
     imgui-utility/imgui_logs.cpp \
     imgui-utility/imgui_texture.cpp \
     main.cpp \

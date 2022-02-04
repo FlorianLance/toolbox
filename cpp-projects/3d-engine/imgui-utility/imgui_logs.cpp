@@ -42,10 +42,10 @@ void ImguiLogs::clear(){
 
 void ImguiLogs::draw(const char *title, bool *p_open){
 
-    if (!ImGui::Begin(title, p_open)){
-        ImGui::End();
-        return;
-    }
+//    if (!ImGui::Begin(title, p_open)){
+//        ImGui::End();
+//        return;
+//    }
 
     // Options menu
     if (ImGui::BeginPopup("Options")){
@@ -121,5 +121,5 @@ void ImguiLogs::draw(const char *title, bool *p_open){
         ImGui::SetScrollHereY(1.0f);
 
     ImGui::EndChild();
-    ImGui::End();
+//    ImGui::End();
 }

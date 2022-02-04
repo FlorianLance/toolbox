@@ -30,7 +30,6 @@
 // std
 #include <thread>
 #include <execution>
-#include <format>
 
 // kinect4
 #include <k4a/k4a.hpp>
@@ -45,6 +44,7 @@
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
 #include "utility/vector.hpp"
+#include "utility/format.hpp"
 // # geometry
 #include "geometry/point4.hpp"
 // # camera
@@ -147,8 +147,8 @@ struct Kinect4::Impl{
     void filter_color_image(const K4::Parameters &p);
     void filter_infrared_image(const K4::Parameters &p);
     void generate_cloud(Mode mode);
-    void compress_cloud_frame();
-    void compress_full_frame(Mode mode);
+    void compress_cloud_frame(const Parameters &p);
+    void compress_full_frame(const Parameters &p, Mode mode);
     void display_frame(const Parameters &p, Mode mode);
 };
 
@@ -203,10 +203,10 @@ k4a_device_configuration_t Kinect4::generate_config(
     config.subordinate_delay_off_master_usec = subordinateDelayUsec;
     config.disable_streaming_indicator       = disableLED;
 
-    Logger::message(std::format("config.color_format: {}\n", static_cast<int>(config.color_format)));
-    Logger::message(std::format("config.color_resolution: {}\n", static_cast<int>(config.color_resolution)));
-    Logger::message(std::format("config.depth_mode: {}\n", static_cast<int>(config.depth_mode)));
-    Logger::message(std::format("config.camera_fps: {}\n", static_cast<int>(config.camera_fps)));
+    Logger::message(fmt("config.color_format: {}\n", static_cast<int>(config.color_format)));
+    Logger::message(fmt("config.color_resolution: {}\n", static_cast<int>(config.color_resolution)));
+    Logger::message(fmt("config.depth_mode: {}\n", static_cast<int>(config.depth_mode)));
+    Logger::message(fmt("config.camera_fps: {}\n", static_cast<int>(config.camera_fps)));
 
     return config;
 }
@@ -218,7 +218,7 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
     if(i->deviceCount == 0){
         Logger::error("[Kinect4] No K4A devices found\n");
     }else{
-        Logger::message(std::format("[Kinect4] Devices found: {}\n", i->deviceCount));
+        Logger::message(fmt("[Kinect4] Devices found: {}\n", i->deviceCount));
     }
 
 
@@ -227,16 +227,16 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
         Logger::error("[Kinect4] Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
     }else{
         size_t nbDevices = k4a::K4AAudioManager::Instance().get_devices_count();
-        Logger::message(std::format("[Kinect4] Audio devices count: {}\n", nbDevices));
+        Logger::message(fmt("[Kinect4] Audio devices count: {}\n", nbDevices));
 
         for(size_t ii = 0; ii < nbDevices; ++ii){
             std::string deviceName = k4a::K4AAudioManager::Instance().get_device_name(ii);
-            Logger::message(std::format(" - {}\n", deviceName));
+            Logger::message(fmt(" - {}\n", deviceName));
             if (deviceName.find("Azure Kinect Microphone Array") != std::string::npos) {
-                Logger::message(std::format("Found Azure kinect microphones array.\n"));
+                Logger::message(fmt("Found Azure kinect microphones array.\n"));
                 i->microphone = k4a::K4AAudioManager::Instance().get_microphone_for_device(deviceName);
                 if(i->microphone == nullptr){
-                    Logger::error(std::format("[Kinect4] Cannot init microphone.\n"));
+                    Logger::error(fmt("[Kinect4] Cannot init microphone.\n"));
                     i->audioListener = nullptr;
                     return;
                 }
@@ -244,11 +244,11 @@ Kinect4::Kinect4() : i(std::make_unique<Impl>()){
                 if(i->microphone->IsStarted()){
                     i->audioListener = i->microphone->CreateListener();
                 }else{
-                    Logger::error(std::format("[Kinect4] Cannot start microphone.\n"));
+                    Logger::error(fmt("[Kinect4] Cannot start microphone.\n"));
                 }
 //                i->audioListener =  std::make_shared<k4a::K4AMicrophoneListener>(i->microphone);
                 if(i->audioListener == nullptr){
-                    Logger::error(std::format("[Kinect4] Cannot init audio listener.\n"));
+                    Logger::error(fmt("[Kinect4] Cannot init audio listener.\n"));
                     return;
                 }
                 break;
@@ -272,7 +272,7 @@ bool Kinect4::open(uint32_t deviceId){
     try {
         i->device = k4a::device::open(deviceId);
     }  catch (std::runtime_error error) {
-        Logger::error(std::format("[Kinect4] open error: {}\n", error.what()));
+        Logger::error(fmt("[Kinect4] open error: {}\n", error.what()));
         return false;
     }
 
@@ -294,17 +294,17 @@ bool Kinect4::open(uint32_t deviceId){
     }
 
     Logger::message("[Kinect4] Device opened:\n");
-    Logger::message(std::format("  Serialnum: {}\n", i->device.get_serialnum()));
+    Logger::message(fmt("  Serialnum: {}\n", i->device.get_serialnum()));
     Logger::message("  Version:\n");
-    Logger::message(std::format("      Firmware build: {}\n", (debugFB ? "[debug]" : "[release]")));
-    Logger::message(std::format("      Firmware signature: {}\n", fsStr));
-    Logger::message(std::format("      Color camera firmware version {}.{}\n", version.rgb.major, version.rgb.minor));
-    Logger::message(std::format("      Depth camera firmware version {}.{}\n", version.depth.major, version.depth.minor));
-    Logger::message(std::format("      Audio device firmware version {}.{}\n", version.audio.major, version.audio.minor));
-    Logger::message(std::format("      Depth device firmware version {}.{}\n", version.depth_sensor.major, version.depth_sensor.minor));
+    Logger::message(fmt("      Firmware build: {}\n", (debugFB ? "[debug]" : "[release]")));
+    Logger::message(fmt("      Firmware signature: {}\n", fsStr));
+    Logger::message(fmt("      Color camera firmware version {}.{}\n", version.rgb.major, version.rgb.minor));
+    Logger::message(fmt("      Depth camera firmware version {}.{}\n", version.depth.major, version.depth.minor));
+    Logger::message(fmt("      Audio device firmware version {}.{}\n", version.audio.major, version.audio.minor));
+    Logger::message(fmt("      Depth device firmware version {}.{}\n", version.depth_sensor.major, version.depth_sensor.minor));
     Logger::message("  Synch:\n");
-    Logger::message(std::format("      IN connected {}\n", i->device.is_sync_in_connected()));
-    Logger::message(std::format("      OUT connected {}\n", i->device.is_sync_out_connected()));
+    Logger::message(fmt("      IN connected {}\n", i->device.is_sync_in_connected()));
+    Logger::message(fmt("      OUT connected {}\n", i->device.is_sync_out_connected()));
 
     return true;
 }
@@ -394,15 +394,15 @@ bool Kinect4::start_cameras(const k4a_device_configuration_t &k4aConfig){
 
         const auto &c = i->calibration;
         Logger::message("Calibration:\n");
-        Logger::message(std::format("  color resolution: {}\n", static_cast<int>(c.color_resolution)));
+        Logger::message(fmt("  color resolution: {}\n", static_cast<int>(c.color_resolution)));
         Logger::message("  color camera:\n");
-        Logger::message(std::format("      width: {}\n", c.color_camera_calibration.resolution_width));
-        Logger::message(std::format("      height: {}\n", c.color_camera_calibration.resolution_height));
-        Logger::message(std::format("      metric radius: {}\n", c.color_camera_calibration.metric_radius));
+        Logger::message(fmt("      width: {}\n", c.color_camera_calibration.resolution_width));
+        Logger::message(fmt("      height: {}\n", c.color_camera_calibration.resolution_height));
+        Logger::message(fmt("      metric radius: {}\n", c.color_camera_calibration.metric_radius));
 
         Logger::message("  depth mode:\n");
-        Logger::message(std::format("      width: {}\n", c.depth_camera_calibration.resolution_width));
-        Logger::message(std::format("      height: {}\n", c.depth_camera_calibration.resolution_height));
+        Logger::message(fmt("      width: {}\n", c.depth_camera_calibration.resolution_width));
+        Logger::message(fmt("      height: {}\n", c.depth_camera_calibration.resolution_height));
 
         Logger::message("[Kinect4] start cameras\n");
         i->device.start_cameras(&i->k4aConfig);
@@ -478,12 +478,18 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
                 continue;
             }
 
-            read_from_microphones();
-            read_from_imu();
+            if(p.captureAudio){
+                read_from_microphones();
+            }
+
+            if(p.captureIMU){
+                read_from_imu();
+            }
+
             temperature = capture->get_temperature_c();
 
         }   catch (std::runtime_error error) {
-            Logger::error(std::format("[Kinect4] get_capture error: {}\n", error.what()));
+            Logger::error(fmt("[Kinect4] get_capture error: {}\n", error.what()));
             readFramesFromCameras = false;
             break;
         }
@@ -509,10 +515,10 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
 
         // send frames
         if(p.sendCompressedCloudFrame){
-            compress_cloud_frame();
+            compress_cloud_frame(p);
         }
         if(p.sendCompressedFullFrame){
-            compress_full_frame(mode);
+            compress_full_frame(p, mode);
         }
         if(p.sendDisplayColorFrame || p.sendDisplayDepthFrame || p.sendDisplayInfraredFrame || p.sendDisplayCloud){
             display_frame(p, mode);
@@ -537,8 +543,8 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
     static_cast<void>(infraredBuffer);
 
     const auto dRange = range(mode)*1000.f;
-    auto minD = p.minDepthValue < dRange.x() ? static_cast<std::int16_t>(dRange.x()) : p.minDepthValue;
-    auto maxD = p.maxDepthValue > dRange.y() ? static_cast<std::int16_t>(dRange.y()) : p.maxDepthValue;
+    auto minD = p.filters.minDepthValue < dRange.x() ? static_cast<std::int16_t>(dRange.x()) : p.filters.minDepthValue;
+    auto maxD = p.filters.maxDepthValue > dRange.y() ? static_cast<std::int16_t>(dRange.y()) : p.filters.maxDepthValue;
 
     for_each(std::execution::par_unseq, std::begin(indicesDepths3D), std::end(indicesDepths3D), [&](const Pt3<size_t> &dIndex){
 
@@ -552,15 +558,15 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
         }
 
         // depth filtering
-        if(ii < p.minHeight){
+        if(ii < p.filters.minHeight){
             return;
-        }else if(ii > p.maxHeight){
+        }else if(ii > p.filters.maxHeight){
             return;
         }
 
-        if(jj < p.minWidth){
+        if(jj < p.filters.minWidth){
             return;
-        }else if(jj > p.maxWidth){
+        }else if(jj > p.filters.maxWidth){
             return;
         }
 
@@ -571,9 +577,9 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
         }
 
         // color filtering
-        if(colorImage.has_value() && p.filterDepthWithColor){
-            auto delta = norm(colorBuffer[id].xyz().conv<int>()-p.filterColor.conv<int>());
-            if(delta > p.maxDiffColor.x()){
+        if(colorImage.has_value() && p.filters.filterDepthWithColor){
+            auto delta = norm(colorBuffer[id].xyz().conv<int>()-p.filters.filterColor.conv<int>());
+            if(delta > p.filters.maxDiffColor.x()){
                 return;
             }
 
@@ -596,7 +602,7 @@ void Kinect4::Impl::filter_depth_image(const Parameters &p, Mode mode){
     const size_t widthMinusOne = res.x() -1;
 
     if(doLocalDiffFiltering){
-        const float mLocal =  parameters.maxLocalDiff;
+        const float mLocal =  parameters.filters.maxLocalDiff;
         for_each(std::execution::par_unseq, std::begin(indicesDepths1DNoBorders), std::end(indicesDepths1DNoBorders), [&](size_t id){
 
             if(!depthMask[id]){
@@ -690,7 +696,7 @@ void Kinect4::Impl::filter_color_image(const K4::Parameters &p){
     static_cast<void>(infraredBuffer);
 
     for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
-        if(p.invalidateColorFromDepth){
+        if(p.filters.invalidateColorFromDepth){
             if(depthBuffer[id] == invalid_depth_value){
                 colorBuffer[id] = invalid_color_value;
             }
@@ -720,7 +726,7 @@ void Kinect4::Impl::filter_infrared_image(const K4::Parameters &p){
     static_cast<void>(colorBuffer);
 
     for_each(std::execution::par_unseq, std::begin(indicesDepths1D), std::end(indicesDepths1D), [&](size_t id){
-        if(p.invalidateInfraFromDepth){
+        if(p.filters.invalidateInfraFromDepth){
             if(depthBuffer[id] == invalid_depth_value){
                 infraredBuffer[id] = invalid_infra_value;
             }
@@ -739,23 +745,30 @@ void Kinect4::Impl::generate_cloud(Mode mode){
     }
 }
 
-void Kinect4::Impl::compress_cloud_frame(){
+void Kinect4::Impl::compress_cloud_frame(const Parameters &p){
 
-    if(!colorImage.has_value() || !depthImage.has_value()){
+    if(!colorImage.has_value() || !depthImage.has_value() || !pointCloudImage.has_value()){
         return;
     }
 
     tool::Bench::start("[Kinect4] Generate compressed cloud frame");
     auto compressedCloudFrame = cfc.compress(
         validDepthValues,
-        parameters.jpegCompressionRate,
-        colorImage, depthImage, pointCloudImage);
+        parameters.filters.jpegCompressionRate,
+        colorImage.value(),
+        depthImage.value(),
+        pointCloudImage.value(),
+        reinterpret_cast<float*>(audioFrames.data()), 7*lastFrameCount);
 
     if(compressedCloudFrame != nullptr){
+
         // add imu
-        compressedCloudFrame->imuSample   = imuSample;
+        if(p.captureIMU){
+            compressedCloudFrame->imuSample   = imuSample;
+        }
+
         // add audio frames
-        if(lastFrameCount > 0){
+        if(p.captureAudio && lastFrameCount > 0){
             compressedCloudFrame->audioFrames.resize(lastFrameCount);
             auto ad1 = reinterpret_cast<float*>(audioFrames.data());
             auto ad2 = reinterpret_cast<float*>(compressedCloudFrame->audioFrames.data());
@@ -770,7 +783,7 @@ void Kinect4::Impl::compress_cloud_frame(){
     }
 }
 
-void Kinect4::Impl::compress_full_frame(Mode mode){
+void Kinect4::Impl::compress_full_frame(const Parameters &p, Mode mode){
 
     if(!colorImage.has_value() || !depthImage.has_value() || !infraredImage.has_value()){
         return;
@@ -780,17 +793,22 @@ void Kinect4::Impl::compress_full_frame(Mode mode){
 
     auto compressedFullFrame = ffc.compress(
         validDepthValues,
-        parameters.jpegCompressionRate,
+        parameters.filters.jpegCompressionRate,
         colorImage, depthImage, infraredImage);
 
     if(compressedFullFrame != nullptr){
+
         // add infos
         compressedFullFrame->mode        = mode;
         compressedFullFrame->calibration = calibration;
+
         // add imu
-        compressedFullFrame->imuSample   = imuSample;
-        // add audio frames
-        if(lastFrameCount > 0){
+        if(p.captureIMU){
+            compressedFullFrame->imuSample   = imuSample;
+        }
+
+        // add audio frames                
+        if(p.captureAudio && lastFrameCount > 0){
             compressedFullFrame->audioFrames.resize(lastFrameCount);
             auto ad1 = reinterpret_cast<float*>(audioFrames.data());
             auto ad2 = reinterpret_cast<float*>(compressedFullFrame->audioFrames.data());
@@ -825,7 +843,7 @@ void Kinect4::Impl::display_frame(const Parameters &p, Mode mode){
     };
 
     // send audio
-    if(p.sendAudio && lastFrameCount != 0){
+    if(p.captureAudio && lastFrameCount != 0){
         // copy audio frames
         dFrame->audioFrames.resize(lastFrameCount);
         auto ad1 = reinterpret_cast<float*>(audioFrames.data());
@@ -1034,7 +1052,7 @@ void Kinect4::Impl::init_data(K4::Mode mode){
         depthHeight  = depthRes.y();
         depthSize   = depthWidth*depthHeight;
 
-        // Logger::message(std::format("depthframe {} {} \n", depthWidth, depthHeight));
+        // Logger::message(fmt("depthframe {} {} \n", depthWidth, depthHeight));
 
         // init resized color image
         if(colorResolution != ColorResolution::OFF){
@@ -1073,7 +1091,7 @@ void Kinect4::Impl::init_data(K4::Mode mode){
             );
         }
 
-        // Logger::message(std::format("depth {} {} \n", depthWidth, depthHeight));
+        // Logger::message(fmt("depth {} {} \n", depthWidth, depthHeight));
     }
 
     // init display frames
@@ -1142,9 +1160,9 @@ void Kinect4::Impl::read_from_microphones(){
         });
 
         if (audioListener->GetStatus() != SoundIoErrorNone){
-            Logger::error(std::format("[Kinect4] Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
+            Logger::error(fmt("[Kinect4] Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
         }else if (audioListener->Overflowed()){
-            Logger::warning(std::format("[Kinect4] Warning: sound overflow detected!\n"));
+            Logger::warning(fmt("[Kinect4] Warning: sound overflow detected!\n"));
             audioListener->ClearOverflowed();
         }
     }
@@ -1236,13 +1254,13 @@ void Kinect4::Impl::convert_color_image(const Parameters &p){
                 const Pt4<uint8_t> &yuy2 = colorsYuy2[idC];
 
                 // convert to rgb
-                const int y0 = std::clamp(static_cast<int>(p.yFactor*yuy2.x()), 0, 255);
+                const int y0 = std::clamp(static_cast<int>(p.filters.yFactor*yuy2.x()), 0, 255);
                 auto ci = 298 * (y0 - 16);
 
-                const int u0 = std::clamp(static_cast<int>(p.uFactor*yuy2.y()), 0, 255);
+                const int u0 = std::clamp(static_cast<int>(p.filters.uFactor*yuy2.y()), 0, 255);
                 const auto d = u0 - 128;
 
-                const int v0 = std::clamp(static_cast<int>(p.vFactor*yuy2.w()), 0, 255);
+                const int v0 = std::clamp(static_cast<int>(p.filters.vFactor*yuy2.w()), 0, 255);
                 const auto e = v0 - 128;
 
                 currentPixel = geo::Pt4<uint8_t>{
@@ -1258,10 +1276,10 @@ void Kinect4::Impl::convert_color_image(const Parameters &p){
                 idC = (idC-1)/2;
 
                 const Pt4<uint8_t> &color = colorsYuy2[idC];
-                const int y0 = std::clamp(static_cast<int>(p.yFactor*color.x()), 0, 255);
-                const int u0 = std::clamp(static_cast<int>(p.uFactor*color.y()), 0, 255);
-                const int y1 = std::clamp(static_cast<int>(p.yFactor*color.z()), 0, 255);
-                const int v0 = std::clamp(static_cast<int>(p.vFactor*color.w()), 0, 255);
+                const int y0 = std::clamp(static_cast<int>(p.filters.yFactor*color.x()), 0, 255);
+                const int u0 = std::clamp(static_cast<int>(p.filters.uFactor*color.y()), 0, 255);
+                const int y1 = std::clamp(static_cast<int>(p.filters.yFactor*color.z()), 0, 255);
+                const int v0 = std::clamp(static_cast<int>(p.filters.vFactor*color.w()), 0, 255);
 
                 // convert to rgb
                 auto c = y0 - 16;

@@ -195,7 +195,7 @@ namespace tool::camera::K4 {
         std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
     };
 
-    struct Parameters{
+    struct Filters{
 
         // # width / height
         unsigned int minWidth  = 0;
@@ -223,18 +223,26 @@ namespace tool::camera::K4 {
         unsigned char minNeighboursLoops = 1;
 
         // flogs
-        bool filterDepthWithColor     = false;
-        bool invalidateColorFromDepth = false;
-        bool invalidateInfraFromDepth = false;
+        bool filterDepthWithColor       = false;
+        bool invalidateColorFromDepth   = false;
+        bool invalidateInfraFromDepth   = false;
+    };
 
-        // send
+    struct Parameters{
+
+        Filters filters;
+
+        // capture
+        bool captureAudio               = true;
+        bool captureIMU                 = true;
+        // send                
         bool sendCompressedFullFrame    = false;
         bool sendCompressedCloudFrame   = false;
-
+        // display
         bool sendDisplayColorFrame      = true;
         bool sendDisplayDepthFrame      = true;
         bool sendDisplayInfraredFrame   = true;
         bool sendDisplayCloud           = true;
-        bool sendAudio                  = true;
+
     };
 }

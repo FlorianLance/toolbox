@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-base                                                               **
+** Toolbox-3d-engine                                                          **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -26,58 +26,18 @@
 
 #pragma once
 
-// kinect
-#include "k4a/k4a.hpp"
-
-// local
-#include "kinect4_data.hpp"
-
-namespace tool::camera::K4{
-
-struct CloudFrameCompressor{
-
-    CloudFrameCompressor();
-    ~CloudFrameCompressor();
-
-    std::shared_ptr<CompressedCloudFrame> compress(
-        size_t validDepthValues,
-        int jpegQuality,
-        k4a::image colorImage,
-        k4a::image depthImage,
-        k4a::image cloud,
-        float *audioData, size_t audioSize);
+// base
+#include "camera/kinect4_types.hpp"
 
 
-private:
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
+namespace tool::graphics {
+class K4FiltersTabItem{
+public:
+
+    static bool draw(const std::string &tabItemName, camera::K4::Mode mode, camera::K4::Filters &filters, bool &updateP);
+
 };
-
-struct FullFrameCompressor{
-
-    FullFrameCompressor();
-    ~FullFrameCompressor();
-
-    std::shared_ptr<CompressedFullFrame> compress(
-        size_t validDepthValues,
-        int jpegQuality,
-        std::optional<k4a::image> colorImage,
-        std::optional<k4a::image> depthImage,
-        std::optional<k4a::image> infraredImage);
-
-private:
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
-};
-
-
 }
-
-
-
-
-
-
 
 
 

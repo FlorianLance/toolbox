@@ -67,6 +67,8 @@ public:
     static std::string to_html_line(MessageType type, std::string_view text, bool addTimestamp = false);
     static void insert_line_to_log_file(MessageType type, std::string_view message);
 
+
+
 // signals
     lsignal::signal<void(std::string message)> message_signal;
     lsignal::signal<void(std::string error)> error_signal;

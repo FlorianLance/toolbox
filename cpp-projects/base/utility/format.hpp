@@ -26,58 +26,19 @@
 
 #pragma once
 
-// kinect
-#include "k4a/k4a.hpp"
+// std
+#include <format>
+#include <string>
 
-// local
-#include "kinect4_data.hpp"
+namespace tool{
+    template <class... Args>
+    std::string fmt(const std::string& fmtString, Args&&... args){
+        return std::format(fmtString, std::forward<Args>(args)...);
+    }
 
-namespace tool::camera::K4{
-
-struct CloudFrameCompressor{
-
-    CloudFrameCompressor();
-    ~CloudFrameCompressor();
-
-    std::shared_ptr<CompressedCloudFrame> compress(
-        size_t validDepthValues,
-        int jpegQuality,
-        k4a::image colorImage,
-        k4a::image depthImage,
-        k4a::image cloud,
-        float *audioData, size_t audioSize);
-
-
-private:
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
-};
-
-struct FullFrameCompressor{
-
-    FullFrameCompressor();
-    ~FullFrameCompressor();
-
-    std::shared_ptr<CompressedFullFrame> compress(
-        size_t validDepthValues,
-        int jpegQuality,
-        std::optional<k4a::image> colorImage,
-        std::optional<k4a::image> depthImage,
-        std::optional<k4a::image> infraredImage);
-
-private:
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
-};
-
-
+    template <typename... Args>
+    std::string vfmt(std::string_view fmtVString, Args&&... args) {
+        return std::vformat(fmtVString, std::forward<Args>(args)...);
+    }
 }
-
-
-
-
-
-
-
-
 

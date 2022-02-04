@@ -53,6 +53,8 @@ struct CloudFrameCompressor::Impl{
     std::vector<size_t> indicesValid1D;
     std::vector<std::uint16_t> processedCloudData;
     std::vector<std::uint8_t> processedColorData;
+
+    std::vector<std::int16_t> processedAudioData;
 };
 
 CloudFrameCompressor::CloudFrameCompressor() : i(std::make_unique<Impl>()){
@@ -68,27 +70,24 @@ CloudFrameCompressor::~CloudFrameCompressor(){
 std::shared_ptr<CompressedCloudFrame> CloudFrameCompressor::compress(
     size_t validDepthValues,
     int jpegQuality,
-    std::optional<k4a::image> colorImage,
-    std::optional<k4a::image> depthImage,
-    std::optional<k4a::image> cloud){
+    k4a::image colorImage,
+    k4a::image depthImage,
+    k4a::image cloud, float *audioData, size_t audioSize){
 
-    if(!colorImage.has_value() || !depthImage.has_value() || !cloud.has_value()){
-        return nullptr;
-    }
 
     // create compressed frame
     auto cFrame                = std::make_shared<CompressedCloudFrame>();
     cFrame->validVerticesCount = validDepthValues;
-    cFrame->colorWidth         = colorImage->get_width_pixels();
-    cFrame->colorHeight        = colorImage->get_height_pixels();
+    cFrame->colorWidth         = colorImage.get_width_pixels();
+    cFrame->colorHeight        = colorImage.get_height_pixels();
 
     // get buffers
-    auto cloudData = reinterpret_cast<geo::Pt3<int16_t>*>(cloud->get_buffer());
-    auto colorData = reinterpret_cast<const geo::Pt4<uint8_t>*>(colorImage->get_buffer());
-    auto depthData = reinterpret_cast<const uint16_t*>(depthImage->get_buffer());
+    auto cloudData = reinterpret_cast<geo::Pt3<int16_t>*>(cloud.get_buffer());
+    auto colorData = reinterpret_cast<const geo::Pt4<uint8_t>*>(colorImage.get_buffer());
+    auto depthData = reinterpret_cast<const uint16_t*>(depthImage.get_buffer());
 
     // fill indices array
-    const size_t depthSize = depthImage->get_width_pixels()*depthImage->get_height_pixels();
+    const size_t depthSize = depthImage.get_width_pixels()*depthImage.get_height_pixels();
     if(i->indicesValid1D.size() < depthSize){
         i->indicesValid1D.resize(depthSize);
         std::iota(std::begin(i->indicesValid1D), std::end(i->indicesValid1D), 0);
@@ -106,14 +105,14 @@ std::shared_ptr<CompressedCloudFrame> CloudFrameCompressor::compress(
     });
 
     // resize processed data
-    const size_t paddedDiff = 128-((idV*3)%128);
-    const size_t processsedCloudDataSize = idV*3 + paddedDiff;
+    size_t paddedCloudSizeDiff = 128-((idV*3)%128);
+    size_t processsedCloudDataSize = idV*3 + paddedCloudSizeDiff;
     if(i->processedCloudData.size() < processsedCloudDataSize){
         i->processedCloudData.resize(processsedCloudDataSize);
     }
     std::fill(i->processedCloudData.begin(), i->processedCloudData.end(), 0);
 
-    const size_t colorBufferSize = colorImage->get_width_pixels()*colorImage->get_height_pixels()*3;
+    const size_t colorBufferSize = colorImage.get_width_pixels()*colorImage.get_height_pixels()*3;
     if(i->processedColorData.size() < colorBufferSize){
         i->processedColorData.resize(colorBufferSize);
     }
@@ -139,13 +138,11 @@ std::shared_ptr<CompressedCloudFrame> CloudFrameCompressor::compress(
     );
     cFrame->encodedCloudData.resize(encodedBytesNb);
 
-//    Logger::message(std::format("sizeb {} encodedb {} cbs  {}", cloudBufferSize*4, encodedBytesNb, cloudBufferSize));
-
+    // compress color buffer
     if(i->tjCompressedImage == nullptr){
         i->tjCompressedImage = tjAlloc(cFrame->colorHeight*cFrame->colorWidth*3);
     }
 
-    // compress color buffer
     long unsigned int jpegSize = 0;
     int ret = tjCompress2(i->jpegCompressor,
         i->processedColorData.data(),
@@ -159,6 +156,35 @@ std::shared_ptr<CompressedCloudFrame> CloudFrameCompressor::compress(
     }
     cFrame->encodedColorData.resize(jpegSize);
     std::copy(i->tjCompressedImage, i->tjCompressedImage + jpegSize, cFrame->encodedColorData.begin());
+
+//    if(audioSize > 0){
+
+        // resize processed data
+//        const size_t paddedAudioSizeDiff = 128-((audioSize)%128);
+//        const size_t processsedAudioDataSize = idV*3 + paddedDiff;
+//        if(i->processedCloudData.size() < processsedCloudDataSize){
+//            i->processedCloudData.resize(processsedCloudDataSize);
+//        }
+//        std::fill(i->processedCloudData.begin(), i->processedCloudData.end(), 0);
+
+//        cFrame->encodedAudioData;
+
+        // process audio buffer
+        // ...
+
+        // compress audio buffer
+        // ...
+
+
+        // -32768
+        // 32767
+
+        // -1.000 +1.0000
+        // * 32767
+        // -32767 +32767
+
+        //    encodedBytesNb = p
+//    }
 
     return cFrame;
 }
