@@ -104,12 +104,13 @@ struct UdpMessage{
 
 struct UdpInitFromManager : UdpMessage{
 
-    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket);
+    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::int64_t timestamp);
     UdpInitFromManager(std::int8_t *data, std::uint32_t messageNbBytes);
 
     std::array<char, 45> ipAdress;
     std::uint16_t port;
     std::uint16_t maxSizeUdpPacket;
+    std::int64_t timestamp;
 };
 
 struct UdpCommand : UdpMessage{

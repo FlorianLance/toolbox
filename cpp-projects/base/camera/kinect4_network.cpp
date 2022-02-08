@@ -211,7 +211,9 @@ void UdpMessage::read_from_data(int8_t *data, uint32_t messageNbBytes){
     std::copy(data, data + messageNbBytes, reinterpret_cast<std::int8_t*>(this));
 }
 
-UdpInitFromManager::UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket) : port(port), maxSizeUdpPacket(maxSizeUdpPacket){
+UdpInitFromManager::UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::int64_t timestamp) :
+      port(port), maxSizeUdpPacket(maxSizeUdpPacket), timestamp(timestamp){
+
     std::fill(ipAdress.begin(), ipAdress.end(), ' ');
     if(ipAdressStr.size() <= 45){
         std::copy(std::begin(ipAdressStr), std::end(ipAdressStr), ipAdress.begin());
