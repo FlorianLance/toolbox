@@ -207,6 +207,7 @@ HEADERS += \
     utility/format.hpp \
     utility/io.hpp \
     utility/math.hpp \
+    utility/paths.hpp \
     utility/string.hpp \
     utility/thread.hpp \
     utility/types.hpp \
@@ -252,6 +253,7 @@ SOURCES += \
     camera/frame_uncompressor.cpp \
     camera/kinect4.cpp \
     camera/kinect4_data.cpp \
+    camera/kinect4_network.cpp \
     camera/volumetric_cloud_video_manager.cpp \
     camera/volumetric_cloud_video_resource.cpp \
     camera/volumetric_full_video_manager.cpp \
@@ -301,6 +303,7 @@ SOURCES += \
     thirdparty/stb/stb_image.cpp \
     thirdparty/stb/stb_image_resize.cpp \
     thirdparty/stb/stb_image_write.cpp \
+    utility/paths.cpp
 
 
 #DISTFILES += \

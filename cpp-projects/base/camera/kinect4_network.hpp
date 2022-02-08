@@ -28,11 +28,12 @@
 
 // std
 #include <string>
+#include <chrono>
 
 // local
-#include "kinect4_types.hpp"
+#include "kinect4_data.hpp"
 
-namespace tool::camera::K4 {
+namespace tool::network {
 
 using namespace std::literals::string_view_literals;
 
@@ -71,12 +72,6 @@ enum Feedback : std::int8_t{
     timeout
 };
 
-enum CompressMode : std::int8_t{
-    Full= 0,
-    Cloud,
-    None
-};
-
 enum Command : std::int8_t{
     Quit,
     Shutdown,
@@ -84,6 +79,12 @@ enum Command : std::int8_t{
 };
 
 struct Header{
+
+    Header() = default;
+    Header(std::int8_t* data){
+        std::copy(data, data + sizeof(Header), reinterpret_cast<std::int8_t*>(this));
+    }
+
     MessageType type;
     std::uint32_t totalSizeBytes = 0;
     std::uint16_t totalNumberPackets = 0;
@@ -92,20 +93,19 @@ struct Header{
     std::uint32_t currentPacketTime = 0;
     std::uint32_t dataOffset = 0;
     std::int32_t idMessage = -1;
+
+    static Header generate_mono_packet(MessageType type, size_t messageNbBytes);
 };
 
 struct UdpMessage{
+    void copy_to_data(const Header &header, size_t messageNbBytes, std::vector<std::int8_t> &data) const;
+    void read_from_data(std::int8_t *data, std::uint32_t messageNbBytes);
 };
 
 struct UdpInitFromManager : UdpMessage{
 
-    UdpInitFromManager() = default;
-    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket) : port(port), maxSizeUdpPacket(maxSizeUdpPacket){
-        std::fill(ipAdress.begin(), ipAdress.end(), ' ');
-        if(ipAdressStr.size() <= 45){
-            std::copy(std::begin(ipAdressStr), std::end(ipAdressStr), ipAdress.begin());
-        }
-    }
+    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket);
+    UdpInitFromManager(std::int8_t *data, std::uint32_t messageNbBytes);
 
     std::array<char, 45> ipAdress;
     std::uint16_t port;
@@ -113,18 +113,25 @@ struct UdpInitFromManager : UdpMessage{
 };
 
 struct UdpCommand : UdpMessage{
+
+    UdpCommand() = default;
+    UdpCommand(std::int8_t *data, std::uint32_t messageNbBytes);
+
     Command command;
 };
 
 struct UdpUpdateDeviceSettings : UdpMessage{
 
+    UdpUpdateDeviceSettings() = default;
+    UdpUpdateDeviceSettings(std::int8_t *data, std::uint32_t messageNbBytes);
+
     // capture
     bool startDevice   = true;
     bool openCamera    = true;
-    Mode mode          = Mode::Cloud_640x576;
+    camera::K4::Mode mode    = camera::K4::Mode::Cloud_640x576;
     bool captureAudio  = true;
     bool captureIMU    = true;
-    CompressMode compressMode  = CompressMode::Cloud;
+    camera::K4::CompressMode compressMode  = camera::K4::CompressMode::Cloud;
 
     // network
     bool sendData      = true;
@@ -140,21 +147,34 @@ struct UdpUpdateDeviceSettings : UdpMessage{
 };
 
 struct UdpUpdateFiltersSettings : UdpMessage{
-    K4::Filters filters;
+    UdpUpdateFiltersSettings() = default;
+    UdpUpdateFiltersSettings(std::int8_t *data, std::uint32_t messageNbBytes);
+    camera::K4::Filters filters;
 };
 
 struct UdpFeedbackMessage : UdpMessage{
+    UdpFeedbackMessage() = default;
+    UdpFeedbackMessage(std::int8_t *data, std::uint32_t messageNbBytes);
     MessageType receivedMessageType;
     Feedback feedback;
 };
 
-//struct DataPacket{
-//    Header header;
-//    std::vector<std::int8_t> data;
-//};
+struct MultiPacketsMessageData{
 
-//struct DataMessage : UdpMessage{
-//    std::vector<DataPacket> packets;
-//};
+    bool receivingFrame = false;
+    size_t timeoutMs = 15;
+    std::chrono::nanoseconds firstPacketTimestamp;
+    size_t totalBytesReceived = 0;
+    size_t nbPacketsReceived = 0;
+    std::vector<std::int8_t> frameData;
+    int idLastMultiPacketsMessageReceived = -1;
+
+    bool process(const Header &header, std::int8_t *data, size_t nbBytes);
+    bool all_received(const Header &header);
+
+    std::shared_ptr<camera::K4::CompressedCloudFrame> generate_compressed_cloud_frame();
+    std::shared_ptr<camera::K4::CompressedFullFrame> generate_compressed_full_frame();
+};
+
 
 }

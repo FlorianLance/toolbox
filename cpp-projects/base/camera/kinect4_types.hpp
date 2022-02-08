@@ -108,6 +108,13 @@ namespace tool::camera::K4 {
         SizeEnum
     };
 
+    enum CompressMode : std::int8_t{
+        Full= 0,
+        Cloud,
+        None
+    };
+
+
     using M   = Mode;
     using IF  = ImageFormat;
     using CR  = ColorResolution;

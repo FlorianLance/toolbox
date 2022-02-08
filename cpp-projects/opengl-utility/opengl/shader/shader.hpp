@@ -50,6 +50,8 @@
 
 namespace tool::gl {
 
+using namespace std::literals::string_view_literals;
+
 class Shader{
 public:
 
@@ -59,14 +61,16 @@ public:
     };
 
     using Name = std::string_view;
-    using TShader = std::tuple<Type,GLenum,Name>;
+    using Ext = std::string_view;
+    using TShader = std::tuple<
+        Type,                         GLenum,                      Name,             Ext>;
     static constexpr TupleArray<Type::SizeEnum, TShader> shaders = {{
-        TShader{Type::vertex,          GL_VERTEX_SHADER,           "vertex"},
-        TShader{Type::fragment,        GL_FRAGMENT_SHADER,         "fragment"},
-        TShader{Type::geometry,        GL_GEOMETRY_SHADER,         "geometry"},
-        TShader{Type::tess_control,    GL_TESS_CONTROL_SHADER,     "tess_control"},
-        TShader{Type::tess_eval,       GL_TESS_EVALUATION_SHADER,  "tess_eval"},
-        TShader{Type::compute,         GL_COMPUTE_SHADER,          "compute"},
+        TShader{Type::vertex,          GL_VERTEX_SHADER,           "vertex"sv,       ".vs"sv},
+        TShader{Type::fragment,        GL_FRAGMENT_SHADER,         "fragment"sv,     ".fs"sv},
+        TShader{Type::geometry,        GL_GEOMETRY_SHADER,         "geometry"sv,     ".gs"sv},
+        TShader{Type::tess_control,    GL_TESS_CONTROL_SHADER,     "tess_control"sv, ".tcs"sv},
+        TShader{Type::tess_eval,       GL_TESS_EVALUATION_SHADER,  "tess_eval"sv,    ".tes"sv},
+        TShader{Type::compute,         GL_COMPUTE_SHADER,          "compute"sv,      ".cs"sv},
     }};
 
     static constexpr GLenum get_gl_type(Type t) {
@@ -74,6 +78,9 @@ public:
     }
     static constexpr std::string_view get_name(Type t) {
         return shaders.at<0,2>(t);
+    }
+    static constexpr std::string_view get_ext(Type t) {
+        return shaders.at<0,3>(t);
     }
 
     static std::unordered_map<std::string, Shader::Type> extensions;

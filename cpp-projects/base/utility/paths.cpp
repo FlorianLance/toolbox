@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-3d-engine                                                          **
+** Toolbox-base                                                               **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -24,49 +24,58 @@
 **                                                                            **
 ********************************************************************************/
 
-#pragma once
+
+#include "paths.hpp"
 
 // std
-#include <vector>
-#include <string>
+#include <filesystem>
 
-// local
-#include "imgui/imgui.h"
+using namespace tool;
+using namespace std::filesystem;
 
+void Paths::initialize(char *argv[]){
 
-namespace tool::graphics {
+    auto exePath = weakly_canonical(path(argv[0]));
+    executable = exePath.string();
 
-struct ImguiLogs{
+    auto applicationDirPath = exePath.parent_path();
+    applicationDir = applicationDirPath.string();
 
-    ImGuiTextBuffer buffer;
-    ImGuiTextFilter filter;
-    ImVector<int> lineOffsets; // Index to lines offset. We maintain this with AddLog() calls.
-    bool autoScroll = true;  // Keep scrolling if already at the bottom.
+    // resources
+    auto resourcesDirPath = (applicationDirPath / "resources");
+    if(exists(resourcesDirPath)){
+        resourcesDir = resourcesDirPath.string();
+    }
+    auto shadersDirPath  = (resourcesDirPath / "shaders");
+    if(exists(shadersDirPath)){
+        shadersDir = shadersDirPath.string();
+    }   
 
-    ImguiLogs();
-    void clear();
-
-    void add_log(const char* fmt, ...){// IM_FMTARGS(2){
-        int old_size = buffer.size();
-        va_list args;
-        va_start(args, fmt);
-        buffer.appendfv(fmt, args);
-        va_end(args);
-        for (int new_size = buffer.size(); old_size < new_size; old_size++){
-            if (buffer[old_size] == '\n'){
-                lineOffsets.push_back(old_size + 1);
-            }
-        }
+    auto dataDirPath = (applicationDirPath / "data");
+    if(exists(dataDirPath)){
+        dataDir = dataDirPath.string();
     }
 
-    void draw(const char* name);
-};
+    auto logsDirPath = (applicationDirPath / "logs");
+    if(exists(logsDirPath)){
+        logsDir = logsDirPath.string();
+    }
 
-struct ImguiLogs2{
-
-
-    std::vector<std::string> logs;
-    ImguiLogs2(){}
-    void draw(const char* name);
-};
+    auto configDirPath = (applicationDirPath / "config");
+    if(exists(configDirPath)){
+        configDir = configDirPath.string();
+    }
 }
+
+std::string Paths::get_shader(std::string_view name, std::string_view ext){
+    std::string shaderPath;
+    if(shadersDir.has_value()){
+        shaderPath.reserve(shadersDir.value().length() + name.length() + ext.length());
+        shaderPath.append(shadersDir.value());
+        shaderPath.append(sep);
+        shaderPath.append(name);        
+        shaderPath.append(ext);
+    }
+    return shaderPath;
+}
+

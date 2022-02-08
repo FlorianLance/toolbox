@@ -40,12 +40,9 @@ void ImguiLogs::clear(){
     lineOffsets.push_back(0);
 }
 
-void ImguiLogs::draw(const char *title, bool *p_open){
+void ImguiLogs::draw(const char* name){
 
-//    if (!ImGui::Begin(title, p_open)){
-//        ImGui::End();
-//        return;
-//    }
+    ImGui::BeginChild(name, ImVec2(0, 0), false);
 
     // Options menu
     if (ImGui::BeginPopup("Options")){
@@ -65,7 +62,7 @@ void ImguiLogs::draw(const char *title, bool *p_open){
     filter.Draw("Filter", -100.0f);
 
     ImGui::Separator();
-    ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
     if (clearB){
         clear();
@@ -85,8 +82,9 @@ void ImguiLogs::draw(const char *title, bool *p_open){
         for (int line_no = 0; line_no < lineOffsets.Size; line_no++){
             const char* line_start = buf + lineOffsets[line_no];
             const char* line_end = (line_no + 1 < lineOffsets.Size) ? (buf + lineOffsets[line_no + 1] - 1) : buf_end;
-            if (filter.PassFilter(line_start, line_end))
+            if (filter.PassFilter(line_start, line_end)){
                 ImGui::TextUnformatted(line_start, line_end);
+            }
         }
     }else{
         // The simplest and easy way to display the entire buffer:
@@ -117,9 +115,20 @@ void ImguiLogs::draw(const char *title, bool *p_open){
     }
     ImGui::PopStyleVar();
 
-    if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+    if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()){
         ImGui::SetScrollHereY(1.0f);
+    }
 
     ImGui::EndChild();
-//    ImGui::End();
+    ImGui::EndChild();
+}
+
+void ImguiLogs2::draw(const char *name){
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+    ImGui::BeginChild(name, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 260), false, window_flags);
+    for(const auto &log : logs){
+        ImGui::Selectable(log.c_str());
+    }
+    ImGui::EndChild();
 }
