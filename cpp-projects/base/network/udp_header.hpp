@@ -27,102 +27,67 @@
 #pragma once
 
 // std
-#include <memory>
-
-// signals
-#include "lsignal.h"
+#include <vector>
 
 namespace tool::network{
 
-class UdpSender {
+struct Header{
 
-public:
+    Header() = default;
+    Header(std::int8_t* data){
+        std::copy(data, data + sizeof(Header), reinterpret_cast<std::int8_t*>(this));
+    }
 
-    UdpSender();
-    ~UdpSender();
+    std::int8_t type = 0;
+    std::uint32_t totalSizeBytes = 0;
+    std::uint16_t totalNumberPackets = 0;
+    std::uint16_t currentPacketId = 0;
+    std::uint16_t currentPacketSizeBytes = 0;
+    std::int64_t currentPacketTime = 0;
+    std::uint32_t dataOffset = 0;
+    std::int32_t idMessage = -1;
 
-    // socket
-    bool init_socket(std::string tagetName, std::string writingPort);//, size_t readingInterface);//, int readingPort);
-    void clean_socket();
+    static Header generate_mono_packet_message(int8_t type, size_t messageNbBytes);
+};
 
-    // send
-    size_t send_packet(std::int8_t *data, std::int32_t size);
+struct UdpMonoPacketMessage{
+    void init_packet_from_data(std::int8_t *data, std::uint32_t messageNbBytes);
+    void copy_packet_to_data(const Header &header, size_t messageNbBytes, std::vector<std::int8_t> &data) const;
+};
 
-    size_t sizeUdpPacket = 9000;
+struct UdpMultiPacketsMessage{
+
+    bool receivingFrame = false;
+    size_t timeoutMs = 15;
+    std::int64_t firstPacketTimestamp;
+    size_t totalBytesReceived = 0;
+    size_t nbPacketsReceived = 0;
+    std::vector<std::int8_t> frameData;
+    int idLastMultiPacketsMessageReceived = -1;
+
+    bool copy_packet_to_data(const Header &header, size_t nbBytes, std::int8_t *data);
+    bool all_received(const Header &header);
 
 protected:
 
-    std::vector<std::int8_t> data;
-
     template<typename T>
-    void write(const T &v, size_t &offset){
+    void read(T &v, size_t &offset){
         std::copy(
-            reinterpret_cast<const std::int8_t*>(&v),
-            reinterpret_cast<const std::int8_t*>(&v) + sizeof(T),
-            data.begin() + offset);
+            frameData.data() + offset,
+            frameData.data() + offset + sizeof(T),
+            reinterpret_cast<std::int8_t*>(&v));
         offset += sizeof(T);
     }
 
     template<typename T>
-    void write_array(T *a, size_t sizeArray, size_t &offset){
+    void read_array(T *a, size_t sizeArray, size_t &offset){
         auto nbBytes = sizeArray * sizeof(T);
         std::copy(
-            reinterpret_cast<std::int8_t*>(a),
-            reinterpret_cast<std::int8_t*>(a) + nbBytes,
-            data.begin() + offset);
+            frameData.data() + offset,
+            frameData.data() + offset + nbBytes,
+            reinterpret_cast<std::int8_t*>(a));
         offset += nbBytes;
     }
-
-private:
-
-    struct Impl;
-    std::unique_ptr<Impl> i = nullptr;
 };
+
 }
-
-//#pragma once
-
-//// Qt
-//#include <QObject>
-
-//// scaner
-//#include "network/tcp_data.hpp"
-
-
-//namespace tool::network{
-
-//class UdpSenderWorker;
-//using UdpSenderWorkerUP = std::unique_ptr<UdpSenderWorker>;
-
-//class UdpSenderWorker : public QObject{
-//    Q_OBJECT
-//public:
-
-//    UdpSenderWorker();
-//    ~UdpSenderWorker();
-//    void set_grabber_id(std::uint8_t id);
-
-//public slots:
-
-//    void enable_writing(QString writingAddress, int writingPort);
-//    void disable_writing();
-//    void send_frame(network::TcpPacket command, std::shared_ptr<camera::K2Frame> frame);
-
-//signals:
-
-//    void connected_state_signal(QString writingAddress, int writingPort, bool state);
-//    void nb_bytes_sent_signal(qint64 timeStamp, size_t nbBytes);
-//    void packets_failure_signal(size_t count);
-//    void frame_sent_signal(std::int64_t time);
-
-//private:
-
-//    bool init_socket(QString address, quint16 port);
-//    void clean_socket();
-
-//private:
-
-//    struct Impl;
-//    std::unique_ptr<Impl> m_p = nullptr;
-//};
-//}

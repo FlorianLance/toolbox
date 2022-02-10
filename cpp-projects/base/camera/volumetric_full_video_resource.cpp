@@ -12,6 +12,7 @@ using namespace tool::camera::K4;
 
 void VolumetricFullVideoResource::read_frame(std::ifstream &file, CompressedFullFrame *fData){
 
+    read(file, &fData->afterCaptureTS);
     read(file, &fData->mode);
     read_array(file, reinterpret_cast<char*>(&fData->calibration), sizeof (k4a_calibration_t));
     std::int32_t validVerticesCount;
@@ -114,6 +115,7 @@ bool VolumetricFullVideoResource::read_file(std::ifstream &file){
 
 void VolumetricFullVideoResource::write_frame(std::ofstream &file, CompressedFullFrame *fData){
 
+    write(file, fData->afterCaptureTS);                                             // std::int64_t
     write(file, static_cast<std::int32_t>(fData->mode));                            // std::int32_t
     write_array(file, reinterpret_cast<char*>(&fData->calibration),
                 sizeof (k4a_calibration_t));                                        // sizeof(k4a_calibration_t)
@@ -121,24 +123,27 @@ void VolumetricFullVideoResource::write_frame(std::ofstream &file, CompressedFul
     // # write color
     write(file, static_cast<std::int16_t>(fData->colorWidth));                      // std::int16_t
     write(file, static_cast<std::int16_t>(fData->colorHeight));                     // std::int16_t
-    write(file, static_cast<std::int32_t>(fData->encodedColorData.size()));              // std::int32_t
-    write_array(file, fData->encodedColorData.data(), fData->encodedColorData.size());        // buffer size * std::int8_t
+    write(file, static_cast<std::int32_t>(fData->encodedColorData.size()));         // std::int32_t
+    write_array(file, fData->encodedColorData.data(),
+                fData->encodedColorData.size());                                    // buffer size * std::int8_t
     // # write depth
     write(file, static_cast<std::int16_t>(fData->depthWidth));                      // std::int16_t
     write(file, static_cast<std::int16_t>(fData->depthHeight));                     // std::int16_t
-    write(file, static_cast<std::int32_t>(fData->encodedDepthData.size()));              // std::int32_t
-    write_array(file, fData->encodedDepthData.data(), fData->encodedDepthData.size());        // buffer size * std::int32_t
+    write(file, static_cast<std::int32_t>(fData->encodedDepthData.size()));         // std::int32_t
+    write_array(file, fData->encodedDepthData.data(),
+                fData->encodedDepthData.size());                                    // buffer size * std::int32_t
     // # write infra
     write(file, static_cast<std::int16_t>(fData->infraWidth));                      // std::int16_t
     write(file, static_cast<std::int16_t>(fData->infraHeight));                     // std::int16_t
-    write(file, static_cast<std::int32_t>(fData->encodedInfraData.size()));              // std::int32_t
-    write_array(file, fData->encodedInfraData.data(), fData->encodedInfraData.size());        // buffer size * std::int32_t
+    write(file, static_cast<std::int32_t>(fData->encodedInfraData.size()));         // std::int32_t
+    write_array(file, fData->encodedInfraData.data(),
+                fData->encodedInfraData.size());                                    // buffer size * std::int32_t
 
     // # write audio
-    write(file, static_cast<std::int32_t>(fData->audioFrames.size()));                  // std::int32_t
+    write(file, static_cast<std::int32_t>(fData->audioFrames.size()));              // std::int32_t
     if(fData->audioFrames.size() > 0){
         write_array(file, reinterpret_cast<float*>(fData->audioFrames.data()),
-                    fData->audioFrames.size()*7);                                       // buffer size * 7 * float
+                    fData->audioFrames.size()*7);                                   // buffer size * 7 * float
     }
     // # write imu
     write_array(file, reinterpret_cast<char*>(&fData->imuSample), sizeof (ImuSample));

@@ -95,6 +95,7 @@ struct Kinect4::Impl{
     Parameters parameters;
 
     // infos
+    size_t idCapture    = 0;
     size_t colorWidth   = 0;
     size_t colorHeight  = 0;
     size_t colorSize    = 0;
@@ -104,6 +105,9 @@ struct Kinect4::Impl{
     ColorResolution colorResolution;
     ImageFormat imageFormat;
     DepthMode depthMode;
+
+    // times
+    std::chrono::nanoseconds afterCaptureTS;
 
     // state
     std::atomic_bool readFramesFromCameras = false;
@@ -470,13 +474,16 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         try {
             Bench::start("[Kinect4] Device get_capture");
             const int32_t timeoutMs = 300;
-            bool success = device.get_capture(capture.get(), std::chrono::milliseconds(timeoutMs));
+            bool success   = device.get_capture(capture.get(), std::chrono::milliseconds(timeoutMs));
             Bench::stop();
 
             if(!success){
                 Logger::error("[Kinect4] get_capture timeout\n");
                 continue;
             }
+
+            // update capture timestamp
+            afterCaptureTS = nanoseconds_since_epoch();
 
             if(p.captureAudio){
                 read_from_microphones();
@@ -523,6 +530,8 @@ void Kinect4::Impl::read_frames(K4::Mode mode){
         if(p.sendDisplayColorFrame || p.sendDisplayDepthFrame || p.sendDisplayInfraredFrame || p.sendDisplayCloud){
             display_frame(p, mode);
         }
+
+        idCapture++;
     }
 }
 
@@ -760,6 +769,10 @@ void Kinect4::Impl::compress_cloud_frame(const Parameters &p){
         pointCloudImage.value(),
         reinterpret_cast<float*>(audioFrames.data()), 7*lastFrameCount);
 
+    compressedCloudFrame->idCapture      = idCapture;
+    compressedCloudFrame->afterCaptureTS = afterCaptureTS.count();
+
+
     if(compressedCloudFrame != nullptr){
 
         // add imu
@@ -795,6 +808,9 @@ void Kinect4::Impl::compress_full_frame(const Parameters &p, Mode mode){
         validDepthValues,
         parameters.filters.jpegCompressionRate,
         colorImage, depthImage, infraredImage);
+
+    compressedFullFrame->idCapture     = idCapture;
+    compressedFullFrame->afterCaptureTS = afterCaptureTS.count();
 
     if(compressedFullFrame != nullptr){
 
@@ -1012,6 +1028,7 @@ void Kinect4::Impl::init_data(K4::Mode mode){
     depthSizedColorImage = std::nullopt;
 
     // reset sizes
+    idCapture            = 0;
     colorWidth           = 0;
     colorHeight          = 0;
     colorSize            = 0;

@@ -18,12 +18,15 @@ CompressedCloudFrame *VolumetricCloudVideoResource::get_cloud_frame(size_t idFra
 
 void VolumetricCloudVideoResource::read_frame(std::ifstream &file, CompressedCloudFrame *fData){
 
+    read(file, &fData->afterCaptureTS);
+
     // # read cloud
     std::int32_t validVerticesCount;
     read(file, &validVerticesCount);
-    std::int32_t cloudBufferSize;
-    read(file, &cloudBufferSize);
     fData->validVerticesCount = validVerticesCount;
+
+    std::int32_t cloudBufferSize;
+    read(file, &cloudBufferSize);        
     fData->encodedCloudData.resize(cloudBufferSize);
     read_array(file, fData->encodedCloudData.data(), fData->encodedCloudData.size());
 
@@ -50,21 +53,23 @@ void VolumetricCloudVideoResource::read_frame(std::ifstream &file, CompressedClo
 void VolumetricCloudVideoResource::write_frame(std::ofstream &file, CompressedCloudFrame *fData){
 
     // # write cloud
+    write(file, fData->afterCaptureTS);                                                 // std::int64_t
     write(file, static_cast<std::int32_t>(fData->validVerticesCount));                  // std::int32_t
-    write(file, static_cast<std::int32_t>(fData->encodedCloudData.size()));                  // std::int32_t
-    write_array(file, fData->encodedCloudData.data(), fData->encodedCloudData.size());            // buffer size * std::int32_t
+    write(file, static_cast<std::int32_t>(fData->encodedCloudData.size()));             // std::int32_t
+    write_array(file, fData->encodedCloudData.data(), fData->encodedCloudData.size());  // buffer size * std::int32_t
 
     // # write color
     write(file, static_cast<std::int16_t>(fData->colorWidth));                          // std::int16_t
     write(file, static_cast<std::int16_t>(fData->colorHeight));                         // std::int16_t
-    write(file, static_cast<std::int32_t>(fData->encodedColorData.size()));                  // std::int32_t
-    write_array(file, fData->encodedColorData.data(), fData->encodedColorData.size());            // buffer size * std::int8_t
+    write(file, static_cast<std::int32_t>(fData->encodedColorData.size()));             // std::int32_t
+    write_array(file, fData->encodedColorData.data(), fData->encodedColorData.size());  // buffer size * std::int8_t
 
     // # write audio
     write(file, static_cast<std::int32_t>(fData->audioFrames.size()));                  // std::int32_t
     if(fData->audioFrames.size() > 0){
-        write_array(file, reinterpret_cast<float*>(fData->audioFrames.data()),
-                    fData->audioFrames.size()*7);                                       // buffer size * 7 * float
+        write_array(file,
+            reinterpret_cast<float*>(fData->audioFrames.data()),
+            fData->audioFrames.size()*7);                                       // buffer size * 7 * float
     }
     // # write imu
     write_array(file, reinterpret_cast<char*>(&fData->imuSample), sizeof (ImuSample));

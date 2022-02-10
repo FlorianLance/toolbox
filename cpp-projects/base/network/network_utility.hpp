@@ -52,13 +52,13 @@ struct Host{
     [[maybe_unused]] static std::string get_name();
 };
 
-
-
-
 struct Interface{
     Protocol protocol;
     std::string ipAddress;
     static std::vector<Interface> list_local_interfaces(Protocol protocol);
 };
+
+
+
 
 }

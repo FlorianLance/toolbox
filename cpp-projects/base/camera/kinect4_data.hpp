@@ -78,14 +78,14 @@ namespace tool::camera::K4{
 
     // compressed common frame
     struct CompressedFrame{
+        size_t idCapture = 0;
+        std::int64_t afterCaptureTS = 0;
         size_t validVerticesCount = 0;
-
         size_t colorWidth = 0;
         size_t colorHeight = 0;
         std::vector<std::uint8_t> encodedColorData;
 
 //        std::vector<std::uint8_t> encodedAudioData; // todo
-
         std::vector<std::array<float, 7>> audioFrames; // to be removed
         ImuSample imuSample;
     };
