@@ -202,10 +202,19 @@ void FullFrameUncompressor::generate_cloud(CompressedFullFrame *cFrame, const st
 
 bool FullFrameUncompressor::uncompress(CompressedFullFrame *cFrame, FullFrame &fframe){
 
+    fframe.colorWidth  = 0;
+    fframe.colorHeight = 0;
+    fframe.depthWidth  = 0;
+    fframe.depthHeight = 0;
+    fframe.infraWidth  = 0;
+    fframe.infraHeight = 0;
+
     if(cFrame->encodedColorData.size() > 0){
         if(!uncompress_color(cFrame, fframe.imageColorData)){
             return false;
         }
+        fframe.colorWidth  = cFrame->colorWidth;
+        fframe.colorHeight = cFrame->colorHeight;
     }
     // depth
     if(cFrame->encodedDepthData.size() > 0){
@@ -213,11 +222,15 @@ bool FullFrameUncompressor::uncompress(CompressedFullFrame *cFrame, FullFrame &f
             return false;
         }
         convert_to_depth_image(cFrame->mode, cFrame->depthWidth, cFrame->depthHeight, fframe.rawDepthData, fframe.imageDepthData);
+        fframe.depthWidth  = cFrame->depthWidth;
+        fframe.depthHeight = cFrame->depthHeight;
     }
     // infra
     if(cFrame->encodedInfraData.size() > 0){
         uncompress_infra(cFrame, fframe.rawInfraData);
         convert_to_infra_image(cFrame->infraWidth, cFrame->infraHeight, fframe.rawInfraData, fframe.imageInfraData);
+        fframe.infraWidth  = cFrame->infraWidth;
+        fframe.infraHeight = cFrame->infraHeight;
     }
     // cloud
     if(cFrame->encodedDepthData.size() > 0){

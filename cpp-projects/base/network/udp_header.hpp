@@ -52,7 +52,7 @@ struct Header{
 
 struct UdpMonoPacketMessage{
     void init_packet_from_data(std::int8_t *data, std::uint32_t messageNbBytes);
-    void copy_packet_to_data(const Header &header, size_t messageNbBytes, std::vector<std::int8_t> &data) const;
+    void copy_packet_to_data(const Header &header, std::vector<int8_t> &data) const;
 };
 
 struct UdpMultiPacketsMessage{
@@ -60,34 +60,55 @@ struct UdpMultiPacketsMessage{
     bool receivingFrame = false;
     size_t timeoutMs = 15;
     std::int64_t firstPacketTimestamp;
-    size_t totalBytesReceived = 0;
+    size_t totalBytesReceived = 0;    
     size_t nbPacketsReceived = 0;
-    std::vector<std::int8_t> frameData;
-    int idLastMultiPacketsMessageReceived = -1;
 
-    bool copy_packet_to_data(const Header &header, size_t nbBytes, std::int8_t *data);
+    int idLastMultiPacketsMessageReceived = -1;
+    int idLastMutliPacketsMessageSent = -1;
+
+    bool copy_packet_to_data(const Header &header, size_t nbBytes, std::int8_t *packetData, std::vector<int8_t> &data);
     bool all_received(const Header &header);
 
 protected:
 
     template<typename T>
-    void read(T &v, size_t &offset){
+    void read(T &v, std::int8_t *data, size_t &offset){
         std::copy(
-            frameData.data() + offset,
-            frameData.data() + offset + sizeof(T),
+            data + offset,
+            data + offset + sizeof(T),
             reinterpret_cast<std::int8_t*>(&v));
         offset += sizeof(T);
     }
 
     template<typename T>
-    void read_array(T *a, size_t sizeArray, size_t &offset){
+    void read_array(T *a, std::int8_t *data, size_t sizeArray, size_t &offset){
         auto nbBytes = sizeArray * sizeof(T);
         std::copy(
-            frameData.data() + offset,
-            frameData.data() + offset + nbBytes,
+            data + offset,
+            data + offset + nbBytes,
             reinterpret_cast<std::int8_t*>(a));
         offset += nbBytes;
     }
+
+    template<typename T>
+    void write(const T &v, std::int8_t *data, size_t &offset){
+        std::copy(
+            reinterpret_cast<const std::int8_t*>(&v),
+            reinterpret_cast<const std::int8_t*>(&v) + sizeof(T),
+            data + offset);
+        offset += sizeof(T);
+    }
+
+    template<typename T>
+    void write_array(T *a, std::int8_t *data, size_t sizeArray, size_t &offset){
+        auto nbBytes = sizeArray * sizeof(T);
+        std::copy(
+            reinterpret_cast<std::int8_t*>(a),
+            reinterpret_cast<std::int8_t*>(a) + nbBytes,
+            data+ offset);
+        offset += nbBytes;
+    }
+
 };
 
 }

@@ -52,6 +52,7 @@ struct UdpSender::Impl{
 };
 
 UdpSender::UdpSender(): i(std::make_unique<Impl>()){
+    update_size_packets(sizeUdpPacket);
 }
 
 UdpSender::~UdpSender(){
@@ -112,11 +113,11 @@ void UdpSender::clean_socket(){
     i->socket = nullptr;
 }
 
-size_t UdpSender::send_packet(int8_t *data, int32_t size){
+size_t UdpSender::send_packet_data(int8_t *packetData, size_t nbBytes){
 
     size_t bytesNbSent=0;
     try{
-        bytesNbSent = i->socket->send_to(boost::asio::buffer(data, size), i->endpoint->endpoint());
+        bytesNbSent = i->socket->send_to(boost::asio::buffer(packetData, nbBytes), i->endpoint->endpoint());
     } catch (const boost::system::system_error& error) {
         Logger::error(std::format("UdpSender::send_data: Cannot sent data to endpoint {}, error message: {}.\n",
             i->endpoint->endpoint().address().to_string(),
@@ -124,4 +125,63 @@ size_t UdpSender::send_packet(int8_t *data, int32_t size){
         );
     }
     return bytesNbSent;
+}
+
+size_t UdpSender::send_packet(Header &header){
+    return send_packet_data(packetBuffer.data(), header.totalSizeBytes);
+}
+
+size_t UdpSender::send_packets(Header &header, size_t allPacketsNbBytes){
+
+    constexpr size_t sizePacketHeader = sizeof (Header);
+    size_t sizePacketData   = sizeUdpPacket - sizePacketHeader;
+
+    size_t nbPacketsNeeded = allPacketsNbBytes / sizePacketData;
+    size_t rest            = allPacketsNbBytes % sizePacketData;
+    if(rest > 0){
+        ++nbPacketsNeeded;
+    }
+
+    header.totalSizeBytes     = nbPacketsNeeded * sizeof(Header) + allPacketsNbBytes;
+    header.totalNumberPackets = nbPacketsNeeded;
+
+    size_t nbBytesSent = 0;
+    for(size_t idP = 0; idP < header.totalNumberPackets; ++idP){
+
+        header.currentPacketId = idP;
+
+        if(idP < header.totalNumberPackets -1){
+            header.currentPacketSizeBytes = sizeUdpPacket;
+        }else{
+            header.currentPacketSizeBytes = rest + sizeof (Header);
+        }
+
+        header.currentPacketTime = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
+
+        // copy header
+        std::copy(
+            reinterpret_cast<std::int8_t*>(&header),
+            reinterpret_cast<std::int8_t*>(&header) + sizeof(Header),
+            packetBuffer.begin()
+        );
+
+        // copy data
+        std::copy(
+            bufferToSend.data() + header.dataOffset,
+            bufferToSend.data() + header.dataOffset + header.currentPacketSizeBytes - sizeof(Header),
+            packetBuffer.begin() + sizeof(Header)
+        );
+
+        // send packet
+        nbBytesSent += send_packet_data(packetBuffer.data(), header.currentPacketSizeBytes);
+
+        // update offset
+        header.dataOffset += header.currentPacketSizeBytes - sizeof(Header);
+    }
+    return nbBytesSent;
+}
+
+void UdpSender::update_size_packets(size_t newUdpPacketSize){
+    sizeUdpPacket = newUdpPacketSize;
+    packetBuffer.resize(sizeUdpPacket);
 }

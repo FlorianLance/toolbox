@@ -29,16 +29,11 @@
 // signal
 #include "lsignal.h"
 
+// local
+#include "udp_header.hpp"
+
 namespace tool::network{
 
-class UdpServer{
-public:
-};
-
-class UdpClient{
-public:
-
-};
 
 class UdpReader {
 
@@ -63,6 +58,10 @@ public:
     // signals
     lsignal::signal<void(bool)> connection_state_signal;
     lsignal::signal<void()> timeout_packet_signal;
+
+protected:
+
+    std::vector<std::int8_t> data;
 
 private :
 

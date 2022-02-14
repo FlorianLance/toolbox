@@ -52,20 +52,23 @@ void UdpMonoPacketMessage::init_packet_from_data(int8_t *data, uint32_t messageN
     std::copy(data, data + messageNbBytes, reinterpret_cast<std::int8_t*>(this));
 }
 
-void UdpMonoPacketMessage::copy_packet_to_data(const Header &header, size_t messageNbBytes, std::vector<int8_t> &data) const{
+void UdpMonoPacketMessage::copy_packet_to_data(const Header &header, std::vector<int8_t> &data) const{
+
     auto messageData = reinterpret_cast<const int8_t *>(this);
-    if(data.size() < header.totalSizeBytes){
-        data.resize(header.totalSizeBytes);
+    size_t dataSize = header.totalSizeBytes - sizeof(Header);
+    if(data.size() < dataSize){
+        data.resize(dataSize);
     }
+
     auto headerD = reinterpret_cast<const std::int8_t*>(&header);
-    std::copy(headerD, headerD + sizeof(Header), data.begin());
-    std::copy(messageData, messageData + messageNbBytes, data.begin() + sizeof(Header));
+    std::copy(headerD,      headerD     + sizeof(Header),   data.begin());
+    std::copy(messageData,  messageData + dataSize,         data.begin() + sizeof(Header));
 }
 
-bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nbBytes, int8_t *data){
+bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nbBytes, std::int8_t *packetData, std::vector<int8_t> &data){
 
     if(header.idMessage != idLastMultiPacketsMessageReceived){
-        //            Logger::message(std::format("New frame {}\n", header.idMessage));
+        //  Logger::message(std::format("New frame {}\n", header.idMessage));
         // new frame
         receivingFrame = true;
         idLastMultiPacketsMessageReceived = header.idMessage;
@@ -83,15 +86,15 @@ bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nb
     size_t totalDataSizeBytes   = header.totalSizeBytes - totalPacketSizeBytes;
 
     // resize data
-    if(frameData.size() < totalDataSizeBytes){
-        frameData.resize(totalDataSizeBytes);
+    if(data.size() < totalDataSizeBytes){
+        data.resize(totalDataSizeBytes);
     }
 
     // copy packet
     std::copy(
-        data,
-        data + header.currentPacketSizeBytes - sizeof (Header),
-        frameData.begin() + header.dataOffset
+        packetData,
+        packetData + header.currentPacketSizeBytes - sizeof (Header),
+        data.begin() + header.dataOffset
     );
 
     totalBytesReceived += nbBytes;
@@ -107,7 +110,8 @@ bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nb
     }
 
     // # packet timeout
-    size_t ts = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count()-firstPacketTimestamp*0.000001;
+    auto currentTime = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
+    size_t ts = (currentTime-firstPacketTimestamp)*0.000001;
     if(ts > timeoutMs){
         // drop packet
         Logger::error(fmt("MutliPacketsMessageData::process Timeout packet {}ms\n", ts));

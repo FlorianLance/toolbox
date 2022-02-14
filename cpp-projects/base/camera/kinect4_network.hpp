@@ -138,11 +138,13 @@ struct UdpFeedbackMessage : UdpMonoPacketMessage{
 
 
 struct UdpCompresedCloudFrameMessage : UdpMultiPacketsMessage{
-    std::shared_ptr<camera::K4::CompressedCloudFrame> generate_frame();
+    std::shared_ptr<camera::K4::CompressedCloudFrame> generate_frame(std::int8_t *data);
+    size_t initialize_data(std::shared_ptr<camera::K4::CompressedCloudFrame> frame, std::vector<std::int8_t> &data);
 };
 
 struct UdpCompresedFullFrameMessage : UdpMultiPacketsMessage{
-    std::shared_ptr<camera::K4::CompressedFullFrame> generate_frame();
+    std::shared_ptr<camera::K4::CompressedFullFrame> generate_frame(std::int8_t *data);
+    size_t initialize_data(std::shared_ptr<camera::K4::CompressedFullFrame> frame, std::vector<std::int8_t> &data);
 };
 
 }

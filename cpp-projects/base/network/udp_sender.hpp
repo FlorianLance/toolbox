@@ -32,6 +32,9 @@
 // signals
 #include "lsignal.h"
 
+// local
+#include "udp_header.hpp"
+
 namespace tool::network{
 
 class UdpSender {
@@ -46,32 +49,17 @@ public:
     void clean_socket();
 
     // send
-    size_t send_packet(std::int8_t *data, std::int32_t size);
+    size_t send_packet_data(std::int8_t *packetData, size_t nbBytes);
+    size_t send_packet(Header &header);
+    size_t send_packets(Header &header, size_t allPacketsNbBytes);
 
-    size_t sizeUdpPacket = 9000;
+    void update_size_packets(size_t newUdpPacketSize);
 
 protected:
 
-    std::vector<std::int8_t> data;
-
-    template<typename T>
-    void write(const T &v, size_t &offset){
-        std::copy(
-            reinterpret_cast<const std::int8_t*>(&v),
-            reinterpret_cast<const std::int8_t*>(&v) + sizeof(T),
-            data.begin() + offset);
-        offset += sizeof(T);
-    }
-
-    template<typename T>
-    void write_array(T *a, size_t sizeArray, size_t &offset){
-        auto nbBytes = sizeArray * sizeof(T);
-        std::copy(
-            reinterpret_cast<std::int8_t*>(a),
-            reinterpret_cast<std::int8_t*>(a) + nbBytes,
-            data.begin() + offset);
-        offset += nbBytes;
-    }
+    size_t sizeUdpPacket = 9000;
+    std::vector<std::int8_t> packetBuffer;
+    std::vector<std::int8_t> bufferToSend;
 
 private:
 
@@ -79,50 +67,3 @@ private:
     std::unique_ptr<Impl> i = nullptr;
 };
 }
-
-//#pragma once
-
-//// Qt
-//#include <QObject>
-
-//// scaner
-//#include "network/tcp_data.hpp"
-
-
-//namespace tool::network{
-
-//class UdpSenderWorker;
-//using UdpSenderWorkerUP = std::unique_ptr<UdpSenderWorker>;
-
-//class UdpSenderWorker : public QObject{
-//    Q_OBJECT
-//public:
-
-//    UdpSenderWorker();
-//    ~UdpSenderWorker();
-//    void set_grabber_id(std::uint8_t id);
-
-//public slots:
-
-//    void enable_writing(QString writingAddress, int writingPort);
-//    void disable_writing();
-//    void send_frame(network::TcpPacket command, std::shared_ptr<camera::K2Frame> frame);
-
-//signals:
-
-//    void connected_state_signal(QString writingAddress, int writingPort, bool state);
-//    void nb_bytes_sent_signal(qint64 timeStamp, size_t nbBytes);
-//    void packets_failure_signal(size_t count);
-//    void frame_sent_signal(std::int64_t time);
-
-//private:
-
-//    bool init_socket(QString address, quint16 port);
-//    void clean_socket();
-
-//private:
-
-//    struct Impl;
-//    std::unique_ptr<Impl> m_p = nullptr;
-//};
-//}

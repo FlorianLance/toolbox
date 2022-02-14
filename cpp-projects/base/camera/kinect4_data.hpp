@@ -116,6 +116,13 @@ namespace tool::camera::K4{
 
     // uncompressed
     struct FullFrame{
+        // sizes
+        size_t colorWidth = 0;
+        size_t colorHeight = 0;
+        size_t depthWidth = 0;
+        size_t depthHeight = 0;
+        size_t infraWidth = 0;
+        size_t infraHeight = 0;
         // raw
         std::vector<std::uint16_t> rawDepthData;
         std::vector<std::uint16_t> rawInfraData;
