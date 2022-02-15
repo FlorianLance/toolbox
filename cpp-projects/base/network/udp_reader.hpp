@@ -50,8 +50,6 @@ public:
     void start_reading();
     void stop_reading();
 
-    virtual void process_packet(std::vector<char> *packet, size_t nbBytes);
-
     bool is_reading() const noexcept;
     bool is_connected() const noexcept;
 
@@ -60,6 +58,8 @@ public:
     lsignal::signal<void()> timeout_packet_signal;
 
 protected:
+
+    virtual void process_packet(std::vector<char> *packet, size_t nbBytes);
 
     std::vector<std::int8_t> data;
 

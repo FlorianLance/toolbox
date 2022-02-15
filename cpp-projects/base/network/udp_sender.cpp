@@ -35,6 +35,7 @@
 
 // local
 #include "utility/logger.hpp"
+#include "utility/format.hpp"
 
 using namespace std::chrono_literals;
 using namespace std::chrono;
@@ -46,7 +47,7 @@ using namespace tool::network;
 
 struct UdpSender::Impl{
     io_service ioService;
-    std::unique_ptr<ip::udp::socket> socket;
+    std::unique_ptr<ip::udp::socket> socket = nullptr;
     boost::asio::ip::basic_resolver_results<ip::udp> endpoint;
     std::string solvedAdress;
 };
@@ -59,6 +60,9 @@ UdpSender::~UdpSender(){
     clean_socket();
 }
 
+bool UdpSender::is_opened() const{
+    return i->socket != nullptr;
+}
 
 bool UdpSender::init_socket(std::string targetName, std::string port){
 
@@ -88,7 +92,7 @@ bool UdpSender::init_socket(std::string targetName, std::string port){
 
     }catch (const boost::system::system_error& error){
 
-        Logger::error(std::format("UdpSender: Cannot resolve target name {} with writing port {}, error message: {}.\n",
+        Logger::error(fmt("UdpSender: Cannot resolve target name {} with writing port {}, error message: {}.\n",
             targetName, port, error.what()));
         clean_socket();
         return false;
@@ -106,7 +110,7 @@ void UdpSender::clean_socket(){
             std::this_thread::sleep_for (std::chrono::milliseconds(300));
             i->socket->close();
         }catch (const boost::system::system_error& error){
-            Logger::error(std::format("UdpSender: Cannot shutdown socket with adress {}, error message: {}.\n",
+            Logger::error(fmt("UdpSender: Cannot shutdown socket with adress {}, error message: {}.\n",
                 i->solvedAdress, error.what()));
         }
     }
@@ -119,7 +123,7 @@ size_t UdpSender::send_packet_data(int8_t *packetData, size_t nbBytes){
     try{
         bytesNbSent = i->socket->send_to(boost::asio::buffer(packetData, nbBytes), i->endpoint->endpoint());
     } catch (const boost::system::system_error& error) {
-        Logger::error(std::format("UdpSender::send_data: Cannot sent data to endpoint {}, error message: {}.\n",
+        Logger::error(fmt("UdpSender::send_data: Cannot sent data to endpoint {}, error message: {}.\n",
             i->endpoint->endpoint().address().to_string(),
             error.what())
         );

@@ -44,6 +44,8 @@ public:
     UdpSender();
     ~UdpSender();
 
+    bool is_opened() const;
+
     // socket
     bool init_socket(std::string tagetName, std::string writingPort);//, size_t readingInterface);//, int readingPort);
     void clean_socket();
