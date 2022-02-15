@@ -70,7 +70,7 @@ std::shared_ptr<CompressedCloudFrame> UdpCompresedCloudFrameMessage::generate_fr
 
     auto ccFrame = std::make_shared<CompressedCloudFrame>();
 
-    size_t offset = 0, nbAudioFrames, colorDataSize, cloudDataSize;
+    size_t offset = 0, nbAudioFrames, encodedColorDataSize, encodedcloudDataSize;
 
     // copy infos
     read(ccFrame->idCapture, data, offset);
@@ -79,44 +79,36 @@ std::shared_ptr<CompressedCloudFrame> UdpCompresedCloudFrameMessage::generate_fr
     read(ccFrame->colorHeight, data, offset);
     read(ccFrame->validVerticesCount, data, offset);
     read(nbAudioFrames, data, offset);   
-    read(colorDataSize, data, offset);  
-    read(cloudDataSize, data, offset);
+    read(encodedColorDataSize, data, offset);
+    read(encodedcloudDataSize, data, offset);
 
     // resize arrays
     ccFrame->audioFrames.resize(nbAudioFrames);
-    ccFrame->encodedColorData.resize(colorDataSize);
-    ccFrame->encodedCloudData.resize(cloudDataSize);
+    ccFrame->encodedColorData.resize(encodedColorDataSize);
+    ccFrame->encodedCloudData.resize(encodedcloudDataSize);
 
     // copy imusample
     read(ccFrame->imuSample, data, offset);
+
     // copy audio
-    read_array(ccFrame->audioFrames.data()->data(), data, nbAudioFrames*7, offset);
+    if(nbAudioFrames > 0){
+        read_array(ccFrame->audioFrames.data()->data(), data, nbAudioFrames*7, offset);
+    }
     // copy color
-    read_array(ccFrame->encodedColorData.data(), data, colorDataSize, offset);
+    if(encodedColorDataSize > 0){
+        read_array(ccFrame->encodedColorData.data(), data, encodedColorDataSize, offset);
+    }
     // copy cloud
-    read_array(ccFrame->encodedCloudData.data(), data, cloudDataSize, offset);
+    if(encodedcloudDataSize > 0){
+        read_array(ccFrame->encodedCloudData.data(), data, encodedcloudDataSize, offset);
+    }
 
     return ccFrame;
 }
 
-size_t UdpCompresedCloudFrameMessage::initialize_data(std::shared_ptr<camera::K4::CompressedCloudFrame> frame, std::vector<std::int8_t> &data){
+size_t UdpCompresedCloudFrameMessage::initialize_data(std::shared_ptr<CompressedCloudFrame> frame, std::vector<std::int8_t> &data){
 
-    size_t nbAudioFrames = frame->audioFrames.size();
-    size_t encColorDataSize = frame->encodedColorData.size();
-    size_t encCloudDataSize = frame->encodedCloudData.size();
-
-    size_t totalDataSize =
-        sizeof(frame->idCapture)  + sizeof(frame->afterCaptureTS) +
-        sizeof(frame->colorWidth) + sizeof(frame->colorHeight) +
-        sizeof(frame->validVerticesCount) +
-        sizeof(nbAudioFrames) +
-        sizeof(encColorDataSize) +
-        sizeof(encCloudDataSize) +
-        sizeof(ImuSample) +
-        nbAudioFrames * 28+
-        encColorDataSize +
-        encCloudDataSize;
-
+    size_t totalDataSize = frame->total_data_size();
     size_t offset = 0;
     if(data.size() < totalDataSize){
         data.resize(totalDataSize);
@@ -130,17 +122,28 @@ size_t UdpCompresedCloudFrameMessage::initialize_data(std::shared_ptr<camera::K4
     write(frame->colorWidth, dataP, offset);
     write(frame->colorHeight, dataP, offset);
     write(frame->validVerticesCount, dataP, offset);
+    size_t nbAudioFrames    = frame->audioFrames.size();
     write(nbAudioFrames, dataP, offset);
+    size_t encColorDataSize = frame->encodedColorData.size();
     write(encColorDataSize, dataP, offset);
+    size_t encCloudDataSize = frame->encodedCloudData.size();
     write(encCloudDataSize, dataP, offset);
+
     // copy imusample
     write(frame->imuSample, dataP, offset);
+
     // copy audio
-    write_array(frame->audioFrames.data()->data(), dataP, nbAudioFrames*7, offset);
+    if(nbAudioFrames > 0){
+        write_array(frame->audioFrames.data()->data(), dataP, nbAudioFrames*7, offset);
+    }
     // copy color
-    write_array(frame->encodedColorData.data(),  dataP, encColorDataSize,offset);
+    if(encColorDataSize > 0){
+        write_array(frame->encodedColorData.data(),  dataP, encColorDataSize,offset);
+    }
     // copy cloud
-    write_array(frame->encodedCloudData.data(), dataP, encCloudDataSize, offset);
+    if(encCloudDataSize > 0){
+        write_array(frame->encodedCloudData.data(), dataP, encCloudDataSize, offset);
+    }
 
     return totalDataSize;
 }
@@ -149,12 +152,13 @@ std::shared_ptr<CompressedFullFrame> UdpCompresedFullFrameMessage::generate_fram
 
     auto cfFrame = std::make_shared<CompressedFullFrame>();
 
-
-    size_t offset = 0, nbAudioFrames, colorDataSize, depthDataSize, infraDataSize;
+    size_t offset = 0, nbAudioFrames, encodedColorDataSize, encodedDepthDataSize, encodedInfraDataSize;
 
     // copy infos
     read(cfFrame->idCapture, data, offset);
     read(cfFrame->afterCaptureTS, data, offset);
+    read(cfFrame->mode, data, offset);
+    read(cfFrame->calibration, data, offset);
     read(cfFrame->colorWidth, data, offset);
     read(cfFrame->colorHeight, data, offset);
     read(cfFrame->depthWidth, data, offset);
@@ -163,26 +167,35 @@ std::shared_ptr<CompressedFullFrame> UdpCompresedFullFrameMessage::generate_fram
     read(cfFrame->infraHeight, data, offset);
     read(cfFrame->validVerticesCount, data, offset);
     read(nbAudioFrames, data, offset);
-    read(colorDataSize, data, offset);
-    read(depthDataSize, data, offset);
-    read(infraDataSize, data, offset);
+    read(encodedColorDataSize, data, offset);
+    read(encodedDepthDataSize, data, offset);
+    read(encodedInfraDataSize, data, offset);
 
     // resize arrays
     cfFrame->audioFrames.resize(nbAudioFrames);
-    cfFrame->encodedColorData.resize(colorDataSize);
-    cfFrame->encodedDepthData.resize(depthDataSize);
-    cfFrame->encodedInfraData.resize(infraDataSize);
+    cfFrame->encodedColorData.resize(encodedColorDataSize);
+    cfFrame->encodedDepthData.resize(encodedDepthDataSize);
+    cfFrame->encodedInfraData.resize(encodedInfraDataSize);
 
     // copy imusample
     read(cfFrame->imuSample, data, offset);
+
     // copy audio
-    read_array(cfFrame->audioFrames.data()->data(), data, nbAudioFrames*7, offset);
+    if(nbAudioFrames > 0){
+        read_array(cfFrame->audioFrames.data()->data(), data, nbAudioFrames*7, offset);
+    }
     // copy color
-    read_array(cfFrame->encodedColorData.data(), data, colorDataSize, offset);
+    if(encodedColorDataSize > 0){
+        read_array(cfFrame->encodedColorData.data(), data, encodedColorDataSize, offset);
+    }
     // copy depth
-    read_array(cfFrame->encodedDepthData.data(), data, depthDataSize, offset);
+    if(encodedDepthDataSize > 0){
+        read_array(cfFrame->encodedDepthData.data(), data, encodedDepthDataSize, offset);
+    }
     // copy infra
-    read_array(cfFrame->encodedInfraData.data(), data, infraDataSize, offset);
+    if(encodedInfraDataSize > 0){
+        read_array(cfFrame->encodedInfraData.data(), data, encodedInfraDataSize, offset);
+    }
 
     return cfFrame;
 }
@@ -194,21 +207,7 @@ size_t UdpCompresedFullFrameMessage::initialize_data(std::shared_ptr<camera::K4:
     size_t encDepthDataSize = frame->encodedDepthData.size();
     size_t encInfraDataSize = frame->encodedInfraData.size();
 
-    size_t totalDataSize =
-        sizeof(frame->idCapture)  + sizeof(frame->afterCaptureTS) +
-        sizeof(frame->colorWidth) + sizeof(frame->colorHeight) +
-        sizeof(frame->depthWidth) + sizeof(frame->depthHeight) +
-        sizeof(frame->infraWidth) + sizeof(frame->infraHeight) +
-        sizeof(frame->validVerticesCount) +
-        sizeof(nbAudioFrames) +
-        sizeof(encColorDataSize) +
-        sizeof(encDepthDataSize) +
-        sizeof(encInfraDataSize) +
-        sizeof(ImuSample) +
-        nbAudioFrames * sizeof(float)*7+
-        encColorDataSize +
-        encDepthDataSize +
-        encInfraDataSize;
+    size_t totalDataSize = frame->total_data_size();
 
     size_t offset = 0;
     if(data.size() < totalDataSize){
@@ -217,10 +216,11 @@ size_t UdpCompresedFullFrameMessage::initialize_data(std::shared_ptr<camera::K4:
 
     auto dataP = data.data();
 
-
     // copy infos
     write(frame->idCapture, dataP, offset);
     write(frame->afterCaptureTS, dataP, offset);
+    write(frame->mode, dataP, offset);
+    write(frame->calibration, dataP, offset);
     write(frame->colorWidth, dataP, offset);
     write(frame->colorHeight, dataP, offset);
     write(frame->depthWidth, dataP, offset);
@@ -235,13 +235,21 @@ size_t UdpCompresedFullFrameMessage::initialize_data(std::shared_ptr<camera::K4:
     write(frame->imuSample, dataP, offset);
 
     // copy audio
-    write_array(frame->audioFrames.data(), dataP, nbAudioFrames*7, offset);
+    if(nbAudioFrames > 0){
+        write_array(frame->audioFrames.data()->data(), dataP, nbAudioFrames*7, offset);
+    }
     // copy color
-    write_array(frame->encodedColorData.data(), dataP, encColorDataSize, offset);
+    if(encColorDataSize > 0){
+        write_array(frame->encodedColorData.data(), dataP, encColorDataSize, offset);
+    }
     // copy depth
-    write_array(frame->encodedDepthData.data(), dataP, encDepthDataSize, offset);
-//    // copy infra
-//    write_array(frame->encodedInfraData.data(), dataP, encInfraDataSize, offset);
+    if(encDepthDataSize > 0){
+        write_array(frame->encodedDepthData.data(), dataP, encDepthDataSize, offset);
+    }
+    // copy infra
+    if(encInfraDataSize > 0){
+        write_array(frame->encodedInfraData.data(), dataP, encInfraDataSize, offset);
+    }
 
     return totalDataSize;
 }

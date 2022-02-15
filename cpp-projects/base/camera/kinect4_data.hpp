@@ -74,6 +74,7 @@ namespace tool::camera::K4{
         ColoredCloudFrame cloud;
         std::vector<std::array<float, 7>> audioFrames;
         ImuSample imuSample;
+
     };
 
     // compressed common frame
@@ -88,11 +89,22 @@ namespace tool::camera::K4{
 //        std::vector<std::uint8_t> encodedAudioData; // todo
         std::vector<std::array<float, 7>> audioFrames; // to be removed
         ImuSample imuSample;
+
+        virtual size_t total_data_size() const{
+            // contains also audioFrames.size() and encodedColorData.size()
+            return
+                sizeof(size_t)*6+sizeof(std::int64_t)+ encodedColorData.size()+
+                audioFrames.size()*7*sizeof(float) + sizeof(ImuSample);
+        }
     };
 
     // compressed cloud frame (to be sended throught network or saved)
     struct CompressedCloudFrame : public CompressedFrame{
         std::vector<std::uint8_t> encodedCloudData;
+        // contains also encodedCloudData.size()
+        size_t total_data_size() const override{
+            return CompressedFrame::total_data_size() + encodedCloudData.size() + sizeof(size_t);
+        }
     };
 
     // compressed full frame (to be saved)
@@ -108,6 +120,12 @@ namespace tool::camera::K4{
         size_t infraWidth = 0;
         size_t infraHeight = 0;
         std::vector<std::uint8_t> encodedInfraData;
+
+        size_t total_data_size() const override{
+            // contains also encodedDepthData.size() and encodedInfraData.size()
+            return CompressedFrame::total_data_size() + sizeof(mode) + sizeof(calibration) +
+                sizeof(size_t)*6 + encodedDepthData.size() + encodedInfraData.size();
+        }
     };
 
     struct CloudFrame{        
