@@ -47,7 +47,7 @@ bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4::Mode mod
         if(minMaxD[1] > range.y()){
             minMaxD[1] = range.y();
         }
-        if(ImGui::SliderInt2("Depth min/max (mm)###settings_depth_min_max_sliderint2", minMaxD, range.x(), range.y())){
+        if(ImGui::SliderInt2("Depth (mm)###settings_depth_min_max_sliderint2", minMaxD, range.x(), range.y())){
             filters.minDepthValue = static_cast<std::int16_t>(minMaxD[0]);
             filters.maxDepthValue = static_cast<std::int16_t>(minMaxD[1]);
             updateP = true;
@@ -58,7 +58,7 @@ bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4::Mode mod
         if(minMaxWidth[1] > depthRes.x()){
             minMaxWidth[1] = depthRes.x();
         }
-        if(ImGui::SliderInt2("Width min/max (pixels)###settings_width_min_max_sliderint2", minMaxWidth, 0, depthRes.x())){
+        if(ImGui::SliderInt2("Width (pixels)###settings_width_min_max_sliderint2", minMaxWidth, 0, depthRes.x())){
             filters.minWidth = static_cast<unsigned int>(minMaxWidth[0]);
             filters.maxWidth = static_cast<unsigned int>(minMaxWidth[1]);
             updateP = true;
@@ -68,7 +68,7 @@ bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4::Mode mod
         if(minMaxHeight[1] > depthRes.y()){
             minMaxHeight[1] = depthRes.y();
         }
-        if(ImGui::SliderInt2("Height min/max (pixels)###settings_height_min_max_sliderint2", minMaxHeight, 0, depthRes.y())){
+        if(ImGui::SliderInt2("Height (pixels)###settings_height_min_max_sliderint2", minMaxHeight, 0, depthRes.y())){
             filters.minHeight = static_cast<unsigned int>(minMaxHeight[0]);
             filters.maxHeight = static_cast<unsigned int>(minMaxHeight[1]);
             updateP = true;

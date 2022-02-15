@@ -84,12 +84,12 @@ void ImguiFboDrawer::update_viewport(){
 
 void ImguiFboDrawer::draw_texture(bool invert){
 
-    auto vMin    = ImGui::GetWindowContentRegionMin();
-    auto vMax    = ImGui::GetWindowContentRegionMax();
-    auto sizeW   = ImVec2(vMax.x-vMin.x, vMax.y-vMin.y);
-    float scale  = std::min(1.f*sizeW.y / texture.height(),  1.f*sizeW.x / texture.width());
-    auto sizeI   = ImVec2(static_cast<int>(texture.width() * scale),static_cast<int>(texture.height() * scale));
-    sizeI.x -= 0;
+    ImVec2 vMin    = ImGui::GetWindowContentRegionMin();
+    ImVec2 vMax    = ImGui::GetWindowContentRegionMax();
+    ImVec2 sizeW   = ImVec2(vMax.x-vMin.x, vMax.y-vMin.y);
+    float scale    = std::min(1.f*sizeW.y / texture.height(),  1.f*sizeW.x / texture.width());
+    ImVec2 sizeI   = ImVec2(static_cast<int>(texture.width() * scale),static_cast<int>(texture.height() * scale));
+//    sizeI.x -= 0;
     sizeI.y -= 50;
 
     auto uv1     = ImVec2(0,0);

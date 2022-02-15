@@ -36,8 +36,8 @@ using namespace tool::camera::K4;
 using namespace std::chrono;
 
 
-UdpInitFromManager::UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket) :
-      port(port), maxSizeUdpPacket(maxSizeUdpPacket){
+UdpInitFromManager::UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::uint8_t idDevice) :
+      port(port), maxSizeUdpPacket(maxSizeUdpPacket), idDevice(idDevice){
 
     std::fill(ipAdress.begin(), ipAdress.end(), ' ');
     if(ipAdressStr.size() <= 45){

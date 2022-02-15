@@ -55,7 +55,8 @@ public:
     ~Kinect4();
 
     // devices
-    bool open(uint32_t deviceId);
+    std::uint32_t nb_devices() const noexcept;
+    bool open(std::uint32_t deviceId);
     void close();
     void clean();
 

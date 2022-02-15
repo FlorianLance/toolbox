@@ -128,12 +128,18 @@ namespace tool::camera::K4{
         }
     };
 
-    struct CloudFrame{        
+
+    struct Frame{
+        std::int32_t idCapture = 0;
+        std::int64_t afterCaptureTS = 0;
+    };
+
+    struct CloudFrame : Frame{
         tool::camera::K4::ColoredCloudFrame cloud;
     };
 
     // uncompressed
-    struct FullFrame{
+    struct FullFrame : Frame{
         // sizes
         size_t colorWidth = 0;
         size_t colorHeight = 0;

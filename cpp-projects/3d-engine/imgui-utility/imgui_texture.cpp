@@ -27,8 +27,8 @@
 
 #include "imgui_texture.hpp"
 
-// std
-#include <format>
+// base
+#include "utility/format.hpp"
 
 // local
 #include "imgui-utility/imgui_std.hpp"
@@ -37,14 +37,14 @@ using namespace tool::graphics;
 
 void ImguiTextureDrawer::draw_texture_tab_child(const std::string &windowName, geo::Pt2<int> sizeWindow, gl::TBO *texture, bool invert){
 
-    if(ImGui::BeginChild(std::format("{}Window",windowName).c_str(), ImVec2(sizeWindow.x(), sizeWindow.y()),false,ImGuiWindowFlags_NoScrollWithMouse)){
+    if(ImGui::BeginChild(fmt("{}Window",windowName).c_str(), ImVec2(sizeWindow.x(), sizeWindow.y()),false,ImGuiWindowFlags_NoScrollWithMouse)){
 
         auto vMin    = ImGui::GetWindowContentRegionMin();
         auto vMax    = ImGui::GetWindowContentRegionMax();
         auto sizeW   = ImVec2(vMax.x-vMin.x, vMax.y-vMin.y);
         float scale  = std::min(1.f*sizeW.y / texture->height(),  1.f*sizeW.x / texture->width());
         auto sizeI   = ImVec2(static_cast<int>(texture->width() * scale),static_cast<int>(texture->height() * scale));
-        //        sizeI.y -= 70;
+        sizeI.y     -= 50;
 
         auto uv1   = ImVec2(0,0);
         auto uv2   = ImVec2(1,1);
@@ -52,7 +52,7 @@ void ImguiTextureDrawer::draw_texture_tab_child(const std::string &windowName, g
         auto uv3   = ImVec2(0,1);
         auto uv4   = ImVec2(1,0);
 
-        if(ImGui::BeginTabBar(std::format("{}Tab",windowName).c_str(), ImGuiTabBarFlags_None)){
+        if(ImGui::BeginTabBar(fmt("{}Tab",windowName).c_str(), ImGuiTabBarFlags_None)){
             if(ImGui::BeginTabItem(windowName.c_str())){
 
                 if(texture->id() == 0){

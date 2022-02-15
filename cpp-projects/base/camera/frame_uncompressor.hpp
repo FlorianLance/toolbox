@@ -105,7 +105,7 @@ struct FullFrameUncompressor : public FrameUncompressor{
     ~FullFrameUncompressor();
 
     // per step
-    bool uncompress_color(CompressedFullFrame *cFrame, std::vector<geo::Pt3<uint8_t>> &uncompressedColor);
+    bool uncompress_color(CompressedFullFrame *cFrame, std::vector<geo::Pt3<uint8_t>> &uncompressedColor) ;
     bool uncompress_depth(CompressedFullFrame *cFrame, std::vector<uint16_t> &uncompressedDepth);
     bool uncompress_infra(CompressedFullFrame *cFrame, std::vector<uint16_t> &uncompressedInfra);
     void generate_cloud(CompressedFullFrame *cFrame, const std::vector<uint16_t> &uncompressedDepth);
@@ -115,6 +115,7 @@ struct FullFrameUncompressor : public FrameUncompressor{
 
     geo::Pt3<int16_t>* cloud_data();
 
+    // convert
     size_t convert_to_cloud(
         size_t validVerticesCount,
         const std::vector<geo::Pt3<std::uint8_t>> &uncompressedColor,

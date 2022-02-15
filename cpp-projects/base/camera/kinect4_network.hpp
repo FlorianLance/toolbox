@@ -76,22 +76,24 @@ enum Feedback : std::int8_t{
 enum Command : std::int8_t{
     Quit,
     Shutdown,
-    Restart
+    Restart,
+    Disconnect
 };
 
 struct UdpInitFromManager : UdpMonoPacketMessage{
 
-    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket);
+    UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::uint8_t idDevice);
     UdpInitFromManager(std::int8_t *data);
 
     std::array<char, 45> ipAdress;
     std::uint16_t port;
     std::uint16_t maxSizeUdpPacket;
+    std::uint8_t idDevice;
 };
 
 struct UdpCommand : UdpMonoPacketMessage{
 
-    UdpCommand() = default;
+    UdpCommand(Command command) : command(command){}
     UdpCommand(std::int8_t *data);
 
     Command command;

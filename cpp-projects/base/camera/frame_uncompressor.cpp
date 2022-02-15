@@ -81,7 +81,7 @@ bool FrameUncompressor::uncompress_color(size_t colorWidth, size_t colorHeight, 
         colorHeight,
         TJPF_RGB,
         TJFLAG_FASTDCT// | TJFLAG_FASTUPSAMPLE
-        );
+    );
     if(decompressStatus == -1){
         Logger::error("[FrameUncompressor] Error uncompress color.\n");
         return false;
@@ -105,7 +105,7 @@ FullFrameUncompressor::~FullFrameUncompressor(){
 
 
 
-bool FullFrameUncompressor::uncompress_color(CompressedFullFrame *cFrame, std::vector<geo::Pt3<uint8_t>> &uncompressedColor){
+bool FullFrameUncompressor::uncompress_color(CompressedFullFrame *cFrame, std::vector<geo::Pt3<uint8_t>> &uncompressedColor) {
     return FrameUncompressor::uncompress_color(
         cFrame->colorWidth,
         cFrame->colorHeight,
@@ -197,10 +197,13 @@ void FullFrameUncompressor::generate_cloud(CompressedFullFrame *cFrame, const st
         i->depthImage.handle(),
         K4A_CALIBRATION_TYPE_DEPTH,
         i->pointCloudImage.handle()
-        );
+    );
 }
 
 bool FullFrameUncompressor::uncompress(CompressedFullFrame *cFrame, FullFrame &fframe){
+
+    fframe.idCapture      = cFrame->idCapture;
+    fframe.afterCaptureTS = cFrame->afterCaptureTS;
 
     fframe.colorWidth  = 0;
     fframe.colorHeight = 0;
@@ -536,6 +539,8 @@ void CloudFrameUncompressor::convert_to_cloud(CompressedCloudFrame *cFrame, Clou
     const auto idV = cFrame->validVerticesCount;
     update_id_array(idV);
 
+    uFrame.idCapture = cFrame->idCapture;
+    uFrame.afterCaptureTS = cFrame->afterCaptureTS;
     uFrame.cloud.validVerticesCount = idV;
     uFrame.cloud.vertices.resize(idV);
     uFrame.cloud.colors.resize(idV);

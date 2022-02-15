@@ -313,6 +313,10 @@ bool Kinect4::open(uint32_t deviceId){
     return true;
 }
 
+uint32_t Kinect4::nb_devices() const noexcept {
+    return i->deviceCount;
+}
+
 bool Kinect4::is_opened() const{
     return i->device.is_valid();
 }

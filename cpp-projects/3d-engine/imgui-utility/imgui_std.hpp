@@ -64,7 +64,26 @@ static auto vector_getter = [](void* vec, int idx, const char** out_text){
     ImGui::Text(d, d + text.size());
 }
 
+[[maybe_unused]] static void TextColored(const ImVec4& col, const std::string &text){
+    auto d = text.c_str();
+    ImGui::TextColored(col, d, d + text.size());
+}
 
+[[maybe_unused]] static void TextCenter(const char* text, ...) {
+
+    va_list vaList = nullptr;
+    va_start(vaList, text);
+
+    float font_size = ImGui::GetFontSize() * strlen(text) / 2;
+    ImGui::SameLine(
+        ImGui::GetWindowSize().x / 2 -
+        font_size + (font_size / 2)
+    );
+
+    ImGui::TextV(text, vaList);
+
+    va_end(vaList);
+}
 
 
 }
