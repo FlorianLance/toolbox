@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-3d-engine                                                          **
+** Toolbox-base                                                               **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -26,56 +26,32 @@
 
 #pragma once
 
-// base
-#include "graphics/camera.hpp"
+// local
+#include "k4_volumetric_cloud_video_resource.hpp"
+#include "k4_frame_uncompressor.hpp"
 
-// opengl-utility
-#include "opengl/buffer/framebuffer_object.hpp"
-#include "opengl/gl_texture.hpp"
-#include "opengl/drawer.hpp"
 
-namespace tool::graphics {
+namespace tool::camera{
 
-class ImguiFboDrawer{
-
+class K4VolumetricCloudVideoManager{
 public:
 
-    ImguiFboDrawer() : m_camera(&m_screen, {0,0,0}, {0,0,1}){
-        m_camera.set_fov(60.);
-    }
+    K4VolumetricCloudVideoManager(K4VolumetricCloudVideoResource *volumetricVideo);
+    ~K4VolumetricCloudVideoManager();
 
-    void initialize_gl(const geo::Pt2<int> &size);
-    void resize_texture(const geo::Pt2<int> &size);
-    void update_viewport();
-    void draw_texture(bool invert = false);
+    // uncompress cloud frame
+    bool uncompress_frame(K4CompressedCloudFrame *cFrame, K4CloudFrame &frame);
 
-    inline void bind(){fbo.bind();}
-    inline void unbind(){fbo.unbind();}
-    inline graphics::Camera *camera(){return &m_camera;}
+    // copy audio
+    void audio_samples_all_channels(size_t idCamera, std::vector<std::vector<float>> &audioBuffer);
+    void audio_samples_all_channels(size_t idCamera, std::vector<float> &audioBuffer);
 
-    double rotationSpeed = 0.05;
-    float scrollSpeed = 0.1f;
-    float movingSpeed = 0.05f;
-    float translateSpeed = 0.01f;
-
-    void update_texture_with_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void update_texture_with_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_voxels(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void test_cloud(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_boths(gl::ShaderProgram *shader1, gl::ShaderProgram *shader2, gl::CloudPointsDrawer *drawer1, gl::CloudPointsDrawer *drawer2, float sizePtsCloud, float halfVoxelSize);
-
+    K4VolumetricCloudVideoResource *vv = nullptr;
+    K4CloudFrameUncompressor cfu;
 private:
 
-    void check_inputs();
+    struct Impl;
+    std::unique_ptr<Impl> m_p = nullptr;
 
-    gl::FBO fbo;
-    gl::Texture2D texture;
-    gl::RBO depthTexture;
-
-    graphics::Camera m_camera;       
-    graphics::Screen m_screen;
-
-
-    gl::CubeDrawer testCube;
 };
 }

@@ -34,7 +34,7 @@
 // base
 #include "geometry/matrix4.hpp"
 #include "network/network_utility.hpp"
-#include "camera/kinect2_settings_files.hpp"
+#include "camera/kinect2/k2_config_files.hpp"
 
 // ui
 #include "ui_grabber_parameters.h"
@@ -65,7 +65,7 @@ public:
     void init_from_grabber(int readingPort);
     void update_grabber_writing_info(QString writingAddress, int writingPort);
 
-    void init_from_manager(QColor color, std_v1<network::Interface> *interfaces, const camera::K2::GrabberTargetInfo &info);
+    void init_from_manager(QColor color, std_v1<network::Interface> *interfaces, const camera::K2GrabberTargetInfo &info);
 
     void init_force_all_cameras();
     void init_force_all_cameras_calibration();
@@ -79,8 +79,8 @@ public slots:
     void send_reading_connection_parameters();
 
     // settings
-    void update_ui_settings(camera::K2::Settings settings);
-    camera::K2::Settings read_settings_from_ui() const;
+    void update_ui_settings(camera::K2Settings settings);
+    camera::K2Settings read_settings_from_ui() const;
     void copy_current_ui_settings();
     void send_current_ui_settings();
 
@@ -89,7 +89,7 @@ public slots:
     DisplayOptions read_display_options_from_ui() const;
 
     // camera
-    void open_camera(camera::K2::FrameRequest frameMode);
+    void open_camera(camera::K2FrameRequest frameMode);
     void close_camera();
     void set_camera_state_ui(bool state);
 
@@ -115,14 +115,14 @@ signals:
     void disable_connection_signal();
 
     // settings
-    void send_settings_parameters_signal(camera::K2::Settings);
-    void copy_camera_parameters_signal(camera::K2::Settings);
+    void send_settings_parameters_signal(camera::K2Settings);
+    void copy_camera_parameters_signal(camera::K2Settings);
 
     // display options
     void send_display_options_signal(DisplayOptions displayOptions);
 
     // camera
-    void open_camera_signal(camera::K2::FrameRequest frameMode);
+    void open_camera_signal(camera::K2FrameRequest frameMode);
     void close_camera_signal();
 
     // state

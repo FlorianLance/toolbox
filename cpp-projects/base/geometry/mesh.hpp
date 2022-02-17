@@ -33,10 +33,9 @@
 #include <map>
 
 // local
-#include "geometry/point2.hpp"
 #include "geometry/point4.hpp"
 #include "geometry/matrix4.hpp"
-#include "geometry/triangle3.hpp"
+#include "geometry/shapes/triangle3.hpp"
 #include "geometry/shapes/aabb3.hpp"
 #include "utility/vector.hpp"
 #include "utility/string.hpp"

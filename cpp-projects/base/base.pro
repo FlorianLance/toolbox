@@ -122,27 +122,7 @@ LIBS += \
 ####################################### PROJECT FILES
 
 HEADERS += \
-    # exvr
-    camera/frame_compressor.hpp \
-    camera/frame_uncompressor.hpp \
-    camera/kinect4.hpp \
-    camera/kinect4_data.hpp \
-    camera/kinect4_network.hpp \
-    camera/kinect4_types.hpp \
-    camera/volumetric_cloud_video_manager.hpp \
-    camera/volumetric_cloud_video_resource.hpp \
-    camera/volumetric_full_video_manager.hpp \
-    camera/volumetric_full_video_resource.hpp \
-    camera/volumetric_video_resource.hpp \
-    data/FastDifferentialCoding/fastdelta.h \
-#    data/simdcomp/avx512bitpacking.h \
-#    data/simdcomp/avxbitpacking.h \
-#    data/simdcomp/portability.h \
-#    data/simdcomp/simdbitpacking.h \
-#    data/simdcomp/simdcomp.h \
-#    data/simdcomp/simdcomputil.h \
-#    data/simdcomp/simdfor.h \
-#    data/simdcomp/simdintegratedbitpacking.h \
+    # exvr    
     exvr/ex_resource.hpp \
     exvr/ex_utility.hpp \
     # files
@@ -150,6 +130,7 @@ HEADERS += \
     files/assimp_loader.hpp \
     # geometry
     ## shapes    
+    geometry/cloud.hpp \
     geometry/geometry.hpp \
     geometry/transform.hpp \
     geometry/shapes/aabb3.hpp \
@@ -161,6 +142,7 @@ HEADERS += \
     geometry/shapes/rectangle.hpp \
     geometry/shapes/sphere.hpp \
     geometry/shapes/ray3.hpp \
+    geometry/shapes/triangle3.hpp \
     geometry/geometry2.hpp \
     geometry/geometry3.hpp \
     geometry/interval.hpp \
@@ -173,8 +155,7 @@ HEADERS += \
     geometry/point2.hpp \
     geometry/point3.hpp \
     geometry/point4.hpp \
-    geometry/raycast.hpp \
-    geometry/triangle3.hpp \
+    geometry/raycast.hpp \    
     geometry/dummy.hpp \
     geometry/aabb2.hpp \
     geometry/octree.hpp \
@@ -193,7 +174,6 @@ HEADERS += \
     input/mouse.hpp \
     input/keyboard.hpp \
     # network
-    # utility    
     network/network_utility.hpp \
     network/tcp_reader.hpp \
     network/tcp_sender.hpp \
@@ -201,6 +181,7 @@ HEADERS += \
     network/udp_header.hpp \
     network/udp_reader.hpp \
     network/udp_sender.hpp \
+    # utility    
     utility/array.hpp \
     utility/benchmark.hpp \
     utility/constants.hpp \
@@ -225,20 +206,36 @@ HEADERS += \
     # tests
     tests/marching_cube_test.hpp \
     # camera
-    camera/k4a/k4aaudiochanneldatagraph.h \
-    camera/k4a/k4aaudiomanager.h \
-    camera/k4a/k4aaudiowindow.h \
-    camera/k4a/k4adevicecorrelator.h \
-    camera/k4a/k4amicrophone.h \
-    camera/k4a/k4amicrophonelistener.h \
-    camera/k4a/k4asoundio_util.h \
-    camera/kinect2_settings_files.hpp \
-    camera/kinect2_data_types.hpp \
-    camera/kinect2_network_types.hpp \
-    camera/k4a/k4astaticimageproperties.h \
-    camera/kinect2.hpp \
-    camera/kinect2_manager.hpp \
+    camera/frame.hpp \
+    ## kinect2
+    camera/kinect2/k2_config_files.hpp \
+    camera/kinect2/k2_device.hpp \
+    camera/kinect2/k2_manager.hpp \
+    camera/kinect2/k2_network.hpp \
+    camera/kinect2/k2_types.hpp \
+    ## kinect4
+    camera/kinect4/k4_data.hpp \
+    camera/kinect4/k4_device.hpp \
+    camera/kinect4/k4_frame.hpp \
+    camera/kinect4/k4_frame_compressor.hpp \
+    camera/kinect4/k4_frame_uncompressor.hpp \
+    camera/kinect4/k4_network.hpp \
+    camera/kinect4/k4_types.hpp \
+    camera/kinect4/k4_volumetric_cloud_video_manager.hpp \
+    camera/kinect4/k4_volumetric_cloud_video_resource.hpp \
+    camera/kinect4/k4_volumetric_full_video_manager.hpp \
+    camera/kinect4/k4_volumetric_full_video_resource.hpp \
+    camera/kinect4/k4_volumetric_video_resource.hpp \
+    camera/kinect4/k4a/k4aaudiochanneldatagraph.h \
+    camera/kinect4/k4a/k4aaudiomanager.h \
+    camera/kinect4/k4a/k4aaudiowindow.h \
+    camera/kinect4/k4a/k4adevicecorrelator.h \
+    camera/kinect4/k4a/k4amicrophone.h \
+    camera/kinect4/k4a/k4amicrophonelistener.h \
+    camera/kinect4/k4a/k4asoundio_util.h \
+    camera/kinect4/k4a/k4astaticimageproperties.h \
     # data
+    data/FastDifferentialCoding/fastdelta.h \
     data/integers_encoder.hpp \
     # thirdparty
     ## stb
@@ -249,26 +246,7 @@ HEADERS += \
 SOURCES += \
     # main
     base_main.cpp \
-    # exvr
-    camera/frame_compressor.cpp \
-    camera/frame_uncompressor.cpp \
-    camera/kinect4.cpp \
-    camera/kinect4_data.cpp \
-    camera/kinect4_network.cpp \
-    camera/volumetric_cloud_video_manager.cpp \
-    camera/volumetric_cloud_video_resource.cpp \
-    camera/volumetric_full_video_manager.cpp \
-    camera/volumetric_full_video_resource.cpp \
-    camera/volumetric_video_resource.cpp \
-    data/FastDifferentialCoding/fastdelta.c \
-#    data/simdcomp/avx512bitpacking.c \
-#    data/simdcomp/avxbitpacking.c \
-#    data/simdcomp/simdbitpacking.c \
-#    data/simdcomp/simdcomputil.c \
-#    data/simdcomp/simdfor.c \
-#    data/simdcomp/simdintegratedbitpacking.c \
-#    data/simdcomp/simdpackedsearch.c \
-#    data/simdcomp/simdpackedselect.c \
+    # exvr    
     exvr/ex_component.cpp \
     exvr/ex_resource.cpp \
     # files
@@ -277,6 +255,34 @@ SOURCES += \
     # graphics
     graphics/texture.cpp \
     # utility    
+    utility/benchmark.cpp \
+    utility/logger.cpp \
+    utility/paths.cpp \
+    # camera
+    camera/frame.cpp \
+    ## kinect2
+    camera/kinect2/k2_config_files.cpp \
+    camera/kinect2/k2_device.cpp \
+    camera/kinect2/k2_manager.cpp \
+    camera/kinect2/k2_types.cpp \
+    ## kinect4
+    camera/kinect4/k4a/k4aaudiochanneldatagraph.cpp \
+    camera/kinect4/k4a/k4aaudiomanager.cpp \
+    camera/kinect4/k4a/k4aaudiowindow.cpp \
+    camera/kinect4/k4a/platform/windows/k4adevicecorrelator.cpp \
+    camera/kinect4/k4a/k4amicrophone.cpp \
+    camera/kinect4/k4a/k4amicrophonelistener.cpp \
+    camera/kinect4/k4_data.cpp \
+    camera/kinect4/k4_device.cpp \
+    camera/kinect4/k4_frame_compressor.cpp \
+    camera/kinect4/k4_frame_uncompressor.cpp \
+    camera/kinect4/k4_network.cpp \
+    camera/kinect4/k4_volumetric_cloud_video_manager.cpp \
+    camera/kinect4/k4_volumetric_cloud_video_resource.cpp \
+    camera/kinect4/k4_volumetric_full_video_manager.cpp \
+    camera/kinect4/k4_volumetric_full_video_resource.cpp \
+    camera/kinect4/k4_volumetric_video_resource.cpp \
+    # network
     network/network_utility.cpp \
     network/tcp_reader.cpp \
     network/tcp_sender.cpp \
@@ -284,28 +290,14 @@ SOURCES += \
     network/udp_header.cpp \
     network/udp_reader.cpp \
     network/udp_sender.cpp \
-    utility/benchmark.cpp \
-    utility/logger.cpp \
-    # camera
-    camera/k4a/k4aaudiochanneldatagraph.cpp \
-    camera/k4a/k4aaudiomanager.cpp \
-    camera/k4a/k4aaudiowindow.cpp \
-    camera/k4a/platform/windows/k4adevicecorrelator.cpp \
-    camera/k4a/k4amicrophone.cpp \
-    camera/k4a/k4amicrophonelistener.cpp \
-    camera/kinect2_settings_files.cpp \
-    camera/kinect2_data_types.cpp \
-    camera/kinect2_manager.cpp \
-    camera/kinect2.cpp \
-    # network
     # data
+    data/FastDifferentialCoding/fastdelta.c \
     data/integers_encoder.cpp \
     # thirdparty
     ## stb
     thirdparty/stb/stb_image.cpp \
     thirdparty/stb/stb_image_resize.cpp \
     thirdparty/stb/stb_image_write.cpp \
-    utility/paths.cpp
 
 
 #DISTFILES += \

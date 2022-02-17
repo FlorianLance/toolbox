@@ -35,12 +35,12 @@
 
 using namespace tool::graphics;
 
-bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4::Mode mode, camera::K4::Filters &filters, bool &updateP){
+bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &updateP){
 
     if (ImGui::BeginTabItem(tabItemName.c_str())){
 
         int minMaxD[2] = {filters.minDepthValue, filters.maxDepthValue};
-        auto range = (camera::K4::range(mode)*1000.f).conv<int>();
+        auto range = (camera::range(mode)*1000.f).conv<int>();
         if(minMaxD[0] < range.x()){
             minMaxD[0] = range.x();
         }
@@ -54,7 +54,7 @@ bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4::Mode mod
         }
 
         int minMaxWidth[2] = {static_cast<int>(filters.minWidth), static_cast<int>(filters.maxWidth)};
-        auto depthRes = camera::K4::depth_resolution(mode);
+        auto depthRes = camera::depth_resolution(mode);
         if(minMaxWidth[1] > depthRes.x()){
             minMaxWidth[1] = depthRes.x();
         }

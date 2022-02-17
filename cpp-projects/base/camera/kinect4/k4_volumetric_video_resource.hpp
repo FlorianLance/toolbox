@@ -1,6 +1,7 @@
 
+
 /*******************************************************************************
-** Toolbox-3d-engine                                                          **
+** Toolbox-base                                                               **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -26,56 +27,56 @@
 
 #pragma once
 
-// base
-#include "graphics/camera.hpp"
+// local
+#include "k4_frame.hpp"
 
-// opengl-utility
-#include "opengl/buffer/framebuffer_object.hpp"
-#include "opengl/gl_texture.hpp"
-#include "opengl/drawer.hpp"
+namespace tool::camera{
 
-namespace tool::graphics {
+// TODO: remove? CompressedFrame contains all information
+struct K4FrameData{
+    size_t idFrame;         // remove ?
+    std::int64_t timeStamp; // remove ?
+    std::shared_ptr<K4CompressedFrame> data = nullptr;
+};
 
-class ImguiFboDrawer{
+struct K4CameraData{
+    geo::Mat4d transform = geo::Mat4d::identity();
+    std::vector<K4FrameData> frames;
+};
+
+class K4VolumetricVideoResource{
 
 public:
+    size_t nb_cameras() const noexcept;
+    size_t nb_frames(size_t idCamera = 0) const noexcept;
+    size_t frame_id(size_t idCamera, float timeMs) const;
+    size_t valid_vertices_count(size_t idFrame, size_t idCamera = 0) const;
 
-    ImguiFboDrawer() : m_camera(&m_screen, {0,0,0}, {0,0,1}){
-        m_camera.set_fov(60.);
-    }
+    std::int64_t start_time(size_t idCamera) const;
+    std::int64_t end_time(size_t idCamera) const;
 
-    void initialize_gl(const geo::Pt2<int> &size);
-    void resize_texture(const geo::Pt2<int> &size);
-    void update_viewport();
-    void draw_texture(bool invert = false);
+    void set_transform(size_t idCamera, geo::Mat4d tr);
+    geo::Mat4d get_transform(size_t idCamera) const;
 
-    inline void bind(){fbo.bind();}
-    inline void unbind(){fbo.unbind();}
-    inline graphics::Camera *camera(){return &m_camera;}
+    K4CompressedFrame *get_frame(size_t idFrame, size_t idCamera = 0);
+    std::vector<K4FrameData> *get_frames(size_t idCamera = 0);
 
-    double rotationSpeed = 0.05;
-    float scrollSpeed = 0.1f;
-    float movingSpeed = 0.05f;
-    float translateSpeed = 0.01f;
+    void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<K4CompressedFrame> frame);
+    void remove_frames_until(size_t idFrame);
+    void remove_frames_after(size_t idFrame);
+    void clean_frames();
 
-    void update_texture_with_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void update_texture_with_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_voxels(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void test_cloud(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_boths(gl::ShaderProgram *shader1, gl::ShaderProgram *shader2, gl::CloudPointsDrawer *drawer1, gl::CloudPointsDrawer *drawer2, float sizePtsCloud, float halfVoxelSize);
+    bool save_to_file(const std::string &path);
+    bool load_from_file(const std::string &path);
+
+    std::vector<K4CameraData> camData;
 
 private:
+    virtual bool read_file(std::ifstream &file) = 0;
+    virtual void write_file(std::ofstream &file) = 0;
 
-    void check_inputs();
-
-    gl::FBO fbo;
-    gl::Texture2D texture;
-    gl::RBO depthTexture;
-
-    graphics::Camera m_camera;       
-    graphics::Screen m_screen;
-
-
-    gl::CubeDrawer testCube;
 };
+
+
+
 }

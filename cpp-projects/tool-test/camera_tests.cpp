@@ -53,22 +53,20 @@
 
 // base
 #include "graphics/texture.hpp"
-#include "camera/kinect4_types.hpp"
+#include "camera/kinect4/k4_data.hpp"
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
 #include "data/integers_encoder.hpp"
 #include "files/cloud_io.hpp"
 
-#include "camera/volumetric_full_video_manager.hpp"
+#include "camera/kinect4/k4_volumetric_full_video_manager.hpp"
 
-#include "camera/frame_compressor.hpp"
-#include "camera/frame_uncompressor.hpp"
+#include "camera/kinect4/k4_frame_compressor.hpp"
+#include "camera/kinect4/k4_frame_uncompressor.hpp"
 
 
 using namespace tool;
-using namespace tool::camera::K4;
-
-
+using namespace tool::camera;
 
 
 TEST_CASE("Kinect4 camera"){
@@ -82,13 +80,13 @@ TEST_CASE("Kinect4 camera"){
 //    CompressedCloudFrame f;
 //    cu.uncompress(&f, dd);
 
-    VolumetricFullVideoResource video;
+    K4VolumetricFullVideoResource video;
 
 //    const std::string filePath = "E:/ttt.kvid";
     const std::string filePath = "D:/compress_test.kvid";
     REQUIRE(video.load_from_file(filePath));
 
-    VolumetricFullVideoManager manager(&video);
+    K4VolumetricFullVideoManager manager(&video);
 
     auto jpegCompressor = tjInitCompress();
     tjhandle jpegUncompressor = tjInitDecompress();    
@@ -449,7 +447,7 @@ return;
     };
 
     std::cout << "start " <<  video.nb_frames(0) << "\n";
-    FullFrame fFrame;
+    K4FullFrame fFrame;
     for(size_t ii = 0; ii < 79; ++ii){//video.nb_frames(0); ++ii){
 
         // use only lossless for depth/cloud values
@@ -476,7 +474,7 @@ return;
 
         size_t idV = 0;
         for(size_t jj = 0; jj < cloudSize; ++jj){
-            if(uncompressedDepthFrame[jj] != invalid_depth_value){
+            if(uncompressedDepthFrame[jj] != k4_invalid_depth_value){
                 vIndices[idV++] = jj;
             }
         }
@@ -487,7 +485,7 @@ return;
         auto color = reinterpret_cast<geo::Pt4<std::uint8_t>*>(uncompressedColorFrame.data());
         Bench::start("pack");
         for_each(std::execution::par_unseq, std::begin(indices), std::begin(indices) + idV, [&](size_t id){
-            packedBuffer[id] = PackedVoxel::pack64(cloud[vIndices[id]], color[vIndices[id]]);
+            packedBuffer[id] = K4PackedVoxel::pack64(cloud[vIndices[id]], color[vIndices[id]]);
         });
         std::sort(std::execution::par_unseq, std::begin(packedBuffer), std::end(packedBuffer));
         Bench::stop();

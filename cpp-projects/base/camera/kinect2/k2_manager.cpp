@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-** Toolbox-3d-engine                                                          **
+** Toolbox-base                                                               **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -24,58 +24,55 @@
 **                                                                            **
 ********************************************************************************/
 
-#pragma once
+#include "k2_manager.hpp"
+
+// std
+#include <chrono>
+#include <iostream>
 
 // base
-#include "graphics/camera.hpp"
+#include "utility/benchmark.hpp"
 
-// opengl-utility
-#include "opengl/buffer/framebuffer_object.hpp"
-#include "opengl/gl_texture.hpp"
-#include "opengl/drawer.hpp"
+using namespace std::chrono;
+using namespace tool::camera;
 
-namespace tool::graphics {
+K2Manager::K2Manager(){
+}
 
-class ImguiFboDrawer{
+bool K2Manager::open_kinect(K2FrameRequest mode){
+    return initialized = kinect.open(mode);
+}
 
-public:
+void K2Manager::close_kinect(){
+    initialized = false;
+    kinect.close();
+}
 
-    ImguiFboDrawer() : m_camera(&m_screen, {0,0,0}, {0,0,1}){
-        m_camera.set_fov(60.);
+std::int64_t K2Manager::get_data(){
+
+    if(!initialized){
+        return -1;
     }
 
-    void initialize_gl(const geo::Pt2<int> &size);
-    void resize_texture(const geo::Pt2<int> &size);
-    void update_viewport();
-    void draw_texture(bool invert = false);
-
-    inline void bind(){fbo.bind();}
-    inline void unbind(){fbo.unbind();}
-    inline graphics::Camera *camera(){return &m_camera;}
-
-    double rotationSpeed = 0.05;
-    float scrollSpeed = 0.1f;
-    float movingSpeed = 0.05f;
-    float translateSpeed = 0.01f;
-
-    void update_texture_with_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void update_texture_with_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_voxels(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void test_cloud(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_boths(gl::ShaderProgram *shader1, gl::ShaderProgram *shader2, gl::CloudPointsDrawer *drawer1, gl::CloudPointsDrawer *drawer2, float sizePtsCloud, float halfVoxelSize);
-
-private:
-
-    void check_inputs();
-
-    gl::FBO fbo;
-    gl::Texture2D texture;
-    gl::RBO depthTexture;
-
-    graphics::Camera m_camera;       
-    graphics::Screen m_screen;
+    auto timeStart = high_resolution_clock::now();
+    timeStampFrame = timeStart.time_since_epoch().count();
 
 
-    gl::CubeDrawer testCube;
-};
+    Bench::reset();
+    if(auto newFrame = kinect.get_kinect_data(); newFrame.has_value()){
+
+        frame = std::make_shared<K2Frame>(std::move(newFrame.value()));
+//        if(rand()%100 == 0){
+//            Bench::display(BenchUnit::microseconds,1);
+//        }
+//        std::cout << "d" << duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count() << " ";
+        return duration_cast<microseconds>(high_resolution_clock::now() - timeStart).count();
+    }
+
+    return -1;
 }
+
+void K2Manager::update_parameters(K2Settings parameters){
+    kinect.parameters = std::move(parameters);
+}
+

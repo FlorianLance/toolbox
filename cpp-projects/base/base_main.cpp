@@ -38,8 +38,8 @@
 #include "utility/logger.hpp"
 #include "utility/benchmark.hpp"
 #include "utility/io.hpp"
-#include "camera/kinect2.hpp"
-#include "camera/kinect4.hpp"
+#include "camera/kinect2/k2_device.hpp"
+#include "camera/kinect4/k4_device.hpp"
 #include "data/integers_encoder.hpp"
 #include "graphics/texture.hpp"
 #include "files/cloud_io.hpp"
@@ -49,8 +49,8 @@ using namespace tool;
 void kinect2_test(){
 
     using namespace std::chrono_literals;
-    camera::Kinect2 kinect;
-    if(!kinect.open(camera::K2::FrameRequest::compressed_color_mesh)){
+    camera::K2Device kinect;
+    if(!kinect.open(camera::K2FrameRequest::compressed_color_mesh)){
         std::cerr << "Cannot init kinect 2\n";
         return;
     }
@@ -96,12 +96,12 @@ void kinect4_test(){
 
 //    std::cout << "Main thread id id " << std::this_thread::get_id() << "\n";
 
-//    K4::Config config;
-////    config.mode = K4::Mode::Only_color_1280x720; // works
-////    config.mode = K4::Mode::Only_color_1920x1080; // works
-////    config.mode = K4::Mode::Only_color_2048x1536; // works
-//    config.mode = K4::Mode::Cloud_640x576;
-////    config.mode = K4::Mode::Cloud_512x512;
+//    Config config;
+////    config.mode = Mode::Only_color_1280x720; // works
+////    config.mode = Mode::Only_color_1920x1080; // works
+////    config.mode = Mode::Only_color_2048x1536; // works
+//    config.mode = Mode::Cloud_640x576;
+////    config.mode = Mode::Cloud_512x512;
 //    kinect.start_cameras(config);
 
 //    // stored frames

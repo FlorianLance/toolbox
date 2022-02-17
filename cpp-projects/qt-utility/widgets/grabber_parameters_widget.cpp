@@ -42,7 +42,6 @@ using namespace tool;
 using namespace tool::network;
 using namespace tool::ui;
 using namespace tool::camera;
-//using namespace tool::camera::K2;
 using namespace tool::geo;
 
 
@@ -54,19 +53,19 @@ GrabberParametersW::GrabberParametersW(){
     // init ui
     ui.sbMaxW->setMinimum(0);
     ui.sbMaxH->setMinimum(0);
-    ui.sbMaxW->setMaximum(K2::depth_width);
-    ui.sbMaxH->setMaximum(K2::depth_height);
-    ui.sbMaxW->setValue(K2::depth_width);
-    ui.sbMaxH->setValue(K2::depth_height-30);
+    ui.sbMaxW->setMaximum(k2_depth_width);
+    ui.sbMaxH->setMaximum(k2_depth_height);
+    ui.sbMaxW->setValue(k2_depth_width);
+    ui.sbMaxH->setValue(k2_depth_height-30);
 
     ui.sbMinW->setMinimum(0);
     ui.sbMinH->setMinimum(0);
-    ui.sbMinW->setMaximum(K2::depth_width);
-    ui.sbMinH->setMaximum(K2::depth_height);
+    ui.sbMinW->setMaximum(k2_depth_width);
+    ui.sbMinH->setMaximum(k2_depth_height);
     ui.sbMinW->setValue(0);
     ui.sbMinH->setValue(64);
 
-    for (const auto& m : K2::all_requests_names()) {
+    for (const auto& m : all_requests_names()) {
         ui.cbDataType->addItem(from_view(m));
     }
 
@@ -80,12 +79,12 @@ GrabberParametersW::GrabberParametersW(){
     connect(ui.pbConnect,       &QPushButton::clicked, this, &GrabberParametersW::send_reading_connection_parameters);
     connect(ui.pbDisconnect,    &QPushButton::clicked, this, &GrabberParametersW::disable_connection_signal);    
     connect(ui.pbOpen,          &QPushButton::clicked, this, [&]{
-        emit open_camera_signal(K2::index_to_mode(to_unsigned(ui.cbDataType->currentIndex())));
+        emit open_camera_signal(index_to_mode(to_unsigned(ui.cbDataType->currentIndex())));
     });
     connect(ui.pbClose,         &QPushButton::clicked, this, &GrabberParametersW::close_camera_signal);
     connect(ui.cbDataType,      &QComboBox::currentTextChanged, this, [&](QString text){
         Q_UNUSED(text)
-        emit open_camera_signal(K2::index_to_mode(to_unsigned(ui.cbDataType->currentIndex())));
+        emit open_camera_signal(index_to_mode(to_unsigned(ui.cbDataType->currentIndex())));
     });
 
     // # network
@@ -178,7 +177,7 @@ void GrabberParametersW::update_grabber_writing_info(QString writingAddress, int
     send_writing_connection_parameters();
 }
 
-void GrabberParametersW::init_from_manager(QColor color, std_v1<Interface> *interfaces, const camera::K2::GrabberTargetInfo &info){
+void GrabberParametersW::init_from_manager(QColor color, std_v1<Interface> *interfaces, const camera::K2GrabberTargetInfo &info){
 
     setObjectName("GrabberParametersW manager");
     grabberUi = false;
@@ -240,7 +239,7 @@ void GrabberParametersW::update_writing_connection_state(bool state){
     ui.fStateW->setStyleSheet("background-color:"+QString(state?"green":"red")+";");
 }
 
-void GrabberParametersW::open_camera(K2::FrameRequest frameMode){
+void GrabberParametersW::open_camera(K2FrameRequest frameMode){
 
     emit set_display_state_signal(false);
     emit set_data_state_signal(false);
@@ -267,7 +266,7 @@ void GrabberParametersW::close_camera(){
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
 }
 
-void GrabberParametersW::update_ui_settings(K2::Settings s){
+void GrabberParametersW::update_ui_settings(K2Settings s){
 
     // misc
     w_blocking(ui.sbFPS)->setValue(static_cast<int>(s.fps));
@@ -347,8 +346,8 @@ Mat4<double> GrabberParametersW::get_transformation() const{
     return tr;
 }
 
-K2::Settings GrabberParametersW::read_settings_from_ui() const{
-    K2::Settings p;
+K2Settings GrabberParametersW::read_settings_from_ui() const{
+    K2Settings p;
     // misc
     p.fps                   = static_cast<unsigned char>(ui.sbFPS->value());
     // size
@@ -384,7 +383,7 @@ K2::Settings GrabberParametersW::read_settings_from_ui() const{
     p.erosionSize           = static_cast<unsigned char>(ui.sbSizeKernelErode->value());
     p.doErosion             = ui.cbErosion->isChecked();
     p.minErosionValue       = static_cast<unsigned char>(ui.sbMinErosionValue->value());
-    p.erosionType           = static_cast<K2::MorphShapes>( ui.cbErosionType->currentIndex());
+    p.erosionType           = static_cast<K2MorphShapes>( ui.cbErosionType->currentIndex());
     p.minDepthValue         = static_cast<float>(ui.dsbMinDepth->value());
     p.maxDepthValue         = static_cast<float>(ui.dsbMaxDepth->value());
     p.maxLocalDiff          = static_cast<float>(ui.dsbLocalDiff->value());

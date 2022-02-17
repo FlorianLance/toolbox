@@ -27,14 +27,14 @@
 #pragma once
 
 // base
-#include "camera/kinect4_types.hpp"
+#include "camera/kinect4/k4_types.hpp"
 
 
 namespace tool::graphics {
 class K4FiltersTabItem{
 public:
 
-    static bool draw(const std::string &tabItemName, camera::K4::Mode mode, camera::K4::Filters &filters, bool &updateP);
+    static bool draw(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &updateP);
 
 };
 }

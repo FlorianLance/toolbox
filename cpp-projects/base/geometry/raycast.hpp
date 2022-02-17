@@ -33,7 +33,7 @@
 //#include "geometry/plane3.hpp"
 //#include "geometry/aabb3.hpp"
 
-namespac/*e tool::geo {
+/*namespace tool::geo {
 
 template<typename acc>
 struct RaycastResult {
@@ -209,5 +209,6 @@ bool raycast_aabb(const AABB3<acc>& aabb, const Ray3<acc>& ray, RaycastResult<ac
 
 
     return true;
-}*/
 }
+}
+*/
