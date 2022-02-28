@@ -37,7 +37,7 @@
 
 namespace tool::camera {
 
-    enum class K4ImageFormat : int {
+    enum class K4ImageFormat : std::int8_t {
         MJPEG    = K4A_IMAGE_FORMAT_COLOR_MJPG,   // The buffer for each image is encoded as a JPEG and can be decoded by a JPEG decoder.
         NV12     = K4A_IMAGE_FORMAT_COLOR_NV12,   // NV12 images separate the luminance and chroma data such that all the luminance is at the
         // beginning of the buffer, and the chroma lines follow immediately after.
@@ -53,7 +53,7 @@ namespace tool::camera {
         CUSTOM16 = K4A_IMAGE_FORMAT_CUSTOM16      // Each pixel of CUSTOM16 is a single channel two bytes of little endian unsigned data.
     };
 
-    enum class K4ColorResolution : int {
+    enum class K4ColorResolution : std::int8_t {
         OFF     = K4A_COLOR_RESOLUTION_OFF,     // Color camera will be turned off with this setting
         R720P   = K4A_COLOR_RESOLUTION_720P,    // 1280 * 720  16:9
         R1080P  = K4A_COLOR_RESOLUTION_1080P,   // 1920 * 1080 16:9
@@ -63,7 +63,7 @@ namespace tool::camera {
         R3072P  = K4A_COLOR_RESOLUTION_3072P    // 4096 * 3072 4:3
     };
 
-    enum class K4DepthMode : int {
+    enum class K4DepthMode : std::int8_t {
         OFF            = K4A_DEPTH_MODE_OFF ,              // Depth sensor will be turned off with this setting.
         NFOV_2X2BINNED = K4A_DEPTH_MODE_NFOV_2X2BINNED,    // Depth captured at 320x288. Passive IR is also captured at 320x288.
         NFOV_UNBINNED  = K4A_DEPTH_MODE_NFOV_UNBINNED,     // Depth captured at 640x576. Passive IR is also captured at 640x576.
@@ -72,13 +72,13 @@ namespace tool::camera {
         PASSIVE_IR     = K4A_DEPTH_MODE_PASSIVE_IR,        // Passive IR only, captured at 1024x1024.
     };
 
-    enum class K4Framerate : int{
+    enum class K4Framerate : std::int8_t{
         F5  = K4A_FRAMES_PER_SECOND_5,   // 5 FPS
         F15 = K4A_FRAMES_PER_SECOND_15,  // 15 FPS
         F30 = K4A_FRAMES_PER_SECOND_30,  // 30 FPS
     };
 
-    enum class K4SynchronisationMode : int{
+    enum class K4SynchronisationMode : std::int8_t{
         Standalone  = K4A_WIRED_SYNC_MODE_STANDALONE, // Neither 'Sync In' or 'Sync Out' connections are used.
         Master      = K4A_WIRED_SYNC_MODE_MASTER,     // The 'Sync Out' jack is enabled and synchronization data it driven out the connected wire.
         // While in master mode the color camera must be enabled as part of the multi device sync signalling logic.
@@ -86,8 +86,9 @@ namespace tool::camera {
         Subordinate = K4A_WIRED_SYNC_MODE_SUBORDINATE // The 'Sync In' jack is used for synchronization and 'Sync Out' is driven for the
         // next device in the chain. 'Sync Out' is a mirror of 'Sync In' for this mode.
     };
+    // https://docs.microsoft.com/fr-FR/azure/Kinect-dk/multi-camera-sync
 
-    enum class K4Mode : std::int32_t {
+    enum class K4Mode : std::int8_t {
         // clouds
         Cloud_320x288,
         Cloud_640x576,

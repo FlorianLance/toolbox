@@ -82,13 +82,15 @@ enum K4Command : std::int8_t{
 
 struct K4UdpInitFromManager : UdpMonoPacketMessage{
 
-    K4UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::uint8_t idDevice);
+    K4UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::uint8_t idDevice, std::uint8_t synchMode, std::uint16_t subordinateDelay);
     K4UdpInitFromManager(std::int8_t *data);
 
     std::array<char, 45> ipAdress;
     std::uint16_t port;
     std::uint16_t maxSizeUdpPacket;
     std::uint8_t idDevice;
+    std::uint8_t synchMode;
+    std::uint16_t subordinateDelay;
 };
 
 struct K4UdpCommand : UdpMonoPacketMessage{
