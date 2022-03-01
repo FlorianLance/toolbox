@@ -43,6 +43,10 @@ ExSliderIntegerW::ExSliderIntegerW(QString name) : ExItemW<QFrame>(UiType::Slide
     layout->addWidget(value = new QSlider());
     value->setOrientation(Qt::Horizontal);
     layout->addWidget(valueTxt = new QLabel());
+    layout->addWidget(less = new QPushButton("-"));
+    layout->addWidget(more = new QPushButton("+"));
+    less->setMaximumWidth(25);
+    more->setMaximumWidth(25);
 
     layout->setContentsMargins(2,2,2,2);
     layout->setSpacing(2);
@@ -51,6 +55,26 @@ ExSliderIntegerW::ExSliderIntegerW(QString name) : ExItemW<QFrame>(UiType::Slide
         valueTxt->setText(QString::number(value));
         trigger_ui_change();
     });
+
+    connect(less, &QPushButton::clicked, this, [&]{
+
+        value->blockSignals(true);
+        value->setValue(value->value()-1);
+        value->blockSignals(false);
+        valueTxt->setText(QString::number(value->value()));
+
+        trigger_ui_change();
+    });
+
+    connect(more, &QPushButton::clicked, this, [&]{
+        value->blockSignals(true);
+        value->setValue(value->value()+1);
+        value->blockSignals(false);
+        valueTxt->setText(QString::number(value->value()));
+
+        trigger_ui_change();
+    });
+
 }
 
 ExSliderIntegerW *ExSliderIntegerW::init_widget(QString titleV, MinV<int> minV, V<int> valueV, MaxV<int> maxV, StepV<int> stepV){
@@ -85,7 +109,7 @@ void ExSliderIntegerW::update_from_arg(const Arg &arg){
     }else{
         int valueV = arg.to_int_value();
         value->setValue(valueV);
-        minMax->setText(QSL("[") % QString::number(value->minimum()) % QSL(" : ") % QString::number(value->maximum()) % QSL("]"));
+        minMax->setText(QSL("[") % QString::number(value->minimum()) % QSL(" : ") % QString::number(value->maximum()) % QSL("]"));        
         valueTxt->setText(QString::number(valueV));
     }
 
@@ -128,14 +152,50 @@ ExSliderFloatW::ExSliderFloatW(QString name) : ExItemW<QFrame>(UiType::Slider_do
     QHBoxLayout *layout = new QHBoxLayout();
     w->setLayout(layout);
     layout->addWidget(title = new QLabel());
-    layout->addWidget(minMax = new QLabel());
+    layout->addWidget(minMax = new QLabel());    
     layout->addWidget(value = new QSlider());
     value->setOrientation(Qt::Horizontal);
     layout->addWidget(valueTxt = new QLabel());
+    layout->addWidget(less = new QPushButton("-"));
+    layout->addWidget(more = new QPushButton("+"));
+    less->setMaximumWidth(25);
+    more->setMaximumWidth(25);
 
-    connect(value, &QSlider::valueChanged, this, [&](int value){
-        qreal dVal = m_min + (1.0*value/m_nbSteps) * (m_max-m_min);
-        valueTxt->setText(QString::number(dVal));
+    connect(value, &QSlider::valueChanged, this, [&](int value){       
+        m_value = m_min + (1.0*value/m_nbSteps) * (m_max-m_min);
+        valueTxt->setText(QString::number(m_value));
+        trigger_ui_change();
+    });
+    connect(less, &QPushButton::clicked, this, [&]{
+        if(m_value - m_step > m_min){
+            m_value -= m_step;
+        }else{
+            m_value = m_min;
+        }
+        if(almost_equal(m_value, 0.)){
+            m_value = 0.;
+        }
+
+        value->blockSignals(true);
+        value->setValue(static_cast<int>((m_value-m_min)/(m_max-m_min)*m_nbSteps));
+        value->blockSignals(false);
+
+        valueTxt->setText(QString::number(m_value, 10, 2));
+        trigger_ui_change();
+    });
+
+    connect(more, &QPushButton::clicked, this, [&]{
+        if(m_value + m_step < m_max){
+            m_value += m_step;
+        }else{
+            m_value = m_max;
+        }
+
+        value->blockSignals(true);
+        value->setValue(static_cast<int>((m_value-m_min)/(m_max-m_min)*m_nbSteps));
+        value->blockSignals(false);        
+
+        valueTxt->setText(QString::number(m_value, 10, 2));
         trigger_ui_change();
     });
 }
@@ -147,20 +207,20 @@ ExSliderFloatW *ExSliderFloatW::init_widget(QString titleV, MinV<qreal> minV, V<
     m_min = minV.v;
     m_max = maxV.v;
     m_step = stepV.v;
+    m_value = valueV.v;
 
     const qreal diff = (m_max-m_min);
     m_nbSteps = static_cast<int>(diff/m_step);
-    ui::W::init(value, MinV<int>{0}, V<int>{static_cast<int>((valueV.v-m_min)/diff*m_nbSteps)}, MaxV<int>{m_nbSteps},  StepV<int>{1});
+    ui::W::init(value, MinV<int>{0}, V<int>{static_cast<int>((m_value-m_min)/diff*m_nbSteps)}, MaxV<int>{m_nbSteps},  StepV<int>{1});
     minMax->setText(QSL("[") % QString::number(minV.v) % QSL(" : ") % QString::number(maxV.v) % QSL("]"));
-    valueTxt->setText(QString::number(valueV.v));
+    valueTxt->setText(QString::number(m_value, 10, 2));
 
     return this;
 }
 
 
 QString ExSliderFloatW::value_to_string() const {
-    qreal dVal = m_min + (1.0*value->value()/m_nbSteps) * (m_max-m_min);
-    return QString::number(dVal);
+    return QString::number(m_value);
 }
 
 
@@ -186,10 +246,10 @@ void ExSliderFloatW::update_from_arg(const Arg &arg){
         }
     }else{
 
-        qreal valueV = arg.to_double_value();
-        value->setValue(valueV);
+        m_value = arg.to_double_value();
+        value->setValue(static_cast<int>((m_value-m_min)/(m_max-m_min)*m_nbSteps));
         minMax->setText(QSL("[") % QString::number(m_min) % QSL(" : ") % QString::number(m_max) % QSL("]"));
-        valueTxt->setText(QString::number(valueV));
+        valueTxt->setText(QString::number(m_value, 10, 2));
     }
 
     w->blockSignals(false);
@@ -198,7 +258,7 @@ void ExSliderFloatW::update_from_arg(const Arg &arg){
 Arg ExSliderFloatW::convert_to_arg() const{
 
     Arg arg = ExBaseW::convert_to_arg();
-    arg.init_from(static_cast<float>(m_min + (1.0*value->value()/m_nbSteps) * (m_max-m_min)));
+    arg.init_from(static_cast<float>(m_value));
 
     // generator
     if(hasGenerator){

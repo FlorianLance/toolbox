@@ -48,6 +48,8 @@ public:
     QLabel *minMax = nullptr;
     QLabel *valueTxt = nullptr;
     QSlider *value = nullptr;
+    QPushButton *less = nullptr;
+    QPushButton *more = nullptr;
 };
 
 class ExSliderFloatW : public ExItemW<QFrame>{
@@ -68,12 +70,15 @@ public:
     QLabel *minMax = nullptr;
     QLabel *valueTxt = nullptr;
     QSlider *value = nullptr;
+    QPushButton *less = nullptr;
+    QPushButton *more = nullptr;
 
 private:
     int m_nbSteps;
     qreal m_min;
     qreal m_max;
     qreal m_step;
+    qreal m_value;
 };
 
 
