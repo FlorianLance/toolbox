@@ -205,7 +205,7 @@ geo::Pt3d ExVector3dW::values() const{
 }
 
 void ExVector3dW::init_default_tooltip(QString name){
-    const QString tooltip = QSL("name: ") % name % QSL("  C# type: ") % from_view(get_tooltip_string(type));
+    QString tooltip = generate_tooltip(name);
     x.init_tooltip(tooltip);
     y.init_tooltip(tooltip);
     z.init_tooltip(tooltip);

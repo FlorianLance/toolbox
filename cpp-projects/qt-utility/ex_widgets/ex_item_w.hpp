@@ -41,11 +41,11 @@ public:
     virtual void init_tooltip(QString tooltip  = "") override{
         w->setToolTipDuration(-1);
         w->setToolTip(tooltip);
-    }
+    }    
 
     virtual void init_default_tooltip(QString name) override{
         w->setToolTipDuration(-1);
-        w->setToolTip(QSL("name: ") % name % QSL("  C# type: ") % from_view(get_tooltip_string(type)));
+        w->setToolTip(generate_tooltip(name));
     }
 
     inline widget *release(){ return w.release();}

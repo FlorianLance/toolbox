@@ -133,7 +133,7 @@ Arg ExSliderIntegerW::convert_to_arg() const{
 
 void ExSliderIntegerW::init_default_tooltip(QString name){
 
-    const QString tooltip = QSL("name: ") % name % QSL("  C# type: ") % from_view(get_tooltip_string(type));
+    QString tooltip = generate_tooltip(name);
     title->setToolTipDuration(-1);
     title->setToolTip(tooltip);
     minMax->setToolTipDuration(-1);
@@ -272,7 +272,7 @@ Arg ExSliderFloatW::convert_to_arg() const{
 
 void ExSliderFloatW::init_default_tooltip(QString name){
 
-    const QString tooltip = QSL("name: ") % name % QSL("  C# type: ") % from_view(get_tooltip_string(type));
+    QString tooltip = generate_tooltip(name);
     title->setToolTipDuration(-1);
     title->setToolTip(tooltip);
     minMax->setToolTipDuration(-1);

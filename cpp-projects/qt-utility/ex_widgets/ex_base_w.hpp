@@ -50,6 +50,19 @@ public:
         hasGenerator = true;
     }
 
+    void set_information(const QString &information){
+        this->information = information;
+    }
+
+    QString generate_tooltip(QStringView name){
+        if(information.length() > 0){
+            return QSL("[Name: \"") % name % QSL("\"]  [C# type: \"") % from_view(get_tooltip_string(type)) % QSL("\"]\nInformations: \n") % information;
+        }else{
+            return QSL("[Name: \"") % name % QSL("\"]  [C# type: \"") % from_view(get_tooltip_string(type)) % QSL("\"]");
+        }
+    }
+
+
     virtual void update_from_arg(const Arg &arg);
     virtual Arg convert_to_arg() const;
 
@@ -66,6 +79,7 @@ public:
 
     UiType type;
     QString itemName;
+    QString information;
     bool hasGenerator = false;
     int generatorOrder = -1;
 

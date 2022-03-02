@@ -46,10 +46,8 @@ struct Arg;
 struct Generator{
 
     Generator() = default;
-//    Generator(Name n) : name(from_view(n)){}
     Generator(int order) : order(order){}
 
-//    QString name;
     int order = -1;
     std::optional<QString> info     = std::nullopt;
     std::optional<QString> decimals = std::nullopt;
