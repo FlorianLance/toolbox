@@ -37,10 +37,12 @@ ExTextEditW::ExTextEditW(QString name) : ExItemW<QTextEdit>(UiType::Text_edit, n
     connect(w.get(), &QTextEdit::textChanged,this, [=]{trigger_ui_change();});
 }
 
-ExTextEditW *ExTextEditW::init_widget(QString txt, bool enabled){
-    ui::W::init(w.get(), txt, enabled);
+ExTextEditW *ExTextEditW::init_widget(QString txt, Qt::TextFormat tf, bool enabled){
+    this->tf = tf;
+    ui::W::init(w.get(), txt, tf, enabled);
     return this;
 }
+
 
 ExTextEditW *ExTextEditW::init_widget_as_csharp_editor(const QColor &bc, QString txt, bool enabled){
 
@@ -61,6 +63,7 @@ ExTextEditW *ExTextEditW::init_widget_as_csharp_editor(const QColor &bc, QString
     w->setStyleSheet(QString("background-color: rgb(%1,%2,%3); border: 0px ;").arg(bc.red()).arg(bc.green()).arg(bc.blue()));
     w->zoomIn(2);
 
+    this->tf = Qt::TextFormat::PlainText;
     w->setPlainText(txt);
     w->setEnabled(enabled);
     return this;
@@ -83,11 +86,23 @@ void ExTextEditW::update_from_arg(const Arg &arg){
 Arg ExTextEditW::convert_to_arg() const{
 
     Arg arg = ExBaseW::convert_to_arg();
-    arg.init_from(w->toPlainText());
+    arg.init_from(get_text());
 
     // generator
     if(hasGenerator){
         // ...
     }
     return arg;
+}
+
+QString ExTextEditW::get_text() const{
+    if(tf == Qt::TextFormat::PlainText){
+        return w->toPlainText();
+    }else if(tf == Qt::TextFormat::RichText){
+        return w->toHtml();
+    }else if(tf == Qt::TextFormat::MarkdownText){
+        return w->toMarkdown();
+    }
+
+    return "";
 }

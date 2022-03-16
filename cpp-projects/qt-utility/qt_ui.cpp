@@ -115,7 +115,7 @@ QComboBox *W::init(QComboBox *cb, QStringList items, int index, bool enabled){
     return cb;
 }
 
-QCheckBox *W::init(QCheckBox *cb, QString txt, bool checked, bool enabled){
+QCheckBox *W::init(QCheckBox *cb, const QString &txt, bool checked, bool enabled){
     const QSignalBlocker blocker(cb);
     cb->setText(txt);
     cb->setChecked(checked);
@@ -123,7 +123,7 @@ QCheckBox *W::init(QCheckBox *cb, QString txt, bool checked, bool enabled){
     return cb;
 }
 
-QRadioButton *W::init(QRadioButton *rb, QString txt, bool checked, bool enabled){
+QRadioButton *W::init(QRadioButton *rb, const QString &txt, bool checked, bool enabled){
     const QSignalBlocker blocker(rb);
     rb->setText(txt);
     rb->setEnabled(enabled);
@@ -141,28 +141,35 @@ QSlider *W::init(QSlider *sl, MinV<int> min, V<int> value, MaxV<int> max, StepV<
     return sl;
 }
 
-QPushButton *W::init(QPushButton *pb, QString txt, bool enabled){
+QPushButton *W::init(QPushButton *pb, const QString &txt, bool enabled){
     const QSignalBlocker blocker(pb);
     pb->setText(txt);
     pb->setEnabled(enabled);
     return pb;
 }
 
-QTextEdit *W::init(QTextEdit *te, QString txt, bool enabled){
+QTextEdit *W::init(QTextEdit *te, const QString &txt, Qt::TextFormat tf, bool enabled){
+
     const QSignalBlocker blocker(te);
-    te->setText(txt);
+    if(tf == Qt::TextFormat::PlainText){
+        te->setPlainText(txt);
+    }else if(tf == Qt::TextFormat::RichText){
+        te->setHtml(txt);
+    }else{
+        te->setMarkdown(txt);
+    }
     te->setEnabled(enabled);
     return te;
 }
 
-QLineEdit *W::init(QLineEdit *le, QString txt, bool enabled){
+QLineEdit *W::init(QLineEdit *le, const QString &txt, bool enabled){
     const QSignalBlocker blocker(le);
     le->setText(txt);
     le->setEnabled(enabled);
     return le;
 }
 
-QLabel *W::init_label(QLabel *la, QString txt, bool enabled){
+QLabel *W::init_label(QLabel *la, const QString &txt, bool enabled){
     const QSignalBlocker blocker(la);
     la->setText(txt);
     la->setEnabled(enabled);
@@ -192,7 +199,7 @@ QDoubleSpinBox *W::init(QDoubleSpinBox *dsb, MinV<qreal> min, V<qreal> value, Ma
     return dsb;
 }
 
-QLabel *W::txt(QString txt){return new QLabel(txt);}
+QLabel *W::txt(const QString &txt){return new QLabel(txt);}
 
 QLabel *W::icon(QIcon icon, QSize size){
     auto l = new QLabel();

@@ -35,7 +35,7 @@ namespace tool::ex {
 
     enum class UiType : int {
         Spin_box, Float_spin_box, Double_spin_box, Line_edit, Slider_integer, Slider_double, Check_box, Text_edit, Code_editor, Color_pick, Vector2D, Vector3D, Transformation, Combo_box_text,Combo_box_index,
-        Button, Radio_button, Generator, List_labels, Non_ui_labels, Label, Color_frame, Curve, Camera_position, Tab, NonUI, Time, PushButton, Component, ComponentsList,
+        Button, Radio_button, Generator, List_labels, Non_ui_labels, Label, Color_frame, Curve, Notepad, Camera_position, Tab, NonUI, Time, PushButton, Component, ComponentsList,
         Resource, ResourcesList, Component_config,
         SizeEnum};
 
@@ -46,7 +46,7 @@ namespace tool::ex {
 
     using TUiType = std::tuple<
         UiType,                 Name,                    Tooltip,                          Generative>;
-    static constexpr TupleArray<32, TUiType> uiTypes{{
+    static constexpr TupleArray<33, TUiType> uiTypes{{
         TUiType
         {UiT::Resource,         "Resource"sv,            "get_resource"sv,                 true},
         {UiT::ResourcesList,    "Resources list"sv,      "get_resource_list"sv,            true},
@@ -75,6 +75,7 @@ namespace tool::ex {
         {UiT::Transformation,   "Transformation"sv,      "Transform or List<Vector3>"sv,   true},
         {UiT::Non_ui_labels,    "Non ui labels"sv,       "List<string>"sv,                 false},
         {UiT::Curve,            "Curve"sv,               "List<float>"sv,                  true},
+        {UiT::Notepad,          "Notepad"sv,             ""sv,                             true},
         {UiT::Color_frame,      "Color Frame"sv,         "bool"sv,                         false},
         {UiT::Camera_position,  "Camera position"sv,     "string"sv,                       false},
         {UiT::Tab,              "Tab"sv,                 "string"sv,                       false},

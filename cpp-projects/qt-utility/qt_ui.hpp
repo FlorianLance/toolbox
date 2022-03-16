@@ -120,17 +120,17 @@ namespace tool::ui {
 
         static QFrame* init(QFrame *f, bool on, bool enabled = true);
         static QComboBox* init(QComboBox *cb, QStringList items, int index=0, bool enabled = true);
-        static QCheckBox* init(QCheckBox *cb, QString txt, bool checked, bool enabled = true);
-        static QRadioButton* init(QRadioButton *rb, QString txt, bool checked, bool enabled = true);
+        static QCheckBox* init(QCheckBox *cb, const QString &txt, bool checked, bool enabled = true);
+        static QRadioButton* init(QRadioButton *rb, const QString &txt, bool checked, bool enabled = true);
         static QSlider* init(QSlider *sl, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled = true);
-        static QPushButton* init(QPushButton *pb, QString txt, bool enabled = true);
-        static QTextEdit* init(QTextEdit *te, QString txt, bool enabled = true);
-        static QLineEdit* init(QLineEdit *le, QString txt, bool enabled = true);
-        static QLabel* init_label(QLabel *la, QString txt, bool enabled = true);
+        static QPushButton* init(QPushButton *pb, const QString &txt, bool enabled = true);
+        static QTextEdit* init(QTextEdit *te, const QString &txt, Qt::TextFormat tf, bool enabled = true);
+        static QLineEdit* init(QLineEdit *le, const QString &txt, bool enabled = true);
+        static QLabel* init_label(QLabel *la, const QString &txt, bool enabled = true);
         static QSpinBox* init(QSpinBox *sb, MinV<int> min, V<int> value, MaxV<int> max, StepV<int> singleStep, bool enabled = true);
         static QDoubleSpinBox* init(QDoubleSpinBox *dsb, MinV<qreal> min, V<qreal> value, MaxV<qreal> max, StepV<qreal> singleStep, int decimals, bool enabled = true);
 
-        static QLabel *txt(QString txt);
+        static QLabel *txt(const QString &txt);
         static QLabel *icon(QIcon icon, QSize size);
         static QLabel *icon(QColor color, QSize size);
         static QFrame *horizontal_line();

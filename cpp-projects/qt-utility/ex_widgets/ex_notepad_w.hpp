@@ -26,23 +26,29 @@
 
 #pragma once
 
-#include "ex_item_w.hpp"
+
+// local
+#include "ex_text_edit_w.hpp"
+#include "ex_combo_box_index_w.hpp"
 
 namespace tool::ex{
 
-class ExTextEditW : public ExItemW<QTextEdit>{
 
-public:
+class ExNotepadW : public ExItemW<QFrame>{
 
-    ExTextEditW(QString name ="");
-    ExTextEditW *init_widget(QString txt, Qt::TextFormat tf, bool enabled = true);
-    ExTextEditW *init_widget_as_csharp_editor(const QColor &backgroundColor, QString txt, bool enabled = true);
+public :
+
+    ExNotepadW(QString name ="");
+    ExNotepadW  *init_widget(QString text, Qt::TextFormat tf, bool enabled = true);
 
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
 
-    QString get_text() const;
+    Qt::TextFormat selected_format()const;
 
-    Qt::TextFormat tf = Qt::TextFormat::PlainText;
+    ExTextEditW text = {"text"};
+    ExComboBoxIndexW type = {"type"};
 };
 }
+
+

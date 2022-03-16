@@ -98,6 +98,7 @@ LIBS +=  \
 
 HEADERS += \
     # global
+    ex_widgets/ex_notepad_w.hpp \
     qt_highlighting.hpp \
     qt_io.hpp \
     qt_logger.hpp \
@@ -152,6 +153,7 @@ HEADERS += \
 
 SOURCES += \
     # global
+    ex_widgets/ex_notepad_w.cpp \
     qt_highlighting.cpp \
     qt_logger.cpp \
     qt_str.cpp \
