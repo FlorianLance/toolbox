@@ -41,13 +41,6 @@ ExNotepadW::ExNotepadW(QString name) : ExItemW<QFrame>(UiType::Notepad, name){
 
     connect(&text, &ExTextEditW::ui_change_signal, this, [=]{trigger_ui_change();});
     connect(&type, &ExComboBoxIndexW::ui_change_signal, this, [=]{
-        if(type.w->currentIndex() == 0){
-//            text.init_widget("PT", Qt::TextFormat::PlainText);
-        }else if(type.w->currentIndex() == 1){
-//            text.init_widget("RT", Qt::TextFormat::RichText);
-        }else if(type.w->currentIndex() == 2){
-//            text.init_widget("MT", Qt::TextFormat::MarkdownText);
-        }
         trigger_ui_change();
     });
 }
@@ -70,6 +63,7 @@ ExNotepadW *ExNotepadW::init_widget(QString txt, Qt::TextFormat tf, bool enabled
 }
 
 void ExNotepadW::update_from_arg(const Arg &arg){
+
     ExItemW::update_from_arg(arg);
 
     auto args = arg.split_value_to_atoms_args();
@@ -82,8 +76,16 @@ void ExNotepadW::update_from_arg(const Arg &arg){
 }
 
 Arg ExNotepadW::convert_to_arg() const{
+
     Arg arg = ExBaseW::convert_to_arg();
-    arg.init_from_args({type.convert_to_arg(), text.convert_to_arg()}, "%%%");
+    arg.init_from(
+        {
+            type.convert_to_arg().value(),
+            text.convert_to_arg().value()
+        },
+        "%%%"
+    );
+
     return arg;
 }
 

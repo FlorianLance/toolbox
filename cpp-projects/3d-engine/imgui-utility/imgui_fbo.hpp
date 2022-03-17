@@ -45,12 +45,14 @@ public:
     }
 
     void initialize_gl(const geo::Pt2<int> &size);
-    void resize_texture(const geo::Pt2<int> &size);
-    void update_viewport();
+    void resize_texture(const geo::Pt2<int> &size);    
     void draw_texture(bool invert = false);
 
     inline void bind(){fbo.bind();}
+    void update_viewport();
+    void reset_states();
     inline void unbind(){fbo.unbind();}
+
     inline graphics::Camera *camera(){return &m_camera;}
 
     double rotationSpeed = 0.05;
@@ -58,15 +60,21 @@ public:
     float movingSpeed = 0.05f;
     float translateSpeed = 0.01f;
 
-    void update_texture_with_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void update_texture_with_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_voxels(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float halfVoxelSize);
-    void test_cloud(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, float sizePtsCloud);
-    void test_boths(gl::ShaderProgram *shader1, gl::ShaderProgram *shader2, gl::CloudPointsDrawer *drawer1, gl::CloudPointsDrawer *drawer2, float sizePtsCloud, float halfVoxelSize);
+//    void draw_voxels(gl::ShaderProgram *shader, std::vector<gl::CloudPointsDrawer> &drawers, const std::vector<geo::Mat4<float>> &models, float halfVoxelSize);
+//    void draw_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float halfVoxelSize);
+//    void draw_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float sizePtsCloud);
+
+//    void test_voxels(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float halfVoxelSize);
+//    void test_cloud(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float sizePtsCloud);
+//    void test_boths(gl::ShaderProgram *shader1, gl::ShaderProgram *shader2, gl::CloudPointsDrawer *drawer1, gl::CloudPointsDrawer *drawer2, float sizePtsCloud, float halfVoxelSize);
 
 private:
 
+
+    void restore_viewport();
     void check_inputs();
+
+    GLint viewport[4];
 
     gl::FBO fbo;
     gl::Texture2D texture;
@@ -74,7 +82,6 @@ private:
 
     graphics::Camera m_camera;       
     graphics::Screen m_screen;
-
 
     gl::CubeDrawer testCube;
 };
