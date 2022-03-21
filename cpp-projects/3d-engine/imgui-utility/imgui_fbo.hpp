@@ -60,13 +60,6 @@ public:
     float movingSpeed = 0.05f;
     float translateSpeed = 0.01f;
 
-//    void draw_voxels(gl::ShaderProgram *shader, std::vector<gl::CloudPointsDrawer> &drawers, const std::vector<geo::Mat4<float>> &models, float halfVoxelSize);
-//    void draw_voxels(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float halfVoxelSize);
-//    void draw_cloud(gl::ShaderProgram *shader, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float sizePtsCloud);
-
-//    void test_voxels(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float halfVoxelSize);
-//    void test_cloud(gl::ShaderProgram *shader, gl::ShaderProgram *solid, gl::CloudPointsDrawer *drawer, const geo::Mat4<float> &model, float sizePtsCloud);
-//    void test_boths(gl::ShaderProgram *shader1, gl::ShaderProgram *shader2, gl::CloudPointsDrawer *drawer1, gl::CloudPointsDrawer *drawer2, float sizePtsCloud, float halfVoxelSize);
 
 private:
 
