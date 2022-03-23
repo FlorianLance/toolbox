@@ -50,6 +50,7 @@ using namespace tool;
 
 struct QtLogger::Impl{
 
+    static inline bool displayConsole = false;
     static inline std::mutex locker;
     static inline std::unique_ptr<QtLogger> logger = nullptr;
     static inline std::unique_ptr<QFile> file = nullptr;
@@ -161,7 +162,9 @@ void QtLogger::insert_line_to_log_file(QtLogger::MessageType type, QStringView m
 }
 
 
-void QtLogger::init(QString logDirectoryPath, QString logFileName){
+void QtLogger::init(QString logDirectoryPath, QString logFileName, bool displayConsole){
+
+    QtLogger::Impl::displayConsole = displayConsole;
 
     if(logDirectoryPath.length() == 0 || logFileName.length() == 0){
         logDirectoryPath = QApplication::applicationDirPath() % QSL("/logs");
@@ -210,7 +213,7 @@ void QtLogger::init(QString logDirectoryPath, QString logFileName){
             }
         }
 
-        // init log file
+        // init log file        
         QtLogger::Impl::epochStart = nanoseconds_since_epoch();
         QtLogger::Impl::logger     = std::make_unique<QtLogger>();
         QtLogger::Impl::file       = std::make_unique<QFile>(absoluteFilePath);
@@ -243,6 +246,9 @@ void QtLogger::message(const QString &message, bool triggersSignal, bool saveToF
             emit QtLogger::Impl::logger->message_signal(
                 to_html_line(MessageType::normal, message, false)
             );
+            if(QtLogger::Impl::displayConsole){
+                qDebug() << message;
+            }
         }
 
         if(saveToFile){
@@ -259,6 +265,9 @@ void QtLogger::error(const QString &error, bool triggersSignal, bool saveToFile)
             emit QtLogger::Impl::logger->error_signal(
                 to_html_line(MessageType::error, error, false)
             );
+            if(QtLogger::Impl::displayConsole){
+                qDebug() << error;
+            }
         }
 
         if(saveToFile){
@@ -275,6 +284,9 @@ void QtLogger::warning(const QString &warning, bool triggersSignal, bool saveToF
             emit QtLogger::Impl::logger->warning_signal(
                 to_html_line(MessageType::warning, warning, false)
             );
+            if(QtLogger::Impl::displayConsole){
+                qWarning() << warning;
+            }
         }
 
         if(saveToFile){
