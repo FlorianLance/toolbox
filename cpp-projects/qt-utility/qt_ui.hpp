@@ -131,6 +131,7 @@ namespace tool::ui {
         static QDoubleSpinBox* init(QDoubleSpinBox *dsb, MinV<qreal> min, V<qreal> value, MaxV<qreal> max, StepV<qreal> singleStep, int decimals, bool enabled = true);
 
         static QLabel *txt(const QString &txt);
+        static QLabel *txt(const QString &txt, Qt::Alignment alignment);
         static QLabel *icon(QIcon icon, QSize size);
         static QLabel *icon(QColor color, QSize size);
         static QFrame *horizontal_line();

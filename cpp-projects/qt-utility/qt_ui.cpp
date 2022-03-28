@@ -199,7 +199,15 @@ QDoubleSpinBox *W::init(QDoubleSpinBox *dsb, MinV<qreal> min, V<qreal> value, Ma
     return dsb;
 }
 
-QLabel *W::txt(const QString &txt){return new QLabel(txt);}
+QLabel *W::txt(const QString &txt){
+    return new QLabel(txt);
+}
+
+QLabel *W::txt(const QString &txt, Qt::Alignment alignment){
+    auto t = new QLabel(txt);
+    t->setAlignment(alignment);
+    return t;
+}
 
 QLabel *W::icon(QIcon icon, QSize size){
     auto l = new QLabel();
