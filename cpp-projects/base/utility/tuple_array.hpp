@@ -42,20 +42,16 @@ namespace tool {
 //        int size;
 //        TupleT *data;
 //    };
-
-
-    template <auto Size, typename TupleT>
-    struct TupleArray {
-
-        std::array<TupleT, static_cast<size_t>(Size)> data;
-
-
 //        static constexpr auto generate(DynTupleArray<TupleT> &a){
 //            auto res = TupleArray{a.data, a.size};
 //            delete[] a.data;
 //            return res;
 //        }
 
+    template <auto Size, typename TupleT>
+    struct TupleArray {
+
+        std::array<TupleT, static_cast<size_t>(Size)> data;
 
         // first row element which tuple of column n°ColumnIdTypeToCompare equals input value
         template <std::size_t ColumnIdTypeToCompare>

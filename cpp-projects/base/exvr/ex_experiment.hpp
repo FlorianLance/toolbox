@@ -28,39 +28,24 @@
 #pragma once
 
 // std
-#include <array>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <any>
 
-typedef void (__stdcall * StackTraceCB)(const char*);
-typedef void (__stdcall * LogCB)(const char*);
-typedef void (__stdcall * LogWarningCB)(const char*);
-typedef void (__stdcall * LogErrorCB)(const char*);
-typedef long (__stdcall * EllapsedTimeExpMsCB)();
-typedef long (__stdcall * EllapsedTimeRoutineMsCB)();
-typedef int (__stdcall * GetCB)(const char*);
-typedef int (__stdcall * IsInitializedCB)(int);
-typedef int (__stdcall * IsVisibleCB)(int);
-typedef int (__stdcall * IsUpdatingCB)(int);
-typedef int (__stdcall * IsClosedCB)(int);
-typedef void (__stdcall * NextCB)();
-typedef void (__stdcall * PreviousCB)();
-typedef void (__stdcall * CloseCB)(int);
-typedef void (__stdcall * SignalBoolCB)(int, int,int);
-typedef void (__stdcall * SignalIntCB)(int, int,int);
-typedef void (__stdcall * SignalFloatCB)(int, int,float);
-typedef void (__stdcall * SignalDoubleCB)(int, int,double);
-typedef void (__stdcall * SignalStringCB)(int, int,const char*);
+// local
+#include "utility/format.hpp"
+#include "utility/tuple_array.hpp"
+#include "utility/logger.hpp"
 
 
 namespace tool::ex {
 
-    enum class ParametersContainer : int {
-        InitConfig=0, CurrentConfig=1, Dynamic=2
-    };
 
-
-    static constexpr std::array<std::tuple<ParametersContainer, const char*>,static_cast<size_t>(3)> mapping ={{
-        {ParametersContainer::InitConfig,       "init"},
-        {ParametersContainer::CurrentConfig,    "current"},
-        {ParametersContainer::Dynamic,          "dynamic"}
-    }};
+class ExExperiment{
+public:
+    static bool init_logger(std::string_view pathDir, std::string_view fileName);
+    static void init_logger_no_file();
+};
 }
+

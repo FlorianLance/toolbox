@@ -40,43 +40,58 @@ class Logger{
 
 public:
 
-    enum class MessageType : int{
+    enum class MessageT : int{
         normal, warning, error, unknow,
+    };
+
+    enum class SenderT : int {
+        GUI, Component, Resource
     };
 
     Logger();
 
     static Logger *get();
 
-    static void init(std::string_view logDirectoryPath = "", std::string_view logFileName = "default_log.html", bool doFormat = false);
-    static void no_file_init(bool noFormat = false);
+    static bool init(std::string_view logDirectoryPath = "", std::string_view logFileName = "default_log.html", bool doFormat = false);
+    static void no_file_init(bool doFormat = false);
 
     static void message(std::string_view message, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void error(std::string_view error, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void warning(std::string_view warning, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
 
-    static void trigger_message(std::string_view message, bool htmlFormat = true);
-    static void trigger_error(std::string_view error, bool htmlFormat = true);
-    static void trigger_warning(std::string_view warning, bool htmlFormat = true);
+    static void message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
+    static void error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
+    static void warning_id(std::string_view warning, SenderT sType, int sKey, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
 
     static void status(std::string_view status, int ms = 0);
     static void progress(int state);
 
     static void clean();
 
-    static std::string to_html_line(MessageType type, std::string_view text, bool addTimestamp = false);
-    static void insert_line_to_log_file(MessageType type, std::string_view message);
-
-
-
 // signals
-    lsignal::signal<void(std::string message)> message_signal;
-    lsignal::signal<void(std::string error)> error_signal;
+    lsignal::signal<void(std::string message)> message_signal;    
     lsignal::signal<void(std::string warning)> warning_signal;
+    lsignal::signal<void(std::string error)> error_signal;
+
+    lsignal::signal<void(std::string message, SenderT sType, int sKey)> message_id_signal;
+    lsignal::signal<void(std::string warning, SenderT sType, int sKey)> warning_id_signal;
+    lsignal::signal<void(std::string error, SenderT sType, int sKey)> error_id_signal;
+
     lsignal::signal<void(std::string status, int ms)> status_signal;
     lsignal::signal<void(int state)> progress_signal;
 
 private:
+
+    static void trigger_message(std::string_view message, bool htmlFormat = true);
+    static void trigger_error(std::string_view error, bool htmlFormat = true);
+    static void trigger_warning(std::string_view warning, bool htmlFormat = true);
+
+    static void trigger_message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat = true);
+    static void trigger_error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat = true);
+    static void trigger_warning_id(std::string_view warning, SenderT sType, int sKey, bool htmlFormat = true);
+
+    static std::string to_html_line(MessageT type, std::string_view text, bool addTimestamp = false);
+    static void insert_line_to_log_file(MessageT type, std::string_view message);
 
     struct Impl;
     std::unique_ptr<Impl> m_p = nullptr;

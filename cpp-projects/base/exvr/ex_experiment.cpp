@@ -25,73 +25,15 @@
 **                                                                            **
 ********************************************************************************/
 
-#pragma once
+#include "ex_experiment.hpp"
 
-// local
-#include "ex_element.hpp"
+using namespace tool::ex;
 
-namespace tool::ex {
+bool ExExperiment::init_logger(std::string_view pathDir, std::string_view fileName){
+    return Logger::init(pathDir, fileName);
+}
 
-
-class ExComponent : public ExElement{
-
-public:
-
-    virtual ~ExComponent(){}
-
-    virtual bool initialize(){return true;}
-    virtual void clean(){}
-
-    virtual void start_experiment(){}
-    virtual void stop_experiment(){}
-
-    virtual void set_current_config(const std::string &configName){static_cast<void>(configName);}
-    virtual void update_from_current_config(){}
-    virtual void pre_start_routine(){}
-    virtual void start_routine(){}
-    virtual void post_start_routine(){}
-    virtual void stop_routine(){}
-
-    virtual void on_gui(){}
-    virtual void pre_update(){}
-    virtual void update(){}
-    virtual void post_update(){}
-
-    virtual void set_visibility(bool visible){static_cast<void>(visible);}
-    virtual void set_update_state(bool doUpdate){static_cast<void>(doUpdate);}    
-    virtual void play(){}
-    virtual void pause(){}
-
-    virtual void update_parameter_from_gui(const std::string &updatedParameter){static_cast<void>(updatedParameter);}
-    virtual void action_from_gui(bool initConfig, const std::string &action){static_cast<void>(initConfig);static_cast<void>(action);}
-
-    virtual void slot(int index){static_cast<void>(index);}
-
-    int key() override{
-        return get<int>(ParametersContainer::Global, "component_key");
-    }
-
-    Logger::SenderT sender_type() override{
-        return Logger::SenderT::Component;
-    }
-
-
-    // callbacks
-    bool is_visible(int cKey);
-    bool is_updating(int cKey);
-    bool is_closed(int cKey);
-
-
-    long ellapsed_time_exp_ms();
-    long ellapsed_time_routine_ms();
-
-    void signal_bool(int index, bool value);
-    void signal_int(int index, int value);
-    void signal_float(int index, float value);
-    void signal_double(int index, double value);
-    void signal_string(int index, std::string value);
-
-
-};
+void ExExperiment::init_logger_no_file(){
+    Logger::no_file_init();
 }
 

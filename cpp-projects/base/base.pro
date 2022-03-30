@@ -123,8 +123,9 @@ LIBS += \
 
 HEADERS += \
     # exvr    
+    exvr/ex_element.hpp \
+    exvr/ex_experiment.hpp \
     exvr/ex_resource.hpp \
-    exvr/ex_utility.hpp \
     # files
     files/cloud_io.hpp \
     files/assimp_loader.hpp \
@@ -248,6 +249,8 @@ SOURCES += \
     base_main.cpp \
     # exvr    
     exvr/ex_component.cpp \
+    exvr/ex_element.cpp \
+    exvr/ex_experiment.cpp \
     exvr/ex_resource.cpp \
     # files
     files/assimp_loader.cpp \

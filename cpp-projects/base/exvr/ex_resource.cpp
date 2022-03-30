@@ -28,43 +28,5 @@
 
 #include "ex_resource.hpp"
 
+
 using namespace tool::ex;
-
-
-int ExResource::get_array_size(const std::string &name){
-    std::unique_lock<std::mutex> lock(containerLocker);
-    if(dynamicArray.count(name) != 0){
-        return std::get<1>(dynamicArray[name]);
-    }
-    return 0;
-}
-
-void ExResource::log_warning(std::string warningMessage){
-    if(logWarningCB){
-        (*logWarningCB)(warningMessage.c_str());
-    }else{
-        std::cerr << warningMessage << "\n";
-    }
-}
-
-void ExResource::log_error(std::string errorMessage){
-    if(logErrorCB){
-        (*logErrorCB)(errorMessage.c_str());
-    }else{
-        std::cerr << errorMessage << "\n";
-    }
-}
-
-void ExResource::log(std::string message){
-    if(logCB){
-        (*logCB)(message.c_str());
-    }else{
-        std::cout << message << "\n";
-    }
-}
-
-void ExResource::stack_trace_log(std::string stackTraceMessage){
-    if(stackTraceCB){
-        (*stackTraceCB)(stackTraceMessage.c_str());
-    }
-}

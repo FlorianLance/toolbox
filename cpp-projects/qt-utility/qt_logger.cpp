@@ -157,7 +157,7 @@ void QtLogger::insert_line_to_log_file(QtLogger::MessageType type, QStringView m
 
     std::unique_lock<std::mutex> lock(QtLogger::Impl::locker);
     if(QtLogger::Impl::out){
-        (*QtLogger::Impl::out) << to_html_line(type, message, true);
+        (*QtLogger::Impl::out) << to_html_line(type, message, true) << Qt::flush;
     }
 }
 

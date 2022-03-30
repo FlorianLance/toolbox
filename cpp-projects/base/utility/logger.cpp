@@ -31,9 +31,9 @@
 #include <fstream>
 #include <filesystem>
 #include <chrono>
-#include <format>
 
 // local
+#include "utility/format.hpp"
 #include "utility/time.hpp"
 
 using namespace tool;
@@ -46,6 +46,9 @@ struct Logger::Impl{
     static inline std::unique_ptr<std::ofstream> out = nullptr;
     static inline std::chrono::nanoseconds epochStart;
     static inline bool doFormat = false;
+
+    static inline constexpr std::string_view braces4                   = "{}{}{}{}";
+    static inline constexpr std::string_view braces6                   = "{}{}{}{}{}{}";
 
     static inline constexpr std::string_view startHtmlBalise           = "<p>";
     static inline constexpr std::string_view startTimestampHtmlBalise  = "<p> [";
@@ -71,13 +74,13 @@ Logger *Logger::get(){
     return nullptr;
 }
 
-void Logger::init(std::string_view logDirectoryPath, std::string_view logFileName, bool doFormat){
+bool Logger::init(std::string_view logDirectoryPath, std::string_view logFileName, bool doFormat){
 
     Logger::Impl::doFormat = doFormat;
 
     if(logDirectoryPath.length() == 0 || logFileName.length() == 0){
         std::cerr << "[LOGGER-ERROR] Empty path or filename.\n";
-        return;
+        return false;
     }
 
     fs::path logDirPath       = logDirectoryPath;
@@ -87,7 +90,7 @@ void Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
     if(!fs::exists(logDirPath)){
         if(!fs::create_directory(logDirPath)){
             std::cerr << "[LOGGER-ERROR] Cannot create logging directory path.\n";
-            return;
+            return false;
         }
     }
 
@@ -124,8 +127,10 @@ void Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
         Logger::Impl::out->open(absoluteFilePath);
         if(!Logger::Impl::out->is_open()){
             std::cerr << "[LOGGER-ERROR] Cannot write to log file: " << absoluteFilePath  << "\n";
+            return false;
         }
     }
+    return true;
 }
 
 void Logger::no_file_init(bool doFormat){
@@ -147,27 +152,9 @@ void Logger::message(std::string_view message, bool htmlFormat, bool triggersSig
     }
 
     if(saveToFile && (Logger::Impl::out != nullptr)){
-        insert_line_to_log_file(MessageType::normal, message);
+        insert_line_to_log_file(MessageT::normal, message);
     }
 }
-
-
-void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal, bool saveToFile){
-
-    if(Logger::Impl::logger == nullptr){
-        std::cerr << error;
-        return;
-    }
-
-    if(triggersSignal){
-        trigger_error(error, htmlFormat && Logger::Impl::doFormat);
-    }
-
-    if(saveToFile && (Logger::Impl::out != nullptr)){
-        insert_line_to_log_file(MessageType::error, error);
-    }
-}
-
 
 void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
@@ -181,32 +168,125 @@ void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSig
     }
 
     if(saveToFile && (Logger::Impl::out != nullptr)){
-        insert_line_to_log_file(MessageType::warning, warning);
+        insert_line_to_log_file(MessageT::warning, warning);
     }
 }
 
+void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal, bool saveToFile){
+
+    if(Logger::Impl::logger == nullptr){
+        std::cerr << error;
+        return;
+    }
+
+    if(triggersSignal){
+        trigger_error(error, htmlFormat && Logger::Impl::doFormat);
+    }
+
+    if(saveToFile && (Logger::Impl::out != nullptr)){
+        insert_line_to_log_file(MessageT::error, error);
+    }
+}
+
+
+
+
+void Logger::message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat, bool triggersSignal, bool saveToFile){
+
+    if(Logger::Impl::logger == nullptr){
+        std::cout << message;
+        return;
+    }
+
+    if(triggersSignal){
+        trigger_message_id(message, sType, sKey, htmlFormat && Logger::Impl::doFormat);
+    }
+
+    if(saveToFile && (Logger::Impl::out != nullptr)){
+        insert_line_to_log_file(MessageT::normal, message);
+    }
+}
+
+
+void Logger::warning_id(std::string_view warning, SenderT sType, int sKey, bool htmlFormat, bool triggersSignal, bool saveToFile){
+
+    if(Logger::Impl::logger == nullptr){
+        std::cerr << warning;
+        return;
+    }
+
+    if(triggersSignal){
+        trigger_warning_id(warning, sType, sKey, htmlFormat && Logger::Impl::doFormat);
+    }
+
+    if(saveToFile && (Logger::Impl::out != nullptr)){
+        insert_line_to_log_file(MessageT::warning, warning);
+    }
+}
+
+
+void Logger::error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat, bool triggersSignal, bool saveToFile){
+
+    if(Logger::Impl::logger == nullptr){
+        std::cerr << error;
+        return;
+    }
+
+    if(triggersSignal){
+        trigger_error_id(error, sType, sKey, htmlFormat && Logger::Impl::doFormat);
+    }
+
+    if(saveToFile && (Logger::Impl::out != nullptr)){
+        insert_line_to_log_file(MessageT::error, error);
+    }
+}
+
+
 void Logger::trigger_message(std::string_view message, bool htmlFormat){
     if(htmlFormat){
-        Logger::Impl::logger->message_signal(to_html_line(MessageType::normal,message));
+        Logger::Impl::logger->message_signal(to_html_line(MessageT::normal,message));
     }else{
         Logger::Impl::logger->message_signal(std::string(message));
     }
 }
 
+void Logger::trigger_warning(std::string_view warning, bool htmlFormat){
+    if(htmlFormat){
+        Logger::Impl::logger->warning_signal(to_html_line(MessageT::warning, warning));
+    }else{
+        Logger::Impl::logger->warning_signal(std::string(warning));
+    }
+}
+
 void Logger::trigger_error(std::string_view error, bool htmlFormat){
     if(htmlFormat){
-        Logger::Impl::logger->error_signal(to_html_line(MessageType::error, error));
+        Logger::Impl::logger->error_signal(to_html_line(MessageT::error, error));
     }else{
         Logger::Impl::logger->error_signal(std::string(error));
     }
 }
 
-void Logger::trigger_warning(std::string_view warning, bool htmlFormat){
-
+void Logger::trigger_message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat){
     if(htmlFormat){
-        Logger::Impl::logger->warning_signal(to_html_line(MessageType::warning, warning));
+        Logger::Impl::logger->message_id_signal(to_html_line(MessageT::normal,message), sType, sKey);
     }else{
-        Logger::Impl::logger->warning_signal(std::string(warning));
+        Logger::Impl::logger->message_id_signal(std::string(message), sType, sKey);
+    }
+}
+
+void Logger::trigger_warning_id(std::string_view warning, SenderT sType, int sKey, bool htmlFormat){
+    if(htmlFormat){
+        Logger::Impl::logger->warning_id_signal(to_html_line(MessageT::warning, warning), sType, sKey);
+    }else{
+        Logger::Impl::logger->warning_id_signal(std::string(warning), sType, sKey);
+    }
+}
+
+void Logger::trigger_error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat){
+    if(htmlFormat){
+        Logger::Impl::logger->error_id_signal(to_html_line(MessageT::error, error), sType, sKey);
+    }else{
+        Logger::Impl::logger->error_id_signal(std::string(error), sType, sKey);
     }
 }
 
@@ -229,36 +309,36 @@ void Logger::clean(){
     Logger::Impl::logger = nullptr;
 }
 
-void Logger::insert_line_to_log_file(MessageType type, std::string_view message){
+void Logger::insert_line_to_log_file(MessageT type, std::string_view message){
 
     std::unique_lock<std::mutex> lock(Logger::Impl::locker);
     if(Logger::Impl::out){
-        (*Logger::Impl::out) << to_html_line(type, message, true);
+        (*Logger::Impl::out) << to_html_line(type, message, true) << std::flush;
     }
 }
 
-std::string Logger::to_html_line(MessageType type, std::string_view text, bool addTimestamp){
+std::string Logger::to_html_line(MessageT type, std::string_view text, bool addTimestamp){
 
     std::string_view colorCode;
     switch (type) {
-    case MessageType::normal:
+    case MessageT::normal:
         colorCode = Logger::Impl::htmlDarkBlueColorBalise;
         break;
-    case MessageType::warning:
+    case MessageT::warning:
         colorCode = Logger::Impl::htmlDarkOrangeColorBalise;
         break;
-    case MessageType::error:
+    case MessageT::error:
         colorCode = Logger::Impl::htmlDarkRedColorBalise;
         break;
-    case MessageType::unknow:
+    case MessageT::unknow:
         colorCode = Logger::Impl::htmlDarkBlackColorBalise;
         break;
     }    
 
     if(!addTimestamp){
-        return std::format("{}{}{}{}", Logger::Impl::startHtmlBalise, colorCode, text, Logger::Impl::endHtmlBalise);
+        return std::format(Logger::Impl::braces4, Logger::Impl::startHtmlBalise, colorCode, text, Logger::Impl::endHtmlBalise);
     }else{
         auto diff = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(nanoseconds_since_epoch() - Logger::Impl::epochStart).count());
-        return std::format("{}{}{}{}{}{}", Logger::Impl::startTimestampHtmlBalise, diff, Logger::Impl::midTimestampHtmlBalise, colorCode, text, Logger::Impl::endHtmlBalise);
+        return std::format(Logger::Impl::braces6, Logger::Impl::startTimestampHtmlBalise, diff, Logger::Impl::midTimestampHtmlBalise, colorCode, text, Logger::Impl::endHtmlBalise);
     }
 }

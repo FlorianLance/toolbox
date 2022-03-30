@@ -41,18 +41,18 @@ public:
 
     // camera
     // # grabber
-    static std::pair<bool, std::string> save_grabber_settings_config_file(const K2Settings &p, std::string path);
-    static std::pair<std::optional<K2Settings>, std::string> read_grabber_settings_config_file(std::string path = "");
+    static bool save_grabber_settings_config_file(const K2Settings &p, std::string path);
+    static std::optional<K2Settings> read_grabber_settings_config_file(std::string path = "");
 
     // network
     // # grabber
-    static std::pair<bool, std::string> read_grabber_network_config_file(int *readingPort, std::string path = "");
+    static bool read_grabber_network_config_file(int *readingPort, std::string path = "");
     // # manager
-    static std::pair<std::vector<K2GrabberTargetInfo>, std::string> read_manager_network_config_file(std::string path = "");
+    static std::vector<K2GrabberTargetInfo> read_manager_network_config_file(std::string path = "");
 
     // calibration
     // # manager
-    static std::pair<std::vector<tool::geo::Mat4d>, std::string> read_manager_calibration_file(std::string path = "");
+    static std::vector<tool::geo::Mat4d> read_manager_calibration_file(std::string path = "");
 };
 
 }
