@@ -27,45 +27,11 @@
 
 #pragma once
 
-// std
-#include <memory>
-#include <string>
-#include <unordered_map>
+// local
 #include <any>
 
 // local
-#include "utility/format.hpp"
-#include "utility/tuple_array.hpp"
-#include "utility/logger.hpp"
-
-typedef void (__stdcall * LogMessageCB)(const char*);
-typedef void (__stdcall * LogWarningCB)(const char*);
-typedef void (__stdcall * LogErrorCB)(const char*);
-
-typedef void (__stdcall * LogMessageIdCB)(const char*, int, int);
-typedef void (__stdcall * LogWarningIdCB)(const char*, int, int);
-typedef void (__stdcall * LogErrorIdCB)(const char*, int, int);
-
-typedef void (__stdcall * StackTraceCB)(const char*);
-
-typedef int (__stdcall * GetCB)(const char*);
-typedef int (__stdcall * IsVisibleCB)(int);
-typedef int (__stdcall * IsUpdatingCB)(int);
-typedef int (__stdcall * IsClosedCB)(int);
-
-typedef void (__stdcall * SignalBoolCB)(int, int,int);
-typedef void (__stdcall * SignalIntCB)(int, int,int);
-typedef void (__stdcall * SignalFloatCB)(int, int,float);
-typedef void (__stdcall * SignalDoubleCB)(int, int,double);
-typedef void (__stdcall * SignalStringCB)(int, int,const char*);
-
-typedef void (__stdcall * NextCB)();
-typedef void (__stdcall * PreviousCB)();
-typedef void (__stdcall * CloseCB)(int);
-
-typedef long (__stdcall * EllapsedTimeExpMsCB)();
-typedef long (__stdcall * EllapsedTimeRoutineMsCB)();
-
+#include "ex_experiment.hpp"
 
 namespace tool::ex {
 
@@ -93,6 +59,11 @@ static constexpr TupleArray<ParametersContainer::SizeEnum,TParametersContainer> 
 
 class ExElement{
 public:
+
+    void set_exp(tool::ex::ExExperiment *e){
+        exp = e;
+    }
+
 
     // callbacks
     void log_warning(std::string warningMessage);
@@ -179,6 +150,7 @@ public:
     virtual int key() = 0;
     virtual Logger::SenderT sender_type() = 0;
 
+    tool::ex::ExExperiment *exp = nullptr;
 
 protected:
 
@@ -188,55 +160,6 @@ protected:
     std::unordered_map<ParametersContainer, std::unordered_map<std::string, std::tuple<std::any,int>>> arrayContainers{
         {ParametersContainer::Global,        {}}
     };
-
-public:
-
-    static inline std::unique_ptr<LogMessageCB> logMessageCBP = nullptr;
-    static inline std::unique_ptr<LogWarningCB> logWarningCBP = nullptr;
-    static inline std::unique_ptr<LogErrorCB> logErrorCBP     = nullptr;
-    static inline std::unique_ptr<LogMessageIdCB> logMessageIdCBP = nullptr;
-    static inline std::unique_ptr<LogWarningIdCB> logWarningIdCBP = nullptr;
-    static inline std::unique_ptr<LogErrorIdCB> logErrorIdCBP     = nullptr;
-    static inline std::unique_ptr<StackTraceCB> stackTraceCBP     = nullptr;
-    static inline std::unique_ptr<EllapsedTimeExpMsCB> ellapsedTimeExpMsCBP = nullptr;
-    static inline std::unique_ptr<EllapsedTimeRoutineMsCB> ellapsedTimeRoutineMsCBP = nullptr;
-    static inline std::unique_ptr<GetCB> getCBP = nullptr;
-    static inline std::unique_ptr<IsVisibleCB> isVisibleCBP= nullptr;
-    static inline std::unique_ptr<IsUpdatingCB> isUpdatingCBP= nullptr;
-    static inline std::unique_ptr<IsClosedCB> isClosedCBP= nullptr;
-    static inline std::unique_ptr<NextCB> nextCBP = nullptr;
-    static inline std::unique_ptr<PreviousCB> previousCBP = nullptr;
-    static inline std::unique_ptr<CloseCB> closeCBP = nullptr;
-    static inline std::unique_ptr<SignalBoolCB> signalBoolCBP= nullptr;
-    static inline std::unique_ptr<SignalIntCB> signalIntCBP= nullptr;
-    static inline std::unique_ptr<SignalFloatCB> signalFloatCBP= nullptr;
-    static inline std::unique_ptr<SignalDoubleCB> signalDoubleCBP= nullptr;
-    static inline std::unique_ptr<SignalStringCB> signalStringCBP= nullptr;
-
-    static void init_callbacks(
-        LogMessageCB logMessageCB,
-        LogWarningCB logWarningCB,
-        LogErrorCB logErrorCB,
-        LogMessageIdCB logMessageIdCB,
-        LogWarningIdCB logWarningIdCB,
-        LogErrorIdCB logErrorIdCB,
-        StackTraceCB stackTraceCB,
-        EllapsedTimeExpMsCB ellapsedTimeExpMsCB,
-        EllapsedTimeRoutineMsCB ellapsedTimeRoutineMsCB,
-        GetCB getCB,
-        IsVisibleCB isVisibleCB,
-        IsUpdatingCB isUpdatingCB,
-        IsClosedCB isClosedCB,
-        NextCB nextCB,
-        PreviousCB previousCB,
-        CloseCB closeCB,
-        SignalBoolCB signalBoolCB,
-        SignalIntCB signalIntCB,
-        SignalFloatCB signalFloatCB,
-        SignalDoubleCB signalDoubleCB,
-        SignalStringCB signalStringCB
-    );
 };
-
 }
 

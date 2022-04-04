@@ -36,6 +36,12 @@
 
 namespace tool {
 
+class Logger;
+struct LoggerCleaner {
+    void operator()(Logger* logger);
+};
+
+
 class Logger{
 
 public:
@@ -52,6 +58,7 @@ public:
 
     static Logger *get();
 
+    static std::unique_ptr<Logger, LoggerCleaner> no_file_generate(bool doFormat = false);
     static bool init(std::string_view logDirectoryPath = "", std::string_view logFileName = "default_log.html", bool doFormat = false);
     static void no_file_init(bool doFormat = false);
 

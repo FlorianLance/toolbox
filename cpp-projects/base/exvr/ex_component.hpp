@@ -75,12 +75,10 @@ public:
         return Logger::SenderT::Component;
     }
 
-
     // callbacks
     bool is_visible(int cKey);
     bool is_updating(int cKey);
     bool is_closed(int cKey);
-
 
     long ellapsed_time_exp_ms();
     long ellapsed_time_routine_ms();
@@ -90,7 +88,6 @@ public:
     void signal_float(int index, float value);
     void signal_double(int index, double value);
     void signal_string(int index, std::string value);
-
 
 };
 }

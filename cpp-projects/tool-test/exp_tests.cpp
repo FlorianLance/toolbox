@@ -1,7 +1,6 @@
 
-
 /*******************************************************************************
-** Toolbox-base                                                               **
+** tool-test                                                                  **
 ** MIT License                                                                **
 ** Copyright (c) [2018] [Florian Lance]                                       **
 **                                                                            **
@@ -25,48 +24,26 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "ex_component.hpp"
+// catch
+#include "catch.hpp"
+
+#include "exvr/ex_experiment.hpp"
+
+using namespace tool;
 
 
-using namespace tool::ex;
+TEST_CASE("experiment"){
 
-bool ExComponent::is_visible(int cKey){
-    return (*exp->isVisibleCBP)(cKey);
+
+    SECTION("test1"){
+        tool::ex::ExExperiment exp;
+
+        REQUIRE(exp.logger == nullptr);
+        exp.generate_logger_no_file();
+        REQUIRE(exp.logger != nullptr);
+//        REQUIRE(geo::equals(dm1,from_glm(glmdm1)));
+//        REQUIRE(dm1.determinant() == glm::determinant(glmdm1));
+    }
+    //    return;
+
 }
-
-bool ExComponent::is_updating(int cKey){
-    return (*exp->isUpdatingCBP)(cKey);
-}
-
-bool ExComponent::is_closed(int cKey){
-    return (*exp->isClosedCBP)(cKey);
-}
-
-long ExComponent::ellapsed_time_exp_ms(){
-    return (*exp->ellapsedTimeExpMsCBP)();
-}
-
-long ExComponent::ellapsed_time_routine_ms(){
-    return (*exp->ellapsedTimeRoutineMsCBP)();
-}
-
-void ExComponent::signal_bool(int index, bool value){
-    (*exp->signalBoolCBP)(key(), index, value ? 1 : 0);
-}
-
-void ExComponent::signal_int(int index, int value){
-    (*exp->signalIntCBP)(key(), index, value);
-}
-
-void ExComponent::signal_float(int index, float value){
-    (*exp->signalFloatCBP)(key(), index, value);
-}
-
-void ExComponent::signal_double(int index, double value){
-    (*exp->signalDoubleCBP)(key(), index, value);
-}
-
-void ExComponent::signal_string(int index, std::string value){
-    (*exp->signalStringCBP)(key(), index, value.c_str());
-}
-

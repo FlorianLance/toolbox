@@ -24,80 +24,59 @@
 **                                                                            **
 ********************************************************************************/
 
-#include "ex_code_editor_w.hpp"
+#pragma once
 
-// qt-utility
-#include "widgets/text_widget_highlighter.hpp"
+// Qt
+#include <QMouseEvent>
+
+// local
+#include "gui/widgets/curve_widget.hpp"
+#include "ex_spin_box_w.hpp"
+#include "ex_double_spin_box_w.hpp"
+#include "ex_checkbox_w.hpp"
+#include "ex_combo_box_text_w.hpp"
+
+namespace tool::ex{
 
 
-using namespace tool::ui;
-using namespace tool::ex;
+class ExCurveW : public ExItemW<QFrame>{
 
-ExCodeEditorW::ExCodeEditorW(QString name) : ExItemW<CodeEditor>(UiType::Code_editor, name) {}
+public :
 
-ExCodeEditorW *ExCodeEditorW::init_widget(QString txt, bool enabled){
-    w->setPlainText(txt);
-    w->setEnabled(enabled);
-    return this;
+    ExCurveW(QString name ="");
+    ExCurveW  *init_widget(QString title, QString xTitle = "x", QString yTitle = "y", geo::Pt2d xRange = {0,1}, geo::Pt2d yRange = {0,1},
+                          const std::pair<std::vector<double>, std::vector<double>> &points = {}, bool enabled = true);
+
+    void update_from_arg(const Arg &arg) override;
+    Arg convert_to_arg() const override;
+
+    void set_points(const std::pair<std::vector<double>, std::vector<double>> &points);
+
+    // curve
+    tool::ui::CurveW *curveW = nullptr;
+    // id curve
+    ExSpinBoxW currentCurveId = {"current_curve_id"};
+    // actions
+    QPushButton *resetB = nullptr;
+    QPushButton *addPointB = nullptr;
+    // range x
+    ExDoubleSpinBoxW minX = {"min_x"};
+    ExDoubleSpinBoxW maxX = {"max_x"};
+    // range y
+    ExDoubleSpinBoxW minY = {"min_y"};
+    ExDoubleSpinBoxW maxY = {"max_y"};
+    // first/last y
+    ExDoubleSpinBoxW firstY = {"first_y"};
+    ExDoubleSpinBoxW lastY  = {"last_y"};
+    // point to add
+    ExDoubleSpinBoxW addX = {"add_x"};
+    ExDoubleSpinBoxW addY = {"add_y"};
+    // settings
+    ExCheckBoxW fitted = {"fitted"};
+    ExComboBoxTextW type = {"type"};
+};
+
+
 }
 
-ExCodeEditorW *ExCodeEditorW::init_widget_as_csharp_editor(const QColor &bc, QString txt, bool enabled){
 
-    QFont font;
-    font.setFamily("Courier");
-    font.setStyleHint(QFont::Monospace);
-    font.setFixedPitch(true);
-    font.setPointSize(10);
-    w->setFont(font);
-
-    // tab size
-    QFontMetrics metrics(font);
-    auto distance = metrics.horizontalAdvance("    ");
-    w->setTabStopDistance(distance);
-
-    ui::CSharpHighlighter *cshStartFunction = new ui::CSharpHighlighter(w->document(), &CSharpHighlighting::csharpHighlingRules);
-    static_cast<void>(cshStartFunction);
-    w->setStyleSheet(QString("background-color: rgb(%1,%2,%3); border: 0px ;").arg(bc.red()).arg(bc.green()).arg(bc.blue()));
-    w->zoomIn(2);
-
-    w->setPlainText(txt);
-    w->setEnabled(enabled);
-
-
-    connect(w.get(), &CodeEditor::textChanged,this, [=]{trigger_ui_change();});
-
-    return this;
-}
-
-
-void ExCodeEditorW::update_from_arg(const Arg &arg){
-
-    ExItemW::update_from_arg(arg);
-
-    w->blockSignals(true);
-
-    if(arg.generator.has_value()){
-//        if(const auto &info = arg.generator->info; info.has_value()){
-
-//        }else{
-//            qDebug() << "ExCodeEditorW Invalid genrator.";
-//        }
-    }else{
-
-        w->setPlainText(arg.to_string_value());
-    }
-
-    w->blockSignals(false);
-}
-
-Arg ExCodeEditorW::convert_to_arg() const{
-
-    Arg arg = ExBaseW::convert_to_arg();
-    arg.init_from(w->toPlainText());
-
-    // generator
-    if(hasGenerator){
-        // ...
-    }
-    return arg;
-}

@@ -104,6 +104,7 @@ LIBS +=\
 
 SOURCES += \
     camera_tests.cpp \
+    exp_tests.cpp \
     main.cpp \       
     geometry_tests.cpp \
 

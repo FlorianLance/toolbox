@@ -40,7 +40,7 @@
 
 #include <QFontMetrics>
 #include <QHeaderView>
-#include "widgets/tree_view_w.hpp"
+#include "gui/widgets/tree_view_w.hpp"
 
 using namespace tool;
 

@@ -48,28 +48,28 @@ using namespace tool;
 
 void kinect2_test(){
 
-    using namespace std::chrono_literals;
-    camera::K2Device kinect;
-    if(!kinect.open(camera::K2FrameRequest::compressed_color_mesh)){
-        std::cerr << "Cannot init kinect 2\n";
-        return;
-    }
+//    using namespace std::chrono_literals;
+//    camera::K2Device kinect;
+//    if(!kinect.open(camera::K2FrameRequest::compressed_color_mesh)){
+//        std::cerr << "Cannot init kinect 2\n";
+//        return;
+//    }
 
-    std::cout << "init\n";
-    std::this_thread::sleep_for(1000ms);
-    std::cout << "try to grab\n";
+//    std::cout << "init\n";
+//    std::this_thread::sleep_for(1000ms);
+//    std::cout << "try to grab\n";
 
-    for(int ii = 0; ii < 10000; ++ii){
-        if(auto newFrame = kinect.get_kinect_data(); newFrame.has_value()){
-            std::cout << "-";
-        }else{
-            std::cout << "E";
-        }
-        std::this_thread::sleep_for((1000/33)*1ms);
-    }
+//    for(int ii = 0; ii < 10000; ++ii){
+//        if(auto newFrame = kinect.get_kinect_data(); newFrame.has_value()){
+//            std::cout << "-";
+//        }else{
+//            std::cout << "E";
+//        }
+//        std::this_thread::sleep_for((1000/33)*1ms);
+//    }
 
-    std::cout << "close\n";
-    kinect.close();
+//    std::cout << "close\n";
+//    kinect.close();
 }
 
 void kinect4_test(){
@@ -387,78 +387,82 @@ void kinect4_test(){
 
 void bench_test(){
 
-    {
-        const auto t1 = "t1"sv;
-        tool::Bench::start(t1, true);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        tool::Bench::stop();
+//    {
+//        const auto t1 = "t1"sv;
+//        tool::Bench::start(t1, true);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        tool::Bench::stop();
 
-        {
-            tool::BenchGuard g("g1", true);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+//        {
+//            tool::BenchGuard g("g1", true);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        }
 
-        tool::Bench::start("t2", true);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        tool::Bench::stop();
+//        tool::Bench::start("t2", true);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        tool::Bench::stop();
 
-        tool::BenchGuard g0("g0", true);
-        {
-            tool::BenchGuard g1("g1", true);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        tool::BenchGuard g0("g0", true);
+//        {
+//            tool::BenchGuard g1("g1", true);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-            {
-                tool::BenchGuard g2("g2", true);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//            {
+//                tool::BenchGuard g2("g2", true);
+//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-            }
+//            }
 
-            tool::BenchGuard g3("g3", true);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+//            tool::BenchGuard g3("g3", true);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        }
 
-        tool::Bench::start("t3"sv, true);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        tool::Bench::stop();
+//        tool::Bench::start("t3"sv, true);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        tool::Bench::stop();
 
-        tool::Bench::start("t4", true);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        tool::Bench::stop();
-    }
+//        tool::Bench::start("t4", true);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        tool::Bench::stop();
+//    }
 
-    tool::BenchGuard g3("g4", true);
+//    tool::BenchGuard g3("g4", true);
 
-    tool::Bench::start("base-lib start", true);
-    Logger::init((std::filesystem::current_path() / "base-lib-logs").string(), "logs.html");
+//    tool::Bench::start("base-lib start", true);
+//    Logger::init((std::filesystem::current_path() / "base-lib-logs").string(), "logs.html");
 
-    auto logger = Logger::get();
-    logger->message_signal.connect([&](std::string messsage){
-        std::cout << "Message from logger: " << messsage << "\n";
-    });
+//    auto logger = Logger::get();
+//    logger->message_signal.connect([&](std::string messsage){
+//        std::cout << "Message from logger: " << messsage << "\n";
+//    });
 
-    tool::Bench::stop();
+//    tool::Bench::stop();
 }
 
 
+#include "exvr/ex_experiment.hpp"
+
 int main(){
 
-    Logger::message("base-lib start\n");
 
-    tool::Bench::reset();
-    tool::Bench::start("kinect4_test");
-    Logger::message("kinect4_test\n");
-    kinect4_test();
-    tool::Bench::stop();
-    tool::Bench::display();
+
+//    Logger::message("base-lib start\n");
 
 //    tool::Bench::reset();
-//    tool::Bench::start("bench_test");
-//    Logger::message("bench_test\n");
-//    bench_test();
+//    tool::Bench::start("kinect4_test");
+//    Logger::message("kinect4_test\n");
+//    kinect4_test();
 //    tool::Bench::stop();
 //    tool::Bench::display();
 
-    Logger::message("base-lib end\n");
+////    tool::Bench::reset();
+////    tool::Bench::start("bench_test");
+////    Logger::message("bench_test\n");
+////    bench_test();
+////    tool::Bench::stop();
+////    tool::Bench::display();
+
+//    Logger::message("base-lib end\n");
 
     return 0;
 }

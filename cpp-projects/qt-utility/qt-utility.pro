@@ -97,8 +97,7 @@ LIBS +=  \
 ####################################### PROJECT FILES
 
 HEADERS += \
-    # global
-    ex_widgets/ex_notepad_w.hpp \
+    # global    
     qt_highlighting.hpp \
     qt_io.hpp \
     qt_logger.hpp \
@@ -113,47 +112,46 @@ HEADERS += \
     data/id_key.hpp \
     data/unity_types.hpp \
     # widgets
-    widgets/code_editor_w.hpp \
-    widgets/custom_combobox_w.hpp \
-    widgets/curve_widget.hpp \
-    widgets/grabber_parameters_widget.hpp \
-    widgets/list_widget.hpp \
-    widgets/image_viewer.hpp \
-    widgets/rich_text_edit.hpp \
-    widgets/sfmlqt_gl_widget.hpp \
-    widgets/text_widget_highlighter.hpp \
-    widgets/tree_view_w.hpp \
-    wrapper/qt_gl_wrapper.hpp \
+    gui/widgets/code_editor_w.hpp \
+    gui/widgets/custom_combobox_w.hpp \
+    gui/widgets/curve_widget.hpp \
+    gui/widgets/grabber_parameters_widget.hpp \
+    gui/widgets/list_widget.hpp \
+    gui/widgets/image_viewer.hpp \
+    gui/widgets/rich_text_edit.hpp \
+    gui/widgets/sfmlqt_gl_widget.hpp \
+    gui/widgets/text_widget_highlighter.hpp \
+    gui/widgets/tree_view_w.hpp \
     # ex_widgets
-    ex_widgets/ex_base_w.hpp \
-    ex_widgets/ex_item_w.hpp \
-    ex_widgets/ex_checkbox_w.hpp \
-    ex_widgets/ex_code_editor_w.hpp \
-    ex_widgets/ex_color_frame_w.hpp \
-    ex_widgets/ex_combo_box_index_w.hpp \
-    ex_widgets/ex_combo_box_text_w.hpp \
-    ex_widgets/ex_curve_w.hpp \
-    ex_widgets/ex_curve_x_w.hpp \
-    ex_widgets/ex_double_spin_box_w.hpp \
-    ex_widgets/ex_float_spin_box_w.hpp \
-    ex_widgets/ex_label_w.hpp \
-    ex_widgets/ex_line_edit_w.hpp \
-    ex_widgets/ex_list_labels_w.hpp \
-    ex_widgets/ex_pushbutton_w.hpp \
-    ex_widgets/ex_radio_button_w.hpp \
-    ex_widgets/ex_select_color_w.hpp \
-    ex_widgets/ex_slider_w.hpp \
-    ex_widgets/ex_spin_box_w.hpp \
-    ex_widgets/ex_text_edit_w.hpp \
-    ex_widgets/ex_transformation_w.hpp \
-    ex_widgets/ex_vector2d_w.hpp \
-    ex_widgets/ex_vector3d_w.hpp \
+    gui/ex_widgets/ex_notepad_w.hpp \
+    gui/ex_widgets/ex_base_w.hpp \
+    gui/ex_widgets/ex_item_w.hpp \
+    gui/ex_widgets/ex_checkbox_w.hpp \
+    gui/ex_widgets/ex_code_editor_w.hpp \
+    gui/ex_widgets/ex_color_frame_w.hpp \
+    gui/ex_widgets/ex_combo_box_index_w.hpp \
+    gui/ex_widgets/ex_combo_box_text_w.hpp \
+    gui/ex_widgets/ex_curve_w.hpp \
+    gui/ex_widgets/ex_curve_x_w.hpp \
+    gui/ex_widgets/ex_double_spin_box_w.hpp \
+    gui/ex_widgets/ex_float_spin_box_w.hpp \
+    gui/ex_widgets/ex_label_w.hpp \
+    gui/ex_widgets/ex_line_edit_w.hpp \
+    gui/ex_widgets/ex_list_labels_w.hpp \
+    gui/ex_widgets/ex_pushbutton_w.hpp \
+    gui/ex_widgets/ex_radio_button_w.hpp \
+    gui/ex_widgets/ex_select_color_w.hpp \
+    gui/ex_widgets/ex_slider_w.hpp \
+    gui/ex_widgets/ex_spin_box_w.hpp \
+    gui/ex_widgets/ex_text_edit_w.hpp \
+    gui/ex_widgets/ex_transformation_w.hpp \
+    gui/ex_widgets/ex_vector2d_w.hpp \
+    gui/ex_widgets/ex_vector3d_w.hpp \
     # wrapper
     wrapper/qt_gl_wrapper.hpp \
 
 SOURCES += \
-    # global
-    ex_widgets/ex_notepad_w.cpp \
+    # global    
     qt_highlighting.cpp \
     qt_logger.cpp \
     qt_str.cpp \
@@ -163,43 +161,44 @@ SOURCES += \
     data/argument.cpp \
     data/id_key.cpp \
     # widgets
-    widgets/code_editor_w.cpp \
-    widgets/grabber_parameters_widget.cpp \
-    widgets/image_viewer.cpp \
-    widgets/list_widget.cpp \
-    widgets/rich_text_edit.cpp \
-    widgets/sfmlqt_gl_widget.cpp \
-    widgets/curve_widget.cpp  \
-    widgets/text_widget_highlighter.cpp \
+    gui/widgets/code_editor_w.cpp \
+    gui/widgets/grabber_parameters_widget.cpp \
+    gui/widgets/image_viewer.cpp \
+    gui/widgets/list_widget.cpp \
+    gui/widgets/rich_text_edit.cpp \
+    gui/widgets/sfmlqt_gl_widget.cpp \
+    gui/widgets/curve_widget.cpp  \
+    gui/widgets/text_widget_highlighter.cpp \
+    gui/widgets/tree_view_w.cpp \
     # ex_widgets
-    ex_widgets/ex_base_w.cpp \
-    ex_widgets/ex_checkbox_w.cpp \
-    ex_widgets/ex_code_editor_w.cpp \
-    ex_widgets/ex_color_frame_w.cpp \
-    ex_widgets/ex_combo_box_index_w.cpp \
-    ex_widgets/ex_combo_box_text_w.cpp \
-    ex_widgets/ex_curve_w.cpp \
-    ex_widgets/ex_curve_x_w.cpp \
-    ex_widgets/ex_double_spin_box_w.cpp \
-    ex_widgets/ex_float_spin_box_w.cpp \
-    ex_widgets/ex_label_w.cpp \
-    ex_widgets/ex_line_edit_w.cpp \
-    ex_widgets/ex_list_labels_w.cpp \
-    ex_widgets/ex_pushbutton_w.cpp \
-    ex_widgets/ex_radio_button_w.cpp \
-    ex_widgets/ex_select_color_w.cpp \
-    ex_widgets/ex_slider_w.cpp \
-    ex_widgets/ex_spin_box_w.cpp \
-    ex_widgets/ex_text_edit_w.cpp \
-    ex_widgets/ex_transformation_w.cpp \
-    ex_widgets/ex_vector2d_w.cpp \
-    ex_widgets/ex_vector3d_w.cpp \
-    widgets/tree_view_w.cpp
+    gui/ex_widgets/ex_notepad_w.cpp \
+    gui/ex_widgets/ex_base_w.cpp \
+    gui/ex_widgets/ex_checkbox_w.cpp \
+    gui/ex_widgets/ex_code_editor_w.cpp \
+    gui/ex_widgets/ex_color_frame_w.cpp \
+    gui/ex_widgets/ex_combo_box_index_w.cpp \
+    gui/ex_widgets/ex_combo_box_text_w.cpp \
+    gui/ex_widgets/ex_curve_w.cpp \
+    gui/ex_widgets/ex_curve_x_w.cpp \
+    gui/ex_widgets/ex_double_spin_box_w.cpp \
+    gui/ex_widgets/ex_float_spin_box_w.cpp \
+    gui/ex_widgets/ex_label_w.cpp \
+    gui/ex_widgets/ex_line_edit_w.cpp \
+    gui/ex_widgets/ex_list_labels_w.cpp \
+    gui/ex_widgets/ex_pushbutton_w.cpp \
+    gui/ex_widgets/ex_radio_button_w.cpp \
+    gui/ex_widgets/ex_select_color_w.cpp \
+    gui/ex_widgets/ex_slider_w.cpp \
+    gui/ex_widgets/ex_spin_box_w.cpp \
+    gui/ex_widgets/ex_text_edit_w.cpp \
+    gui/ex_widgets/ex_transformation_w.cpp \
+    gui/ex_widgets/ex_vector2d_w.cpp \
+    gui/ex_widgets/ex_vector3d_w.cpp \
 
 RESOURCES += \
     $$TOOLBOX_CPP_RESOURCES_DIR"/resources.qrc" \
 
 FORMS += \
-    ui/grabber_parameters.ui \
+    gui/forms/grabber_parameters.ui \
 
 

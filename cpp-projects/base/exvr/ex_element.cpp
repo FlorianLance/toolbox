@@ -29,8 +29,6 @@
 #include "ex_element.hpp"
 
 
-// local
-#include "utility/logger.hpp"
 
 using namespace tool;
 using namespace ex;
@@ -44,112 +42,38 @@ int ExElement::get_array_size(ParametersContainer pc, const std::string &name){
 }
 
 void ExElement::log_message(std::string message){
-    Logger::message_id(message, sender_type(), key());
+//    (*exp->logMessageIdCBP)(message.c_str(), (int)sender_type(), key());
+//    exp->logger->message_id(message, sender_type(), key());
 }
 
 void ExElement::log_warning(std::string warningMessage){
-    Logger::warning_id(warningMessage, sender_type(), key());
+//    (*exp->logWarningIdCBP)(warningMessage.c_str(), (int)sender_type(), key());
+//    exp->logger->warning_id(warningMessage, sender_type(), key());
 }
 
 void ExElement::log_error(std::string errorMessage){
-    Logger::error_id(errorMessage, sender_type(), key());
+//    (*exp->logErrorIdCBP)(errorMessage.c_str(), (int)sender_type(), key());
+//    exp->logger->error_id(errorMessage, sender_type(), key());
 }
 
 void ExElement::stack_trace_log(std::string stackTraceMessage){
-    (*stackTraceCBP)(stackTraceMessage.c_str());
+    (*exp->stackTraceCBP)(stackTraceMessage.c_str());
 }
 
 void ExElement::next(){
-    (*nextCBP)();
+    (*exp->nextCBP)();
 }
 
 void ExElement::previous(){
-    (*previousCBP)();
+    (*exp->previousCBP)();
 }
 
 void ExElement::close(int key){
-    (*closeCBP)(key);
+    (*exp->closeCBP)(key);
 }
 
 int ExElement::component_key(std::string componentName){
-    return (*getCBP)(componentName.c_str());
+    return (*exp->getCBP)(componentName.c_str());
 }
 
-void ExElement::init_callbacks(
-    LogMessageCB logMessageCB,
-    LogWarningCB logWarningCB,
-    LogErrorCB logErrorCB,
-    LogMessageIdCB logMessageIdCB,
-    LogWarningIdCB logWarningIdCB,
-    LogErrorIdCB logErrorIdCB,
-    StackTraceCB stackTraceCB,
-    EllapsedTimeExpMsCB ellapsedTimeExpMsCB,
-    EllapsedTimeRoutineMsCB ellapsedTimeRoutineMsCB,
-    GetCB getCB,
-    IsVisibleCB isVisibleCB,
-    IsUpdatingCB isUpdatingCB,
-    IsClosedCB isClosedCB,
-    NextCB nextCB,
-    PreviousCB previousCB,
-    CloseCB closeCB,
-    SignalBoolCB signalBoolCB,
-    SignalIntCB signalIntCB,
-    SignalFloatCB signalFloatCB,
-    SignalDoubleCB signalDoubleCB,
-    SignalStringCB signalStringCB){
 
-    logMessageCBP             = std::make_unique<LogMessageCB>(logMessageCB);
-    logWarningCBP             = std::make_unique<LogWarningCB>(logWarningCB);
-    logErrorCBP               = std::make_unique<LogErrorCB>(logErrorCB);
-
-    logMessageIdCBP           = std::make_unique<LogMessageIdCB>(logMessageIdCB);
-    logWarningIdCBP           = std::make_unique<LogWarningIdCB>(logWarningIdCB);
-    logErrorIdCBP             = std::make_unique<LogErrorIdCB>(logErrorIdCB);
-    stackTraceCBP             = std::make_unique<StackTraceCB>(stackTraceCB);
-
-    ellapsedTimeExpMsCBP      = std::make_unique<EllapsedTimeExpMsCB>(ellapsedTimeExpMsCB);
-    ellapsedTimeRoutineMsCBP  = std::make_unique<EllapsedTimeRoutineMsCB>(ellapsedTimeRoutineMsCB);
-
-    getCBP                    = std::make_unique<GetCB>(getCB);
-    isVisibleCBP              = std::make_unique<IsVisibleCB>(isVisibleCB);
-    isUpdatingCBP             = std::make_unique<IsUpdatingCB>(isUpdatingCB);
-    isClosedCBP               = std::make_unique<IsClosedCB>(isClosedCB);
-
-    nextCBP                   = std::make_unique<NextCB>(nextCB);
-    previousCBP               = std::make_unique<PreviousCB>(previousCB);
-    closeCBP                  = std::make_unique<CloseCB>(closeCB);
-
-    signalBoolCBP             = std::make_unique<SignalBoolCB>(signalBoolCB);
-    signalIntCBP              = std::make_unique<SignalIntCB>(signalIntCB);
-    signalFloatCBP            = std::make_unique<SignalFloatCB>(signalFloatCB);
-    signalDoubleCBP           = std::make_unique<SignalDoubleCB>(signalDoubleCB);
-    signalStringCBP           = std::make_unique<SignalStringCB>(signalStringCB);
-
-
-    Logger::get()->message_signal.connect([&](std::string message){
-        (*logMessageCBP)(message.c_str());
-    });
-    Logger::get()->warning_signal.connect([&](std::string warning){
-        (*logWarningCBP)(warning.c_str());
-    });
-    Logger::get()->error_signal.connect([&](std::string error){
-        (*logErrorCBP)(error.c_str());
-    });
-
-    Logger::get()->message_id_signal.connect([&](std::string message, Logger::SenderT sType, int sKey){
-        (*logMessageIdCBP)(message.c_str(), static_cast<int>(sType), sKey);
-    });
-    Logger::get()->warning_id_signal.connect([&](std::string warning, Logger::SenderT sType, int sKey){
-        (*logWarningIdCBP)(warning.c_str(), static_cast<int>(sType), sKey);
-    });
-    Logger::get()->error_id_signal.connect([&](std::string error, Logger::SenderT sType, int sKey){
-        (*logErrorIdCBP)(error.c_str(), static_cast<int>(sType), sKey);
-    });
-
-    Logger::get()->message("test1");
-    Logger::message("test2");
-    Logger::get()->warning("wtest1");
-    Logger::warning("wtest2");
-    Logger::get()->error("etest1");
-    Logger::error("etest2");
-}

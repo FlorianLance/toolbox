@@ -26,57 +26,22 @@
 
 #pragma once
 
-// Qt
-#include <QMouseEvent>
+#include "ex_item_w.hpp"
 
-// local
-#include "widgets/curve_widget.hpp"
-#include "ex_spin_box_w.hpp"
-#include "ex_double_spin_box_w.hpp"
-#include "ex_checkbox_w.hpp"
-#include "ex_combo_box_text_w.hpp"
+// qt-utility
+#include "gui/widgets/code_editor_w.hpp"
 
 namespace tool::ex{
 
+class ExCodeEditorW : public ExItemW<ui::CodeEditor>{
 
-class ExCurveW : public ExItemW<QFrame>{
+public:
 
-public :
-
-    ExCurveW(QString name ="");
-    ExCurveW  *init_widget(QString title, QString xTitle = "x", QString yTitle = "y", geo::Pt2d xRange = {0,1}, geo::Pt2d yRange = {0,1},
-                          const std::pair<std::vector<double>, std::vector<double>> &points = {}, bool enabled = true);
+    ExCodeEditorW(QString name ="");
+    ExCodeEditorW *init_widget(QString txt, bool enabled = true);
+    ExCodeEditorW *init_widget_as_csharp_editor(const QColor &backgroundColor, QString txt, bool enabled = true);
 
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;
-
-    void set_points(const std::pair<std::vector<double>, std::vector<double>> &points);
-
-    // curve
-    tool::ui::CurveW *curveW = nullptr;
-    // id curve
-    ExSpinBoxW currentCurveId = {"current_curve_id"};
-    // actions
-    QPushButton *resetB = nullptr;
-    QPushButton *addPointB = nullptr;
-    // range x
-    ExDoubleSpinBoxW minX = {"min_x"};
-    ExDoubleSpinBoxW maxX = {"max_x"};
-    // range y
-    ExDoubleSpinBoxW minY = {"min_y"};
-    ExDoubleSpinBoxW maxY = {"max_y"};
-    // first/last y
-    ExDoubleSpinBoxW firstY = {"first_y"};
-    ExDoubleSpinBoxW lastY  = {"last_y"};
-    // point to add
-    ExDoubleSpinBoxW addX = {"add_x"};
-    ExDoubleSpinBoxW addY = {"add_y"};
-    // settings
-    ExCheckBoxW fitted = {"fitted"};
-    ExComboBoxTextW type = {"type"};
 };
-
-
 }
-
-
