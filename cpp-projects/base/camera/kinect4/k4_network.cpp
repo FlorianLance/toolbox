@@ -53,12 +53,12 @@ K4UdpFeedbackMessage::K4UdpFeedbackMessage(int8_t *data){
     init_packet_from_data(data, sizeof (K4UdpFeedbackMessage));
 }
 
-K4UdpUpdateFiltersSettings::K4UdpUpdateFiltersSettings(int8_t *data){
-    init_packet_from_data(data, sizeof (K4UdpUpdateFiltersSettings));
+K4UdpFiltersSettings::K4UdpFiltersSettings(int8_t *data){
+    init_packet_from_data(data, sizeof (K4UdpFiltersSettings));
 }
 
-K4UdpUpdateDeviceSettings::K4UdpUpdateDeviceSettings(int8_t *data){
-    init_packet_from_data(data, sizeof (K4UdpUpdateDeviceSettings));
+K4UdpDeviceSettings::K4UdpDeviceSettings(int8_t *data){
+    init_packet_from_data(data, sizeof (K4UdpDeviceSettings));
 }
 
 K4UdpCommand::K4UdpCommand(int8_t *data){

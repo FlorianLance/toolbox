@@ -38,6 +38,16 @@ namespace tool::network {
 
 using namespace std::literals::string_view_literals;
 
+
+enum FeedbackType : std::int8_t{
+    message_received,
+    timeout,
+    disconnect,
+    quit,
+    shutdown,
+    restart
+};
+
 enum MessageType : std::int8_t {
     manager_id = 0,
     update_device_settings,
@@ -45,7 +55,7 @@ enum MessageType : std::int8_t {
     compressed_cloud_frame_data,
     compressed_full_frame_data,
     command,
-    feedback,
+    feedback,    
     SizeEnum
 };
 
@@ -68,10 +78,10 @@ static constexpr TupleArray<MessageType::SizeEnum, TMessageTypes> k4MessageTypes
     return k4MessageTypes.at<0,1>(m);
 }
 
-enum K4Feedback : std::int8_t{
-    valid = 0,
-    timeout
-};
+//enum K4Feedback : std::int8_t{
+//    valid = 0,
+//    timeout
+//};
 
 enum K4Command : std::int8_t{
     Quit,
@@ -79,6 +89,8 @@ enum K4Command : std::int8_t{
     Restart,
     Disconnect
 };
+
+
 
 struct K4UdpInitFromManager : UdpMonoPacketMessage{
 
@@ -94,42 +106,20 @@ struct K4UdpInitFromManager : UdpMonoPacketMessage{
 };
 
 struct K4UdpCommand : UdpMonoPacketMessage{
-
     K4UdpCommand(K4Command command) : command(command){}
     K4UdpCommand(std::int8_t *data);
-
     K4Command command;
 };
 
-struct K4UdpUpdateDeviceSettings : UdpMonoPacketMessage{
-
-    K4UdpUpdateDeviceSettings() = default;
-    K4UdpUpdateDeviceSettings(std::int8_t *data);
-
-    // capture
-    bool startDevice   = true;
-    bool openCamera    = true;
-    camera::K4Mode mode    = camera::K4Mode::Cloud_640x576;
-    bool captureAudio  = true;
-    bool captureIMU    = true;
-    camera::K4CompressMode compressMode  = camera::K4CompressMode::Cloud;
-
-    // network
-    bool sendData      = true;
-
-    // record
-    bool record        = false;
-
-    // display
-    bool displayRGB    = false;
-    bool displayDepth  = false;
-    bool displayInfra  = false;
-    bool displayCloud  = false;
+struct K4UdpDeviceSettings : UdpMonoPacketMessage{
+    K4UdpDeviceSettings(camera::K4DeviceSettings d) : device(d){}
+    K4UdpDeviceSettings(std::int8_t *data);
+    camera::K4DeviceSettings device;
 };
 
-struct K4UdpUpdateFiltersSettings : UdpMonoPacketMessage{
-    K4UdpUpdateFiltersSettings() = default;
-    K4UdpUpdateFiltersSettings(std::int8_t *data);
+struct K4UdpFiltersSettings : UdpMonoPacketMessage{
+    K4UdpFiltersSettings(camera::K4Filters f) : filters(f){}
+    K4UdpFiltersSettings(std::int8_t *data);
     camera::K4Filters filters;
 };
 
@@ -137,7 +127,7 @@ struct K4UdpFeedbackMessage : UdpMonoPacketMessage{
     K4UdpFeedbackMessage() = default;
     K4UdpFeedbackMessage(std::int8_t *data);
     MessageType receivedMessageType;
-    K4Feedback feedback;
+    FeedbackType feedback;
 };
 
 struct K4UdpCompresedCloudFrameMessage : UdpMultiPacketsMessage{

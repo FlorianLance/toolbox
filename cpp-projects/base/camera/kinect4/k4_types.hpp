@@ -253,4 +253,27 @@ namespace tool::camera {
         bool sendDisplayCloud           = true;
 
     };
+
+    struct K4DeviceSettings{
+
+        // capture
+        bool startDevice   = true;
+        bool openCamera    = true;
+        camera::K4Mode mode    = camera::K4Mode::Cloud_640x576;
+        bool captureAudio  = true;
+        bool captureIMU    = true;
+        camera::K4CompressMode compressMode  = camera::K4CompressMode::Cloud;
+
+        // network
+        bool sendData      = true;
+
+        // record
+        bool record        = false;
+
+        // display
+        bool displayRGB    = false;
+        bool displayDepth  = false;
+        bool displayInfra  = false;
+        bool displayCloud  = false;
+    };
 }
