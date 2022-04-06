@@ -72,7 +72,7 @@ void CubeDrawer::init(float side, std_v1<TextureName> textures){
     drawableObject = std::make_unique<Cube>(side);
 }
 
-void CloudPointsDrawer::init(size_t size, geo::Pt2f *points, geo::Pt3f *colors){
+void CloudPointsDrawer::init(size_t size, const geo::Pt2f *points, const geo::Pt3f *colors){
     drawableObject = std::make_unique<gl::Cloud>(size, points, colors);
 }
 
@@ -80,7 +80,7 @@ void CloudPointsDrawer::init(std_v1<geo::Pt2f> *points, std_v1<geo::Pt3f> *color
     drawableObject = std::make_unique<gl::Cloud>(points, colors);
 }
 
-void CloudPointsDrawer::init(size_t size, geo::Pt3f *points, geo::Pt3f *colors){
+void CloudPointsDrawer::init(size_t size, const geo::Pt3f *points, const geo::Pt3f *colors){
     drawableObject = std::make_unique<gl::Cloud>(size, points, colors);
 }
 

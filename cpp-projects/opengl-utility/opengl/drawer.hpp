@@ -137,10 +137,10 @@ public:
 class CloudPointsDrawer : public Drawer{
 public:
 
-    void init(size_t size, geo::Pt2f *points, geo::Pt3f *colors = nullptr);
+    void init(size_t size, const geo::Pt2f *points, const geo::Pt3f *colors = nullptr);
     void init(std_v1<geo::Pt2f> *points, std_v1<geo::Pt3f> *colors = nullptr);
 
-    void init(size_t size, geo::Pt3f *points, geo::Pt3f *colors = nullptr);
+    void init(size_t size, const geo::Pt3f *points, const geo::Pt3f *colors = nullptr);
     void init(std_v1<geo::Pt3f> *points, std_v1<geo::Pt3f> *colors = nullptr);
 };
 

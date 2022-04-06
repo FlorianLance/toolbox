@@ -35,6 +35,7 @@
 namespace tool::graphics {
 class ImguiTextureDrawer{
 public:
-    static void draw_texture_tab_child(const std::string &windowName, geo::Pt2<int> sizeWindow, gl::TBO *texture, bool invert = false);
+    static void draw_texture(const std::string &name, geo::Pt2f screenPos, geo::Pt2f sizeTexture, const gl::TBO *texture, bool invert = false);
+    static void draw_texture_tab_child(const std::string &windowName, geo::Pt2f sizeWindow, const gl::TBO *texture, bool invert = false);
 };
 }

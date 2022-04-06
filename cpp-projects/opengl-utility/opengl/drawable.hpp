@@ -78,20 +78,20 @@ protected:
 
     void init_buffers(
         GLuint size,
-        geo::Pt3f *points,
-        geo::Pt3f *colors = nullptr
+        const geo::Pt3f *points,
+        const geo::Pt3f *colors = nullptr
     );
 
     void init_buffers(
         GLuint size,
-        geo::Pt2f *points,
-        geo::Pt3f *colors = nullptr
+        const geo::Pt2f *points,
+        const geo::Pt3f *colors = nullptr
     );
 
     void init_buffers(
         GLuint size,
-        geo::Pt3<int> *voxels,
-        geo::Pt3f *colors = nullptr
+        const geo::Pt3<int> *voxels,
+        const geo::Pt3f *colors = nullptr
     );
 
 

@@ -34,7 +34,78 @@
 // imgui
 #include "imgui/imgui.h"
 
+// base
+#include "geometry/point2.hpp"
+
 namespace ImGui{
+
+[[maybe_unused]] static ImVec2 to_iv2(tool::geo::Pt2<int> p){
+    return ImVec2(static_cast<float>(p.x()),static_cast<float>(p.y()));
+}
+[[maybe_unused]] static ImVec2 to_iv2(tool::geo::Pt2f p){
+    return ImVec2(p.x(),p.y());
+}
+[[maybe_unused]] static tool::geo::Pt2f to_pt2(ImVec2 v){
+    return {v.x,v.y};
+}
+
+/**
+ * @brief get current window position in screen space
+ */
+[[maybe_unused]] static tool::geo::Pt2f window_screen_pos(){
+    return to_pt2(ImGui::GetWindowPos());
+}
+
+/**
+ * @brief get current window size
+ */
+[[maybe_unused]] static tool::geo::Pt2f window_size(){
+    return to_pt2(ImGui::GetWindowSize());
+}
+
+[[maybe_unused]] static tool::geo::Pt2f item_size(){
+    return to_pt2(ImGui::GetItemRectSize());
+}
+
+[[maybe_unused]] static tool::geo::Pt2f last_item_top_left_screen_pos(){
+    return to_pt2(ImGui::GetItemRectMin());
+}
+
+[[maybe_unused]] static tool::geo::Pt2f last_item_bottom_right_screen_pos(){
+    return to_pt2(ImGui::GetItemRectMax());
+}
+
+[[maybe_unused]] static tool::geo::Pt2f last_item_bottom_left_screen_pos(){
+    return last_item_top_left_screen_pos() + tool::geo::Pt2f{0, item_size().y()};
+}
+
+[[maybe_unused]] static float last_item_top_screen_value(){
+    return last_item_top_left_screen_pos().y();
+}
+
+[[maybe_unused]] static float last_item_bottom_screen_value(){
+    return last_item_bottom_right_screen_pos().y();
+}
+
+[[maybe_unused]] static float last_item_left_screen_value(){
+    return last_item_top_left_screen_pos().x();
+}
+
+[[maybe_unused]] static float last_item_right_screen_value(){
+    return last_item_bottom_right_screen_pos().x();
+}
+
+[[maybe_unused]] static tool::geo::Pt2f content_region_size_available(){
+    return to_pt2(ImGui::GetContentRegionAvail());
+}
+
+[[maybe_unused]] static tool::geo::Pt2f cursor_window_position(){
+    return to_pt2(ImGui::GetCursorPos());
+}
+
+[[maybe_unused]] static tool::geo::Pt2f cursor_screen_position(){
+    return to_pt2(ImGui::GetCursorScreenPos());
+}
 
 static auto vector_getter = [](void* vec, int idx, const char** out_text){
     auto& vector = *static_cast<std::vector<std::string>*>(vec);
@@ -49,14 +120,14 @@ static auto vector_getter = [](void* vec, int idx, const char** out_text){
     if (values.empty()) {
         return false;
     }
-    return Combo(label, currIndex, vector_getter,static_cast<void*>(&values), values.size());
+    return Combo(label, currIndex, vector_getter,static_cast<void*>(&values), static_cast<int>(values.size()));
 }
 
 [[maybe_unused]] static bool ListBox(const char* label, int* currIndex, std::vector<std::string>& values){
     if (values.empty()) {
         return false;
     }
-    return ListBox(label, currIndex, vector_getter,static_cast<void*>(&values), values.size());
+    return ListBox(label, currIndex, vector_getter,static_cast<void*>(&values), static_cast<int>(values.size()));
 }
 
 [[maybe_unused]] static void Text(const std::string &text){

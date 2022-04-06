@@ -50,7 +50,7 @@ public:
 
     inline void bind(){fbo.bind();}
     void update_viewport();
-    void reset_states();
+    void reset_states(geo::Pt4f color = {0.0f, 0.0f, 0.0f, 1.0f});
     inline void unbind(){fbo.unbind();}
 
     inline graphics::Camera *camera(){return &m_camera;}
@@ -59,7 +59,6 @@ public:
     float scrollSpeed = 0.1f;
     float movingSpeed = 0.05f;
     float translateSpeed = 0.01f;
-
 
 private:
 

@@ -120,10 +120,10 @@ public:
 
 class Cloud : public PointMesh{
 public:
-    Cloud(size_t size, geo::Pt2f *vertices, geo::Pt3f *colors);
+    Cloud(size_t size, const geo::Pt2f *vertices, const geo::Pt3f *colors);
     Cloud(std_v1<geo::Pt2f> *vertices, std_v1<geo::Pt3f> *colors);
 
-    Cloud(size_t size, geo::Pt3f *vertices, geo::Pt3f *colors);
+    Cloud(size_t size, const geo::Pt3f *vertices, const geo::Pt3f *colors);
     Cloud(std_v1<geo::Pt3f> *vertices, std_v1<geo::Pt3f> *colors);
 };
 

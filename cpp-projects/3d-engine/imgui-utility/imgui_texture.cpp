@@ -35,42 +35,55 @@
 
 using namespace tool::graphics;
 
-void ImguiTextureDrawer::draw_texture_tab_child(const std::string &windowName, geo::Pt2<int> sizeWindow, gl::TBO *texture, bool invert){
+void ImguiTextureDrawer::draw_texture(const std::string &name, geo::Pt2f screenPos, geo::Pt2f sizeTexture, const gl::TBO *texture, bool invert){
 
-    if(ImGui::BeginChild(fmt("{}Window",windowName).c_str(), ImVec2(sizeWindow.x(), sizeWindow.y()),false,ImGuiWindowFlags_NoScrollWithMouse)){
+    auto pos = ImGui::GetCursorScreenPos();
 
-        auto vMin    = ImGui::GetWindowContentRegionMin();
-        auto vMax    = ImGui::GetWindowContentRegionMax();
-        auto sizeW   = ImVec2(vMax.x-vMin.x, vMax.y-vMin.y);
-        float scale  = std::min(1.f*sizeW.y / texture->height(),  1.f*sizeW.x / texture->width());
-        auto sizeI   = ImVec2(static_cast<int>(texture->width() * scale),static_cast<int>(texture->height() * scale));
-        sizeI.y     -= 50;
+    ImGui::SetCursorScreenPos(ImGui::to_iv2(screenPos));
 
-        auto uv1   = ImVec2(0,0);
-        auto uv2   = ImVec2(1,1);
+    if(texture->id() == 0){
+        ImGui::Text(fmt("{}: texture not initialized.", name));
+    }else{
+        if(invert){
+            ImGui::Image(texture->id(), ImGui::to_iv2(sizeTexture),  ImVec2(0,1), ImVec2(1,0));
+        }else{
+            ImGui::Image(texture->id(), ImGui::to_iv2(sizeTexture),  ImVec2(0,0), ImVec2(1,1));
+        }
+        ImGui::SetCursorScreenPos(ImGui::to_iv2(screenPos));
+        ImGui::TextColored(ImVec4(1,0,0,1),name);
+    }
 
-        auto uv3   = ImVec2(0,1);
-        auto uv4   = ImVec2(1,0);
+    ImGui::SetCursorScreenPos(pos);
+}
+
+
+void ImguiTextureDrawer::draw_texture_tab_child(const std::string &windowName, geo::Pt2f sizeWindow, const gl::TBO *texture, bool invert){
+
+    if(ImGui::BeginChild(fmt("{}Window",windowName).c_str(), ImGui::to_iv2(sizeWindow),false,ImGuiWindowFlags_NoScrollWithMouse)){
 
         if(ImGui::BeginTabBar(fmt("{}Tab",windowName).c_str(), ImGuiTabBarFlags_None)){
             if(ImGui::BeginTabItem(windowName.c_str())){
+
+                auto size    = ImGui::content_region_size_available();
+                float scale  = std::min(1.f*size.y() / texture->height(),  1.f*size.x() / texture->width());
+                auto sizeI   = ImVec2(texture->width() * scale, texture->height() * scale);
 
                 if(texture->id() == 0){
                     ImGui::Text("Texture not initialized.");
                 }else{
                     if(invert){
-                        ImGui::Image(texture->id(), sizeI,  uv3, uv4);
+                        ImGui::Image(texture->id(), sizeI,  ImVec2(0,1), ImVec2(1,0));
                     }else{
-                        ImGui::Image(texture->id(), sizeI,  uv1, uv2);
+                        ImGui::Image(texture->id(), sizeI,  ImVec2(0,0), ImVec2(1,1));
                     }
                 }
-
                 ImGui::EndTabItem();
             }
             if(ImGui::BeginTabItem("Infos")){
+                auto size    = ImGui::content_region_size_available();
                 ImGui::Text("pointer = %d", texture->id());
                 ImGui::Text("original size = %d x %d", texture->width(), texture->height());
-                ImGui::Text("window size = %d x %d", static_cast<int>(sizeI.x), static_cast<int>(sizeI.y));
+                ImGui::Text("window size = %d x %d", size.x(), size.y());
                 ImGui::EndTabItem();
             }
 

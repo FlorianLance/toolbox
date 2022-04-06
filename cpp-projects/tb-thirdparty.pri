@@ -9,6 +9,8 @@ IMGUI_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/imgui-maste
 CATCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/catch"
 AUDIOFILE_INCLUDES                   = $$TOOLBOX_CPP_THIRDPARTY_DIR"/audiofile"
 QOI_INCLUDES                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/qoi"
+BINPACK_2D_INCLUDES                  = $$TOOLBOX_CPP_THIRDPARTY_DIR"/BinPack2D"
+
 #OROCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/oroch/include"
 ############################ third-party others
 TURBOJPG_DIR                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/libjpeg-turbo-2.0.3"

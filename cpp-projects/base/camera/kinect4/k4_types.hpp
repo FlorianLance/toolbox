@@ -203,6 +203,15 @@ namespace tool::camera {
         std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
     };
 
+    struct K4DisplaySettings{
+        bool cloudVisible = true;
+        bool forceCloudColor = false;
+        geo::Pt4f cloudColor = {1.f,0.f,0.f, 1.f};
+        bool useVoxels = false;
+        float sizePoints = 5.f;
+        float sizeVoxels = 0.002f;
+    };
+
     struct K4Filters{
 
         // # width / height
@@ -236,23 +245,6 @@ namespace tool::camera {
         bool invalidateInfraFromDepth   = false;
     };
 
-    struct K4Parameters{
-
-        K4Filters filters;
-
-        // capture
-        bool captureAudio               = true;
-        bool captureIMU                 = true;
-        // send                
-        bool sendCompressedFullFrame    = false;
-        bool sendCompressedCloudFrame   = false;
-        // display
-        bool sendDisplayColorFrame      = true;
-        bool sendDisplayDepthFrame      = true;
-        bool sendDisplayInfraredFrame   = true;
-        bool sendDisplayCloud           = true;
-
-    };
 
     struct K4DeviceSettings{
 
@@ -275,5 +267,26 @@ namespace tool::camera {
         bool displayDepth  = false;
         bool displayInfra  = false;
         bool displayCloud  = false;
+
     };
+
+
+    struct K4Parameters{
+
+        K4Filters filters;
+
+        // capture
+        bool captureAudio               = true;
+        bool captureIMU                 = true;
+        // send                
+        bool sendCompressedFullFrame    = false;
+        bool sendCompressedCloudFrame   = false;
+        // display
+        bool sendDisplayColorFrame      = true;
+        bool sendDisplayDepthFrame      = true;
+        bool sendDisplayInfraredFrame   = true;
+        bool sendDisplayCloud           = true;
+
+    };
+
 }

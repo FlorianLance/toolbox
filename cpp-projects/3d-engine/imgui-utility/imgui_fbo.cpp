@@ -83,8 +83,8 @@ void ImguiFboDrawer::update_viewport(){
     glViewport(0,0, texture.width(), texture.height());
 }
 
-void ImguiFboDrawer::reset_states(){
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+void ImguiFboDrawer::reset_states(geo::Pt4f color){
+    glClearColor(color.x(),color.y(),color.z(),color.w());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 }

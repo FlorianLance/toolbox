@@ -37,7 +37,7 @@ using namespace tool::gl;
 
 
 
-void PointMesh::init_buffers(GLuint size, geo::Pt3f *points, geo::Pt3f *colors){
+void PointMesh::init_buffers(GLuint size, const geo::Pt3f *points, const geo::Pt3f *colors){
 
     if(points == nullptr){
         Logger::error("[LineMesh::init_buffers] error, no points buffers.\n");
@@ -55,11 +55,11 @@ void PointMesh::init_buffers(GLuint size, geo::Pt3f *points, geo::Pt3f *colors){
     }
 
     vao.bind();
-    pointsB.load_data(FloatData{reinterpret_cast<GLfloat*>(points)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
+    pointsB.load_data(FloatData{reinterpret_cast<const GLfloat*>(points)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
     pointsB.attrib(AttriIndex{0}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
 
     if(colors != nullptr){
-        colorsB.load_data(FloatData{reinterpret_cast<GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
+        colorsB.load_data(FloatData{reinterpret_cast<const GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
         colorsB.attrib(AttriIndex{1}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
     }
 
@@ -70,7 +70,7 @@ void PointMesh::init_buffers(GLuint size, geo::Pt3f *points, geo::Pt3f *colors){
 
 }
 
-void PointMesh::init_buffers(GLuint size, geo::Pt2f *points, geo::Pt3f *colors){
+void PointMesh::init_buffers(GLuint size, const geo::Pt2f *points, const geo::Pt3f *colors){
 
     if(points == nullptr){
         Logger::error("[PointMesh::init_buffers] error, no points buffers.\n");
@@ -88,11 +88,11 @@ void PointMesh::init_buffers(GLuint size, geo::Pt2f *points, geo::Pt3f *colors){
     }
 
     vao.bind();
-    pointsB.load_data(FloatData{reinterpret_cast<GLfloat*>(points)}, SizeData{static_cast<GLsizeiptr>(size*2*sizeof(GLfloat))});
+    pointsB.load_data(FloatData{reinterpret_cast<const GLfloat*>(points)}, SizeData{static_cast<GLsizeiptr>(size*2*sizeof(GLfloat))});
     pointsB.attrib(AttriIndex{0}, AttriSize{2}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
 
     if(colors != nullptr){
-        colorsB.load_data(FloatData{reinterpret_cast<GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
+        colorsB.load_data(FloatData{reinterpret_cast<const GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
         colorsB.attrib(AttriIndex{1}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
     }
 
@@ -102,7 +102,7 @@ void PointMesh::init_buffers(GLuint size, geo::Pt2f *points, geo::Pt3f *colors){
     buffersInitialized = true;
 }
 
-void PointMesh::init_buffers(GLuint size, geo::Pt3<int> *voxels, geo::Pt3f *colors){
+void PointMesh::init_buffers(GLuint size, const geo::Pt3<int> *voxels, const geo::Pt3f *colors){
 
     if(voxels == nullptr){
         Logger::error("[PointMesh::init_buffers] error, no voxels buffers.\n");
@@ -120,11 +120,11 @@ void PointMesh::init_buffers(GLuint size, geo::Pt3<int> *voxels, geo::Pt3f *colo
     }
 
     vao.bind();
-    pointsB.load_data(IntData{reinterpret_cast<GLint*>(voxels)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLint))});
+    pointsB.load_data(IntData{reinterpret_cast<const GLint*>(voxels)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLint))});
     pointsB.attrib(AttriIndex{0}, AttriSize{3}, AttriType{GL_INT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(int))});
 
     if(colors != nullptr){
-        colorsB.load_data(FloatData{reinterpret_cast<GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
+        colorsB.load_data(FloatData{reinterpret_cast<const GLfloat*>(colors)}, SizeData{static_cast<GLsizeiptr>(size*3*sizeof(GLfloat))});
         colorsB.attrib(AttriIndex{1}, AttriSize{3}, AttriType{GL_FLOAT}, Stride{0}, AttribOffset{reinterpret_cast<GLvoid*>(0* sizeof(float))});
     }
 

@@ -278,7 +278,7 @@ gl::Mesh::Mesh(geo::Mesh<float> *mesh){
     );
 }
 
-Cloud::Cloud(size_t size, Pt2f *vertices, Pt3f *colors){
+Cloud::Cloud(size_t size, const Pt2f *vertices, const Pt3f *colors){
     init_buffers(static_cast<GLuint>(size), vertices, colors);
 }
 
@@ -286,7 +286,7 @@ Cloud::Cloud(std_v1<Pt2f> *vertices, std_v1<Pt3f> *colors){
     init_buffers(static_cast<GLuint>(vertices->size()), vertices->data(), (colors != nullptr) ? (colors->data()) : nullptr);
 }
 
-Cloud::Cloud(size_t size, Pt3f *vertices, Pt3f *colors){
+Cloud::Cloud(size_t size, const Pt3f *vertices, const Pt3f *colors){
     init_buffers(static_cast<GLuint>(size), vertices, colors);
 }
 

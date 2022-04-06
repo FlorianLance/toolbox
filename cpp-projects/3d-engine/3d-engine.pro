@@ -94,7 +94,7 @@ LIBS +=\
 
 HEADERS += \
     # ui
-    imgui-utility/imgui_k4_filters_tab_item_drawer.hpp \
+    imgui-utility/imgui_k4_drawers.hpp \
     imgui-utility/imgui_logs.hpp \
     imgui-utility/imgui_texture.hpp \
     immediate_ui.hpp \
@@ -141,7 +141,7 @@ HEADERS += \
 
 SOURCES += \
     # main
-    imgui-utility/imgui_k4_filters_tab_item_drawer.cpp \
+    imgui-utility/imgui_k4_drawers.cpp \
     imgui-utility/imgui_logs.cpp \
     imgui-utility/imgui_texture.cpp \
     main.cpp \
