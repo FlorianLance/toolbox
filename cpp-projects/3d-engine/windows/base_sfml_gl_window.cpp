@@ -80,8 +80,10 @@ bool BaseSfmlGlWindow::init(){
     m_scene.setActive(true);
 
     initialize_gl();
+
     ImGui::SFML::Init(m_scene);
 
+    resize_windows();
 
     return true;
 }
@@ -118,6 +120,7 @@ void BaseSfmlGlWindow::start(){
                 running = false;
                 break;
             case sf::Event::Resized: // The window was resized
+                Logger::message("resize_event-");
                 base_resize_windows(event.size);
                 break;
             case sf::Event::KeyPressed: // A key was pressed

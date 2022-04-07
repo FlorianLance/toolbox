@@ -26,13 +26,12 @@
 
 #pragma once
 
-
 // base
 #include "graphics/model.hpp"
 
 // local
-#include "shapes.hpp"
-#include "gl_draw.hpp"
+#include "opengl/shapes.hpp"
+#include "opengl/gl_draw.hpp"
 #include "opengl/shader/shader.hpp"
 
 namespace tool::gl {

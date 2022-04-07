@@ -234,3 +234,151 @@ bool K4DisplaySettingsTabItem::draw(const std::string &tabItemName, camera::K4Di
     ImGui::EndTabItem();
     return true;
 }
+
+
+
+void K4CloudsDrawer::populate(size_t nbConnections){
+    cloudsD.resize(nbConnections);
+}
+
+void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame){
+
+    if(idCloud >= cloudsD.size()){
+        // error
+        return;
+    }
+
+    if(cloudsD[idCloud].lastDisplayFrameId == frame->idCapture){
+        return;
+    }
+
+    if(frame->colorFrame.width > 0){
+        cloudsD[idCloud].colorT.init_or_update_8ui(
+            static_cast<GLsizei>(frame->colorFrame.width),
+            static_cast<GLsizei>(frame->colorFrame.height), 3, frame->colorFrame.pixels.data());
+    }
+    if(frame->depthFrame.width > 0){
+        cloudsD[idCloud].depthT.init_or_update_8ui(
+            static_cast<GLsizei>(frame->depthFrame.width),
+            static_cast<GLsizei>(frame->depthFrame.height), 3, frame->depthFrame.pixels.data());
+    }
+    if(frame->infraredFrame.width > 0){
+        cloudsD[idCloud].infraT.init_or_update_8ui(
+            static_cast<GLsizei>(frame->infraredFrame.width),
+            static_cast<GLsizei>(frame->infraredFrame.height), 3, frame->infraredFrame.pixels.data());
+    }
+
+    if(frame->cloud.validVerticesCount > 0){
+        cloudsD[idCloud].drawer.init(frame->cloud.validVerticesCount, frame->cloud.vertices.data(), frame->cloud.colors.data());
+    }
+
+    cloudsD[idCloud].lastDisplayFrameId = frame->idCapture;
+
+//    if(k4M->parameters.captureAudio){
+        //        for(size_t idFrame = 0; idFrame < currentData->audioFramesCount; ++idFrame){
+        //            for(size_t idChannel = 0; idChannel < channelsData2.size(); ++idChannel){
+        //                //                        if(idChannel == 0){
+        //                //                            Logger::message(std::to_string(currentData->audioChannelsData[idChannel][idFrame]) + " ");
+        //                //                        }
+        //                channelsData2[idChannel].push_back(currentData->audioChannelsData[idChannel][idFrame]);
+        //            }
+        //        }
+
+        //        for(size_t idChannel = 0; idChannel < channelsData2.size(); ++idChannel){
+        //            if(channelsData2[idChannel].size() > 50000){
+        //                channelsData2[idChannel].erase(channelsData2[idChannel].begin(), channelsData2[idChannel].begin() + (channelsData2[idChannel].size() - 50000));
+        //            }
+        //        }
+//    }
+}
+
+void K4CloudsDrawer::update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame &frame){
+
+    if(idCloud >= cloudsD.size()){
+        // error
+        return;
+    }
+
+    if(cloudsD[idCloud].lastCloudFrameId == frame.idCapture){
+        return;
+    }
+
+    if(frame.cloud.validVerticesCount > 0){
+        cloudsD[idCloud].drawer.init(frame.cloud.validVerticesCount, frame.cloud.vertices.data(), frame.cloud.colors.data());
+    }
+
+    cloudsD[idCloud].lastCloudFrameId = frame.idCapture;
+}
+
+void K4CloudsDrawer::update_from_full_frame(size_t idCloud, camera::K4FullFrame &frame){
+
+    if(idCloud >= cloudsD.size()){
+        // error
+        return;
+    }
+
+    if(cloudsD[idCloud].lastFullFrameId == frame.idCapture){
+        return;
+    }
+
+    if(frame.colorWidth > 0){
+        cloudsD[idCloud].colorT.init_or_update_8ui(
+            static_cast<GLsizei>(frame.colorWidth),
+            static_cast<GLsizei>(frame.colorHeight), 3, frame.imageColorData.data());
+    }
+    if(frame.depthWidth > 0){
+        cloudsD[idCloud].depthT.init_or_update_8ui(
+            static_cast<GLsizei>(frame.depthWidth),
+            static_cast<GLsizei>(frame.depthHeight), 3, frame.imageDepthData.data());
+    }
+    if(frame.infraWidth > 0){
+        cloudsD[idCloud].infraT.init_or_update_8ui(
+            static_cast<GLsizei>(frame.infraWidth),
+            static_cast<GLsizei>(frame.infraHeight), 3, frame.imageInfraData.data());
+    }
+
+    if(frame.cloud.validVerticesCount > 0){
+        cloudsD[idCloud].drawer.init(frame.cloud.validVerticesCount, frame.cloud.vertices.data(), frame.cloud.colors.data());
+    }
+
+    cloudsD[idCloud].lastFullFrameId = frame.idCapture;
+}
+
+
+void K4CloudsDrawer::draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiFboUiDrawer &fboD){
+
+    if(fboD.texture_id() == 0){
+        return;
+    }
+
+    fboD.bind();
+    fboD.update_viewport();
+    fboD.reset_states(backgroundColor);
+
+    for(auto &cloudD : cloudsD){
+
+        if(!cloudD.displaySettings.cloudVisible){
+            continue;
+        }
+
+        auto shader = cloudD.displaySettings.useVoxels ? voxelShader : cloudShader;
+        shader->use();
+        shader->set_uniform("view", fboD.camera()->view().conv<float>());
+        shader->set_uniform("projection", fboD.camera()->projection().conv<float>());
+        shader->set_uniform("model", cloudD.model);
+        shader->set_uniform("enable_unicolor", cloudD.displaySettings.forceCloudColor);
+        shader->set_uniform("unicolor", cloudD.displaySettings.cloudColor);
+
+        if(cloudD.displaySettings.useVoxels){
+            shader->set_uniform("hSize", cloudD.displaySettings.sizeVoxels);
+        }else{
+            shader->set_uniform("size_pt", cloudD.displaySettings.sizePoints);
+            shader->set_uniform("camera_position", fboD.camera()->position().conv<float>());
+        }
+        cloudD.drawer.draw();
+    }
+
+    fboD.unbind();
+}
+
+

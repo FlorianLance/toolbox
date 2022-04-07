@@ -33,20 +33,16 @@
 #include "geometry/mesh.hpp"
 
 // local
-#include "buffer/vertex_buffer_object.hpp"
-#include "buffer/element_buffer_object.hpp"
-#include "buffer/texture_buffer_object.hpp"
-#include "vao.hpp"
+#include "opengl/buffer/vertex_buffer_object.hpp"
+#include "opengl/buffer/element_buffer_object.hpp"
+#include "opengl/buffer/texture_buffer_object.hpp"
+#include "opengl/vao.hpp"
 
 namespace tool::gl{
 
 
 class Drawable{
 public:
-
-    virtual ~Drawable(){
-        clean();
-    }
 
     virtual void render() const = 0;
     virtual void render_adjacency() const{}
@@ -64,9 +60,9 @@ protected:
     GLsizei nIndices = 0;
 };
 
-
 class PointMesh : public Drawable{
-
+public:
+    ~PointMesh(){PointMesh::clean();}
 protected:
 
 
@@ -99,13 +95,13 @@ public:
 
     virtual void render() const override;
     virtual void render_patches() const override;
-    virtual void clean() override;
-
-
+    void clean() override;
 };
 
 
 class LineMesh : public Drawable{
+public:
+    ~LineMesh(){LineMesh::clean();}
 protected:
 
     VBO pointsB;
@@ -123,14 +119,13 @@ protected:
 
 public:
 
-
     virtual void render() const override;
-    virtual void clean() override;
+    void clean() override;
 };
 
 class TriangleMesh : public Drawable {
-
 public:
+    ~TriangleMesh(){TriangleMesh::clean();}
 
     bool hasTexCoord = false;
     bool hasTangents = false;
@@ -183,7 +178,7 @@ public:
 
     virtual void render() const override;
     virtual void render_adjacency() const override;
-    virtual void clean() override;
+    void clean() override;
 };
 
 

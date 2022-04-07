@@ -32,49 +32,46 @@
 // opengl-utility
 #include "opengl/buffer/framebuffer_object.hpp"
 #include "opengl/gl_texture.hpp"
-#include "opengl/drawer.hpp"
 
 namespace tool::graphics {
 
-class ImguiFboDrawer{
+
+class ImguiFboUiDrawer{
 
 public:
 
-    ImguiFboDrawer() : m_camera(&m_screen, {0,0,0}, {0,0,1}){
-        m_camera.set_fov(60.);
-    }
+    ImguiFboUiDrawer();
 
-    void initialize_gl(const geo::Pt2<int> &size);
-    void resize_texture(const geo::Pt2<int> &size);    
-    void draw_texture(bool invert = false);
+    void init();
+    void resize(const geo::Pt2<int> &size);
+    void draw();
 
-    inline void bind(){fbo.bind();}
+    gl::TextureName texture_id()const{return m_texture.id();}
+
     void update_viewport();
     void reset_states(geo::Pt4f color = {0.0f, 0.0f, 0.0f, 1.0f});
-    inline void unbind(){fbo.unbind();}
 
+    inline void bind(){m_fbo.bind();}
+    inline void unbind(){m_fbo.unbind();}
     inline graphics::Camera *camera(){return &m_camera;}
 
     double rotationSpeed = 0.05;
     float scrollSpeed = 0.1f;
     float movingSpeed = 0.05f;
     float translateSpeed = 0.01f;
+    bool invertTexture = true;
 
 private:
-
 
     void restore_viewport();
     void check_inputs();
 
-    GLint viewport[4];
-
-    gl::FBO fbo;
-    gl::Texture2D texture;
-    gl::RBO depthTexture;
-
+    GLint m_viewport[4];
+    gl::FBO m_fbo;
+    gl::Texture2D m_texture;
+    gl::RBO m_depthTexture;
     graphics::Camera m_camera;       
     graphics::Screen m_screen;
 
-    gl::CubeDrawer testCube;
 };
 }

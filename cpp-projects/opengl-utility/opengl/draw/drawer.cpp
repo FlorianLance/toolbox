@@ -25,7 +25,9 @@
 ********************************************************************************/
 
 #include "drawer.hpp"
-#include "gl_texture.hpp"
+
+// local
+#include "opengl/gl_texture.hpp"
 
 using namespace tool;
 using namespace tool::gl;

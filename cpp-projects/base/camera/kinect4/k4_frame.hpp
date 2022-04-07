@@ -33,18 +33,10 @@
 
 namespace tool::camera{
 
-// # display data frame (to be displayed in a client)
-struct K4DisplayDataFrame{
-    PixelsFrame colorFrame;
-    PixelsFrame depthFrame;
-    PixelsFrame infraredFrame;
-    ColoredCloudFrame cloud;
-    std::vector<std::array<float, 7>> audioFrames;
-    K4ImuSample imuSample;
 
-};
-
-// compressed common frame
+/**
+ * @brief Compressed kinect4 base frame
+ */
 struct K4CompressedFrame : Frame{
 
     size_t validVerticesCount = 0;
@@ -64,7 +56,9 @@ struct K4CompressedFrame : Frame{
     }
 };
 
-// compressed cloud frame (to be sended throught network or saved)
+/**
+ * @brief Compressed kinect4 cloud frame
+ */
 struct K4CompressedCloudFrame : public K4CompressedFrame{
     std::vector<std::uint8_t> encodedCloudData;
     // contains also encodedCloudData.size()
@@ -73,7 +67,9 @@ struct K4CompressedCloudFrame : public K4CompressedFrame{
     }
 };
 
-// compressed full frame (to be saved)
+/**
+ * @brief Compressed kinect4 full frame
+ */
 struct K4CompressedFullFrame : public K4CompressedFrame{
 
     K4Mode mode;
@@ -94,12 +90,28 @@ struct K4CompressedFullFrame : public K4CompressedFrame{
     }
 };
 
-
-// uncompressed
-struct K4CloudFrame : Frame{
-    tool::camera::ColoredCloudFrame cloud;
+/**
+ * @brief Display kinect4 frame to be used in clients
+ */
+struct K4DisplayFrame : Frame{
+    PixelsFrame colorFrame;
+    PixelsFrame depthFrame;
+    PixelsFrame infraredFrame;
+    ColoredCloudFrame cloud;
+    std::vector<std::array<float, 7>> audioFrames;
+    K4ImuSample imuSample;
 };
 
+/**
+ * @brief Uncompressed kinect4 cloud frame
+ */
+struct K4CloudFrame : Frame{
+    ColoredCloudFrame cloud;
+};
+
+/**
+ * @brief Uncompressed kinect4 full frame
+ */
 struct K4FullFrame : Frame{
     // sizes
     size_t colorWidth = 0;
@@ -116,10 +128,8 @@ struct K4FullFrame : Frame{
     std::vector<geo::Pt3<std::uint8_t>> imageDepthData;
     std::vector<geo::Pt3<std::uint8_t>> imageInfraData;
     // # cloud data
-    tool::camera::ColoredCloudFrame cloud;
+    ColoredCloudFrame cloud;
 };
-
-
 
 
 }

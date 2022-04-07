@@ -27,110 +27,105 @@
 
 #include "imgui_fbo.hpp"
 
-// local
+// imgui
 #include "imgui/imgui.h"
+
+// local
+#include "imgui-utility/imgui_std.hpp"
 
 using namespace tool::graphics;
 
 
-void ImguiFboDrawer::initialize_gl(const geo::Pt2<int> &size){
-    fbo.clean();
-    fbo.generate();
-    resize_texture(size);
-    testCube.init(1.f);
+ImguiFboUiDrawer::ImguiFboUiDrawer() : m_camera(&m_screen, {0,0,0}, {0,0,1}){
+    m_camera.set_fov(60.);
 }
 
-void ImguiFboDrawer::resize_texture(const geo::Pt2<int> &size){
+void ImguiFboUiDrawer::init(){
+    m_fbo.clean();
+    m_fbo.generate();
+}
 
-    if(texture.width() == size.x() && texture.height() == size.y()){
+void ImguiFboUiDrawer::resize(const geo::Pt2<int> &size){
+
+    if(m_texture.width() == size.x() && m_texture.height() == size.y()){
         return;
     }
+    std::cout << "[FBOR]";
 
     m_screen.resize(size.x(), size.y());
     m_camera.update_projection();
 
-
-    fbo.bind();
-
-    texture.clean();
-    texture.init_image_8ui(size.x(),size.y(), 3);
+    m_texture.clean();
+    m_texture.init_image_8ui(size.x(),size.y(), 3);
 
     TextureOptions options;
     options.minFilter = TextureMinFilter::linear;
     options.magFilter = TextureMagFilter::linear;
-    texture.set_texture_options(options);
+    m_texture.set_texture_options(options);
 
-    depthTexture.clean();
-    depthTexture.generate();
-    depthTexture.bind();
-    depthTexture.set_data_storage(size.x(), size.y());
+    m_depthTexture.clean();
+    m_depthTexture.generate();
+    m_depthTexture.bind();
+    m_depthTexture.set_data_storage(size.x(), size.y());
 
-    fbo.attach_colors_textures({
-        &texture
+    m_fbo.attach_colors_textures({
+        &m_texture
     });
 
-    fbo.attach_depth_buffer(depthTexture);
+    m_fbo.attach_depth_buffer(m_depthTexture);
 
-    fbo.set_draw_buffers({
+    m_fbo.set_draw_buffers({
         tool::gl::FrameBufferAttachment::color0,
     });
-
-    fbo.unbind();
 }
 
-void ImguiFboDrawer::update_viewport(){
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glViewport(0,0, texture.width(), texture.height());
+void ImguiFboUiDrawer::update_viewport(){
+
+    if(m_texture.id() == 0){
+        return;
+    }
+
+    glGetIntegerv(GL_VIEWPORT, m_viewport);
+    glViewport(0,0, m_texture.width(), m_texture.height());
 }
 
-void ImguiFboDrawer::reset_states(geo::Pt4f color){
+void ImguiFboUiDrawer::reset_states(geo::Pt4f color){
     glClearColor(color.x(),color.y(),color.z(),color.w());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 }
 
-void ImguiFboDrawer::draw_texture(bool invert){
+void ImguiFboUiDrawer::draw(){
 
+    auto size    = ImGui::content_region_size_available();
+    float scale  = std::min(1.f*size.y() / m_texture.height(),  1.f*size.x() / m_texture.width());
+    ImVec2 sizeI = ImVec2(m_texture.width() * scale,m_texture.height() * scale);
 
-    ImVec2 vMin    = ImGui::GetWindowContentRegionMin();
-    ImVec2 vMax    = ImGui::GetWindowContentRegionMax();
-    ImVec2 sizeW   = ImVec2(vMax.x-vMin.x, vMax.y-vMin.y);
-    float scale    = std::min(1.f*sizeW.y / texture.height(),  1.f*sizeW.x / texture.width());
-    ImVec2 sizeI   = ImVec2(static_cast<int>(texture.width() * scale),static_cast<int>(texture.height() * scale));
-//    sizeI.x -= 0;
-    sizeI.y -= 50;
-
-    auto uv1     = ImVec2(0,0);
-    auto uv2     = ImVec2(1,1);
-    auto uv3     = ImVec2(0,1);
-    auto uv4     = ImVec2(1,0);
-
-    if(texture.id() == 0){
+    if(m_texture.id() == 0){
         ImGui::Text("Texture not initialized.");
     }else{
-        if(invert){
-            ImGui::Image(texture.id(), sizeI,  uv3, uv4);
+        if(invertTexture){
+            ImGui::Image(m_texture.id(), sizeI,  ImVec2(0,1), ImVec2(1,0));
         }else{
-            ImGui::Image(texture.id(), sizeI,  uv1, uv2);
+            ImGui::Image(m_texture.id(), sizeI,  ImVec2(0,0), ImVec2(1,1));
         }
     }
 
     check_inputs();
-
 }
 
-void ImguiFboDrawer::restore_viewport(){
+void ImguiFboUiDrawer::restore_viewport(){
     // restore
     gl::FBO::unbind();
     glViewport(
-        static_cast<GLsizei>(viewport[0]),
-        static_cast<GLsizei>(viewport[1]),
-        static_cast<GLsizei>(viewport[2]),
-        static_cast<GLsizei>(viewport[3])
+        static_cast<GLsizei>(m_viewport[0]),
+        static_cast<GLsizei>(m_viewport[1]),
+        static_cast<GLsizei>(m_viewport[2]),
+        static_cast<GLsizei>(m_viewport[3])
     );
 }
 
-void ImguiFboDrawer::check_inputs(){
+void ImguiFboUiDrawer::check_inputs(){
 
     ImGuiIO& io = ImGui::GetIO();
     if(ImGui::IsItemHovered()){

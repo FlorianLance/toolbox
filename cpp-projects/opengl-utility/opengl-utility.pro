@@ -112,9 +112,10 @@ HEADERS += \
     opengl/utility/gl_error.hpp \
     opengl/utility/gl_utility.hpp \
     opengl/utility/glew_utility.hpp \
+    ## drawer
+    opengl/draw/drawable.hpp \
+    opengl/draw/drawer.hpp \
     #
-    opengl/drawable.hpp \
-    opengl/drawer.hpp \
     opengl/gl_draw.hpp \
     opengl/gl_material.hpp \
     opengl/gl_texture.hpp \    
@@ -132,9 +133,10 @@ SOURCES += \
     ## shader
     opengl/buffer/vertex_buffer_object.cpp \
     opengl/shader/shader.cpp \
+    ## drawer
+    opengl/draw/drawable.cpp \
+    opengl/draw/drawer.cpp \
     #
-    opengl/drawable.cpp \
-    opengl/drawer.cpp \
     opengl/gl_texture.cpp \    
     opengl/shapes.cpp \
     # glfw

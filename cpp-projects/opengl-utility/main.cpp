@@ -32,8 +32,8 @@
 #include "glfw/glfw_gl_windows.hpp"
 
 #include "opengl/shapes.hpp"
-#include "opengl/drawer.hpp"
-#include "opengl/drawable.hpp"
+#include "opengl/draw/drawer.hpp"
+#include "opengl/draw/drawable.hpp"
 
 
 int main(){

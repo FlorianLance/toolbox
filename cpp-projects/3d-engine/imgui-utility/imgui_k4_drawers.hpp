@@ -27,7 +27,17 @@
 #pragma once
 
 // base
-#include "camera/kinect4/k4_types.hpp"
+#include "camera/kinect4/k4_frame.hpp"
+
+// opengl
+#include "opengl/draw/drawer.hpp"
+#include "opengl/gl_texture.hpp"
+
+// local
+#include "imgui-utility/imgui_fbo.hpp"
+
+
+namespace tool::graphics {
 
 [[maybe_unused]] static const char* modeItems[] = {
     "Cloud_320x288", "Cloud_640x576", "Cloud_512x512", "Cloud_1024x1024",
@@ -39,7 +49,14 @@
     "Full", "Cloud", "None"
 };
 
-namespace tool::graphics {
+class UiDrawer{
+public:
+    virtual void init(){}
+    virtual void update(){}
+    virtual void draw(){}
+};
+
+
 class K4FiltersTabItem{
 public:
     static bool draw(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &updateP);    
@@ -52,6 +69,45 @@ class K4DisplaySettingsTabItem{
 public:
     static bool draw(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP);
 };
+
+struct K4CloudDrawer{
+    // last frame info
+    std::int32_t lastDisplayFrameId = -1;
+    std::int32_t lastCloudFrameId = -1;
+    std::int32_t lastFullFrameId = -1;
+    // cloud
+    geo::Mat4f model = geo::Mat4f::identity();
+    gl::CloudPointsDrawer drawer;
+    // textures
+    gl::Texture2D colorT;
+    gl::Texture2D depthT;
+    gl::Texture2D infraT;
+    // settings
+    camera::K4DisplaySettings displaySettings;
+};
+
+struct K4CloudsDrawer{
+
+    void populate(size_t nbConnections);
+    void update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame);
+    void update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame &frame);
+    void update_from_full_frame(size_t idCloud, camera::K4FullFrame &frame);
+    void draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiFboUiDrawer &fboD);
+
+    // clouds
+    std::vector<K4CloudDrawer> cloudsD;
+    gl::ShaderProgram *cloudShader = nullptr;
+    gl::ShaderProgram *voxelShader = nullptr;
+};
+
+
+struct CloudPointsFrameDrawer{
+    int currentFrameId = 0;
+    int startFrameId = 0;
+    int endFrameId = 0;
+    gl::CloudPointsDrawer cloudD;
+};
+
 
 
 }

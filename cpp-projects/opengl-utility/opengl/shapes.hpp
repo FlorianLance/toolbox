@@ -33,7 +33,7 @@
 #include "geometry/mesh.hpp"
 
 // local
-#include "drawable.hpp"
+#include "opengl/draw/drawable.hpp"
 
 namespace tool::gl{
 

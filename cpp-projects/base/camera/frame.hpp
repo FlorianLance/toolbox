@@ -35,7 +35,6 @@ namespace tool::camera{
         std::int64_t afterCaptureTS = 0;
     };
 
-    // TODO: inheritance?
     struct PixelsFrame{
         size_t width = 0;
         size_t height = 0;
@@ -47,9 +46,5 @@ namespace tool::camera{
         std::vector<geo::Pt3f> vertices;
         std::vector<geo::Pt3f> colors;
         // std::vector<geo::Pt3f> normals;
-    };
-
-    struct CloudVoxelizer{
-        // ...
     };
 }

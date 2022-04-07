@@ -30,11 +30,10 @@
 #include "utility/logger.hpp"
 
 // local
-#include "gl_draw.hpp"
+#include "opengl/gl_draw.hpp"
 
 using namespace tool;
 using namespace tool::gl;
-
 
 
 void PointMesh::init_buffers(GLuint size, const geo::Pt3f *points, const geo::Pt3f *colors){

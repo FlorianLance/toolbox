@@ -77,7 +77,7 @@ public:
     void set_parameters(const K4Parameters &parameters);
 
 // signals
-    lsignal::signal<void(std::shared_ptr<K4DisplayDataFrame> cloud)> new_display_frame_signal;
+    lsignal::signal<void(std::shared_ptr<K4DisplayFrame> cloud)> new_display_frame_signal;
     lsignal::signal<void(std::shared_ptr<K4CompressedFullFrame> frame)> new_compressed_full_frame_signal;
     lsignal::signal<void(std::shared_ptr<K4CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
 

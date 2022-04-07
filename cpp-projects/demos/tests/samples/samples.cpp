@@ -1430,7 +1430,7 @@ void Ch6HdrLightingToneMapping::init(){
 
 void Ch6HdrLightingToneMapping::update_screen_size(){
 
-    int size = camera->screen()->size();
+    int size = camera->screen()->size_pixels();
     texData.resize(size*3);
 
     // Generate and bind the framebuffer
@@ -1507,7 +1507,7 @@ void Ch6HdrLightingToneMapping::draw(tool::gl::Drawer *drawer){
     draw_scene1(shader);
 
     // compute log avg luminance
-    const int size = camera->screen()->size();
+    const int size = camera->screen()->size_pixels();
     hdrRenderTexture.bind();
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
     //    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());
@@ -1573,7 +1573,7 @@ void Ch6HdrBloom::init(){
 
 void Ch6HdrBloom::update_screen_size(){
 
-    int size = camera->screen()->size();
+    int size = camera->screen()->size_pixels();
     texData.resize(size*3);
 
     //    gl::FBO::unbind();
@@ -1680,7 +1680,7 @@ void Ch6HdrBloom::draw(tool::gl::Drawer *drawer){
     draw_scene1(shader);
 
     // compute log average luminance
-    const int size = camera->screen()->size();
+    const int size = camera->screen()->size_pixels();
     hdrRenderTexture.bind();
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, texData.data());
     //    glGetTextureImage(hdrRenderTexture.id(), 0, GL_RGB, GL_FLOAT, static_cast<GLsizei>(texData.size()*4), texData.data());

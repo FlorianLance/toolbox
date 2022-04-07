@@ -52,8 +52,12 @@ public:
         return m_size.y();
     }
 
-    constexpr unsigned int size() const noexcept{
+    constexpr unsigned int size_pixels() const noexcept{
         return m_size.x() * m_size.y();
+    }
+
+    constexpr geo::Pt2<unsigned int> size() const noexcept{
+        return m_size;
     }
 
 private:

@@ -126,7 +126,7 @@ struct K4Device::Impl{
 
     // display frames
     size_t currentDisplayFramesId = 0;
-    std::vector<std::shared_ptr<K4DisplayDataFrame>> displayFrames;
+    std::vector<std::shared_ptr<K4DisplayFrame>> displayFrames;
 
     // thread/lockers
     std::mutex parametersM; /**< mutex for reading parameters at beginning of a new frame in thread function */
@@ -850,6 +850,10 @@ void K4Device::Impl::display_frame(const K4Parameters &p, K4Mode mode){
     auto currDisplayFrame = displayFrames[currentDisplayFramesId++];
     currentDisplayFramesId = currentDisplayFramesId%displayFrames.size();
 
+    currDisplayFrame->idCapture      = idCapture;
+    currDisplayFrame->afterCaptureTS = afterCaptureTS.count();
+
+
     auto dFrame = currDisplayFrame.get();
 
     // init depth frame
@@ -1119,7 +1123,7 @@ void K4Device::Impl::init_data(K4Mode mode){
     currentDisplayFramesId = 0;
     for(auto &frame : displayFrames){
 
-        frame = std::make_shared<K4DisplayDataFrame>();
+        frame = std::make_shared<K4DisplayFrame>();
 
         if(depthSize > 0){
             frame->depthFrame.width  = depthWidth;
