@@ -39,7 +39,7 @@ struct K4CloudFrameCompressor{
     K4CloudFrameCompressor();
     ~K4CloudFrameCompressor();
 
-    std::shared_ptr<K4CompressedCloudFrame> compress(
+    std::unique_ptr<K4CompressedCloudFrame> compress(
         size_t validDepthValues,
         int jpegQuality,
         k4a::image colorImage,
@@ -58,7 +58,7 @@ struct K4FullFrameCompressor{
     K4FullFrameCompressor();
     ~K4FullFrameCompressor();
 
-    std::shared_ptr<K4CompressedFullFrame> compress(
+    std::unique_ptr<K4CompressedFullFrame> compress(
         size_t validDepthValues,
         int jpegQuality,
         std::optional<k4a::image> colorImage,

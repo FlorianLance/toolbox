@@ -36,7 +36,7 @@ namespace tool::camera{
 struct K4FrameData{
     size_t idFrame;         // remove ?
     std::int64_t timeStamp; // remove ?
-    std::shared_ptr<K4CompressedFrame> data = nullptr;
+    std::unique_ptr<K4CompressedFrame> data = nullptr;
 };
 
 struct K4CameraData{
@@ -61,7 +61,7 @@ public:
     K4CompressedFrame *get_frame(size_t idFrame, size_t idCamera = 0);
     std::vector<K4FrameData> *get_frames(size_t idCamera = 0);
 
-    void add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<K4CompressedFrame> frame);
+    void add_frame(size_t idCamera, std::int64_t timestamp, std::unique_ptr<K4CompressedFrame> frame);
     void remove_frames_until(size_t idFrame);
     void remove_frames_after(size_t idFrame);
     void clean_frames();

@@ -66,9 +66,9 @@ K4UdpCommand::K4UdpCommand(int8_t *data){
 }
 
 
-std::shared_ptr<K4CompressedCloudFrame> K4UdpCompresedCloudFrameMessage::generate_frame(std::int8_t *data){
+std::unique_ptr<K4CompressedCloudFrame> K4UdpCompresedCloudFrameMessage::generate_frame(std::int8_t *data){
 
-    auto ccFrame = std::make_shared<K4CompressedCloudFrame>();
+    auto ccFrame = std::make_unique<K4CompressedCloudFrame>();
 
     size_t offset = 0, nbAudioFrames, encodedColorDataSize, encodedcloudDataSize;
 
@@ -106,7 +106,7 @@ std::shared_ptr<K4CompressedCloudFrame> K4UdpCompresedCloudFrameMessage::generat
     return ccFrame;
 }
 
-size_t K4UdpCompresedCloudFrameMessage::initialize_data(std::shared_ptr<K4CompressedCloudFrame> frame, std::vector<std::int8_t> &data){
+size_t K4UdpCompresedCloudFrameMessage::initialize_data(K4CompressedCloudFrame *frame, std::vector<std::int8_t> &data){
 
     size_t totalDataSize = frame->total_data_size();
     size_t offset = 0;
@@ -148,9 +148,9 @@ size_t K4UdpCompresedCloudFrameMessage::initialize_data(std::shared_ptr<K4Compre
     return totalDataSize;
 }
 
-std::shared_ptr<K4CompressedFullFrame> K4UdpCompresedFullFrameMessage::generate_frame(std::int8_t *data){
+std::unique_ptr<K4CompressedFullFrame> K4UdpCompresedFullFrameMessage::generate_frame(std::int8_t *data){
 
-    auto cfFrame = std::make_shared<K4CompressedFullFrame>();
+    auto cfFrame = std::make_unique<K4CompressedFullFrame>();
 
     size_t offset = 0, nbAudioFrames, encodedColorDataSize, encodedDepthDataSize, encodedInfraDataSize;
 
@@ -200,7 +200,7 @@ std::shared_ptr<K4CompressedFullFrame> K4UdpCompresedFullFrameMessage::generate_
     return cfFrame;
 }
 
-size_t K4UdpCompresedFullFrameMessage::initialize_data(std::shared_ptr<camera::K4CompressedFullFrame> frame, std::vector<int8_t> &data){
+size_t K4UdpCompresedFullFrameMessage::initialize_data(camera::K4CompressedFullFrame *frame, std::vector<int8_t> &data){
 
     size_t nbAudioFrames    = frame->audioFrames.size();
     size_t encColorDataSize = frame->encodedColorData.size();

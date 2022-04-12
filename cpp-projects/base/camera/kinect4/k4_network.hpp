@@ -118,9 +118,9 @@ struct K4UdpDeviceSettings : UdpMonoPacketMessage{
 };
 
 struct K4UdpFiltersSettings : UdpMonoPacketMessage{
-    K4UdpFiltersSettings(camera::K4Filters f) : filters(f){}
+    K4UdpFiltersSettings(camera::K4FiltersSettings f) : filters(f){}
     K4UdpFiltersSettings(std::int8_t *data);
-    camera::K4Filters filters;
+    camera::K4FiltersSettings filters;
 };
 
 struct K4UdpFeedbackMessage : UdpMonoPacketMessage{
@@ -131,13 +131,13 @@ struct K4UdpFeedbackMessage : UdpMonoPacketMessage{
 };
 
 struct K4UdpCompresedCloudFrameMessage : UdpMultiPacketsMessage{
-    std::shared_ptr<camera::K4CompressedCloudFrame> generate_frame(std::int8_t *data);
-    size_t initialize_data(std::shared_ptr<camera::K4CompressedCloudFrame> frame, std::vector<std::int8_t> &data);
+    std::unique_ptr<camera::K4CompressedCloudFrame> generate_frame(std::int8_t *data);
+    size_t initialize_data(camera::K4CompressedCloudFrame *frame, std::vector<std::int8_t> &data);
 };
 
 struct K4UdpCompresedFullFrameMessage : UdpMultiPacketsMessage{
-    std::shared_ptr<camera::K4CompressedFullFrame> generate_frame(std::int8_t *data);
-    size_t initialize_data(std::shared_ptr<camera::K4CompressedFullFrame> frame, std::vector<std::int8_t> &data);
+    std::unique_ptr<camera::K4CompressedFullFrame> generate_frame(std::int8_t *data);
+    size_t initialize_data(camera::K4CompressedFullFrame *frame, std::vector<std::int8_t> &data);
 };
 
 }

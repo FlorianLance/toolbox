@@ -85,7 +85,7 @@ bool K4VolumetricFullVideoResource::read_file(std::ifstream &file){
         // create frames
         cameraData.frames.reserve(nbFrames);
         for(size_t ii = 0; ii < static_cast<size_t>(nbFrames); ++ii){
-            cameraData.frames.emplace_back(K4FrameData{0,0, std::make_shared<K4CompressedFullFrame>()});
+            cameraData.frames.emplace_back(K4FrameData{0,0, std::make_unique<K4CompressedFullFrame>()});
         }
 
         // calibration matrix

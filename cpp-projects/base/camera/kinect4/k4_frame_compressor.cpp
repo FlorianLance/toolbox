@@ -67,7 +67,7 @@ K4CloudFrameCompressor::~K4CloudFrameCompressor(){
     tjDestroy(i->jpegCompressor);
 }
 
-std::shared_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
+std::unique_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
     size_t validDepthValues,
     int jpegQuality,
     k4a::image colorImage,
@@ -76,7 +76,7 @@ std::shared_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
 
 
     // create compressed frame
-    auto cFrame                = std::make_shared<K4CompressedCloudFrame>();
+    auto cFrame                = std::make_unique<K4CompressedCloudFrame>();
     cFrame->validVerticesCount = validDepthValues;
     cFrame->colorWidth         = colorImage.get_width_pixels();
     cFrame->colorHeight        = colorImage.get_height_pixels();
@@ -209,14 +209,14 @@ K4FullFrameCompressor::~K4FullFrameCompressor(){
     tjDestroy(i->jpegCompressor);
 }
 
-std::shared_ptr<K4CompressedFullFrame> K4FullFrameCompressor::compress(
+std::unique_ptr<K4CompressedFullFrame> K4FullFrameCompressor::compress(
     size_t validDepthValues,
     int jpegQuality,
     std::optional<k4a::image> colorImage,
     std::optional<k4a::image> depthImage,
     std::optional<k4a::image> infraredImage){
 
-    auto cFrame = std::make_shared<K4CompressedFullFrame>();
+    auto cFrame = std::make_unique<K4CompressedFullFrame>();
 
     if(colorImage.has_value()){
 

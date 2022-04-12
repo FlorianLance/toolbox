@@ -56,13 +56,16 @@ public:
 
     // devices
     std::uint32_t nb_devices() const noexcept;
-    bool open(std::uint32_t deviceId);
+    bool open();
     void close();
     void clean();
 
     // getters
+    std::uint32_t current_device_opened() const;
     bool is_opened() const;
+    bool cameras_started()const;
     bool is_reading_frames()const;
+    K4Mode mode()const;
 
     // cameras
     bool start_cameras(const K4Config &config);
@@ -74,12 +77,13 @@ public:
     void stop_reading();
 
     // settings
-    void set_parameters(const K4Parameters &parameters);
+    void set_settings(const K4DeviceSettings &setings);
+    void set_filters(const K4FiltersSettings &filtersS);
 
 // signals
-    lsignal::signal<void(std::shared_ptr<K4DisplayFrame> cloud)> new_display_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4CompressedFullFrame> frame)> new_compressed_full_frame_signal;
-    lsignal::signal<void(std::shared_ptr<K4CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
+    lsignal::signal<void(std::unique_ptr<K4DisplayFrame> cloud)> new_display_frame_signal;
+    lsignal::signal<void(std::unique_ptr<K4CompressedFullFrame> frame)> new_compressed_full_frame_signal;
+    lsignal::signal<void(std::unique_ptr<K4CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
 
 private:
 

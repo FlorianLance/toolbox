@@ -35,10 +35,7 @@
 
 using namespace tool::graphics;
 
-
-
-
-bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &updateP){
+bool K4SettingsDrawer::draw_filters_settings_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4FiltersSettings &filters, bool &updateP){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return false;
@@ -126,82 +123,7 @@ bool K4FiltersTabItem::draw(const std::string &tabItemName, camera::K4Mode mode,
     return true;
 }
 
-bool K4DeviceTabItem::draw(const std::string &tabItemName, camera::K4DeviceSettings &device, bool &updateP){
-
-    if (!ImGui::BeginTabItem(tabItemName.c_str())){
-        return false;
-    }
-
-    if(ImGui::Checkbox("Start device", &device.startDevice)){
-        updateP = true;
-    }
-    ImGui::SameLine();
-    if(ImGui::Checkbox("Open camera", &device.openCamera)){
-        updateP = true;
-    }
-
-    ImGui::Separator();
-
-    ImGui::Text("Mode:");
-    int guiCurrentModeSelection = static_cast<int>(device.mode);
-    if(ImGui::Combo("###settings_mode_combo", &guiCurrentModeSelection, modeItems, IM_ARRAYSIZE(modeItems))){
-        updateP = true;
-    }
-
-    ImGui::Separator();
-
-    ImGui::Text("Compression:");
-    int guiCurrentCompressSelection = static_cast<int>(device.compressMode);
-    if(ImGui::Combo("###settings_compress_combo", &guiCurrentCompressSelection, compressModeItems, IM_ARRAYSIZE(compressModeItems))){
-        updateP = true;
-    }
-
-    ImGui::Separator();
-    ImGui::Text("Data:");
-    if(ImGui::Checkbox("Record###settings_record_data_cb", &device.record)){
-        updateP = true;
-    }
-    ImGui::SameLine();
-    if(ImGui::Checkbox("Send###settings_send_data_cb", &device.sendData)){
-        updateP = true;
-    }
-
-    ImGui::Separator();
-
-    ImGui::Text("Capture:");
-    if(ImGui::Checkbox("audio###settings_capture_audio_cb", &device.captureAudio)){
-        updateP = true;
-    }
-    ImGui::SameLine();
-    if(ImGui::Checkbox("IMU###settings_capture_imu_cb", &device.captureIMU)){
-        updateP = true;
-    }
-    ImGui::Separator();
-
-    ImGui::Text("Display on grabber:");
-    if(ImGui::Checkbox("RGB###settings_display_rgb_cb", &device.displayRGB)){
-        updateP = true;
-    }
-    ImGui::SameLine();
-    if(ImGui::Checkbox("Depth###settings_display_depth_cb", &device.displayDepth)){
-        updateP = true;
-    }
-    if(ImGui::Checkbox("Infra###settings_display_infra_cb", &device.displayInfra)){
-        updateP = true;
-    }
-    ImGui::SameLine();
-    if(ImGui::Checkbox("Cloud###settings_display_cloud_cb", &device.displayCloud)){
-        updateP = true;
-    }
-
-    device.mode         = static_cast<camera::K4Mode>(guiCurrentModeSelection);
-    device.compressMode = static_cast<camera::K4CompressMode>(guiCurrentCompressSelection);
-
-    ImGui::EndTabItem();
-    return true;
-}
-
-bool K4DisplaySettingsTabItem::draw(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP){
+bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return false;
@@ -237,11 +159,119 @@ bool K4DisplaySettingsTabItem::draw(const std::string &tabItemName, camera::K4Di
 
 
 
+bool K4SettingsDrawer::draw_all_settings_tab_item(const std::string &tabItemName, camera::K4Config &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &updateC, bool &updateD, bool &updateA){
+
+    if (!ImGui::BeginTabItem(tabItemName.c_str())){
+        return false;
+    }
+
+    draw_config(config, updateC);
+    draw_device_settings(device, updateC);
+    draw_action_settings(action, updateC);
+
+    ImGui::EndTabItem();
+    return true;
+}
+
+
+void K4SettingsDrawer::draw_config(camera::K4Config &config, bool &updateP){
+
+    ImGui::Text("Mode:");
+    int guiCurrentModeSelection = static_cast<int>(config.mode);
+    if(ImGui::Combo("###settings_mode_combo", &guiCurrentModeSelection, modeItems, IM_ARRAYSIZE(modeItems))){
+        updateP       = true;
+        config.mode  = static_cast<camera::K4Mode>(guiCurrentModeSelection);
+    }
+
+    //    if(devices.size() > 0){
+    //        ImGui::Text("Device id:");
+    //        if(ImGui::BeginCombo("###settings_device_id_combo", devices[device.deviceId].c_str())){
+    //            for(size_t ii = 0; ii < devices.size(); ++ii){
+
+    //                bool selected = ii == device.deviceId;
+    //                if (ImGui::Selectable(devices[ii].c_str(),selected)){
+    //                    device.deviceId = ii;
+    //                    updateP = true;
+    //                }
+    //                if(selected){
+    //                    ImGui::SetItemDefaultFocus();
+    //                }
+    //            }
+    //            ImGui::EndCombo();
+    //        }
+    //    }
+}
+
+
+void K4SettingsDrawer::draw_device_settings(camera::K4DeviceSettings &device, bool &updateP){
+
+    ImGui::Text("Capture:");
+    if(ImGui::Checkbox("audio###settings_capture_audio_cb", &device.captureAudio)){
+        updateP = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("IMU###settings_capture_imu_cb", &device.captureIMU)){
+        updateP = true;
+    }
+    ImGui::Separator();
+
+    ImGui::Text("Compression:");
+    int guiCurrentCompressSelection = static_cast<int>(device.compressMode);
+    if(ImGui::Combo("###settings_compress_combo", &guiCurrentCompressSelection, compressModeItems, IM_ARRAYSIZE(compressModeItems))){
+        updateP = true;
+        device.compressMode = static_cast<camera::K4CompressMode>(guiCurrentCompressSelection);
+    }
+    ImGui::Separator();
+
+    ImGui::Text("Display on grabber:");
+    if(ImGui::Checkbox("RGB###settings_display_rgb_cb", &device.displayRGB)){
+        updateP = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Depth###settings_display_depth_cb", &device.displayDepth)){
+        updateP = true;
+    }
+    if(ImGui::Checkbox("Infra###settings_display_infra_cb", &device.displayInfra)){
+        updateP = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Cloud###settings_display_cloud_cb", &device.displayCloud)){
+        updateP = true;
+    }
+}
+
+void K4SettingsDrawer::draw_action_settings(camera::K4ActionsSettings &action, bool &updateP){
+
+    if(ImGui::Checkbox("Start device", &action.startDevice)){
+        updateP = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Open camera", &action.openCamera)){
+        updateP = true;
+    }
+    ImGui::Separator();
+
+    ImGui::Text("Data:");
+    if(ImGui::Checkbox("Record###settings_record_data_cb", &action.record)){
+        updateP = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Send###settings_send_data_cb", &action.sendData)){
+        updateP = true;
+    }
+
+    ImGui::Separator();
+}
+
+
+
+
+
 void K4CloudsDrawer::populate(size_t nbConnections){
     cloudsD.resize(nbConnections);
 }
 
-void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame){
+void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::unique_ptr<camera::K4DisplayFrame> frame){
 
     if(idCloud >= cloudsD.size()){
         // error
@@ -292,56 +322,56 @@ void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<c
 //    }
 }
 
-void K4CloudsDrawer::update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame &frame){
+void K4CloudsDrawer::update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame *frame){
 
     if(idCloud >= cloudsD.size()){
         // error
         return;
     }
 
-    if(cloudsD[idCloud].lastCloudFrameId == frame.idCapture){
+    if(cloudsD[idCloud].lastCloudFrameId == frame->idCapture){
         return;
     }
 
-    if(frame.cloud.validVerticesCount > 0){
-        cloudsD[idCloud].drawer.init(frame.cloud.validVerticesCount, frame.cloud.vertices.data(), frame.cloud.colors.data());
+    if(frame->cloud.validVerticesCount > 0){
+        cloudsD[idCloud].drawer.init(frame->cloud.validVerticesCount, frame->cloud.vertices.data(), frame->cloud.colors.data());
     }
 
-    cloudsD[idCloud].lastCloudFrameId = frame.idCapture;
+    cloudsD[idCloud].lastCloudFrameId = frame->idCapture;
 }
 
-void K4CloudsDrawer::update_from_full_frame(size_t idCloud, camera::K4FullFrame &frame){
+void K4CloudsDrawer::update_from_full_frame(size_t idCloud, camera::K4FullFrame *frame){
 
     if(idCloud >= cloudsD.size()){
         // error
         return;
     }
 
-    if(cloudsD[idCloud].lastFullFrameId == frame.idCapture){
+    if(cloudsD[idCloud].lastFullFrameId == frame->idCapture){
         return;
     }
 
-    if(frame.colorWidth > 0){
+    if(frame->colorWidth > 0){
         cloudsD[idCloud].colorT.init_or_update_8ui(
-            static_cast<GLsizei>(frame.colorWidth),
-            static_cast<GLsizei>(frame.colorHeight), 3, frame.imageColorData.data());
+            static_cast<GLsizei>(frame->colorWidth),
+            static_cast<GLsizei>(frame->colorHeight), 3, frame->imageColorData.data());
     }
-    if(frame.depthWidth > 0){
+    if(frame->depthWidth > 0){
         cloudsD[idCloud].depthT.init_or_update_8ui(
-            static_cast<GLsizei>(frame.depthWidth),
-            static_cast<GLsizei>(frame.depthHeight), 3, frame.imageDepthData.data());
+            static_cast<GLsizei>(frame->depthWidth),
+            static_cast<GLsizei>(frame->depthHeight), 3, frame->imageDepthData.data());
     }
-    if(frame.infraWidth > 0){
+    if(frame->infraWidth > 0){
         cloudsD[idCloud].infraT.init_or_update_8ui(
-            static_cast<GLsizei>(frame.infraWidth),
-            static_cast<GLsizei>(frame.infraHeight), 3, frame.imageInfraData.data());
+            static_cast<GLsizei>(frame->infraWidth),
+            static_cast<GLsizei>(frame->infraHeight), 3, frame->imageInfraData.data());
     }
 
-    if(frame.cloud.validVerticesCount > 0){
-        cloudsD[idCloud].drawer.init(frame.cloud.validVerticesCount, frame.cloud.vertices.data(), frame.cloud.colors.data());
+    if(frame->cloud.validVerticesCount > 0){
+        cloudsD[idCloud].drawer.init(frame->cloud.validVerticesCount, frame->cloud.vertices.data(), frame->cloud.colors.data());
     }
 
-    cloudsD[idCloud].lastFullFrameId = frame.idCapture;
+    cloudsD[idCloud].lastFullFrameId = frame->idCapture;
 }
 
 
@@ -380,5 +410,6 @@ void K4CloudsDrawer::draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiF
 
     fboD.unbind();
 }
+
 
 

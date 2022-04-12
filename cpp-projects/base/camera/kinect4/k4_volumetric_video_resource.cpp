@@ -145,12 +145,12 @@ void K4VolumetricVideoResource::clean_frames(){
     camData.clear();
 }
 
-void K4VolumetricVideoResource::add_frame(size_t idCamera, std::int64_t timestamp, std::shared_ptr<K4CompressedFrame> frame){
+void K4VolumetricVideoResource::add_frame(size_t idCamera, std::int64_t timestamp, std::unique_ptr<K4CompressedFrame> frame){
     if(idCamera >= camData.size()){
         camData.resize(idCamera+1);
     }
     auto idFrame = camData[idCamera].frames.size();
-    camData[idCamera].frames.emplace_back(K4FrameData{idFrame, timestamp, frame});
+    camData[idCamera].frames.emplace_back(K4FrameData{idFrame, timestamp, std::move(frame)});
 }
 
 

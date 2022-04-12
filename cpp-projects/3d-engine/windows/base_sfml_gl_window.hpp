@@ -49,7 +49,8 @@ namespace tool::graphics {
 class BaseSfmlGlWindow{
 
 public:
-    using TimePoint = std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<long long, std::ratio<1,1000000000>>>;
+
+    using TimePoint = std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>;
 
     BaseSfmlGlWindow(
             std::string title,
@@ -63,7 +64,8 @@ public:
     void start();        
 
     float elapsed_secondes() const{
-        return std::chrono::duration_cast<std::chrono::milliseconds>(currentFrame-startL).count()*0.001f;
+        using namespace std::chrono;
+        return duration_cast<milliseconds>(currentFrame-startL).count()*0.001f;
     }
 
 protected:

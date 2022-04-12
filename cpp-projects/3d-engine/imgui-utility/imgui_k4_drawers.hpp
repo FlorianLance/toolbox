@@ -57,18 +57,17 @@ public:
 };
 
 
-class K4FiltersTabItem{
+class K4SettingsDrawer{
 public:
-    static bool draw(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &updateP);    
+    static void draw_config(camera::K4Config &config,  bool &updateP);
+    static void draw_device_settings(camera::K4DeviceSettings &device, bool &updateP);
+    static void draw_action_settings(camera::K4ActionsSettings &action,  bool &updateP);
+    static bool draw_all_settings_tab_item(const std::string &tabItemName, camera::K4Config &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &updateC, bool &updateD, bool &updateA);
+
+    static bool draw_filters_settings_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4FiltersSettings &filters, bool &updateP);
+    static bool draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP);
 };
-class K4DeviceTabItem{
-public:
-    static bool draw(const std::string &tabItemName, camera::K4DeviceSettings &device, bool &updateP);
-};
-class K4DisplaySettingsTabItem{
-public:
-    static bool draw(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP);
-};
+
 
 struct K4CloudDrawer{
     // last frame info
@@ -89,9 +88,9 @@ struct K4CloudDrawer{
 struct K4CloudsDrawer{
 
     void populate(size_t nbConnections);
-    void update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame);
-    void update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame &frame);
-    void update_from_full_frame(size_t idCloud, camera::K4FullFrame &frame);
+    void update_from_display_frame(size_t idCloud, std::unique_ptr<camera::K4DisplayFrame> frame);
+    void update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame *frame);
+    void update_from_full_frame(size_t idCloud, camera::K4FullFrame *frame);
     void draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiFboUiDrawer &fboD);
 
     // clouds

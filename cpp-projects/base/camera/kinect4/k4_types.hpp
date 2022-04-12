@@ -130,7 +130,7 @@ namespace tool::camera {
     using CRes = Resolution;
 
     using TMode = std::tuple<
-        K4Mode,                     IF,         CR,         DM,                 FPS,      Range,          DRes,       CE,    ME,    IE>;
+        K4Mode,                   IF,         CR,         DM,                 FPS,      Range,          DRes,       CE,    ME,    IE>;
     static constexpr TupleArray<K4Mode::SizeEnum, TMode> k4Modes = {{
         // cloud
         TMode
@@ -181,14 +181,6 @@ namespace tool::camera {
         return k4Modes.at<0,9>(m);
     }
 
-    struct K4Config{
-        K4Mode mode = K4Mode::Cloud_640x576;
-        bool synchronizeColorAndDepth = true;
-        int delayBetweenColorAndDepthUsec = 0;
-        K4SynchronisationMode synchMode = K4SynchronisationMode::Standalone;
-        int subordinateDelayUsec = 0;
-        bool disableLED = false;
-    };
 
     [[maybe_unused]] static constexpr std::int16_t k4_invalid_depth_value = 0;
     [[maybe_unused]] static constexpr std::int16_t k4_invalid_infra_value = 0;
@@ -212,7 +204,17 @@ namespace tool::camera {
         float sizeVoxels = 0.002f;
     };
 
-    struct K4Filters{
+    struct K4Config{
+        std::uint32_t idDevice = 0;
+        K4Mode mode = K4Mode::Cloud_640x576;
+        bool synchronizeColorAndDepth = true;
+        int delayBetweenColorAndDepthUsec = 0;
+        K4SynchronisationMode synchMode = K4SynchronisationMode::Standalone;
+        int subordinateDelayUsec = 0;
+        bool disableLED = false;
+    };
+
+    struct K4FiltersSettings{
 
         // # width / height
         unsigned int minWidth  = 0;
@@ -245,22 +247,13 @@ namespace tool::camera {
         bool invalidateInfraFromDepth   = false;
     };
 
-
     struct K4DeviceSettings{
 
         // capture
-        bool startDevice   = true;
-        bool openCamera    = true;
-        camera::K4Mode mode    = camera::K4Mode::Cloud_640x576;
-        bool captureAudio  = true;
-        bool captureIMU    = true;
+        int deviceId        = 0;
+        bool captureAudio   = true;
+        bool captureIMU     = true;
         camera::K4CompressMode compressMode  = camera::K4CompressMode::Cloud;
-
-        // network
-        bool sendData      = true;
-
-        // record
-        bool record        = false;
 
         // display
         bool displayRGB    = false;
@@ -268,26 +261,39 @@ namespace tool::camera {
         bool displayInfra  = false;
         bool displayCloud  = false;
 
+        static K4DeviceSettings init_for_grabber(){
+            K4DeviceSettings device;
+            device.displayRGB    = true;
+            device.displayDepth  = true;
+            device.displayInfra  = true;
+            device.displayCloud  = true;
+            return device;
+        }
     };
 
+    struct K4ActionsSettings{
+        // device
+        bool startDevice   = true;
+        bool openCamera    = true;
+        // network
+        bool sendData      = true;
+        // record
+        bool record        = false;
 
+        static K4ActionsSettings init_for_grabber(){
+            K4ActionsSettings actions;
+            actions.sendData      = false;
+            actions.startDevice   = false;
+            actions.openCamera    = false;
+            return actions;
+        }
+    };
 
-    struct K4Parameters{
-
-        K4Filters filters;
-
-        // capture
-        bool captureAudio               = true;
-        bool captureIMU                 = true;
-        // send                
-        bool sendCompressedFullFrame    = false;
-        bool sendCompressedCloudFrame   = false;
-        // display
-        bool sendDisplayColorFrame      = true;
-        bool sendDisplayDepthFrame      = true;
-        bool sendDisplayInfraredFrame   = true;
-        bool sendDisplayCloud           = true;
-
+    struct K4GrabberSettings{
+        K4Config config;
+        K4DeviceSettings device = camera::K4DeviceSettings::init_for_grabber();
+        K4ActionsSettings actions = camera::K4ActionsSettings::init_for_grabber();
+        K4FiltersSettings filters;
     };
 
 }
