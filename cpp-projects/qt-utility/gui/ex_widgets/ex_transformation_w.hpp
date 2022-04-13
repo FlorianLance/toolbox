@@ -46,6 +46,9 @@ public:
 
     ExTransformationW(QString name ="");
     ExTransformationW *init_widget(const QString &title, Vector3dSettings transS = DefaultTranVec, Vector3dSettings rotationS = DefaultRotVec, Vector3dSettings scaleS = DefaultScaVec, bool enabled = true);
+    static std::vector<std::any> generate_init_any_array(const QString &title, Vector3dSettings transS = DefaultTranVec, Vector3dSettings rotationS = DefaultRotVec, Vector3dSettings scaleS = DefaultScaVec, bool enabled = true);
+
+    ExBaseW *init_widget_from_any_array(std_v1<std::any> &parameters) override;
 
     void update_from_arg(const Arg &arg) override;
     Arg convert_to_arg() const override;

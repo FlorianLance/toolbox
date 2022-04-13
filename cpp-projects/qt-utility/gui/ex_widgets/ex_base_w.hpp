@@ -69,7 +69,7 @@ public:
     virtual void update_from_resources(){}
     virtual void update_from_components(){}
 
-    virtual ExBaseW *init_widget2(std_v1<std::any> parameters){
+    virtual ExBaseW *init_widget_from_any_array(std_v1<std::any> &parameters){
         Q_UNUSED(parameters)
         return this;
     }

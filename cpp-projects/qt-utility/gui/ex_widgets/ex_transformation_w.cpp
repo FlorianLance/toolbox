@@ -83,6 +83,26 @@ ExTransformationW *ExTransformationW::init_widget(const QString &title, Vector3d
     return this;
 }
 
+std::vector<std::any> ExTransformationW::generate_init_any_array(const QString &title, Vector3dSettings transS, Vector3dSettings rotationS, Vector3dSettings scaleS, bool enabled){
+    return {
+        std::make_any<QString>(title),
+        std::make_any<Vector3dSettings>(transS),
+        std::make_any<Vector3dSettings>(rotationS),
+        std::make_any<Vector3dSettings>(scaleS),
+        std::make_any<bool>(enabled)
+    };
+}
+
+ExBaseW *ExTransformationW::init_widget_from_any_array(std_v1<std::any> &parameters){
+    return init_widget(
+        std::any_cast<QString>(parameters[0]),
+        std::any_cast<Vector3dSettings>(parameters[1]),
+        std::any_cast<Vector3dSettings>(parameters[2]),
+        std::any_cast<Vector3dSettings>(parameters[3]),
+        std::any_cast<bool>(parameters[4])
+    );
+}
+
 void ExTransformationW::update_from_arg(const Arg &arg){
 
 
