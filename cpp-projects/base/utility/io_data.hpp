@@ -1,3 +1,4 @@
+
 /*******************************************************************************
 ** Toolbox-base                                                               **
 ** MIT License                                                                **
@@ -22,14 +23,49 @@
 ** DEALINGS IN THE SOFTWARE.                                                  **
 **                                                                            **
 ********************************************************************************/
+
 #pragma once
 
-// local
-#include "utility/types.hpp"
-#include "utility/vector.hpp"
-#include "utility/array.hpp"
-#include "utility/constants.hpp"
-#include "utility/math.hpp"
-#include "utility/string.hpp"
-#include "utility/io_file.hpp"
-#include "utility/view.hpp"
+// std
+#include <algorithm>
+
+namespace tool{
+
+    template<typename T>
+    static void read(T &v, std::int8_t *data, size_t &offset){
+        std::copy(
+            data + offset,
+            data + offset + sizeof(T),
+            reinterpret_cast<std::int8_t*>(&v));
+        offset += sizeof(T);
+    }
+
+    template<typename T>
+    static void read_array(T *a, std::int8_t *data, size_t sizeArray, size_t &offset){
+        auto nbBytes = sizeArray * sizeof(T);
+        std::copy(
+            data + offset,
+            data + offset + nbBytes,
+            reinterpret_cast<std::int8_t*>(a));
+        offset += nbBytes;
+    }
+
+    template<typename T>
+    static void write(const T &v, std::int8_t *data, size_t &offset){
+        std::copy(
+            reinterpret_cast<const std::int8_t*>(&v),
+            reinterpret_cast<const std::int8_t*>(&v) + sizeof(T),
+            data + offset);
+        offset += sizeof(T);
+    }
+
+    template<typename T>
+    static void write_array(T *a, std::int8_t *data, size_t sizeArray, size_t &offset){
+        auto nbBytes = sizeArray * sizeof(T);
+        std::copy(
+            reinterpret_cast<std::int8_t*>(a),
+            reinterpret_cast<std::int8_t*>(a) + nbBytes,
+            data+ offset);
+        offset += nbBytes;
+    }
+}

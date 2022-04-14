@@ -38,7 +38,6 @@ namespace tool::network {
 
 using namespace std::literals::string_view_literals;
 
-
 enum FeedbackType : std::int8_t{
     message_received,
     timeout,
@@ -49,9 +48,11 @@ enum FeedbackType : std::int8_t{
 };
 
 enum MessageType : std::int8_t {
-    manager_id = 0,
+    init_network_infos = 0,
+    update_config_settings,
     update_device_settings,
-    update_filters_settings,
+    update_actions_settings,
+    update_filters,
     compressed_cloud_frame_data,
     compressed_full_frame_data,
     command,
@@ -63,11 +64,12 @@ using Name = std::string_view;
 using TMessageTypes = std::tuple<
     MessageType,                                Name>;
 static constexpr TupleArray<MessageType::SizeEnum, TMessageTypes> k4MessageTypes = {{
-    // cloud
     TMessageTypes
-    {MessageType::manager_id,                   "manager_id"sv},
+    {MessageType::init_network_infos,           "init_network_infos"sv},
+    {MessageType::update_config_settings,       "update_config_settings"sv},
     {MessageType::update_device_settings,       "update_device_settings"sv},
-    {MessageType::update_filters_settings,      "update_filters_settings"sv},
+    {MessageType::update_actions_settings,       "update_action_settings"sv},
+    {MessageType::update_filters,               "update_filters"sv},
     {MessageType::compressed_cloud_frame_data,  "compressed_cloud_frame_data"sv},
     {MessageType::compressed_full_frame_data,   "compressed_full_frame_data"sv},
     {MessageType::command,                      "command"sv},
@@ -78,11 +80,6 @@ static constexpr TupleArray<MessageType::SizeEnum, TMessageTypes> k4MessageTypes
     return k4MessageTypes.at<0,1>(m);
 }
 
-//enum K4Feedback : std::int8_t{
-//    valid = 0,
-//    timeout
-//};
-
 enum K4Command : std::int8_t{
     Quit,
     Shutdown,
@@ -90,54 +87,55 @@ enum K4Command : std::int8_t{
     Disconnect
 };
 
-
-
-struct K4UdpInitFromManager : UdpMonoPacketMessage{
-
-    K4UdpInitFromManager(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket, std::uint8_t idDevice, std::uint8_t synchMode, std::uint16_t subordinateDelay);
-    K4UdpInitFromManager(std::int8_t *data);
-
+struct K4NetworkInfos{
+    K4NetworkInfos() = default;
+    K4NetworkInfos(std::string ipAdressStr, uint16_t port, uint16_t maxSizeUdpPacket) : port(port), maxSizeUdpPacket(maxSizeUdpPacket) {
+        std::fill(ipAdress.begin(), ipAdress.end(), ' ');
+        if(ipAdressStr.size() <= 45){
+            std::copy(std::begin(ipAdressStr), std::end(ipAdressStr), ipAdress.begin());
+        }
+    }
     std::array<char, 45> ipAdress;
     std::uint16_t port;
     std::uint16_t maxSizeUdpPacket;
-    std::uint8_t idDevice;
-    std::uint8_t synchMode;
-    std::uint16_t subordinateDelay;
 };
 
-struct K4UdpCommand : UdpMonoPacketMessage{
-    K4UdpCommand(K4Command command) : command(command){}
-    K4UdpCommand(std::int8_t *data);
-    K4Command command;
-};
-
-struct K4UdpDeviceSettings : UdpMonoPacketMessage{
-    K4UdpDeviceSettings(camera::K4DeviceSettings d) : device(d){}
-    K4UdpDeviceSettings(std::int8_t *data);
-    camera::K4DeviceSettings device;
-};
-
-struct K4UdpFiltersSettings : UdpMonoPacketMessage{
-    K4UdpFiltersSettings(camera::K4FiltersSettings f) : filters(f){}
-    K4UdpFiltersSettings(std::int8_t *data);
-    camera::K4FiltersSettings filters;
-};
-
-struct K4UdpFeedbackMessage : UdpMonoPacketMessage{
-    K4UdpFeedbackMessage() = default;
-    K4UdpFeedbackMessage(std::int8_t *data);
+struct K4Feedback{
     MessageType receivedMessageType;
     FeedbackType feedback;
 };
 
-struct K4UdpCompresedCloudFrameMessage : UdpMultiPacketsMessage{
-    std::unique_ptr<camera::K4CompressedCloudFrame> generate_frame(std::int8_t *data);
-    size_t initialize_data(camera::K4CompressedCloudFrame *frame, std::vector<std::int8_t> &data);
+template <typename T>
+struct K4UdpMessage : UdpMonoPacketMessage{
+    K4UdpMessage(T d) : data(d){}
+    K4UdpMessage(std::int8_t *data){init_packet_from_data(data, sizeof(K4UdpMessage<T>));}
+    T data;
 };
 
-struct K4UdpCompresedFullFrameMessage : UdpMultiPacketsMessage{
-    std::unique_ptr<camera::K4CompressedFullFrame> generate_frame(std::int8_t *data);
-    size_t initialize_data(camera::K4CompressedFullFrame *frame, std::vector<std::int8_t> &data);
-};
+using K4UdpNetworkInfos    = K4UdpMessage<K4NetworkInfos>;
+using K4UdpCommand         = K4UdpMessage<K4Command>;
+using K4UdpFeedback        = K4UdpMessage<K4Feedback>;
+
+using K4UdpConfigSettings  = K4UdpMessage<camera::K4ConfigSettings>;
+using K4UdpDeviceSettings  = K4UdpMessage<camera::K4DeviceSettings>;
+using K4UdpActionsSettings  = K4UdpMessage<camera::K4ActionsSettings>;
+using K4UdpFilters         = K4UdpMessage<camera::K4Filters>;
+
+
+//struct K4UdpCompresedCloudFrameMessage : UdpMultiPacketsMessage{
+//    size_t initialize_data(camera::K4CompressedCloudFrame *frame, std::vector<std::int8_t> &data){
+//        frame->initialize_data(data);
+//    }
+//};
+
+//struct K4UdpCompresedCloudFrameMessage : UdpMultiPacketsMessage{
+
+//    std::unique_ptr<camera::K4CompressedCloudFrame> generate_frame(std::int8_t *data);
+//};
+
+//struct K4UdpCompresedFullFrameMessage : UdpMultiPacketsMessage{
+//    size_t initialize_data(camera::K4CompressedFullFrame *frame, std::vector<std::int8_t> &data);
+//    std::unique_ptr<camera::K4CompressedFullFrame> generate_frame(std::int8_t *data);
+//};
 
 }

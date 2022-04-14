@@ -10,7 +10,7 @@
 #include "imgui-utility/imgui_std.hpp"
 
 // base
-#include "utility/io.hpp"
+#include "utility/io_file.hpp"
 #include "utility/logger.hpp"
 
 // opengl-utility
@@ -94,12 +94,12 @@ void Sample::draw(tool::gl::Drawer *drawer){
 
             if(idAnimation < nbAnimations){
 
-                durationAnimation = model->animations[idAnimation].duration;
+                durationAnimation = static_cast<float>(model->animations[idAnimation].duration);
 
                 modelDrawer->update_animation(
                     model->animations[idAnimation].name,
                     stopAnimation ? timeAnimation : elapsedSeconds
-                    );
+                );
             }
         }
     }
@@ -1975,7 +1975,7 @@ void Ch6SSAO::init(){
         float scale = ((float)(i * i)) / (kernSize * kernSize);
         // v *= glm::mix(0.1f, 1.0f, scale);
         //  x * (1.0 - a) + y * a
-        v *= 0.1f * (1.0 - scale) + 1.0f * scale;
+        v *= 0.1f * (1.f - scale) + 1.0f * scale;
         kern[i] = {v.x(), v.y(), v.z()};
         std::cout << i << " " << v << "\n";
     }
@@ -2207,12 +2207,12 @@ void Ch6OIT::update_screen_size(){
     std::vector<GLuint> headPtrClearBuf(width*height, 0xffffffff);
     clearBuffer.clean();
     clearBuffer.generate();
-    clearBuffer.set_data_storage(headPtrClearBuf.size() * sizeof(GLuint), gl::UintData{headPtrClearBuf.data()});
+    clearBuffer.set_data_storage(static_cast<GLsizei>(headPtrClearBuf.size() * sizeof(GLuint)), gl::UintData{headPtrClearBuf.data()});
 
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
-void Ch6OIT::draw(tool::gl::Drawer *drawer){
+void Ch6OIT::draw(tool::gl::Drawer*){
 
     const auto width  = camera->screen()->width();
     const auto height = camera->screen()->height();
@@ -2785,7 +2785,7 @@ void Ch8ShadowMap2::init(){
 //    shader->set_uniform("shadowMap", gl::Sampler2DShadow{(int)depthMap});
 }
 
-void Ch8ShadowMap2::draw(tool::gl::Drawer *drawer){
+void Ch8ShadowMap2::draw(tool::gl::Drawer *){
 
     //Sample::draw(drawer);
 

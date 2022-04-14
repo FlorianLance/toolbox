@@ -140,13 +140,13 @@ std::unique_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
 
     // compress color buffer
     if(i->tjCompressedImage == nullptr){
-        i->tjCompressedImage = tjAlloc(cFrame->colorHeight*cFrame->colorWidth*3);
+        i->tjCompressedImage = tjAlloc(static_cast<int>(cFrame->colorHeight*cFrame->colorWidth*3));
     }
 
     long unsigned int jpegSize = 0;
     int ret = tjCompress2(i->jpegCompressor,
         i->processedColorData.data(),
-        cFrame->colorWidth, 0, cFrame->colorHeight,
+                          static_cast<int>(cFrame->colorWidth), 0, static_cast<int>(cFrame->colorHeight),
         TJPF_BGR,
         &i->tjCompressedImage, &jpegSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT);
 
@@ -226,11 +226,12 @@ std::unique_ptr<K4CompressedFullFrame> K4FullFrameCompressor::compress(
 
         long unsigned int jpegColorSize = 0;
         if(i->tjCompressedImage == nullptr){
-            i->tjCompressedImage = tjAlloc(cFrame->colorHeight*cFrame->colorWidth*4);
+            i->tjCompressedImage = tjAlloc(static_cast<int>(cFrame->colorHeight*cFrame->colorWidth*4));
         }
 
         int ret = tjCompress2(i->jpegCompressor,
-            reinterpret_cast<const unsigned char*>(colorImage->get_buffer()), cFrame->colorWidth, 0, cFrame->colorHeight,
+            reinterpret_cast<const unsigned char*>(colorImage->get_buffer()),
+            static_cast<int>(cFrame->colorWidth), 0, static_cast<int>(cFrame->colorHeight),
             TJPF_BGRA,
             &i->tjCompressedImage, &jpegColorSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT);
 

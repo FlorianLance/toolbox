@@ -36,7 +36,7 @@
 using namespace std::chrono;
 using namespace tool::network;
 
-Header Header::generate_mono_packet_message(std::int8_t type, size_t messageNbBytes){
+Header Header::generate_mono_packet(std::int8_t type, size_t messageNbBytes){
     Header header;
     header.type = type;
     header.totalSizeBytes = sizeof(Header) + messageNbBytes;

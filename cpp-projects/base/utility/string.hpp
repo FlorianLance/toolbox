@@ -118,6 +118,17 @@ static void replace_all2(std::string& source, const std::string& from, const std
     return std::make_pair(s.substr(0, pos1), s.substr(pos1+1));
 }
 
+[[maybe_unused]] static inline std_v1<std::string> split(const std::string &s, char delim){
+    std_v1<std::string> elems;
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)){
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+
 //static std::vector<std::string> split3(const std::string& str, const std::string& delims = " "){
 
 //    std::vector<std::string> output;
@@ -159,15 +170,6 @@ static void replace_all2(std::string& source, const std::string& from, const std
 //}
 
 
-[[maybe_unused]] static inline std_v1<std::string> split(const std::string &s, char delim){
-    std_v1<std::string> elems;
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)){
-        elems.push_back(item);
-    }
-    return elems;
-}
 
 
 }

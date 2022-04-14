@@ -47,7 +47,7 @@ struct Header{
     std::uint32_t dataOffset = 0;
     std::int32_t idMessage = -1;
 
-    static Header generate_mono_packet_message(int8_t type, size_t messageNbBytes);
+    static Header generate_mono_packet(int8_t type, size_t messageNbBytes);
 };
 
 struct UdpMonoPacketMessage{
@@ -68,47 +68,6 @@ struct UdpMultiPacketsMessage{
 
     bool copy_packet_to_data(const Header &header, size_t nbBytes, std::int8_t *packetData, std::vector<int8_t> &data);
     bool all_received(const Header &header);
-
-protected:
-
-    template<typename T>
-    void read(T &v, std::int8_t *data, size_t &offset){
-        std::copy(
-            data + offset,
-            data + offset + sizeof(T),
-            reinterpret_cast<std::int8_t*>(&v));
-        offset += sizeof(T);
-    }
-
-    template<typename T>
-    void read_array(T *a, std::int8_t *data, size_t sizeArray, size_t &offset){
-        auto nbBytes = sizeArray * sizeof(T);
-        std::copy(
-            data + offset,
-            data + offset + nbBytes,
-            reinterpret_cast<std::int8_t*>(a));
-        offset += nbBytes;
-    }
-
-    template<typename T>
-    void write(const T &v, std::int8_t *data, size_t &offset){
-        std::copy(
-            reinterpret_cast<const std::int8_t*>(&v),
-            reinterpret_cast<const std::int8_t*>(&v) + sizeof(T),
-            data + offset);
-        offset += sizeof(T);
-    }
-
-    template<typename T>
-    void write_array(T *a, std::int8_t *data, size_t sizeArray, size_t &offset){
-        auto nbBytes = sizeArray * sizeof(T);
-        std::copy(
-            reinterpret_cast<std::int8_t*>(a),
-            reinterpret_cast<std::int8_t*>(a) + nbBytes,
-            data+ offset);
-        offset += nbBytes;
-    }
-
 };
 
 }

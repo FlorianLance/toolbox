@@ -38,7 +38,7 @@ class K4Device {
 
 public:
 
-    static k4a_device_configuration_t generate_config(const K4Config &config);
+    static k4a_device_configuration_t generate_config(const K4ConfigSettings &config);
 
     static k4a_device_configuration_t generate_config(
         K4ImageFormat colFormat,
@@ -56,6 +56,7 @@ public:
 
     // devices
     std::uint32_t nb_devices() const noexcept;
+    std::string device_name() const;
     bool open();
     void close();
     void clean();
@@ -68,7 +69,7 @@ public:
     K4Mode mode()const;
 
     // cameras
-    bool start_cameras(const K4Config &config);
+    bool start_cameras(const K4ConfigSettings &config);
     bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
     void stop_cameras();
 
@@ -78,7 +79,7 @@ public:
 
     // settings
     void set_settings(const K4DeviceSettings &setings);
-    void set_filters(const K4FiltersSettings &filtersS);
+    void set_filters(const K4Filters &filtersS);
 
 // signals
     lsignal::signal<void(std::unique_ptr<K4DisplayFrame> cloud)> new_display_frame_signal;

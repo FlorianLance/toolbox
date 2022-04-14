@@ -78,13 +78,13 @@ constexpr static int to_signed(T v) {
     return static_cast<int>(v);
 }
 
-constexpr static size_t id(int id){
-    return static_cast<size_t>(id);
-}
+//constexpr static size_t id(int id){
+//    return static_cast<size_t>(id);
+//}
 
-constexpr static int qt_id(size_t id){
-    return static_cast<int>(id);
-}
+//constexpr static int qt_id(size_t id){
+//    return static_cast<int>(id);
+//}
 
 
 struct Decimal;

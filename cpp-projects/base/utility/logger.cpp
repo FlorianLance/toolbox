@@ -174,7 +174,7 @@ void Logger::message(std::string_view message, bool htmlFormat, bool triggersSig
 void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::loggerPtr == nullptr){
-        std::cerr << warning;
+        std::cerr << warning << std::flush;
         return;
     }
 
@@ -190,7 +190,7 @@ void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSig
 void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::loggerPtr == nullptr){
-        std::cerr << error;
+        std::cerr << error << std::flush;
         return;
     }
 
@@ -202,9 +202,6 @@ void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal,
         insert_line_to_log_file(MessageT::error, error);
     }
 }
-
-
-
 
 void Logger::message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
@@ -226,7 +223,7 @@ void Logger::message_id(std::string_view message, SenderT sType, int sKey, bool 
 void Logger::warning_id(std::string_view warning, SenderT sType, int sKey, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::loggerPtr == nullptr){
-        std::cerr << warning;
+        std::cerr << warning << std::flush;
         return;
     }
 
@@ -243,7 +240,7 @@ void Logger::warning_id(std::string_view warning, SenderT sType, int sKey, bool 
 void Logger::error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::loggerPtr == nullptr){
-        std::cerr << error;
+        std::cerr << error << std::flush;
         return;
     }
 

@@ -92,7 +92,7 @@ bool UdpSender::init_socket(std::string targetName, std::string port){
 
     }catch (const boost::system::system_error& error){
 
-        Logger::error(fmt("UdpSender: Cannot resolve target name {} with writing port {}, error message: {}.\n",
+        Logger::error(fmt("UdpSender::init_socket: Cannot resolve target name {} with writing port {}, error message: {}.\n",
             targetName, port, error.what()));
         clean_socket();
         return false;

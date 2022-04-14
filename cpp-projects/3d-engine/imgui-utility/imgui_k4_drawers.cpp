@@ -35,11 +35,16 @@
 
 using namespace tool::graphics;
 
-bool K4SettingsDrawer::draw_filters_settings_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4FiltersSettings &filters, bool &updateP){
+bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &autoUpdate){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return false;
     }
+
+    ImGui::Text("Thresholds");
+    ImGui::Spacing();
+
+    bool update = false;
 
     int minMaxD[2] = {filters.minDepthValue, filters.maxDepthValue};
     auto range = (camera::range(mode)*1000.f).conv<int>();
@@ -49,10 +54,11 @@ bool K4SettingsDrawer::draw_filters_settings_tab_item(const std::string &tabItem
     if(minMaxD[1] > range.y()){
         minMaxD[1] = range.y();
     }
-    if(ImGui::SliderInt2("Depth (mm)###settings_depth_min_max_sliderint2", minMaxD, range.x(), range.y())){
+    ImGui::Text("Depth (mm):");
+    if(ImGui::SliderInt2("###settings_depth_min_max_sliderint2", minMaxD, range.x(), range.y())){
         filters.minDepthValue = static_cast<std::int16_t>(minMaxD[0]);
         filters.maxDepthValue = static_cast<std::int16_t>(minMaxD[1]);
-        updateP = true;
+        update = true;
     }
 
     int minMaxWidth[2] = {static_cast<int>(filters.minWidth), static_cast<int>(filters.maxWidth)};
@@ -60,35 +66,40 @@ bool K4SettingsDrawer::draw_filters_settings_tab_item(const std::string &tabItem
     if(minMaxWidth[1] > depthRes.x()){
         minMaxWidth[1] = depthRes.x();
     }
-    if(ImGui::SliderInt2("Width (pixels)###settings_width_min_max_sliderint2", minMaxWidth, 0, depthRes.x())){
+    ImGui::Text("Width (pixels):");
+    if(ImGui::SliderInt2("###settings_width_min_max_sliderint2", minMaxWidth, 0, depthRes.x())){
         filters.minWidth = static_cast<unsigned int>(minMaxWidth[0]);
         filters.maxWidth = static_cast<unsigned int>(minMaxWidth[1]);
-        updateP = true;
+        update = true;
     }
 
     int minMaxHeight[2] = {static_cast<int>(filters.minHeight), static_cast<int>(filters.maxHeight)};
     if(minMaxHeight[1] > depthRes.y()){
         minMaxHeight[1] = depthRes.y();
     }
-    if(ImGui::SliderInt2("Height (pixels)###settings_height_min_max_sliderint2", minMaxHeight, 0, depthRes.y())){
+
+    ImGui::Text("Height (pixels):");
+    if(ImGui::SliderInt2("###settings_height_min_max_sliderint2", minMaxHeight, 0, depthRes.y())){
         filters.minHeight = static_cast<unsigned int>(minMaxHeight[0]);
         filters.maxHeight = static_cast<unsigned int>(minMaxHeight[1]);
-        updateP = true;
+        update = true;
     }
 
+    ImGui::Spacing();
+
     if(ImGui::Checkbox("Filter depth with color###settings_filter_depth_with_color_checkbox", &filters.filterDepthWithColor)){
-        updateP = true;
+        update = true;
     }
 
     if(ImGui::Checkbox("Invalidate color from depth###settings_invalidate_color_from_depth_checkbox", &filters.invalidateColorFromDepth)){
-        updateP = true;
+        update = true;
     }
 
     if(ImGui::Checkbox("Invalidate infra from depth###settings_invalidate_infra_from_depth_checkbox", &filters.invalidateInfraFromDepth)){
-        updateP = true;
+        update = true;
     }
     if(ImGui::DragFloat("Local diff###settings_local_diff_dragfloat", &filters.maxLocalDiff, 0.1f, 0.f, 50.f)){
-        updateP = true;
+        update = true;
     }
 
     float filteredColor[3] = {
@@ -102,7 +113,7 @@ bool K4SettingsDrawer::draw_filters_settings_tab_item(const std::string &tabItem
             static_cast<std::uint8_t>(255*filteredColor[1]),
             static_cast<std::uint8_t>(255*filteredColor[2])
         };
-        updateP = true;
+        update = true;
     }
 
     int maxDiffColor[3] = {
@@ -116,11 +127,22 @@ bool K4SettingsDrawer::draw_filters_settings_tab_item(const std::string &tabItem
             static_cast<std::uint8_t>(maxDiffColor[1]),
             static_cast<std::uint8_t>(maxDiffColor[2])
         };
-        updateP = true;
+        update = true;
     }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    bool manualUpdate = false;
+    if(ImGui::Button("Update###filters_update_button")){
+        manualUpdate = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Auto update###filters_auto_update_cb", &autoUpdate)){}
+
     ImGui::EndTabItem();
 
-    return true;
+    return (update && autoUpdate) || manualUpdate;
 }
 
 bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP){
@@ -129,27 +151,27 @@ bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemN
         return false;
     }
 
-    if(ImGui::Checkbox("Cloud visible", &display.cloudVisible)){
+    if(ImGui::Checkbox("Cloud visible###display_cloud_visible", &display.cloudVisible)){
         updateP = true;
     }
-    if(ImGui::Checkbox("Force cloud color", &display.forceCloudColor)){
+    if(ImGui::Checkbox("Force cloud color###display_force_cloud_color", &display.forceCloudColor)){
         updateP = true;
     }
-    if(ImGui::ColorEdit4("Cloud color", display.cloudColor.v.data())){
+    if(ImGui::ColorEdit4("Cloud color###display_cloud_color", display.cloudColor.v.data())){
         updateP = true;
     }
 
     ImGui::Separator();
-    if(ImGui::Checkbox("Use voxels", &display.useVoxels)){
+    if(ImGui::Checkbox("Use voxels###display_use_voxels", &display.useVoxels)){
         updateP = true;
     }
 
     ImGui::SetNextItemWidth(100.f);
-    if(ImGui::DragFloat("Size points", &display.sizePoints, 0.1f, 0.1f, 30.f, "%.1f")){
+    if(ImGui::DragFloat("Size points###display_size_points", &display.sizePoints, 0.1f, 0.1f, 30.f, "%.1f")){
         updateP = true;
     }
     ImGui::SetNextItemWidth(100.f);
-    if(ImGui::DragFloat("Size voxel", &display.sizeVoxels, 0.001f, 0.001f, 0.015f, "%.3f")){
+    if(ImGui::DragFloat("Size voxel###display_size_voxels", &display.sizeVoxels, 0.001f, 0.001f, 0.015f, "%.3f")){
         updateP = true;
     }
 
@@ -159,99 +181,133 @@ bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemN
 
 
 
-bool K4SettingsDrawer::draw_all_settings_tab_item(const std::string &tabItemName, camera::K4Config &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &updateC, bool &updateD, bool &updateA){
+std::tuple<bool,bool,bool> K4SettingsDrawer::draw_all_settings_tab_item(const std::string &tabItemName, const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &autoUpdate){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
-        return false;
+        return {false,false,false};
     }
+    bool updateC = false, updateD = false, updateA = false;
 
-    draw_config(config, updateC);
-    draw_device_settings(device, updateC);
-    draw_action_settings(action, updateC);
+    draw_config(devicesName, config, updateC);
+    draw_device_settings(device, updateD);
+    draw_action_settings(action, updateA);
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    bool manualUpdate = false;
+    if(ImGui::Button("Update###settings_update_button")){
+        manualUpdate = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Auto update###settings_auto_update_cb", &autoUpdate)){}
 
     ImGui::EndTabItem();
-    return true;
+
+    return {
+        (updateC && autoUpdate) || manualUpdate,
+        (updateD && autoUpdate) || manualUpdate,
+        (updateA && autoUpdate) || manualUpdate
+    };
 }
 
+void K4SettingsDrawer::draw_config(const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config, bool &updateP){
 
-void K4SettingsDrawer::draw_config(camera::K4Config &config, bool &updateP){
+    ImGui::Spacing();
+    ImGui::TextCenter("Config");
+    ImGui::Separator();
 
+    ImGui::Spacing();
+    ImGui::Text("Device id:");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(75.f);
+    if(ImGui::BeginCombo("###settings_device_id", devicesName[config.idDevice].c_str())){
+        for(size_t ii = 0; ii < devicesName.size(); ++ii){
+            bool selected = ii == config.idDevice;
+            if (ImGui::Selectable(devicesName[ii].c_str(),selected)){
+                config.idDevice = ii;
+                updateP = true;
+            }
+            if(selected){
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Spacing();
     ImGui::Text("Mode:");
     int guiCurrentModeSelection = static_cast<int>(config.mode);
     if(ImGui::Combo("###settings_mode_combo", &guiCurrentModeSelection, modeItems, IM_ARRAYSIZE(modeItems))){
         updateP       = true;
         config.mode  = static_cast<camera::K4Mode>(guiCurrentModeSelection);
     }
-
-    //    if(devices.size() > 0){
-    //        ImGui::Text("Device id:");
-    //        if(ImGui::BeginCombo("###settings_device_id_combo", devices[device.deviceId].c_str())){
-    //            for(size_t ii = 0; ii < devices.size(); ++ii){
-
-    //                bool selected = ii == device.deviceId;
-    //                if (ImGui::Selectable(devices[ii].c_str(),selected)){
-    //                    device.deviceId = ii;
-    //                    updateP = true;
-    //                }
-    //                if(selected){
-    //                    ImGui::SetItemDefaultFocus();
-    //                }
-    //            }
-    //            ImGui::EndCombo();
-    //        }
-    //    }
+    ImGui::Spacing();
 }
-
 
 void K4SettingsDrawer::draw_device_settings(camera::K4DeviceSettings &device, bool &updateP){
 
+    ImGui::Spacing();
+    ImGui::TextCenter("Device");
+    ImGui::Separator();
+
+    ImGui::Spacing();
     ImGui::Text("Capture:");
-    if(ImGui::Checkbox("audio###settings_capture_audio_cb", &device.captureAudio)){
+    ImGui::SameLine();
+    if(ImGui::Checkbox("audio###settings_capture_audio", &device.captureAudio)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("IMU###settings_capture_imu_cb", &device.captureIMU)){
+    if(ImGui::Checkbox("IMU###settings_capture_imu", &device.captureIMU)){
         updateP = true;
     }
-    ImGui::Separator();
 
+    ImGui::Spacing();
     ImGui::Text("Compression:");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(75.f);
     int guiCurrentCompressSelection = static_cast<int>(device.compressMode);
-    if(ImGui::Combo("###settings_compress_combo", &guiCurrentCompressSelection, compressModeItems, IM_ARRAYSIZE(compressModeItems))){
+    if(ImGui::Combo("###settings_compress_mode", &guiCurrentCompressSelection, compressModeItems, IM_ARRAYSIZE(compressModeItems))){
         updateP = true;
         device.compressMode = static_cast<camera::K4CompressMode>(guiCurrentCompressSelection);
     }
-    ImGui::Separator();
 
+    ImGui::Spacing();
     ImGui::Text("Display on grabber:");
-    if(ImGui::Checkbox("RGB###settings_display_rgb_cb", &device.displayRGB)){
+    if(ImGui::Checkbox("RGB###settings_display_rgb", &device.displayRGB)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Depth###settings_display_depth_cb", &device.displayDepth)){
+    if(ImGui::Checkbox("Depth###settings_display_depth", &device.displayDepth)){
         updateP = true;
     }
-    if(ImGui::Checkbox("Infra###settings_display_infra_cb", &device.displayInfra)){
+    if(ImGui::Checkbox("Infra###settings_display_infra", &device.displayInfra)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Cloud###settings_display_cloud_cb", &device.displayCloud)){
+    if(ImGui::Checkbox("Cloud###settings_display_cloud", &device.displayCloud)){
         updateP = true;
     }
 }
 
 void K4SettingsDrawer::draw_action_settings(camera::K4ActionsSettings &action, bool &updateP){
 
-    if(ImGui::Checkbox("Start device", &action.startDevice)){
+    ImGui::Spacing();
+    ImGui::TextCenter("Action");
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if(ImGui::Checkbox("Start device###settings_start_device", &action.startDevice)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Open camera", &action.openCamera)){
+    if(ImGui::Checkbox("Open camera###settings_open_camera", &action.openCamera)){
         updateP = true;
     }
-    ImGui::Separator();
 
+    ImGui::Spacing();
     ImGui::Text("Data:");
+    ImGui::SameLine();
     if(ImGui::Checkbox("Record###settings_record_data_cb", &action.record)){
         updateP = true;
     }
@@ -260,7 +316,7 @@ void K4SettingsDrawer::draw_action_settings(camera::K4ActionsSettings &action, b
         updateP = true;
     }
 
-    ImGui::Separator();
+    ImGui::Spacing();
 }
 
 

@@ -59,12 +59,12 @@ public:
 
 class K4SettingsDrawer{
 public:
-    static void draw_config(camera::K4Config &config,  bool &updateP);
+    static void draw_config(const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config,  bool &updateP);
     static void draw_device_settings(camera::K4DeviceSettings &device, bool &updateP);
     static void draw_action_settings(camera::K4ActionsSettings &action,  bool &updateP);
-    static bool draw_all_settings_tab_item(const std::string &tabItemName, camera::K4Config &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &updateC, bool &updateD, bool &updateA);
+    static std::tuple<bool,bool,bool> draw_all_settings_tab_item(const std::string &tabItemName, const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &autoUpdate);
 
-    static bool draw_filters_settings_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4FiltersSettings &filters, bool &updateP);
+    static bool draw_filters_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &autoUpdate);
     static bool draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP);
 };
 

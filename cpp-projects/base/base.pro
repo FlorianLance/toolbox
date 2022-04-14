@@ -156,7 +156,7 @@ HEADERS += \
     geometry/point2.hpp \
     geometry/point3.hpp \
     geometry/point4.hpp \
-    geometry/raycast.hpp \    
+    geometry/raycast.hpp \
     geometry/dummy.hpp \
     geometry/aabb2.hpp \
     geometry/octree.hpp \
@@ -188,7 +188,7 @@ HEADERS += \
     utility/constants.hpp \
     utility/export.hpp \
     utility/format.hpp \
-    utility/io.hpp \
+    utility/io_data.hpp \
     utility/math.hpp \
     utility/paths.hpp \
     utility/string.hpp \
@@ -200,6 +200,7 @@ HEADERS += \
     utility/utility.hpp \
     utility/view.hpp \
     utility/time.hpp \
+    utility/io_file.hpp \
     # exvr
     exvr/ex_component.hpp \
     # algorithms

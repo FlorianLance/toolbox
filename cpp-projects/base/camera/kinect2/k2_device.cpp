@@ -1289,7 +1289,7 @@ void K2Device::post_computing_depth_data(){
             count++;
         });
         if(count > 0){
-            mean /= count;
+            mean /= static_cast<float>(count);
         }
 
         std::cout << squareMaxDist << " " << mean << "\n";

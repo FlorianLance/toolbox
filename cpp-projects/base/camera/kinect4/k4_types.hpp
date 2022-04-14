@@ -204,7 +204,7 @@ namespace tool::camera {
         float sizeVoxels = 0.002f;
     };
 
-    struct K4Config{
+    struct K4ConfigSettings{
         std::uint32_t idDevice = 0;
         K4Mode mode = K4Mode::Cloud_640x576;
         bool synchronizeColorAndDepth = true;
@@ -214,7 +214,53 @@ namespace tool::camera {
         bool disableLED = false;
     };
 
-    struct K4FiltersSettings{
+    struct K4DeviceSettings{
+
+        // capture
+        bool captureAudio   = true;
+        bool captureIMU     = true;
+
+        // compression
+        camera::K4CompressMode compressMode  = camera::K4CompressMode::Cloud;
+
+        // display
+        bool displayRGB    = false;
+        bool displayDepth  = false;
+        bool displayInfra  = false;
+        bool displayCloud  = false;
+
+        static K4DeviceSettings init_for_grabber(){
+            K4DeviceSettings device;
+            device.displayRGB    = true;
+            device.displayDepth  = true;
+            device.displayInfra  = true;
+            device.displayCloud  = true;
+            return device;
+        }
+    };
+
+    struct K4ActionsSettings{
+
+        // device
+        bool startDevice   = true;
+        bool openCamera    = true;
+
+        // network
+        bool sendData      = true;
+
+        // record
+        bool record        = false;
+
+        static K4ActionsSettings init_for_grabber(){
+            K4ActionsSettings actions;
+            actions.sendData      = false;
+            actions.startDevice   = false;
+            actions.openCamera    = false;
+            return actions;
+        }
+    };
+
+    struct K4Filters{
 
         // # width / height
         unsigned int minWidth  = 0;
@@ -247,53 +293,10 @@ namespace tool::camera {
         bool invalidateInfraFromDepth   = false;
     };
 
-    struct K4DeviceSettings{
-
-        // capture
-        int deviceId        = 0;
-        bool captureAudio   = true;
-        bool captureIMU     = true;
-        camera::K4CompressMode compressMode  = camera::K4CompressMode::Cloud;
-
-        // display
-        bool displayRGB    = false;
-        bool displayDepth  = false;
-        bool displayInfra  = false;
-        bool displayCloud  = false;
-
-        static K4DeviceSettings init_for_grabber(){
-            K4DeviceSettings device;
-            device.displayRGB    = true;
-            device.displayDepth  = true;
-            device.displayInfra  = true;
-            device.displayCloud  = true;
-            return device;
-        }
-    };
-
-    struct K4ActionsSettings{
-        // device
-        bool startDevice   = true;
-        bool openCamera    = true;
-        // network
-        bool sendData      = true;
-        // record
-        bool record        = false;
-
-        static K4ActionsSettings init_for_grabber(){
-            K4ActionsSettings actions;
-            actions.sendData      = false;
-            actions.startDevice   = false;
-            actions.openCamera    = false;
-            return actions;
-        }
-    };
-
     struct K4GrabberSettings{
-        K4Config config;
-        K4DeviceSettings device = camera::K4DeviceSettings::init_for_grabber();
+        K4ConfigSettings config;
+        K4DeviceSettings device   = camera::K4DeviceSettings::init_for_grabber();
         K4ActionsSettings actions = camera::K4ActionsSettings::init_for_grabber();
-        K4FiltersSettings filters;
     };
 
 }
