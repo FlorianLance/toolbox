@@ -111,6 +111,7 @@ struct Arg{
     void init_from_vector3_str(QString v);
     void init_from_color_str(QString v);
     void init_from_curve_str(QString v, QString sep);
+    void init_from_transform_str(QString v);
 
     // from args
     void init_from_transform_args(Arg tr, Arg rot, Arg sc);
@@ -134,7 +135,7 @@ struct Arg{
 
 private:
 
-    UiType m_associatedUiType   = UiType::NonUI;
+    UiType m_associatedUiType   = UiType::Unspecified;
     QString m_value             = "";
     QString m_separator         = "";
     QVector<int> m_sizes        = {};

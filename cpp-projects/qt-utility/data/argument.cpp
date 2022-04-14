@@ -132,6 +132,13 @@ void Arg::init_from_curve_str(QString v, QString sep){
     m_sizes     = {(v.count(m_separator) + 1)};
 }
 
+void Arg::init_from_transform_str(QString v){
+    m_unityType = UnityType::System_single;
+    m_separator = " ";
+    m_value     = v;
+    m_sizes     = {9};
+}
+
 void Arg::init_from_transform_args(Arg tr, Arg rot, Arg sc){
 
     m_unityType = UnityType::System_single;

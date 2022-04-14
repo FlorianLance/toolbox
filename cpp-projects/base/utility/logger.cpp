@@ -92,7 +92,7 @@ bool Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
     Logger::Impl::doFormat = doFormat;
 
     if(logDirectoryPath.length() == 0 || logFileName.length() == 0){
-        std::cerr << "[LOGGER-ERROR] Empty path or filename.\n";
+        std::cerr << "[LOGGER-ERROR] Empty path or filename." << std::endl;
         return false;
     }
 
@@ -102,7 +102,7 @@ bool Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
 
     if(!fs::exists(logDirPath)){
         if(!fs::create_directory(logDirPath)){
-            std::cerr << "[LOGGER-ERROR] Cannot create logging directory path.\n";
+            std::cerr << "[LOGGER-ERROR] Cannot create logging directory path." << std::endl;
             return false;
         }
     }
@@ -122,7 +122,7 @@ bool Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
             bool copyPrevious = true;
             if(fs::exists(previousPath)){
                 if(!fs::remove(previousPath)){
-                    std::cerr << "[LOGGER-ERROR] Cannot remove previous log file.\n";
+                    std::cerr << "[LOGGER-ERROR] Cannot remove previous log file." << std::endl;
                     copyPrevious = false;
                 }
             }
@@ -140,7 +140,7 @@ bool Logger::init(std::string_view logDirectoryPath, std::string_view logFileNam
 
         Logger::Impl::out->open(absoluteFilePath);
         if(!Logger::Impl::out->is_open()){
-            std::cerr << "[LOGGER-ERROR] Cannot write to log file: " << absoluteFilePath  << "\n";
+            std::cerr << "[LOGGER-ERROR] Cannot write to log file: " << absoluteFilePath  << std::endl;
             return false;
         }
     }

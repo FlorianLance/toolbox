@@ -105,7 +105,6 @@ ExBaseW *ExTransformationW::init_widget_from_any_array(std_v1<std::any> &paramet
 
 void ExTransformationW::update_from_arg(const Arg &arg){
 
-
     ExItemW::update_from_arg(arg);
 
     auto size = arg.count();
@@ -160,7 +159,7 @@ void ExTransformationW::update_from_arg(const Arg &arg){
         }
     }
 
-    if(auto splitV = arg.value().split(arg.separator()); splitV.size() > 8){
+    if(auto splitV = arg.split_value(); splitV.size() > 8){
         set_trans_values({splitV[0].toDouble(),splitV[1].toDouble(),splitV[2].toDouble()});
         set_rotation_values({splitV[3].toDouble(),splitV[4].toDouble(),splitV[5].toDouble()});
         set_scale_values({splitV[6].toDouble(),splitV[7].toDouble(),splitV[8].toDouble()});
