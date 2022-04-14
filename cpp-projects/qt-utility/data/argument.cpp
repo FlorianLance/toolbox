@@ -142,8 +142,8 @@ void Arg::init_from_transform_str(QString v){
 void Arg::init_from_transform_args(Arg tr, Arg rot, Arg sc){
 
     m_unityType = UnityType::System_single;
-    m_separator = " ";
-    m_value     = tr.value() + m_separator + rot.value() + m_separator + sc.value();
+    m_separator = " ";    
+    m_value     = Convertor::to_str({tr.value(),rot.value(), sc.value()}, m_separator);
     m_sizes     = {9};
 }
 
@@ -153,13 +153,14 @@ void Arg::init_from_args(std::vector<Arg> args, QString sep, UnityType uType){
     m_unityType = uType;
     m_separator = sep;
     m_value     = "";
-    for(size_t ii = 0; ii < args.size(); ++ii){
-        m_value += args[ii].m_value;
-        if(ii < args.size() -1){
-            m_value += m_separator;
-        }
-    }
+
+    QStringList values;
+    values.reserve(args.size());
     m_sizes = {static_cast<int>(args.size())};
+    for(auto &arg : args){
+        values << arg.value();
+    }
+    m_value = Convertor::to_str(values, m_separator);
 }
 
 Arg Arg::generate_item_ui_arg(QString name, UiType associatedUiType, bool hasGenerator, int generatorOrder){
