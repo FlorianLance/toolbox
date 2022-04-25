@@ -50,7 +50,7 @@ void ImguiFboUiDrawer::resize(const geo::Pt2<int> &size){
     if(m_texture.width() == size.x() && m_texture.height() == size.y()){
         return;
     }
-    std::cout << "[FBOR]";
+    m_screenUpdated = true;
 
     m_screen.resize(size.x(), size.y());
     m_camera.update_projection();
@@ -89,7 +89,7 @@ void ImguiFboUiDrawer::update_viewport(){
     glViewport(0,0, m_texture.width(), m_texture.height());
 }
 
-void ImguiFboUiDrawer::reset_states(geo::Pt4f color){
+void ImguiFboUiDrawer::reset_gl_states(geo::Pt4f color){
     glClearColor(color.x(),color.y(),color.z(),color.w());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -136,37 +136,46 @@ void ImguiFboUiDrawer::check_inputs(){
 
         if(ImGui::IsMouseDown(0)){
             m_camera.set_direction(rotationSpeed*xoffset,rotationSpeed*yoffset,0.);
+            m_cameraUpdated = true;
         }
         if(ImGui::IsMouseDown(1)){
             m_camera.set_direction(0.,0.,rotationSpeed*xoffset);
+            m_cameraUpdated = true;
         }
         if(ImGui::IsMouseDown(2)){
             m_camera.move_up(translateSpeed*yoffset);
             m_camera.move_right(translateSpeed*xoffset);
+            m_cameraUpdated = true;
         }
         if(io.MouseWheel != 0.f){
             m_camera.move_front(scrollSpeed*wheel);
+            m_cameraUpdated = true;
         }
 
         // up key
         if(ImGui::IsKeyDown(73)){
             m_camera.move_front(movingSpeed);
+            m_cameraUpdated = true;
         }
         // down key
         if(ImGui::IsKeyDown(74)){
             m_camera.move_back(movingSpeed);
+            m_cameraUpdated = true;
         }
         // left key
         if(ImGui::IsKeyDown(71)){
             m_camera.move_left(movingSpeed);
+            m_cameraUpdated = true;
         }
         // right key
         if(ImGui::IsKeyDown(72)){
             m_camera.move_right(movingSpeed);
+            m_cameraUpdated = true;
         }
         // R key
-        if(ImGui::IsKeyPressed(17, false)){
+        if(ImGui::IsKeyPressed(17, false)){            
             m_camera.reset_init_values();
+            m_cameraUpdated = true;
         }
     }
 }

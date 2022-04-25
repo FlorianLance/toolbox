@@ -65,7 +65,7 @@ public:
     static std::tuple<bool,bool,bool> draw_all_settings_tab_item(const std::string &tabItemName, const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &autoUpdate);
 
     static bool draw_filters_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &autoUpdate);
-    static bool draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP);
+    static bool draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &autoUpdate);
 };
 
 

@@ -41,8 +41,10 @@ bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, cam
         return false;
     }
 
-    ImGui::Text("Thresholds");
     ImGui::Spacing();
+    ImGui::TextCenter("Thresholds");
+    ImGui::Separator();
+
 
     bool update = false;
 
@@ -86,28 +88,30 @@ bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, cam
     }
 
     ImGui::Spacing();
+    ImGui::TextCenter("Geometry filtering");
+    ImGui::Separator();
+
+    ImGui::Text("Max local depth diff");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100.f);
+    if(ImGui::DragFloat("###settings_local_diff_dragfloat", &filters.maxLocalDiff, 0.1f, 0.f, 50.f)){
+        update = true;
+    }
+
+    ImGui::Spacing();
+    ImGui::TextCenter("Color filtering");
+    ImGui::Separator();
 
     if(ImGui::Checkbox("Filter depth with color###settings_filter_depth_with_color_checkbox", &filters.filterDepthWithColor)){
         update = true;
     }
-
-    if(ImGui::Checkbox("Invalidate color from depth###settings_invalidate_color_from_depth_checkbox", &filters.invalidateColorFromDepth)){
-        update = true;
-    }
-
-    if(ImGui::Checkbox("Invalidate infra from depth###settings_invalidate_infra_from_depth_checkbox", &filters.invalidateInfraFromDepth)){
-        update = true;
-    }
-    if(ImGui::DragFloat("Local diff###settings_local_diff_dragfloat", &filters.maxLocalDiff, 0.1f, 0.f, 50.f)){
-        update = true;
-    }
-
     float filteredColor[3] = {
         filters.filterColor.x()/255.f,
         filters.filterColor.y()/255.f,
         filters.filterColor.z()/255.f
     };
-    if(ImGui::ColorEdit3("Filtered color###settings_filtered_color_coloredit3", filteredColor)){
+    ImGui::Text("Filtered color");
+    if(ImGui::ColorEdit3("###settings_filtered_color_coloredit3", filteredColor)){
         filters.filterColor = {
             static_cast<std::uint8_t>(255*filteredColor[0]),
             static_cast<std::uint8_t>(255*filteredColor[1]),
@@ -121,7 +125,8 @@ bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, cam
         static_cast<int>(filters.maxDiffColor.y()),
         static_cast<int>(filters.maxDiffColor.z())
     };
-    if(ImGui::SliderInt3("Max diff color###settings_max_diff_color_sliderint3", maxDiffColor, 0, 255)){
+    ImGui::Text("Max diff color");
+    if(ImGui::SliderInt3("###settings_max_diff_color_sliderint3", maxDiffColor, 0, 255)){
         filters.maxDiffColor = {
             static_cast<std::uint8_t>(maxDiffColor[0]),
             static_cast<std::uint8_t>(maxDiffColor[1]),
@@ -129,6 +134,19 @@ bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, cam
         };
         update = true;
     }
+
+    ImGui::Spacing();
+    ImGui::TextCenter("Invalidate");
+    ImGui::Separator();
+
+    if(ImGui::Checkbox("Invalidate color from depth###settings_invalidate_color_from_depth_checkbox", &filters.invalidateColorFromDepth)){
+        update = true;
+    }
+
+    if(ImGui::Checkbox("Invalidate infra from depth###settings_invalidate_infra_from_depth_checkbox", &filters.invalidateInfraFromDepth)){
+        update = true;
+    }
+
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -145,38 +163,51 @@ bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, cam
     return (update && autoUpdate) || manualUpdate;
 }
 
-bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &updateP){
+bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &autoUpdate){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return false;
     }
 
+    bool update = false;
+
     if(ImGui::Checkbox("Cloud visible###display_cloud_visible", &display.cloudVisible)){
-        updateP = true;
+        update = true;
     }
     if(ImGui::Checkbox("Force cloud color###display_force_cloud_color", &display.forceCloudColor)){
-        updateP = true;
+        update = true;
     }
     if(ImGui::ColorEdit4("Cloud color###display_cloud_color", display.cloudColor.v.data())){
-        updateP = true;
+        update = true;
     }
 
     ImGui::Separator();
     if(ImGui::Checkbox("Use voxels###display_use_voxels", &display.useVoxels)){
-        updateP = true;
+        update = true;
     }
 
     ImGui::SetNextItemWidth(100.f);
     if(ImGui::DragFloat("Size points###display_size_points", &display.sizePoints, 0.1f, 0.1f, 30.f, "%.1f")){
-        updateP = true;
+        update = true;
     }
     ImGui::SetNextItemWidth(100.f);
     if(ImGui::DragFloat("Size voxel###display_size_voxels", &display.sizeVoxels, 0.001f, 0.001f, 0.015f, "%.3f")){
-        updateP = true;
+        update = true;
     }
 
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    bool manualUpdate = false;
+    if(ImGui::Button("Update###filters_update_button")){
+        manualUpdate = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Auto update###filters_auto_update_cb", &autoUpdate)){}
+
     ImGui::EndTabItem();
-    return true;
+
+    return (update && autoUpdate) || manualUpdate;
 }
 
 
@@ -220,7 +251,7 @@ void K4SettingsDrawer::draw_config(const std::vector<std::string> &devicesName, 
     ImGui::Spacing();
     ImGui::Text("Device id:");
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(75.f);
+    ImGui::SetNextItemWidth(130.f);
     if(ImGui::BeginCombo("###settings_device_id", devicesName[config.idDevice].c_str())){
         for(size_t ii = 0; ii < devicesName.size(); ++ii){
             bool selected = ii == config.idDevice;
@@ -439,7 +470,7 @@ void K4CloudsDrawer::draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiF
 
     fboD.bind();
     fboD.update_viewport();
-    fboD.reset_states(backgroundColor);
+    fboD.reset_gl_states(backgroundColor);
 
     for(auto &cloudD : cloudsD){
 
