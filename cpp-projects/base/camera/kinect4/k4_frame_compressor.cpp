@@ -37,8 +37,6 @@
 #include "TurboPFor/vp4.h"
 
 // local
-// # data
-//#include "data/integers_encoder.hpp"
 // # utility
 #include "utility/logger.hpp"
 
@@ -144,11 +142,13 @@ std::unique_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
     }
 
     long unsigned int jpegSize = 0;
-    int ret = tjCompress2(i->jpegCompressor,
+    int ret = tjCompress2(
+        i->jpegCompressor,
         i->processedColorData.data(),
-                          static_cast<int>(cFrame->colorWidth), 0, static_cast<int>(cFrame->colorHeight),
+        static_cast<int>(cFrame->colorWidth), 0, static_cast<int>(cFrame->colorHeight),
         TJPF_BGR,
-        &i->tjCompressedImage, &jpegSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT);
+        &i->tjCompressedImage, &jpegSize, TJSAMP_444, jpegQuality, TJFLAG_NOREALLOC | TJFLAG_FASTDCT
+    );
 
     if(ret == -1){
         Logger::error(std::format("[Kinect4] CloudFrameCompressor error with code: {}\n", tjGetErrorStr2(i->jpegCompressor)));
@@ -190,11 +190,6 @@ std::unique_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
 }
 
 struct K4FullFrameCompressor::Impl{
-
-    // compression
-    // # integer compressor
-//    data::IntegersEncoder integerCompressor;
-    // # jpeg compressor
     tjhandle jpegCompressor = nullptr;
     unsigned char *tjCompressedImage = nullptr;
 };
@@ -269,27 +264,6 @@ std::unique_ptr<K4CompressedFullFrame> K4FullFrameCompressor::compress(
             cFrame->encodedDepthData.data()
         );
         cFrame->encodedDepthData.resize(encodedBytesNb);
-
-
-//        cFrame->encodedDepthData.resize(depthSize + 1024, 0);
-
-//        // fill buffer
-//        std::fill(std::begin(cFrame->encodedDepthData), std::end(cFrame->encodedDepthData), 0);
-
-//        // encode buffer
-//        size_t sizeDepthCompressed = i->integerCompressor.encode(
-//            reinterpret_cast<uint32_t*>(depthImage->get_buffer()), depthSize,
-//            cFrame->encodedDepthData.data(), depthSize + 1024
-//        );
-
-//        if(sizeDepthCompressed == 0){
-//            Logger::error("[Kinect4] depth compress error\n");
-//            return nullptr;
-//        }
-//        if(cFrame->encodedDepthData.size() != sizeDepthCompressed){
-//            cFrame->encodedDepthData.resize(sizeDepthCompressed);
-//        }
-//        Logger::message(std::format("size compressed {} {} {}\n", depthSize, sizeDepthCompressed, 1.f*sizeDepthCompressed/depthSize));
     }
 
     if(infraredImage.has_value()){
@@ -310,27 +284,6 @@ std::unique_ptr<K4CompressedFullFrame> K4FullFrameCompressor::compress(
             cFrame->encodedInfraData.data()
         );
         cFrame->encodedInfraData.resize(encodedBytesNb);
-
-
-//        cFrame->encodedInfraData.resize(infraSize + 1024, 0);
-
-//        // fill buffer
-//        std::fill(std::begin(cFrame->encodedInfraData), std::end(cFrame->encodedInfraData), 0);
-
-//        // encode buffer
-//        size_t sizeInfraCompressed = i->integerCompressor.encode(
-//            reinterpret_cast<uint32_t*>(infraredImage->get_buffer()), infraSize,
-//            cFrame->encodedInfraData.data(), infraSize + 1024
-//        );
-
-//        if(sizeInfraCompressed == 0){
-//            Logger::error("[Kinect4] infra compress error\n");
-//            return nullptr;
-//        }
-//        if(cFrame->encodedInfraData.size() != sizeInfraCompressed){
-//            cFrame->encodedInfraData.resize(sizeInfraCompressed);
-//        }
-        // Logger::message(std::format("size compressed {} {}\n", infraSize, sizeInfraCompressed));
     }
 
     return cFrame;

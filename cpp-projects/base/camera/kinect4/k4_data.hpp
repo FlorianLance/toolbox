@@ -44,9 +44,6 @@ namespace tool::camera{
         static void unpack64(std::uint64_t p, geo::Pt3<std::int16_t> &pos, geo::Pt4<std::uint8_t> &col);
         static geo::Pt4<std::uint8_t> pack_xy(std::int16_t x, std::int16_t y);
     };
-
-
-
 }
 
 
