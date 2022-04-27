@@ -824,7 +824,7 @@ void K4Device::Impl::compress_cloud_frame(const K4Filters &f, const K4DeviceSett
 
     // send
     if(compressedCloudFrame != nullptr){
-        kinect4->new_compressed_cloud_frame_signal(std::move(compressedCloudFrame));
+        kinect4->new_compressed_cloud_frame_signal(std::shared_ptr<tool::camera::K4CompressedCloudFrame>(std::move(compressedCloudFrame)));
     }
 }
 
@@ -867,7 +867,7 @@ void K4Device::Impl::compress_full_frame(const K4Filters &f, const K4DeviceSetti
 
     // send
     if(compressedFullFrame != nullptr){
-        kinect4->new_compressed_full_frame_signal(std::move(compressedFullFrame));
+        kinect4->new_compressed_full_frame_signal(std::shared_ptr<K4CompressedFullFrame>(std::move(compressedFullFrame)));
     }
 }
 
@@ -1050,7 +1050,7 @@ void K4Device::Impl::display_frame(const K4DeviceSettings &d, K4Mode mode){
 
     tool::Bench::stop();
 
-    kinect4->new_display_frame_signal(std::move(currDisplayFrame));
+    kinect4->new_display_frame_signal(std::shared_ptr<K4DisplayFrame>(std::move(currDisplayFrame)));
 }
 
 

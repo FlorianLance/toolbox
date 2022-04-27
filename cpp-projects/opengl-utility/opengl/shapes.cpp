@@ -29,75 +29,12 @@
 // base
 #include "utility/constants.hpp"
 #include "utility/vector.hpp"
-//#include "geometry/matrix3.hpp"
+#include "utility/logger.hpp"
 
 using namespace tool;
 using namespace tool::gl;
 using namespace tool::geo;
 
-
-Torus::Torus(GLfloat outerRadius, GLfloat innerRadius, GLuint nsides, GLuint nrings){
-
-    GLuint faces = nsides * nrings;
-    size_t nVerts  = nsides * (nrings+1);   // One extra ring to duplicate first ring
-
-    std_v1<GLfloat> points(3 * nVerts);
-    std_v1<GLfloat> normals(3 * nVerts);
-    std_v1<GLfloat> textCoords(2 * nVerts);
-    std_v1<GLuint> elements(6 * faces);
-
-    // Generate the vertex data
-    float ringFactor = two_PI<float> / nrings;
-    float sideFactor = two_PI<float> / nsides;
-    size_t idx = 0, tidx = 0;
-    for( GLuint ring = 0; ring <= nrings; ring++ ) {
-        float u = ring * ringFactor;
-        float cu = cos(u);
-        float su = sin(u);
-        for( GLuint side = 0; side < nsides; side++ ) {
-            float v = side * sideFactor;
-            float cv = cos(v);
-            float sv = sin(v);
-            float r = (outerRadius + innerRadius * cv);
-            points[idx] = r * cu;
-            points[idx + 1] = r * su;
-            points[idx + 2] = innerRadius * sv;
-            normals[idx] = cv * cu * r;
-            normals[idx + 1] = cv * su * r;
-            normals[idx + 2] = sv * r;
-            textCoords[tidx] = u / two_PI<float>;
-            textCoords[tidx + 1] = v / two_PI<float>;
-            tidx += 2;
-            // Normalize
-            float len = sqrt( normals[idx] * normals[idx] +
-                              normals[idx+1] * normals[idx+1] +
-                              normals[idx+2] * normals[idx+2] );
-            normals[idx] /= len;
-            normals[idx+1] /= len;
-            normals[idx+2] /= len;
-            idx += 3;
-        }
-    }
-
-    idx = 0;
-    for( GLuint ring = 0; ring < nrings; ring++ ) {
-        GLuint ringStart = ring * nsides;
-        GLuint nextRingStart = (ring + 1) * nsides;
-        for( GLuint side = 0; side < nsides; side++ ) {
-            GLuint nextSide = (side+1) % nsides;
-            // The quad
-            elements[idx] = (ringStart + side);
-            elements[idx+1] = (nextRingStart + side);
-            elements[idx+2] = (nextRingStart + nextSide);
-            elements[idx+3] = ringStart + side;
-            elements[idx+4] = nextRingStart + nextSide;
-            elements[idx+5] = (ringStart + nextSide);
-            idx += 6;
-        }
-    }
-
-    init_buffers(&elements, &points, &normals, &textCoords);
-}
 
 Axes::Axes(GLfloat length){
 
@@ -117,9 +54,11 @@ Axes::Axes(GLfloat length){
         1.f,0.f,0.f,1.f, 1.f,0.f,0.f,1.f,
         0.f,1.f,0.f,1.f, 0.f,1.f,0.f,1.f,
         0.f,0.f,1.f,1.f, 0.f,0.f,1.f,1.f
-    };
+    };    
 
-    init_buffers(&indices, &points, &colors);
+    auto lmd = std::make_unique<LineMeshData>();
+    lmd->init_buffers(&indices, &points, &colors);
+    data = std::move(lmd);
 }
 
 
@@ -163,7 +102,9 @@ Grid::Grid(GLfloat width, GLfloat height, GLuint nbX, GLuint nbY){
         points.emplace_back(maxY);
     }
 
-    init_buffers(&indices, &points);
+    auto lmd = std::make_unique<LineMeshData>();
+    lmd->init_buffers(&indices, &points);
+    data = std::move(lmd);
 }
 
 
@@ -199,7 +140,75 @@ Skybox::Skybox(GLfloat size){
         20,22,21,20,23,22
     };
 
-    init_buffers(&el, &p, &n);
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&el, &p, &n);
+    data = std::move(tmd);
+}
+
+
+Torus::Torus(GLfloat outerRadius, GLfloat innerRadius, GLuint nsides, GLuint nrings){
+
+    GLuint faces = nsides * nrings;
+    size_t nVerts  = nsides * (nrings+1);   // One extra ring to duplicate first ring
+
+    std_v1<GLfloat> points(3 * nVerts);
+    std_v1<GLfloat> normals(3 * nVerts);
+    std_v1<GLfloat> textCoords(2 * nVerts);
+    std_v1<GLuint> elements(6 * faces);
+
+    // Generate the vertex data
+    float ringFactor = two_PI<float> / nrings;
+    float sideFactor = two_PI<float> / nsides;
+    size_t idx = 0, tidx = 0;
+    for( GLuint ring = 0; ring <= nrings; ring++ ) {
+        float u = ring * ringFactor;
+        float cu = cos(u);
+        float su = sin(u);
+        for( GLuint side = 0; side < nsides; side++ ) {
+            float v = side * sideFactor;
+            float cv = cos(v);
+            float sv = sin(v);
+            float r = (outerRadius + innerRadius * cv);
+            points[idx] = r * cu;
+            points[idx + 1] = r * su;
+            points[idx + 2] = innerRadius * sv;
+            normals[idx] = cv * cu * r;
+            normals[idx + 1] = cv * su * r;
+            normals[idx + 2] = sv * r;
+            textCoords[tidx] = u / two_PI<float>;
+            textCoords[tidx + 1] = v / two_PI<float>;
+            tidx += 2;
+            // Normalize
+            float len = sqrt( normals[idx] * normals[idx] +
+                             normals[idx+1] * normals[idx+1] +
+                             normals[idx+2] * normals[idx+2] );
+            normals[idx] /= len;
+            normals[idx+1] /= len;
+            normals[idx+2] /= len;
+            idx += 3;
+        }
+    }
+
+    idx = 0;
+    for( GLuint ring = 0; ring < nrings; ring++ ) {
+        GLuint ringStart = ring * nsides;
+        GLuint nextRingStart = (ring + 1) * nsides;
+        for( GLuint side = 0; side < nsides; side++ ) {
+            GLuint nextSide = (side+1) % nsides;
+            // The quad
+            elements[idx] = (ringStart + side);
+            elements[idx+1] = (nextRingStart + side);
+            elements[idx+2] = (nextRingStart + nextSide);
+            elements[idx+3] = ringStart + side;
+            elements[idx+4] = nextRingStart + nextSide;
+            elements[idx+5] = (ringStart + nextSide);
+            idx += 6;
+        }
+    }
+
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&elements, &points, &normals, &textCoords);
+    data = std::move(tmd);
 }
 
 
@@ -261,13 +270,16 @@ Cube::Cube(GLfloat side){
         20,21,22,20,22,23
     };
 
-    init_buffers(&el, &p, &n, &tex);
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&el, &p, &n, &tex);
+    data = std::move(tmd);
 }
 
 
 gl::Mesh::Mesh(geo::Mesh<float> *mesh){
 
-    init_buffers(
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(
         &mesh->triIds,
         &mesh->vertices,
         (mesh->normals.size()  != 0) ? &mesh->normals   : nullptr,
@@ -276,27 +288,9 @@ gl::Mesh::Mesh(geo::Mesh<float> *mesh){
         (mesh->bones.size()    != 0) ? &mesh->bones     : nullptr,
         (mesh->colors.size()   != 0) ? &mesh->colors    : nullptr
     );
+    data = std::move(tmd);
 }
 
-Cloud::Cloud(size_t size, const Pt2f *vertices, const Pt3f *colors){
-    init_buffers(static_cast<GLuint>(size), vertices, colors);
-}
-
-Cloud::Cloud(std_v1<Pt2f> *vertices, std_v1<Pt3f> *colors){
-    init_buffers(static_cast<GLuint>(vertices->size()), vertices->data(), (colors != nullptr) ? (colors->data()) : nullptr);
-}
-
-Cloud::Cloud(size_t size, const Pt3f *vertices, const Pt3f *colors){
-    init_buffers(static_cast<GLuint>(size), vertices, colors);
-}
-
-Cloud::Cloud(std_v1<geo::Pt3f> *vertices, std_v1<geo::Pt3f> *colors){
-    init_buffers(static_cast<GLuint>(vertices->size()), vertices->data(), (colors != nullptr) ? (colors->data()) : nullptr);
-}
-
-Voxels::Voxels(size_t size, geo::Pt3<int> *voxels, Pt3f *colors){
-    init_buffers(static_cast<GLuint>(size), voxels, colors);
-}
 
 
 Plane::Plane(GLfloat xsize, GLfloat zsize, size_t xdivs, size_t zdivs, GLfloat smax, GLfloat tmax){
@@ -359,7 +353,9 @@ Plane::Plane(GLfloat xsize, GLfloat zsize, size_t xdivs, size_t zdivs, GLfloat s
         }
     }
 
-    init_buffers(&el, &p, &n, &tex, &tang);
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&el, &p, &n, &tex, &tang);
+    data = std::move(tmd);
 }
 
 Sphere::Sphere(GLfloat radius, GLuint nSlices, GLuint nStacks){
@@ -428,9 +424,11 @@ Sphere::Sphere(GLfloat radius, GLuint nSlices, GLuint nStacks){
                 idx += 6;
             }
         }
-    }
+    }    
 
-    init_buffers(&el, &p, &n, &tex);
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&el, &p, &n, &tex);
+    data = std::move(tmd);
 }
 
 FullscreenQuad::FullscreenQuad(){
@@ -453,7 +451,9 @@ FullscreenQuad::FullscreenQuad(){
         0,1,2,0,2,3
     };
 
-    init_buffers(&el, &p, nullptr, &tex);
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&el, &p, nullptr, &tex);
+    data = std::move(tmd);
 }
 
 
@@ -849,7 +849,9 @@ Teapot::Teapot(int grid, const geo::Mat4f &lidTransform){
     generate_patches( p, n, tc, el, grid );
     move_lid(grid, p, lidTransform);
 
-    init_buffers(&el,&p, &n, &tc);
+    auto tmd = std::make_unique<TriangleMeshData>();
+    tmd->init_buffers(&el,&p, &n, &tc);
+    data = std::move(tmd);
 }
 
 Frustum::Frustum(){
@@ -896,7 +898,11 @@ void Frustum::set_perspective(float fovy, float ar, float nearDist, float farDis
         5,6,6,7,7,8,8,5
     };
 
-    init_buffers(&indices, &vertices);
+
+    auto tmd = std::make_unique<LineMeshData>();
+    tmd->init_buffers(&indices, &vertices);
+    data = std::move(tmd);
+
 }
 
 Mat4f Frustum::view_matrix() const{    
@@ -914,4 +920,37 @@ Mat4f Frustum::projection_matrix() const{
 Pt3f Frustum::origin() const{
     return m_position;
 }
+
+Cloud::Cloud(size_t size, const Pt2f *vertices, const Pt3f *colors){
+    auto pmd = std::make_unique<PointMeshData>();
+    pmd->init_buffers(static_cast<GLuint>(size), vertices, colors);
+    data = std::move(pmd);
+}
+
+Cloud::Cloud(std_v1<Pt2f> *vertices, std_v1<Pt3f> *colors){
+    auto pmd = std::make_unique<PointMeshData>();
+    pmd->init_buffers(static_cast<GLuint>(vertices->size()), vertices->data(), (colors != nullptr) ? (colors->data()) : nullptr);
+    data = std::move(pmd);
+}
+
+Cloud::Cloud(size_t size, const Pt3f *vertices, const Pt3f *colors){
+    auto pmd = std::make_unique<PointMeshData>();
+    pmd->init_buffers(static_cast<GLuint>(size), vertices, colors);
+    data = std::move(pmd);
+}
+
+Cloud::Cloud(std_v1<geo::Pt3f> *vertices, std_v1<geo::Pt3f> *colors){
+    auto pmd = std::make_unique<PointMeshData>();
+    pmd->init_buffers(static_cast<GLuint>(vertices->size()), vertices->data(), (colors != nullptr) ? (colors->data()) : nullptr);
+    data = std::move(pmd);
+}
+
+
+
+Voxels::Voxels(size_t size, geo::Pt3<int> *voxels, Pt3f *colors){
+    auto pmd = std::make_unique<PointMeshData>();
+    pmd->init_buffers(static_cast<GLuint>(size), voxels, colors);
+    data = std::move(pmd);
+}
+
 

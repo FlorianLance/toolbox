@@ -49,15 +49,14 @@ public:
     gl::TextureName texture_id()const{return m_texture.id();}
 
     void update_viewport();
-    void reset_gl_states(geo::Pt4f color = {0.0f, 0.0f, 0.0f, 1.0f});
+    void set_gl_states(geo::Pt4f color = {0.0f, 0.0f, 0.0f, 1.0f});
 
     inline void bind(){m_fbo.bind();}
     inline void unbind(){m_fbo.unbind();}
     inline graphics::Camera *camera(){return &m_camera;}
     bool is_camera_updated()const{return m_cameraUpdated;}
     bool is_screen_updated()const{return m_screenUpdated;}
-    void reset_camera_state(){m_cameraUpdated=false;}
-    void reset_screen_state(){m_screenUpdated=false;}
+    void reset_states(){m_cameraUpdated=false;m_screenUpdated=false;}
 
     double rotationSpeed = 0.05;
     float scrollSpeed = 0.1f;

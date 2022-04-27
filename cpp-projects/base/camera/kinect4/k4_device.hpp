@@ -26,8 +26,8 @@
 
 #pragma once
 
-// signals
-#include "lsignal.h"
+// sigslot
+#include "sigslot/signal.hpp"
 
 // local
 #include "k4_frame.hpp"
@@ -81,10 +81,10 @@ public:
     void set_settings(const K4DeviceSettings &setings);
     void set_filters(const K4Filters &filtersS);
 
-// signals
-    lsignal::signal<void(std::unique_ptr<K4DisplayFrame> cloud)> new_display_frame_signal;
-    lsignal::signal<void(std::unique_ptr<K4CompressedFullFrame> frame)> new_compressed_full_frame_signal;
-    lsignal::signal<void(std::unique_ptr<K4CompressedCloudFrame> frame)> new_compressed_cloud_frame_signal;
+    // signals
+    sigslot::signal<std::shared_ptr<K4DisplayFrame>> new_display_frame_signal;
+    sigslot::signal<std::shared_ptr<K4CompressedFullFrame>> new_compressed_full_frame_signal;
+    sigslot::signal<std::shared_ptr<K4CompressedCloudFrame>> new_compressed_cloud_frame_signal;
 
 private:
 

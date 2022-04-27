@@ -75,6 +75,8 @@ INCLUDEPATH += \
     $$GLM_INCLUDES\
     # signals
     $$SIGNALS_INCLUDES \
+    # sigslot
+    $$SIGSLOT_INCLUDES \
 
 ####################################### LIBRAIRIES
 LIBS += \
@@ -107,13 +109,13 @@ HEADERS += \
     opengl/buffer/buffer-utility.hpp \
     opengl/buffer/vertex_buffer_object.hpp \
     ## shader    
+    opengl/draw/geometry_data.hpp \
     opengl/shader/shader.hpp \
     ## utility
     opengl/utility/gl_error.hpp \
     opengl/utility/gl_utility.hpp \
     opengl/utility/glew_utility.hpp \
     ## drawer
-    opengl/draw/drawable.hpp \
     opengl/draw/drawer.hpp \
     #
     opengl/gl_draw.hpp \
@@ -132,9 +134,9 @@ SOURCES += \
     opengl/buffer/texture_buffer_object.cpp \
     ## shader
     opengl/buffer/vertex_buffer_object.cpp \
+    opengl/draw/geometry_data.cpp \
     opengl/shader/shader.cpp \
     ## drawer
-    opengl/draw/drawable.cpp \
     opengl/draw/drawer.cpp \
     #
     opengl/gl_texture.cpp \    

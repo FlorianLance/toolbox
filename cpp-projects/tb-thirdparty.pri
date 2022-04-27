@@ -10,6 +10,8 @@ CATCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/catch"
 AUDIOFILE_INCLUDES                   = $$TOOLBOX_CPP_THIRDPARTY_DIR"/audiofile"
 QOI_INCLUDES                         = $$TOOLBOX_CPP_THIRDPARTY_DIR"/qoi"
 BINPACK_2D_INCLUDES                  = $$TOOLBOX_CPP_THIRDPARTY_DIR"/BinPack2D"
+SIGSLOT_INCLUDES                     = $$TOOLBOX_CPP_THIRDPARTY_DIR"/sigslot/include"
+
 
 #OROCH_INCLUDES                       = $$TOOLBOX_CPP_THIRDPARTY_DIR"/oroch/include"
 ############################ third-party others

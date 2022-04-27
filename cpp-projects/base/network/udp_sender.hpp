@@ -28,9 +28,7 @@
 
 // std
 #include <memory>
-
-// signals
-#include "lsignal.h"
+#include <string>
 
 // local
 #include "udp_header.hpp"

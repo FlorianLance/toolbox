@@ -73,6 +73,7 @@ INCLUDEPATH += \
     $$GLM_INCLUDES\    
     $$BIOPAC_INCLUDES\
     $$SIGNALS_INCLUDES\
+    $$SIGSLOT_INCLUDES \
 
 ####################################### LIBRAIRIES
 

@@ -31,8 +31,8 @@
 #include <memory>
 #include <string>
 
-// lsignal
-#include "lsignal.h"
+// sigslot
+#include "sigslot/signal.hpp"
 
 namespace tool {
 
@@ -76,16 +76,16 @@ public:
     static void clean();
 
 // signals
-    lsignal::signal<void(std::string message)> message_signal;    
-    lsignal::signal<void(std::string warning)> warning_signal;
-    lsignal::signal<void(std::string error)> error_signal;
+    sigslot::signal<std::string> message_signal;
+    sigslot::signal<std::string> warning_signal;
+    sigslot::signal<std::string> error_signal;
 
-    lsignal::signal<void(std::string message, SenderT sType, int sKey)> message_id_signal;
-    lsignal::signal<void(std::string warning, SenderT sType, int sKey)> warning_id_signal;
-    lsignal::signal<void(std::string error, SenderT sType, int sKey)> error_id_signal;
+    sigslot::signal<std::string, SenderT, int> message_id_signal;
+    sigslot::signal<std::string, SenderT, int> warning_id_signal;
+    sigslot::signal<std::string, SenderT, int> error_id_signal;
 
-    lsignal::signal<void(std::string status, int ms)> status_signal;
-    lsignal::signal<void(int state)> progress_signal;
+    sigslot::signal<std::string, int> status_signal;
+    sigslot::signal<int> progress_signal;
 
 private:
 

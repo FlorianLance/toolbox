@@ -43,3 +43,38 @@ public:
     inline bool try_lock() noexcept { return !m_flag.test_and_set(std::memory_order_acquire);  }
 };
 }
+
+
+
+//struct spin_mutex {
+//    spin_mutex() noexcept = default;
+//    ~spin_mutex() noexcept = default;
+//    spin_mutex(spin_mutex const&) = delete;
+//    spin_mutex& operator=(const spin_mutex &) = delete;
+//    spin_mutex(spin_mutex &&) = delete;
+//    spin_mutex& operator=(spin_mutex &&) = delete;
+
+//    void lock() noexcept {
+//        while (true) {
+//            while (!state.load(std::memory_order_relaxed)) {
+//                std::this_thread::yield();
+//            }
+
+//            if (try_lock()) {
+//                break;
+//            }
+//        }
+//    }
+
+//    bool try_lock() noexcept {
+//        return state.exchange(false, std::memory_order_acquire);
+//    }
+
+//    void unlock() noexcept {
+//        state.store(true, std::memory_order_release);
+//    }
+
+//private:
+//    std::atomic<bool> state {true};
+//};
+

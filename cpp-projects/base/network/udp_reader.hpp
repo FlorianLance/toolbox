@@ -26,8 +26,8 @@
 
 #pragma once
 
-// signal
-#include "lsignal.h"
+// sigslot
+#include "sigslot/signal.hpp"
 
 // local
 #include "udp_header.hpp"
@@ -54,8 +54,8 @@ public:
     bool is_connected() const noexcept;
 
     // signals
-    lsignal::signal<void(bool)> connection_state_signal;
-    lsignal::signal<void()> timeout_packet_signal;
+    sigslot::signal<bool> connection_state_signal;
+    sigslot::signal<> timeout_packet_signal;
 
 protected:
 

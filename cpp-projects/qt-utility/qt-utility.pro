@@ -76,6 +76,7 @@ INCLUDEPATH += \
     $$OPENGL_UTILITY_INCLUDES \
     # thirdparty
     $$SIGNALS_INCLUDES \
+    $$SIGSLOT_INCLUDES \
     $$SFML_INCLUDES \
     $$GLEW_INCLUDES \
     $$GLM_INCLUDES \

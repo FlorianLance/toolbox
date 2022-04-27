@@ -28,24 +28,74 @@
 
 // local
 #include "opengl/gl_texture.hpp"
+#include "utility/logger.hpp"
 
 using namespace tool;
 using namespace tool::gl;
 
+Drawer::~Drawer(){
+    clean();
+}
+
+void Drawer::draw(ShaderProgram *shader){
+    static_cast<void>(shader);
+    if(drawableObject != nullptr){
+        if(texturesNames.size() > 0){
+            TBO::bind_textures(texturesNames);
+        }
+        drawableObject->data->render();
+    }
+}
+
+void Drawer::draw_adjacency(ShaderProgram *shader){
+    static_cast<void>(shader);
+    if(drawableObject != nullptr){
+        if(texturesNames.size() > 0){
+            TBO::bind_textures(texturesNames);
+        }
+        drawableObject->data->render_adjacency();
+    }
+}
+
+void Drawer::draw_patches(ShaderProgram *shader){
+    static_cast<void>(shader);
+    if(drawableObject != nullptr){
+        if(texturesNames.size() > 0){
+            TBO::bind_textures(texturesNames);
+        }
+        drawableObject->data->render_patches();
+    }
+}
+
+void Drawer::draw_instances(ShaderProgram *shader){
+
+    static_cast<void>(shader);
+    if(drawableObject != nullptr){
+        if(texturesNames.size() > 0){
+            TBO::bind_textures(texturesNames);
+        }
+        // ...
+    }
+}
+
 
 void AxesDrawer::init(){
+    clean();
     drawableObject = std::make_unique<Axes>(1.f);
 }
 
 void GridDrawer::init(){
+    clean();
     drawableObject = std::make_unique<Grid>(0.2f,0.2f, 100,100);
 }
 
 void FullscreenQuadDrawer::init(){
+    clean();
     drawableObject = std::make_unique<FullscreenQuad>();
 }
 
 void TorusDrawer::init(std_v1<TextureName> textures){
+    clean();
     texturesNames  = textures;
 //    drawableObject = std::make_unique<Torus>(0.7f, 0.3f, 30, 30);
     drawableObject = std::make_unique<Torus>(0.7f * 1.5f, 0.3f * 1.5f, 50,50);
@@ -53,11 +103,13 @@ void TorusDrawer::init(std_v1<TextureName> textures){
 }
 
 void PlaneDrawer::init(float xSize, float zSize, std_v1<TextureName> textures){
+    clean();
     texturesNames  = textures;
     drawableObject = std::make_unique<Plane>( static_cast<GLfloat>(xSize), static_cast<GLfloat>(zSize), 1, 1, GLfloat{10}, GLfloat{7});
 }
 
 void SkyboxDrawer::init(std::optional<TextureName> cubemap){
+    clean();
     if(cubemap.has_value()){
         texturesNames.emplace_back(cubemap.value());
     }
@@ -65,41 +117,50 @@ void SkyboxDrawer::init(std::optional<TextureName> cubemap){
 }
 
 void SphereDrawer::init(float radius, size_t slices, size_t nbStacks, std_v1<TextureName> textures){
+    clean();
     texturesNames  = textures;
     drawableObject = std::make_unique<Sphere>(radius, static_cast<GLuint>(slices), static_cast<GLuint>(nbStacks));
 }
 
 void CubeDrawer::init(float side, std_v1<TextureName> textures){
+    clean();
     texturesNames  = textures;
     drawableObject = std::make_unique<Cube>(side);
 }
 
 void CloudPointsDrawer::init(size_t size, const geo::Pt2f *points, const geo::Pt3f *colors){
+    clean();
     drawableObject = std::make_unique<gl::Cloud>(size, points, colors);
 }
 
 void CloudPointsDrawer::init(std_v1<geo::Pt2f> *points, std_v1<geo::Pt3f> *colors){
+    clean();
     drawableObject = std::make_unique<gl::Cloud>(points, colors);
 }
 
 void CloudPointsDrawer::init(size_t size, const geo::Pt3f *points, const geo::Pt3f *colors){
+    clean();
     drawableObject = std::make_unique<gl::Cloud>(size, points, colors);
 }
 
 void CloudPointsDrawer::init(std_v1<geo::Pt3f> *points, std_v1<geo::Pt3f> *colors){
+    clean();
     drawableObject = std::make_unique<gl::Cloud>(points, colors);
 }
 
 void VoxelsDrawer::init(size_t size, geo::Pt3<int> *voxels, geo::Pt3f *colors){
+    clean();
     drawableObject = std::make_unique<gl::Voxels>(size, voxels, colors);
 }
 
 void MeshDrawer::init(geo::Mesh<float> *mesh){
+    clean();
     drawableObject = std::make_unique<gl::Mesh>(mesh);
 }
 
 void GMeshDrawer::init(const std::shared_ptr<graphics::GMesh<float>> &gmesh){
 
+    clean();
     for(auto &texturesT : gmesh->material->texturesInfo){
         for(auto textureInfo : texturesT.second){
             gl::Texture2D tbo;
@@ -124,6 +185,8 @@ void GMeshDrawer::init(const std::shared_ptr<graphics::GMesh<float>> &gmesh){
 
 void GMeshDrawer::init(const std::shared_ptr<graphics::GMesh<float>> &gmesh, const std_v1<tool::graphics::TextureInfo> &texturesInfo){
 
+    clean();
+
     for(auto textureInfo : texturesInfo){
         gl::Texture2D tbo;
         tbo.load_texture(textureInfo.texture);
@@ -146,6 +209,8 @@ void GMeshDrawer::init(const std::shared_ptr<graphics::GMesh<float>> &gmesh, con
 
 void ModelDrawer::init(const std::weak_ptr<graphics::Model<float>> &model){
 
+    clean();
+
     modelP = model;
     if(auto m = modelP.lock()){
 
@@ -164,6 +229,8 @@ void ModelDrawer::init(const std::weak_ptr<graphics::Model<float>> &model){
 }
 
 void ModelDrawer::init(const std::weak_ptr<graphics::Model<float>> &model, const std_v1<graphics::TextureInfo> &texturesInfo){
+
+    clean();
 
     modelP = model;
     if(auto m = modelP.lock()){
@@ -246,12 +313,14 @@ void ModelDrawer::set_bones_uniform(graphics::Model<float> *model, ShaderProgram
 }
 
 void TeapotDrawer::init(std_v1<TextureName> textures){
+    clean();
     texturesNames  = textures;
     drawableObject = std::make_unique<Teapot>(14);
 }
 
 
 void FrustumDrawer::init(){
+    clean();
     drawableObject = std::make_unique<Frustum>();
 }
 

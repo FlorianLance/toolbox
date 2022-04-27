@@ -33,7 +33,7 @@
 
 #include "opengl/shapes.hpp"
 #include "opengl/draw/drawer.hpp"
-#include "opengl/draw/drawable.hpp"
+#include "opengl/draw/geometry_data.hpp"
 
 
 int main(){

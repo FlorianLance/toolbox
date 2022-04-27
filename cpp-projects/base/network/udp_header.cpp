@@ -48,22 +48,7 @@ Header Header::generate_mono_packet(std::int8_t type, size_t messageNbBytes){
     return header;
 }
 
-void UdpMonoPacketMessage::init_packet_from_data(int8_t *data, uint32_t messageNbBytes){
-    std::copy(data, data + messageNbBytes, reinterpret_cast<std::int8_t*>(this));
-}
 
-void UdpMonoPacketMessage::copy_packet_to_data(const Header &header, std::vector<int8_t> &data) const{
-
-    auto messageData = reinterpret_cast<const int8_t *>(this);
-    size_t dataSize = header.totalSizeBytes - sizeof(Header);
-    if(data.size() < dataSize){
-        data.resize(dataSize);
-    }
-
-    auto headerD = reinterpret_cast<const std::int8_t*>(&header);
-    std::copy(headerD,      headerD     + sizeof(Header),   data.begin());
-    std::copy(messageData,  messageData + dataSize,         data.begin() + sizeof(Header));
-}
 
 bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nbBytes, std::int8_t *packetData, std::vector<int8_t> &data){
 

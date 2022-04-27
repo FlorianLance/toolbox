@@ -50,10 +50,34 @@ struct Header{
     static Header generate_mono_packet(int8_t type, size_t messageNbBytes);
 };
 
-struct UdpMonoPacketMessage{
-    void init_packet_from_data(std::int8_t *data, std::uint32_t messageNbBytes);
-    void copy_packet_to_data(const Header &header, std::vector<int8_t> &data) const;
+
+template <typename T>
+struct UdpMonoPacketMessage {
+
+    void init_packet_from_data(int8_t *data, uint32_t messageNbBytes){
+        std::copy(data, data + messageNbBytes, reinterpret_cast<std::int8_t*>(this));
+    }
+
+    void copy_packet_to_data(const Header &header, std::vector<int8_t> &data) const{
+
+        auto messageData = reinterpret_cast<const int8_t *>(this);
+        size_t dataSize = header.totalSizeBytes - sizeof(Header);
+        if(data.size() < dataSize){
+            data.resize(dataSize);
+        }
+
+        auto headerD = reinterpret_cast<const std::int8_t*>(&header);
+        std::copy(headerD,      headerD     + sizeof(Header),   data.begin());
+        std::copy(messageData,  messageData + dataSize,         data.begin() + sizeof(Header));
+    }
+
+    UdpMonoPacketMessage() = default;
+    UdpMonoPacketMessage(T d) : data(d){}
+    UdpMonoPacketMessage(std::int8_t *data){init_packet_from_data(data, sizeof(UdpMonoPacketMessage<T>));}
+    T data;
 };
+
+
 
 struct UdpMultiPacketsMessage{
 

@@ -77,6 +77,7 @@ INCLUDEPATH += \
     $$LIBSOUNDIO_INCLUDES \
     $$QOI_INCLUDES\
     $$SIGNALS_INCLUDES\
+    $$SIGSLOT_INCLUDES \
     $$TURBOPFOR_INCLUDES \
 
 ####################################### LIBRAIRIES

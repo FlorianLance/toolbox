@@ -40,9 +40,12 @@
 
 namespace tool::gl{
 
-
-class Drawable{
+class GeometryData{
 public:
+
+    VAO vao;
+    VBO pointsB;
+    GLsizei nIndices = 0;
 
     virtual void render() const = 0;
     virtual void render_adjacency() const{}
@@ -52,26 +55,16 @@ public:
         static_cast<void>(baseId);
 
     }
-    virtual void clean(){}
 
-    constexpr GLuint indices_nb() const noexcept{ return nIndices;}
+    virtual void clean() = 0;
 
 protected:
-    GLsizei nIndices = 0;
+    bool buffersInitialized = false;   
 };
 
-class PointMesh : public Drawable{
+
+class PointMeshData : public GeometryData{
 public:
-    ~PointMesh(){PointMesh::clean();}
-protected:
-
-
-    VBO pointsB;
-    VBO colorsB;
-    VAO vao;
-
-    bool buffersInitialized = false;
-
     void init_buffers(
         GLuint size,
         const geo::Pt3f *points,
@@ -90,26 +83,19 @@ protected:
         const geo::Pt3f *colors = nullptr
     );
 
+    void render() const override;
+    void render_patches() const override;
 
-public:
-
-    virtual void render() const override;
-    virtual void render_patches() const override;
     void clean() override;
+
+protected:
+
+    VBO colorsB;
 };
 
 
-class LineMesh : public Drawable{
+class LineMeshData : public GeometryData{
 public:
-    ~LineMesh(){LineMesh::clean();}
-protected:
-
-    VBO pointsB;
-    VBO colorsB;
-    EBO indicesB;
-    VAO vao;
-
-    bool buffersInitialized = false;
 
     void init_buffers(
         std_v1<GLuint>  *indices,
@@ -117,34 +103,17 @@ protected:
         std_v1<GLfloat> *colors = nullptr
     );
 
-public:
-
-    virtual void render() const override;
+    void render() const override;
     void clean() override;
-};
-
-class TriangleMesh : public Drawable {
-public:
-    ~TriangleMesh(){TriangleMesh::clean();}
-
-    bool hasTexCoord = false;
-    bool hasTangents = false;
-    bool hasNormals  = false;
-    bool hasBones    = false;
-    bool hasColors   = false;
 
 protected:
 
-    VBO pointsB;
-    VBO normalsB;
-    VBO tangentsB;
     VBO colorsB;
-    VBO texCoordsB;
-    VBO bonesB;
     EBO indicesB;
-    VAO vao;
+};
 
-    bool buffersInitialized = false;
+class TriangleMeshData : public GeometryData {
+public:
 
     void init_buffers(
         std_v1<GLuint>  *indices,
@@ -165,21 +134,26 @@ protected:
         std_v1<geo::Pt4f> *colors    = nullptr
     );
 
-//    void init_buffers(
-//        std_v1<geo::TriIds> *indices,
-//        std_v1<geo::Pt3f> *points,
-//        std_v1<geo::Pt3f> *normals   = nullptr,
-//        std_v1<geo::Pt3f> *colors    = nullptr,
-//        std_v1<geo::Pt4f> *tangents  = nullptr,
-//        std_v1<geo::BoneData> *bones = nullptr
-//    );
-
-public:
-
-    virtual void render() const override;
-    virtual void render_adjacency() const override;
+    void render() const override;
+    void render_adjacency() const override;
     void clean() override;
-};
 
+    bool hasTexCoord = false;
+    bool hasTangents = false;
+    bool hasNormals  = false;
+    bool hasBones    = false;
+    bool hasColors   = false;
+
+protected:
+
+    VBO pointsB;
+    VBO normalsB;
+    VBO tangentsB;
+    VBO colorsB;
+    VBO texCoordsB;
+    VBO bonesB;
+    EBO indicesB;
+
+};
 
 }

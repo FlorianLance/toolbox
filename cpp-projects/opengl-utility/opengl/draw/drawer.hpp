@@ -36,59 +36,34 @@
 
 namespace tool::gl {
 
+
 class Drawer{
 
 public:
 
-    float scaleHint = 1;
+    Drawer() = default;
+    Drawer(Drawer&&) = default;
+    virtual ~Drawer();
 
-    virtual void draw(gl::ShaderProgram *shader = nullptr){
-        static_cast<void>(shader);
-        if(drawableObject != nullptr){
-            if(texturesNames.size() > 0){
-                TBO::bind_textures(texturesNames);
-            }
-            drawableObject->render();
-        }
-    }
+    virtual void draw(gl::ShaderProgram *shader = nullptr);
+    virtual void draw_adjacency(gl::ShaderProgram *shader = nullptr);
+    virtual void draw_patches(gl::ShaderProgram *shader = nullptr);
+    virtual void draw_instances(gl::ShaderProgram *shader = nullptr);
 
-    virtual void draw_adjacency(gl::ShaderProgram *shader = nullptr){
-        static_cast<void>(shader);
-        if(drawableObject != nullptr){
-            if(texturesNames.size() > 0){
-                TBO::bind_textures(texturesNames);
-            }
-            drawableObject->render_adjacency();
-        }
-    }
-
-    virtual void draw_patches(gl::ShaderProgram *shader = nullptr){
-        static_cast<void>(shader);
-        if(drawableObject != nullptr){
-            if(texturesNames.size() > 0){
-                TBO::bind_textures(texturesNames);
-            }
-            drawableObject->render_patches();
-        }
-    }
-
-    virtual void draw_instances(gl::ShaderProgram *shader = nullptr){
-
-        static_cast<void>(shader);
-        if(drawableObject != nullptr){
-            if(texturesNames.size() > 0){
-                TBO::bind_textures(texturesNames);
-            }
-            // ...
-        }
-    }
-
-    gl::Drawable *object() const{
+    inline gl::BaseShape *object() const{
         return drawableObject.get();
     }
 
+    float scaleHint = 1;
+
+    void clean(){
+        if(drawableObject){
+            drawableObject->data->clean();
+        }
+    }
+
 protected:
-    std::unique_ptr<gl::Drawable> drawableObject = nullptr;
+    std::unique_ptr<gl::BaseShape> drawableObject = nullptr;
     std_v1<TextureName> texturesNames;
 };
 
@@ -98,8 +73,6 @@ protected:
     std_v1<std::unique_ptr<Drawer>> drawableObjects;
     std_v1<std::unique_ptr<Drawer>> children;
 };
-
-
 
 
 // procedural geometry

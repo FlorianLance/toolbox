@@ -88,7 +88,7 @@ struct K4CloudDrawer{
 struct K4CloudsDrawer{
 
     void populate(size_t nbConnections);
-    void update_from_display_frame(size_t idCloud, std::unique_ptr<camera::K4DisplayFrame> frame);
+    void update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame);
     void update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame *frame);
     void update_from_full_frame(size_t idCloud, camera::K4FullFrame *frame);
     void draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiFboUiDrawer &fboD);

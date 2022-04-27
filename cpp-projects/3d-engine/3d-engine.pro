@@ -74,6 +74,7 @@ INCLUDEPATH += \
     $$SFML_INCLUDES\
     $$ASSIMP_INCLUDES\
     $$SIGNALS_INCLUDES\
+    $$SIGSLOT_INCLUDES \
     $$KINECT4_INCLUDES \
 
 ####################################### LIBRAIRIES

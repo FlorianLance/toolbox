@@ -33,21 +33,30 @@
 #include "geometry/mesh.hpp"
 
 // local
-#include "opengl/draw/drawable.hpp"
+#include "opengl/draw/geometry_data.hpp"
 
 namespace tool::gl{
 
-class FullscreenQuad : public TriangleMesh{
+class BaseShape{
+public:
+    virtual ~BaseShape(){}
+    std::unique_ptr<GeometryData> data;
+};
+
+class FullscreenQuad : public BaseShape{
 public:
     FullscreenQuad();
 };
 
-class Torus : public TriangleMesh{
+class Torus : public BaseShape{
 public:
     Torus(GLfloat outerRadius, GLfloat innerRadius, GLuint nsides, GLuint nrings);
 };
 
-class Teapot : public TriangleMesh{
+class Teapot : public BaseShape{
+public:
+    Teapot(int grid, const geo::Mat4f &lidTransform = geo::Mat4f(true));
+
 private:
 
     void generate_patches(std_v1<GLfloat> & p, std_v1<GLfloat> & n, std_v1<GLfloat> & tc, std_v1<GLuint> & el, int grid);
@@ -58,25 +67,23 @@ private:
     geo::Vec3f evaluate( int gridU, int gridV, std_v1<GLfloat> & B, geo::Vec3f patch[][4] );
     geo::Vec3f evaluate_normal(  int gridU, int gridV, std_v1<GLfloat> & B, std_v1<GLfloat> & dB, geo::Vec3f patch[][4] );
     void move_lid(int grid, std_v1<GLfloat> & p, const geo::Mat4f &lidTransform);
-
-public:
-    Teapot(int grid, const geo::Mat4f &lidTransform = geo::Mat4f(true));
 };
 
-class Grid : public LineMesh{
+class Grid : public BaseShape{
 public:
     Grid(GLfloat width, GLfloat height, GLuint nbX, GLuint nbY);
 };
 
-class Axes : public LineMesh{
+class Axes : public BaseShape{
 public:
     Axes(GLfloat length);
 };
 
-class Frustum : public LineMesh{
+class Frustum : public BaseShape{
 public:
 
     Frustum();
+
     void orient( const geo::Pt3f &pos, const geo::Pt3f &at, const geo::Pt3f &up);
     void set_perspective( float fovy, float ar, float nearDist, float farDist );
 
@@ -93,41 +100,43 @@ private:
 };
 
 
-class Plane : public TriangleMesh{
+class Plane : public BaseShape{
 public:
     Plane(GLfloat xsize, GLfloat zsize, size_t xdivs, size_t zdivs, GLfloat smax = 1.0f, GLfloat tmax = 1.0f);
 };
 
-class Skybox : public TriangleMesh{
+class Skybox : public BaseShape{
 public:
     Skybox(GLfloat size);
 };
 
-class Cube : public TriangleMesh{
+class Cube : public BaseShape{
 public:
     Cube(GLfloat side);
 };
 
-class Sphere : public TriangleMesh{
+class Sphere : public BaseShape{
 public:
     Sphere(GLfloat radius, GLuint nSlices, GLuint nStacks);
 };
 
-class Mesh : public TriangleMesh{
+class Mesh : public BaseShape{
 public:
-    Mesh(geo::Mesh<float> *mesh);
+    Mesh(geo::Mesh<float> *mesh);    
 };
 
-class Cloud : public PointMesh{
+class Cloud : public BaseShape{
 public:
     Cloud(size_t size, const geo::Pt2f *vertices, const geo::Pt3f *colors);
     Cloud(std_v1<geo::Pt2f> *vertices, std_v1<geo::Pt3f> *colors);
 
     Cloud(size_t size, const geo::Pt3f *vertices, const geo::Pt3f *colors);
     Cloud(std_v1<geo::Pt3f> *vertices, std_v1<geo::Pt3f> *colors);
+
+    void init();
 };
 
-class Voxels : public PointMesh{
+class Voxels : public BaseShape{
 public :
     Voxels(size_t size, geo::Pt3<int> *voxels, geo::Pt3f *colors);
 };

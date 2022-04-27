@@ -30,6 +30,9 @@
 // std
 #include <format>
 
+// base
+#include "utility/logger.hpp"
+
 // local
 #include "imgui-utility/imgui_std.hpp"
 
@@ -191,8 +194,10 @@ bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemN
         update = true;
     }
     ImGui::SetNextItemWidth(100.f);
-    if(ImGui::DragFloat("Size voxel###display_size_voxels", &display.sizeVoxels, 0.001f, 0.001f, 0.015f, "%.3f")){
+    float sizeV = display.sizeVoxels*1000.f;
+    if(ImGui::DragFloat("Size voxel###display_size_voxels", &sizeV, 1.f, 10.f, 0.001f, "%.3f")){
         update = true;
+        display.sizeVoxels = sizeV*0.001f;
     }
 
     ImGui::Spacing();
@@ -358,7 +363,7 @@ void K4CloudsDrawer::populate(size_t nbConnections){
     cloudsD.resize(nbConnections);
 }
 
-void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::unique_ptr<camera::K4DisplayFrame> frame){
+void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame){
 
     if(idCloud >= cloudsD.size()){
         // error
@@ -470,7 +475,7 @@ void K4CloudsDrawer::draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiF
 
     fboD.bind();
     fboD.update_viewport();
-    fboD.reset_gl_states(backgroundColor);
+    fboD.set_gl_states(backgroundColor);
 
     for(auto &cloudD : cloudsD){
 

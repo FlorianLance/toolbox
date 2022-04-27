@@ -65,6 +65,8 @@ CONFIG -= qt
 INCLUDEPATH += \
     # signals
     $$SIGNALS_INCLUDES \
+    # sigslot
+    $$SIGSLOT_INCLUDES \
     # assimp
     $$ASSIMP_INCLUDES \
     # catch
