@@ -13,9 +13,10 @@
 
 
 int main(int argc, char *argv[]){
-    calculator(argc, argv);
-    connection_colors(argc, argv);
-    example2(argc, argv);
-    return images(argc, argv);
+//    calculator(argc, argv);
+//    connection_colors(argc, argv);
+//    example2(argc, argv);
+//    return images(argc, argv);
+    return 0;
 //    return styles(argc, argv);
 }

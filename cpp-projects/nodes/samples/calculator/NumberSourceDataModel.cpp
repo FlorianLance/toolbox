@@ -1,117 +1,117 @@
-#include "NumberSourceDataModel.hpp"
+//#include "NumberSourceDataModel.hpp"
 
-#include <QtCore/QJsonValue>
-#include <QtGui/QDoubleValidator>
+//#include <QtCore/QJsonValue>
+//#include <QtGui/QDoubleValidator>
 
-#include "DecimalData.hpp"
+//#include "DecimalData.hpp"
 
-NumberSourceDataModel::
-NumberSourceDataModel()
-  : _lineEdit(new QLineEdit())
-{
-  _lineEdit->setValidator(new QDoubleValidator());
+//NumberSourceDataModel::
+//NumberSourceDataModel()
+//  : _lineEdit(new QLineEdit())
+//{
+//  _lineEdit->setValidator(new QDoubleValidator());
 
-  _lineEdit->setMaximumSize(_lineEdit->sizeHint());
+//  _lineEdit->setMaximumSize(_lineEdit->sizeHint());
 
-  connect(_lineEdit, &QLineEdit::textChanged,
-          this, &NumberSourceDataModel::onTextEdited);
+//  connect(_lineEdit, &QLineEdit::textChanged,
+//          this, &NumberSourceDataModel::onTextEdited);
 
-  _lineEdit->setText("0.0");
+//  _lineEdit->setText("0.0");
 
-}
-
-
-QJsonObject
-NumberSourceDataModel::
-save() const
-{
-  QJsonObject modelJson = NodeDataModel::save();
-
-  if (_number)
-    modelJson["number"] = QString::number(_number->number());
-
-  return modelJson;
-}
+//}
 
 
-void
-NumberSourceDataModel::
-restore(QJsonObject const &p)
-{
-  QJsonValue v = p["number"];
+//QJsonObject
+//NumberSourceDataModel::
+//save() const
+//{
+//  QJsonObject modelJson = NodeDataModel::save();
 
-  if (!v.isUndefined())
-  {
-    QString strNum = v.toString();
+//  if (_number)
+//    modelJson["number"] = QString::number(_number->number());
 
-    bool   ok;
-    double d = strNum.toDouble(&ok);
-    if (ok)
-    {
-      _number = std::make_shared<DecimalData>(d);
-      _lineEdit->setText(strNum);
-    }
-  }
-}
+//  return modelJson;
+//}
 
 
-unsigned int
-NumberSourceDataModel::
-nPorts(PortType portType) const
-{
-  unsigned int result = 1;
+//void
+//NumberSourceDataModel::
+//restore(QJsonObject const &p)
+//{
+//  QJsonValue v = p["number"];
 
-  switch (portType)
-  {
-    case PortType::In:
-      result = 0;
-      break;
+//  if (!v.isUndefined())
+//  {
+//    QString strNum = v.toString();
 
-    case PortType::Out:
-      result = 1;
-
-    default:
-      break;
-  }
-
-  return result;
-}
+//    bool   ok;
+//    double d = strNum.toDouble(&ok);
+//    if (ok)
+//    {
+//      _number = std::make_shared<DecimalData>(d);
+//      _lineEdit->setText(strNum);
+//    }
+//  }
+//}
 
 
-void
-NumberSourceDataModel::
-onTextEdited(QString const &string)
-{
-  Q_UNUSED(string);
+//unsigned int
+//NumberSourceDataModel::
+//nb_Ports(PortType portType) const
+//{
+//  unsigned int result = 1;
 
-  bool ok = false;
+//  switch (portType)
+//  {
+//    case PortType::In:
+//      result = 0;
+//      break;
 
-  double number = _lineEdit->text().toDouble(&ok);
+//    case PortType::Out:
+//      result = 1;
 
-  if (ok)
-  {
-    _number = std::make_shared<DecimalData>(number);
+//    default:
+//      break;
+//  }
 
-    Q_EMIT dataUpdated(0);
-  }
-  else
-  {
-    Q_EMIT dataInvalidated(0);
-  }
-}
-
-
-const NodeDataType&
-NumberSourceDataModel::
-dataType(PortType, PortIndex) const
-{
-  return DecimalData().type();
-}
+//  return result;
+//}
 
 
-std::shared_ptr<NodeData>
-NumberSourceDataModel::
-outData(PortIndex)
-{
-  return _number;
-}
+//void
+//NumberSourceDataModel::
+//onTextEdited(QString const &string)
+//{
+//  Q_UNUSED(string);
+
+//  bool ok = false;
+
+//  double number = _lineEdit->text().toDouble(&ok);
+
+//  if (ok)
+//  {
+//    _number = std::make_shared<DecimalData>(number);
+
+//    Q_EMIT dataUpdated(0);
+//  }
+//  else
+//  {
+//    Q_EMIT dataInvalidated(0);
+//  }
+//}
+
+
+//const NodeDataType&
+//NumberSourceDataModel::
+//dataType(PortType, PortIndex) const
+//{
+//  return DecimalData().type();
+//}
+
+
+//std::shared_ptr<NodeData>
+//NumberSourceDataModel::
+//outData(PortIndex)
+//{
+//  return _number;
+//}

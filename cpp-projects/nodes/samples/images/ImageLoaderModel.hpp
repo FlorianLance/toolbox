@@ -1,77 +1,77 @@
-#pragma once
+//#pragma once
 
-#include <iostream>
+//#include <iostream>
 
-#include <QtCore/QObject>
-#include <QtWidgets/QLabel>
+//#include <QtCore/QObject>
+//#include <QtWidgets/QLabel>
 
-#include "nodes/DataModelRegistry.hpp"
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/DataModelRegistry.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-#include "PixmapData.hpp"
+//#include "PixmapData.hpp"
 
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeData;
-using QtNodes::NodeDataType;
-using QtNodes::NodeDataModel;
-using QtNodes::NodeValidationState;
+//using QtNodes::PortType;
+//using QtNodes::PortIndex;
+//using QtNodes::NodeData;
+//using QtNodes::NodeDataType;
+//using QtNodes::NodeDataModel;
+//using QtNodes::NodeValidationState;
 
-/// The model dictates the number of inputs and outputs for the Node.
-/// In this example it has no logic.
-class ImageLoaderModel : public NodeDataModel
-{
-  Q_OBJECT
+///// The model dictates the number of inputs and outputs for the Node.
+///// In this example it has no logic.
+//class ImageLoaderModel : public NodeDataModel
+//{
+//  Q_OBJECT
 
-public:
-  ImageLoaderModel();
+//public:
+//  ImageLoaderModel();
 
-  virtual
-  ~ImageLoaderModel() {}
+//  virtual
+//  ~ImageLoaderModel() {}
 
-  static const inline QString m_caption = QStringLiteral("Image Source");
-  static const inline QString m_name = QStringLiteral("ImageLoaderModel");
-
-
-public:
-
-    const QString &caption() const override{return m_caption;}
-    const QString &name() const override{return m_name;}
+//  static const inline QString m_caption = QStringLiteral("Image Source");
+//  static const inline QString m_name = QStringLiteral("ImageLoaderModel");
 
 
-public:
+//public:
 
-  virtual QString
-  modelName() const
-  { return QString("Source Image"); }
+//    const QString &caption() const override{return m_caption;}
+//    const QString &name() const override{return m_name;}
 
-  unsigned int
-  nPorts(PortType portType) const override;
 
-  const NodeDataType&
-  dataType(PortType portType, PortIndex portIndex) const override;
+//public:
 
-  std::shared_ptr<NodeData>
-  outData(PortIndex port) override;
+//  virtual QString
+//  modelName() const
+//  { return QString("Source Image"); }
 
-  void
-  setInData(std::shared_ptr<NodeData>, int) override
-  { }
+//  unsigned int
+//  nb_Ports(PortType portType) const override;
 
-  QWidget *
-  embeddedWidget() override { return _label; }
+//  const NodeDataType&
+//  dataType(PortType portType, PortIndex portIndex) const override;
 
-  bool
-  resizable() const override { return true; }
+//  std::shared_ptr<NodeData>
+//  outData(PortIndex port) override;
 
-protected:
+//  void
+//  setInData(std::shared_ptr<NodeData>, int) override
+//  { }
 
-  bool
-  eventFilter(QObject *object, QEvent *event) override;
+//  QWidget *
+//  embeddedWidget() override { return _label; }
 
-private:
+//  bool
+//  resizable() const override { return true; }
 
-  QLabel * _label;
+//protected:
 
-  QPixmap _pixmap;
-};
+//  bool
+//  eventFilter(QObject *object, QEvent *event) override;
+
+//private:
+
+//  QLabel * _label;
+
+//  QPixmap _pixmap;
+//};

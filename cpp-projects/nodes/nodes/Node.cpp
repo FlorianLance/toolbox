@@ -34,7 +34,7 @@ Node::Node(std::unique_ptr<NodeDataModel> && dataModel) :
     _nodeGeometry(_nodeDataModel),
     _nodeGraphicsObject(nullptr){
 
-    _nodeGeometry.recalculateSize();
+    _nodeGeometry.recalculate_size();
 
     // propagate data: model => node
     connect(_nodeDataModel.get(), &NodeDataModel::dataUpdated, this, &Node::onDataUpdated);
@@ -42,30 +42,6 @@ Node::Node(std::unique_ptr<NodeDataModel> && dataModel) :
 }
 
 Node::~Node() = default;
-
-QJsonObject Node::save() const {
-
-    QJsonObject nodeJson;
-    nodeJson["id"]    = _uid.toString();
-    nodeJson["model"] = _nodeDataModel->save();
-
-    QJsonObject obj;
-    obj["x"] = _nodeGraphicsObject->pos().x();
-    obj["y"] = _nodeGraphicsObject->pos().y();
-    nodeJson["position"] = obj;
-
-    return nodeJson;
-}
-
-
-void Node::restore(QJsonObject const& json){
-
-    _uid = QUuid(json["id"].toString());
-    QJsonObject positionJson = json["position"].toObject();
-    QPointF point(positionJson["x"].toDouble(), positionJson["y"].toDouble());
-    _nodeGraphicsObject->setPos(point);
-    _nodeDataModel->restore(json["model"].toObject());
-}
 
 QUuid Node::id() const{
     return _uid;
@@ -101,7 +77,7 @@ NodeGraphicsObject &Node::nodeGraphicsObject(){
 
 void Node::setGraphicsObject(std::unique_ptr<NodeGraphicsObject>&& graphics){
     _nodeGraphicsObject = std::move(graphics);
-    _nodeGeometry.recalculateSize();
+    _nodeGeometry.recalculate_size();
 }
 
 NodeGeometry& Node::nodeGeometry(){
@@ -130,7 +106,7 @@ void Node::propagateData(std::shared_ptr<NodeData> nodeData,PortIndex inPortInde
 
     //Recalculate the nodes visuals. A data change can result in the node taking more space than before, so this forces a recalculate+repaint on the affected node
     _nodeGraphicsObject->setGeometryChanged();
-    _nodeGeometry.recalculateSize();
+    _nodeGeometry.recalculate_size();
     _nodeGraphicsObject->update();
     _nodeGraphicsObject->moveConnections();
 
@@ -155,7 +131,7 @@ void Node::onNodeSizeUpdated(){
         nodeDataModel()->embeddedWidget()->adjustSize();
     }
 
-    nodeGeometry().recalculateSize();
+    nodeGeometry().recalculate_size();
     for(PortType type: {PortType::In, PortType::Out}){        
         for(auto& conn_set : nodeState().getEntries(type)){
             for(auto& pair: conn_set){

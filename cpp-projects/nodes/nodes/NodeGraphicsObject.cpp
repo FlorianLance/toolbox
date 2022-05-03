@@ -41,7 +41,7 @@ NodeGraphicsObject::NodeGraphicsObject(FlowScene &scene, Node& node) :
 
     setCacheMode( QGraphicsItem::DeviceCoordinateCache );
 
-    auto const &nodeStyle = node.nodeDataModel()->nodeStyle();
+    auto const &nodeStyle = node.nodeDataModel()->node_style();
 
     {
         auto effect = new QGraphicsDropShadowEffect;
@@ -87,14 +87,14 @@ void NodeGraphicsObject::embedQWidget(){
         _proxyWidget = new QGraphicsProxyWidget(this);
         _proxyWidget->setWidget(w);
         _proxyWidget->setPreferredWidth(5);
-        geom.recalculateSize();
+        geom.recalculate_size();
 
         if (w->sizePolicy().verticalPolicy() & QSizePolicy::ExpandFlag){
             // If the widget wants to use as much vertical space as possible, set it to have the geom's equivalentWidgetHeight.
-            _proxyWidget->setMinimumHeight(geom.equivalentWidgetHeight());
+            _proxyWidget->setMinimumHeight(geom.equivalent_widget_height());
         }
 
-        _proxyWidget->setPos(geom.widgetPosition());
+        _proxyWidget->setPos(geom.widget_position());
 
         update();
 
@@ -132,7 +132,7 @@ void NodeGraphicsObject::lock(bool locked){
     setFlag(QGraphicsItem::ItemIsSelectable, !locked);
 }
 
-void NodeGraphicsObject::paint(QPainter * painter,QStyleOptionGraphicsItem const* option,QWidget* ){
+void NodeGraphicsObject::paint(QPainter * painter, const QStyleOptionGraphicsItem *option, QWidget*){
 
     tool::Bench::start("NodeGraphicsObject::paint");
     painter->setClipRect(option->exposedRect);
@@ -173,7 +173,7 @@ void NodeGraphicsObject::mousePressEvent(QGraphicsSceneMouseEvent * event){
         NodeGeometry const & nodeGeometry = _node.nodeGeometry();
 
         // TODO do not pass sceneTransform
-        int const portIndex = nodeGeometry.checkHitScenePoint(portToCheck,
+        int const portIndex = nodeGeometry.check_hit_scene_point(portToCheck,
         event->scenePos(),
         sceneTransform());
 
@@ -194,7 +194,7 @@ void NodeGraphicsObject::mousePressEvent(QGraphicsSceneMouseEvent * event){
             }else {// initialize new Connection
 
                 if (portToCheck == PortType::Out){
-                    auto const outPolicy = _node.nodeDataModel()->portOutConnectionPolicy(portIndex);
+                    auto const outPolicy = _node.nodeDataModel()->port_out_connection_policy(portIndex);
                     if (!connections.empty() && outPolicy == NodeDataModel::ConnectionPolicy::One){
                         _scene.deleteConnection( *connections.begin()->second );
                     }
@@ -218,7 +218,7 @@ void NodeGraphicsObject::mousePressEvent(QGraphicsSceneMouseEvent * event){
     auto & geom  = _node.nodeGeometry();
     auto & state = _node.nodeState();
 
-    if (_node.nodeDataModel()->resizable() && geom.resizeRect().contains(QPoint(pos.x(), pos.y()))){
+    if (_node.nodeDataModel()->resizable() && geom.resize_rect().contains(QPoint(pos.x(), pos.y()))){
         state.setResizing(true);
     }
 }
@@ -244,9 +244,9 @@ void NodeGraphicsObject::mouseMoveEvent(QGraphicsSceneMouseEvent * event){
 
             _proxyWidget->setMinimumSize(oldSize);
             _proxyWidget->setMaximumSize(oldSize);
-            _proxyWidget->setPos(geom.widgetPosition());
+            _proxyWidget->setPos(geom.widget_position());
 
-            geom.recalculateSize();
+            geom.recalculate_size();
             update();
 
             moveConnections();
@@ -295,7 +295,7 @@ void NodeGraphicsObject::hoverEnterEvent(QGraphicsSceneHoverEvent * event){
     // bring this node forward
     setZValue(1.0);
 
-    _node.nodeGeometry().setHovered(true);
+    _node.nodeGeometry().set_hovered(true);
     update();
     _scene.nodeHovered(node(), event->screenPos());
     event->accept();
@@ -304,7 +304,7 @@ void NodeGraphicsObject::hoverEnterEvent(QGraphicsSceneHoverEvent * event){
 
 
 void NodeGraphicsObject::hoverLeaveEvent(QGraphicsSceneHoverEvent * event){
-    _node.nodeGeometry().setHovered(false);
+    _node.nodeGeometry().set_hovered(false);
     update();
     _scene.nodeHoverLeft(node());
     event->accept();
@@ -314,7 +314,7 @@ void NodeGraphicsObject::hoverMoveEvent(QGraphicsSceneHoverEvent * event){
 
     auto pos    = event->pos();
     auto & geom = _node.nodeGeometry();
-    if (_node.nodeDataModel()->resizable() && geom.resizeRect().contains(QPoint(pos.x(), pos.y()))){
+    if (_node.nodeDataModel()->resizable() && geom.resize_rect().contains(QPoint(pos.x(), pos.y()))){
         setCursor(QCursor(Qt::SizeFDiagCursor));
     }else{
         setCursor(QCursor());

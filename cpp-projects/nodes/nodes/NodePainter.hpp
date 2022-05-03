@@ -19,6 +19,8 @@ public:
     NodePainter();
 
 public:
+    static constexpr double nodeRadius = 3.0;
+
 
     static void paint(QPainter* painter, Node& node, FlowScene const& scene);
 

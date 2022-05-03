@@ -1,80 +1,80 @@
-#pragma once
+//#pragma once
 
-#include <QtCore/QObject>
-#include <QtWidgets/QLineEdit>
+//#include <QtCore/QObject>
+//#include <QtWidgets/QLineEdit>
 
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-#include <iostream>
+//#include <iostream>
 
-class DecimalData;
+//class DecimalData;
 
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeData;
-using QtNodes::NodeDataType;
-using QtNodes::NodeDataModel;
-using QtNodes::NodeValidationState;
+//using QtNodes::PortType;
+//using QtNodes::PortIndex;
+//using QtNodes::NodeData;
+//using QtNodes::NodeDataType;
+//using QtNodes::NodeDataModel;
+//using QtNodes::NodeValidationState;
 
-/// The model dictates the number of inputs and outputs for the Node.
-/// In this example it has no logic.
-class NumberSourceDataModel
-  : public NodeDataModel
-{
-  Q_OBJECT
+///// The model dictates the number of inputs and outputs for the Node.
+///// In this example it has no logic.
+//class NumberSourceDataModel
+//  : public NodeDataModel
+//{
+//  Q_OBJECT
 
-public:
-  NumberSourceDataModel();
+//public:
+//  NumberSourceDataModel();
 
-  virtual
-  ~NumberSourceDataModel() {}
+//  virtual
+//  ~NumberSourceDataModel() {}
 
-  static const inline QString m_caption = QStringLiteral("Number Source");
-  static const inline QString m_name = QStringLiteral("NumberSource");
+//  static const inline QString m_caption = QStringLiteral("Number Source");
+//  static const inline QString m_name = QStringLiteral("NumberSource");
 
-public:
+//public:
 
-  bool
-  captionVisible() const override
-  { return false; }
+//  bool
+//  caption_visible() const override
+//  { return false; }
 
-  const QString &caption() const override{return m_caption;}
-  const QString &name() const override{return m_name;}
+//  const QString &caption() const override{return m_caption;}
+//  const QString &name() const override{return m_name;}
 
-public:
+//public:
 
-  QJsonObject
-  save() const override;
+//  QJsonObject
+//  save() const override;
 
-  void
-  restore(QJsonObject const &p) override;
+//  void
+//  restore(QJsonObject const &p) override;
 
-public:
+//public:
 
-  unsigned int
-  nPorts(PortType portType) const override;
+//  unsigned int
+//  nb_Ports(PortType portType) const override;
 
-  const NodeDataType&
-  dataType(PortType portType, PortIndex portIndex) const override;
+//  const NodeDataType&
+//  dataType(PortType portType, PortIndex portIndex) const override;
 
-  std::shared_ptr<NodeData>
-  outData(PortIndex port) override;
+//  std::shared_ptr<NodeData>
+//  outData(PortIndex port) override;
 
-  void
-  setInData(std::shared_ptr<NodeData>, int) override
-  { }
+//  void
+//  setInData(std::shared_ptr<NodeData>, int) override
+//  { }
 
-  QWidget *
-  embeddedWidget() override { return _lineEdit; }
+//  QWidget *
+//  embeddedWidget() override { return _lineEdit; }
 
-private Q_SLOTS:
+//private Q_SLOTS:
 
-  void
-  onTextEdited(QString const &string);
+//  void
+//  onTextEdited(QString const &string);
 
-private:
+//private:
 
-  std::shared_ptr<DecimalData> _number;
+//  std::shared_ptr<DecimalData> _number;
 
-  QLineEdit * _lineEdit;
-};
+//  QLineEdit * _lineEdit;
+//};

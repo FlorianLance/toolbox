@@ -1,38 +1,38 @@
-#pragma once
+//#pragma once
 
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-using QtNodes::NodeDataType;
-using QtNodes::NodeData;
+//using QtNodes::NodeDataType;
+//using QtNodes::NodeData;
 
-/// The class can potentially incapsulate any user data which
-/// need to be transferred within the Node Editor graph
-class DecimalData : public NodeData
-{
-public:
+///// The class can potentially incapsulate any user data which
+///// need to be transferred within the Node Editor graph
+//class DecimalData : public NodeData
+//{
+//public:
 
-  DecimalData()
-    : _number(0.0)
-  {}
+//  DecimalData()
+//    : _number(0.0)
+//  {}
 
-  DecimalData(double const number)
-    : _number(number)
-  {}
+//  DecimalData(double const number)
+//    : _number(number)
+//  {}
 
-  const NodeDataType &type() const override
-  {
-      return m_type;
-  }
+//  const NodeDataType &type() const override
+//  {
+//      return m_type;
+//  }
 
-  double number() const
-  { return _number; }
+//  double number() const
+//  { return _number; }
 
-  QString numberAsText() const
-  { return QString::number(_number, 'f'); }
+//  QString numberAsText() const
+//  { return QString::number(_number, 'f'); }
 
 
-private:
+//private:
 
-static const inline NodeDataType m_type = {"decimal", "Decimal"};
-  double _number;
-};
+//static const inline NodeDataType m_type = {"decimal", "Decimal"};
+//  double _number;
+//};

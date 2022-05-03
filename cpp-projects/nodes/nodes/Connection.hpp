@@ -8,13 +8,10 @@
 // local
 #include "PortType.hpp"
 #include "NodeData.hpp"
-#include "Serializable.hpp"
 #include "ConnectionState.hpp"
 #include "ConnectionGeometry.hpp"
 #include "TypeConverter.hpp"
 #include "QUuidStdHash.hpp"
-#include "Export.hpp"
-#include "memory.hpp"
 
 class QPointF;
 
@@ -25,7 +22,7 @@ class NodeData;
 class ConnectionGraphicsObject;
 
 ///
-class NODE_EDITOR_PUBLIC Connection : public QObject, public Serializable{
+class NODE_EDITOR_PUBLIC Connection : public QObject{
 
 Q_OBJECT
 
@@ -47,9 +44,6 @@ public:
 
     ~Connection();
 
-public:
-
-    QJsonObject save() const override;
 
 public:
 

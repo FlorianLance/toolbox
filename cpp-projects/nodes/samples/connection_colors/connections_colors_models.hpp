@@ -1,138 +1,138 @@
-#pragma once
+//#pragma once
 
-#include <QtCore/QObject>
+//#include <QtCore/QObject>
 
-#include "nodes/NodeData.hpp"
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/NodeData.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-#include <memory>
+//#include <memory>
 
-using QtNodes::NodeData;
-using QtNodes::NodeDataType;
-using QtNodes::NodeDataModel;
-using QtNodes::PortType;
-using QtNodes::PortIndex;
+//using QtNodes::NodeData;
+//using QtNodes::NodeDataType;
+//using QtNodes::NodeDataModel;
+//using QtNodes::PortType;
+//using QtNodes::PortIndex;
 
-/// The class can potentially incapsulate any user data which
-/// need to be transferred within the Node Editor graph
-class MyNodeData : public NodeData
-{
-public:
+///// The class can potentially incapsulate any user data which
+///// need to be transferred within the Node Editor graph
+//class MyNodeData : public NodeData
+//{
+//public:
 
-    const NodeDataType &type() const override
-    {
-        return m_type;
-    }
+//    const NodeDataType &type() const override
+//    {
+//        return m_type;
+//    }
 
-  static const inline NodeDataType m_type = {"MyNodeData", "My Node Data"};
-};
+//  static const inline NodeDataType m_type = {"MyNodeData", "My Node Data"};
+//};
 
-class SimpleNodeData : public NodeData
-{
-public:
+//class SimpleNodeData : public NodeData
+//{
+//public:
 
-    const NodeDataType &type() const override
-    {
-        return m_type;
-    }
+//    const NodeDataType &type() const override
+//    {
+//        return m_type;
+//    }
 
-  static const inline NodeDataType m_type = {"SimpleData", "Simple Data"};
-};
+//  static const inline NodeDataType m_type = {"SimpleData", "Simple Data"};
+//};
 
-//------------------------------------------------------------------------------
+////------------------------------------------------------------------------------
 
-/// The model dictates the number of inputs and outputs for the Node.
-/// In this example it has no logic.
-class NaiveDataModel : public NodeDataModel
-{
-  Q_OBJECT
+///// The model dictates the number of inputs and outputs for the Node.
+///// In this example it has no logic.
+//class NaiveDataModel : public NodeDataModel
+//{
+//  Q_OBJECT
 
-public:
+//public:
 
-  virtual
-  ~NaiveDataModel() {}
+//  virtual
+//  ~NaiveDataModel() {}
 
-  static const inline QString m_caption = QStringLiteral("Naive Data Model");
-  static const inline QString m_name = QStringLiteral("NaiveDataModel");
-
-
-public:
-
-    const QString &caption() const override{return m_caption;}
-    const QString &name() const override{return m_name;}
+//  static const inline QString m_caption = QStringLiteral("Naive Data Model");
+//  static const inline QString m_name = QStringLiteral("NaiveDataModel");
 
 
-public:
+//public:
 
-  unsigned int
-  nPorts(PortType portType) const override
-  {
-    unsigned int result = 1;
+//    const QString &caption() const override{return m_caption;}
+//    const QString &name() const override{return m_name;}
 
-    switch (portType)
-    {
-      case PortType::In:
-        result = 2;
-        break;
 
-      case PortType::Out:
-        result = 2;
-        break;
-      case PortType::None:
-        break;
-    }
+//public:
 
-    return result;
-  }
+//  unsigned int
+//  nb_Ports(PortType portType) const override
+//  {
+//    unsigned int result = 1;
 
-  const NodeDataType &
-  dataType(PortType portType,
-           PortIndex portIndex) const override
-  {
-    switch (portType)
-    {
-      case PortType::In:
-        switch (portIndex)
-        {
-          case 0:
-            return MyNodeData().type();
-          case 1:
-            return SimpleNodeData().type();
-        }
-        break;
+//    switch (portType)
+//    {
+//      case PortType::In:
+//        result = 2;
+//        break;
 
-      case PortType::Out:
-        switch (portIndex)
-        {
-          case 0:
-            return MyNodeData().type();
-          case 1:
-            return SimpleNodeData().type();
-        }
-        break;
+//      case PortType::Out:
+//        result = 2;
+//        break;
+//      case PortType::None:
+//        break;
+//    }
 
-      case PortType::None:
-        break;
-    }
-    // FIXME: control may reach end of non-void function [-Wreturn-type]
-    return NodeData::defaultType;
-  }
+//    return result;
+//  }
 
-  std::shared_ptr<NodeData>
-  outData(PortIndex port) override
-  {
-    if (port < 1)
-      return std::make_shared<MyNodeData>();
+//  const NodeDataType &
+//  dataType(PortType portType,
+//           PortIndex portIndex) const override
+//  {
+//    switch (portType)
+//    {
+//      case PortType::In:
+//        switch (portIndex)
+//        {
+//          case 0:
+//            return MyNodeData().type();
+//          case 1:
+//            return SimpleNodeData().type();
+//        }
+//        break;
 
-    return std::make_shared<SimpleNodeData>();
-  }
+//      case PortType::Out:
+//        switch (portIndex)
+//        {
+//          case 0:
+//            return MyNodeData().type();
+//          case 1:
+//            return SimpleNodeData().type();
+//        }
+//        break;
 
-  void
-  setInData(std::shared_ptr<NodeData>, int) override
-  {
-    //
-  }
+//      case PortType::None:
+//        break;
+//    }
+//    // FIXME: control may reach end of non-void function [-Wreturn-type]
+//    return NodeData::defaultType;
+//  }
 
-  QWidget *
-  embeddedWidget() override { return nullptr; }
-};
+//  std::shared_ptr<NodeData>
+//  outData(PortIndex port) override
+//  {
+//    if (port < 1)
+//      return std::make_shared<MyNodeData>();
+
+//    return std::make_shared<SimpleNodeData>();
+//  }
+
+//  void
+//  setInData(std::shared_ptr<NodeData>, int) override
+//  {
+//    //
+//  }
+
+//  QWidget *
+//  embeddedWidget() override { return nullptr; }
+//};

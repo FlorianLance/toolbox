@@ -1,46 +1,46 @@
 
-#pragma once
+//#pragma once
 
-#include "nodes/NodeData.hpp"
-#include "nodes/FlowScene.hpp"
-#include "nodes/FlowView.hpp"
+//#include "nodes/NodeData.hpp"
+//#include "nodes/FlowScene.hpp"
+//#include "nodes/FlowView.hpp"
 
-#include <QtWidgets/QApplication>
+//#include <QtWidgets/QApplication>
 
-#include "nodes/DataModelRegistry.hpp"
+//#include "nodes/DataModelRegistry.hpp"
 
-#include "TextSourceDataModel.hpp"
-#include "TextDisplayDataModel.hpp"
+//#include "TextSourceDataModel.hpp"
+//#include "TextDisplayDataModel.hpp"
 
-using QtNodes::DataModelRegistry;
-using QtNodes::FlowView;
-using QtNodes::FlowScene;
+//using QtNodes::DataModelRegistry;
+//using QtNodes::FlowView;
+//using QtNodes::FlowScene;
 
-static std::shared_ptr<DataModelRegistry>
-example2_registerDataModels()
-{
-  auto ret = std::make_shared<DataModelRegistry>();
+//static std::shared_ptr<DataModelRegistry>
+//example2_registerDataModels()
+//{
+//  auto ret = std::make_shared<DataModelRegistry>();
 
-  ret->registerModel<TextSourceDataModel>();
+//  ret->registerModel<TextSourceDataModel>();
 
-  ret->registerModel<TextDisplayDataModel>();
+//  ret->registerModel<TextDisplayDataModel>();
 
-  return ret;
-}
+//  return ret;
+//}
 
 
-int
-example2(int argc, char *argv[])
-{
-  QApplication app(argc, argv);
+//int
+//example2(int argc, char *argv[])
+//{
+//  QApplication app(argc, argv);
 
-  FlowScene scene(example2_registerDataModels());
+//  FlowScene scene(example2_registerDataModels());
 
-  FlowView view(&scene);
+//  FlowView view(&scene);
 
-  view.setWindowTitle("Node-based flow editor");
-  view.resize(800, 600);
-  view.show();
+//  view.setWindowTitle("Node-based flow editor");
+//  view.resize(800, 600);
+//  view.show();
 
-  return app.exec();
-}
+//  return app.exec();
+//}

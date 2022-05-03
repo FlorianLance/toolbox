@@ -73,7 +73,9 @@ INCLUDEPATH += \
     $$BASE_INCLUDES \
     # local
     nodes\
-    nodes/internal\
+    nodes/internal\   
+    # sigslot
+    $$SIGSLOT_INCLUDES \
 
 ####################################### LIBRAIRIES
 

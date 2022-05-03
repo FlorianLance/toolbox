@@ -1,75 +1,75 @@
-#pragma once
+//#pragma once
 
-#include <QtCore/QObject>
-#include <QtWidgets/QLineEdit>
+//#include <QtCore/QObject>
+//#include <QtWidgets/QLineEdit>
 
-#include "TextData.hpp"
+//#include "TextData.hpp"
 
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-#include <iostream>
+//#include <iostream>
 
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeData;
-using QtNodes::NodeDataModel;
+//using QtNodes::PortType;
+//using QtNodes::PortIndex;
+//using QtNodes::NodeData;
+//using QtNodes::NodeDataModel;
 
-/// The model dictates the number of inputs and outputs for the Node.
-/// In this example it has no logic.
-class TextSourceDataModel : public NodeDataModel
-{
-  Q_OBJECT
+///// The model dictates the number of inputs and outputs for the Node.
+///// In this example it has no logic.
+//class TextSourceDataModel : public NodeDataModel
+//{
+//  Q_OBJECT
 
-public:
-  TextSourceDataModel();
+//public:
+//  TextSourceDataModel();
 
-  virtual
-  ~TextSourceDataModel() {}
+//  virtual
+//  ~TextSourceDataModel() {}
 
-  static const inline QString m_caption = QStringLiteral("Text Source");
-  static const inline QString m_name = QStringLiteral("TextSourceDataModel");
-
-
-
-public:
+//  static const inline QString m_caption = QStringLiteral("Text Source");
+//  static const inline QString m_name = QStringLiteral("TextSourceDataModel");
 
 
-    const QString &caption() const override{return m_caption;}
-  bool
-  captionVisible() const override { return false; }
 
-  static const QString&
-  Name()
-  { return m_name; }
+//public:
 
-  const QString&
-  name() const override
-  { return TextSourceDataModel::Name(); }
 
-public:
+//    const QString &caption() const override{return m_caption;}
+//  bool
+//  caption_visible() const override { return false; }
 
-  unsigned int
-  nPorts(PortType portType) const override;
+//  static const QString&
+//  Name()
+//  { return m_name; }
 
-  const NodeDataType&
-  dataType(PortType portType, PortIndex portIndex) const override;
+//  const QString&
+//  name() const override
+//  { return TextSourceDataModel::Name(); }
 
-  std::shared_ptr<NodeData>
-  outData(PortIndex port) override;
+//public:
 
-  void
-  setInData(std::shared_ptr<NodeData>, int) override
-  { }
+//  unsigned int
+//  nb_Ports(PortType portType) const override;
 
-  QWidget *
-  embeddedWidget() override { return _lineEdit; }
+//  const NodeDataType&
+//  dataType(PortType portType, PortIndex portIndex) const override;
 
-private Q_SLOTS:
+//  std::shared_ptr<NodeData>
+//  outData(PortIndex port) override;
 
-  void
-  onTextEdited(QString const &string);
+//  void
+//  setInData(std::shared_ptr<NodeData>, int) override
+//  { }
 
-private:
+//  QWidget *
+//  embeddedWidget() override { return _lineEdit; }
 
-  QLineEdit * _lineEdit;
-};
+//private Q_SLOTS:
+
+//  void
+//  onTextEdited(QString const &string);
+
+//private:
+
+//  QLineEdit * _lineEdit;
+//};

@@ -1,58 +1,58 @@
-#include "TextSourceDataModel.hpp"
+//#include "TextSourceDataModel.hpp"
 
-TextSourceDataModel::
-TextSourceDataModel()
-  : _lineEdit(new QLineEdit("Default Text"))
-{
-  connect(_lineEdit, &QLineEdit::textEdited,
-          this, &TextSourceDataModel::onTextEdited);
-}
-
-
-unsigned int
-TextSourceDataModel::
-nPorts(PortType portType) const
-{
-  unsigned int result = 1;
-
-  switch (portType)
-  {
-    case PortType::In:
-      result = 0;
-      break;
-
-    case PortType::Out:
-      result = 1;
-
-    default:
-      break;
-  }
-
-  return result;
-}
+//TextSourceDataModel::
+//TextSourceDataModel()
+//  : _lineEdit(new QLineEdit("Default Text"))
+//{
+//  connect(_lineEdit, &QLineEdit::textEdited,
+//          this, &TextSourceDataModel::onTextEdited);
+//}
 
 
-void
-TextSourceDataModel::
-onTextEdited(QString const &string)
-{
-  Q_UNUSED(string);
+//unsigned int
+//TextSourceDataModel::
+//nb_Ports(PortType portType) const
+//{
+//  unsigned int result = 1;
 
-  Q_EMIT dataUpdated(0);
-}
+//  switch (portType)
+//  {
+//    case PortType::In:
+//      result = 0;
+//      break;
+
+//    case PortType::Out:
+//      result = 1;
+
+//    default:
+//      break;
+//  }
+
+//  return result;
+//}
 
 
-const NodeDataType&
-TextSourceDataModel::
-dataType(PortType, PortIndex) const
-{
-  return TextData().type();
-}
+//void
+//TextSourceDataModel::
+//onTextEdited(QString const &string)
+//{
+//  Q_UNUSED(string);
+
+//  Q_EMIT dataUpdated(0);
+//}
 
 
-std::shared_ptr<NodeData>
-TextSourceDataModel::
-outData(PortIndex)
-{
-  return std::make_shared<TextData>(_lineEdit->text());
-}
+//const NodeDataType&
+//TextSourceDataModel::
+//dataType(PortType, PortIndex) const
+//{
+//  return TextData().type();
+//}
+
+
+//std::shared_ptr<NodeData>
+//TextSourceDataModel::
+//outData(PortIndex)
+//{
+//  return std::make_shared<TextData>(_lineEdit->text());
+//}

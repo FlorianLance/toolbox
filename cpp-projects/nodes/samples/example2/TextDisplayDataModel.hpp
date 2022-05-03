@@ -1,85 +1,85 @@
-#pragma once
+//#pragma once
 
-#include <QtCore/QObject>
-#include <QtWidgets/QLabel>
+//#include <QtCore/QObject>
+//#include <QtWidgets/QLabel>
 
-#include "TextData.hpp"
+//#include "TextData.hpp"
 
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-#include <iostream>
+//#include <iostream>
 
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeData;
-using QtNodes::NodeDataModel;
+//using QtNodes::PortType;
+//using QtNodes::PortIndex;
+//using QtNodes::NodeData;
+//using QtNodes::NodeDataModel;
 
-/// The model dictates the number of inputs and outputs for the Node.
-/// In this example it has no logic.
-class TextDisplayDataModel : public NodeDataModel
-{
-  Q_OBJECT
+///// The model dictates the number of inputs and outputs for the Node.
+///// In this example it has no logic.
+//class TextDisplayDataModel : public NodeDataModel
+//{
+//  Q_OBJECT
 
-public:
-  TextDisplayDataModel();
+//public:
+//  TextDisplayDataModel();
 
-  virtual
-  ~TextDisplayDataModel() {}
-
-
-  static const inline QString m_caption = QStringLiteral("Text Display");
-  static const inline QString m_name = QStringLiteral("TextDisplayDataModel");
+//  virtual
+//  ~TextDisplayDataModel() {}
 
 
-public:
-
-    const QString &caption() const override{return m_caption;}
-
+//  static const inline QString m_caption = QStringLiteral("Text Display");
+//  static const inline QString m_name = QStringLiteral("TextDisplayDataModel");
 
 
-  bool
-  captionVisible() const override { return false; }
+//public:
 
-  static const QString&
-  Name()
-  { return m_name; }
+//    const QString &caption() const override{return m_caption;}
 
-  const QString&
-  name() const override
-  { return TextDisplayDataModel::Name(); }
 
-public:
 
-  unsigned int
-  nPorts(PortType portType) const override;
+//  bool
+//  caption_visible() const override { return false; }
 
-  const NodeDataType&
-  dataType(PortType portType, PortIndex portIndex) const override;
+//  static const QString&
+//  Name()
+//  { return m_name; }
 
-  std::shared_ptr<NodeData>
-  outData(PortIndex port) override;
+//  const QString&
+//  name() const override
+//  { return TextDisplayDataModel::Name(); }
 
-  void
-  setInData(std::shared_ptr<NodeData> data, int) override
-  {
-    auto textData = std::dynamic_pointer_cast<TextData>(data);
+//public:
 
-    if (textData)
-    {
-      _label->setText(textData->text());
-    }
-    else
-    {
-      _label->clear();
-    }
+//  unsigned int
+//  nb_Ports(PortType portType) const override;
 
-    _label->adjustSize();
-  }
+//  const NodeDataType&
+//  dataType(PortType portType, PortIndex portIndex) const override;
 
-  QWidget *
-  embeddedWidget() override { return _label; }
+//  std::shared_ptr<NodeData>
+//  outData(PortIndex port) override;
 
-private:
+//  void
+//  setInData(std::shared_ptr<NodeData> data, int) override
+//  {
+//    auto textData = std::dynamic_pointer_cast<TextData>(data);
 
-  QLabel * _label;
-};
+//    if (textData)
+//    {
+//      _label->setText(textData->text());
+//    }
+//    else
+//    {
+//      _label->clear();
+//    }
+
+//    _label->adjustSize();
+//  }
+
+//  QWidget *
+//  embeddedWidget() override { return _label; }
+
+//private:
+
+//  QLabel * _label;
+//};

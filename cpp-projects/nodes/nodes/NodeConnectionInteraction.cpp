@@ -55,7 +55,7 @@ bool NodeConnectionInteraction::canConnect(PortIndex &portIndex, TypeConverter &
     const NodeDataType &connectionDataType = _connection->dataType(oppositePort(requiredPort));
 
     auto const   &modelTarget = _node->nodeDataModel();
-    const NodeDataType &candidateNodeDataType = modelTarget->dataType(requiredPort, portIndex);
+    const NodeDataType &candidateNodeDataType = modelTarget->port_data_type(requiredPort, portIndex);
 
     if (connectionDataType.id != candidateNodeDataType.id){
 
@@ -147,7 +147,7 @@ QPointF NodeConnectionInteraction::connectionEndScenePosition(PortType portType)
 
 QPointF NodeConnectionInteraction::nodePortScenePosition(PortType portType, PortIndex portIndex) const{
     NodeGeometry const &geom = _node->nodeGeometry();
-    QPointF p = geom.portScenePosition(portIndex, portType);
+    QPointF p = geom.port_scene_position(portIndex, portType);
     NodeGraphicsObject& ngo = _node->nodeGraphicsObject();
     return ngo.sceneTransform().map(p);
 }
@@ -156,7 +156,7 @@ PortIndex NodeConnectionInteraction::nodePortIndexUnderScenePoint(PortType portT
 
     NodeGeometry const &nodeGeom = _node->nodeGeometry();
     QTransform sceneTransform =   _node->nodeGraphicsObject().sceneTransform();
-    PortIndex portIndex = nodeGeom.checkHitScenePoint(
+    PortIndex portIndex = nodeGeom.check_hit_scene_point(
         portType,
         scenePoint,
         sceneTransform
@@ -173,6 +173,6 @@ bool NodeConnectionInteraction::nodePortIsEmpty(PortType portType, PortIndex por
         return true;
     }
 
-    const auto outPolicy = _node->nodeDataModel()->portOutConnectionPolicy(portIndex);
+    const auto outPolicy = _node->nodeDataModel()->port_out_connection_policy(portIndex);
     return ( portType == PortType::Out && outPolicy == NodeDataModel::ConnectionPolicy::Many);
 }

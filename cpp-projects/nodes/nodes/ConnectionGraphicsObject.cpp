@@ -80,7 +80,7 @@ void ConnectionGraphicsObject::move(){
             auto const &nodeGraphics = node->nodeGraphicsObject();
             auto const &nodeGeom = node->nodeGeometry();
 
-            QPointF scenePos = nodeGeom.portScenePosition(_connection.getPortIndex(portType),portType, nodeGraphics.sceneTransform());
+            QPointF scenePos = nodeGeom.port_scene_position(_connection.getPortIndex(portType),portType, nodeGraphics.sceneTransform());
 
             QTransform sceneTransform = this->sceneTransform();
             QPointF connectionPos = sceneTransform.inverted().map(scenePos);

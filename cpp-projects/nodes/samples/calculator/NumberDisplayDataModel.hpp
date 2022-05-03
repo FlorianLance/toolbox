@@ -1,74 +1,74 @@
-#pragma once
+//#pragma once
 
-#include <QtCore/QObject>
-#include <QtWidgets/QLabel>
+//#include <QtCore/QObject>
+//#include <QtWidgets/QLabel>
 
-#include "nodes/NodeDataModel.hpp"
+//#include "nodes/NodeDataModel.hpp"
 
-#include <iostream>
+//#include <iostream>
 
-using QtNodes::PortType;
-using QtNodes::PortIndex;
-using QtNodes::NodeData;
-using QtNodes::NodeDataType;
-using QtNodes::NodeDataModel;
-using QtNodes::NodeValidationState;
+//using QtNodes::PortType;
+//using QtNodes::PortIndex;
+//using QtNodes::NodeData;
+//using QtNodes::NodeDataType;
+//using QtNodes::NodeDataModel;
+//using QtNodes::NodeValidationState;
 
-/// The model dictates the number of inputs and outputs for the Node.
-/// In this example it has no logic.
-class NumberDisplayDataModel : public NodeDataModel
-{
-  Q_OBJECT
+///// The model dictates the number of inputs and outputs for the Node.
+///// In this example it has no logic.
+//class NumberDisplayDataModel : public NodeDataModel
+//{
+//  Q_OBJECT
 
-public:
-  NumberDisplayDataModel();
+//public:
+//  NumberDisplayDataModel();
 
-  virtual
-  ~NumberDisplayDataModel() {}
+//  virtual
+//  ~NumberDisplayDataModel() {}
 
-  static const inline QString m_caption = QStringLiteral("Result");
-  static const inline QString m_name = QStringLiteral("Result");
-
-
-public:
-
-    const QString &caption() const override{return m_caption;}
-    const QString &name() const override{return m_name;}
+//  static const inline QString m_caption = QStringLiteral("Result");
+//  static const inline QString m_name = QStringLiteral("Result");
 
 
-  bool
-  captionVisible() const override
-  { return false; }
+//public:
+
+//    const QString &caption() const override{return m_caption;}
+//    const QString &name() const override{return m_name;}
 
 
-public:
+//  bool
+//  caption_visible() const override
+//  { return false; }
 
-  unsigned int
-  nPorts(PortType portType) const override;
 
-  const NodeDataType&
-  dataType(PortType portType,
-           PortIndex portIndex) const override;
+//public:
 
-  std::shared_ptr<NodeData>
-  outData(PortIndex port) override;
+//  unsigned int
+//  nb_Ports(PortType portType) const override;
 
-  void
-  setInData(std::shared_ptr<NodeData> data, int) override;
+//  const NodeDataType&
+//  dataType(PortType portType,
+//           PortIndex portIndex) const override;
 
-  QWidget *
-  embeddedWidget() override { return _label; }
+//  std::shared_ptr<NodeData>
+//  outData(PortIndex port) override;
 
-  NodeValidationState
-  validationState() const override;
+//  void
+//  setInData(std::shared_ptr<NodeData> data, int) override;
 
-  QString
-  validationMessage() const override;
+//  QWidget *
+//  embeddedWidget() override { return _label; }
 
-private:
+//  NodeValidationState
+//  validation_state() const override;
 
-  NodeValidationState modelValidationState = NodeValidationState::Warning;
-  QString modelValidationError = QStringLiteral("Missing or incorrect inputs");
+//  QString
+//  validationMessage() const override;
 
-  QLabel * _label;
-};
+//private:
+
+//  NodeValidationState modelValidationState = NodeValidationState::Warning;
+//  QString modelValidationError = QStringLiteral("Missing or incorrect inputs");
+
+//  QLabel * _label;
+//};

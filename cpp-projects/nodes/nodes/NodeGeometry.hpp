@@ -20,36 +20,36 @@ class Node;
 class NODE_EDITOR_PUBLIC NodeGeometry{
 public:
 
-    NodeGeometry(std::unique_ptr<NodeDataModel> const &dataModel);
+    NodeGeometry(const std::unique_ptr<NodeDataModel> &dataModel);
 
 public:
 
-    unsigned int height() const { return _height; }
-    void setHeight(unsigned int h) { _height = h; }
+    constexpr unsigned int height() const noexcept{ return _height; }
+    constexpr void set_height(unsigned int h) noexcept{ _height = h; }
 
-    unsigned int width() const { return _width; }
-    void setWidth(unsigned int w) { _width = w; }
+    constexpr unsigned int width() const noexcept{ return _width; }
+    constexpr void set_width(unsigned int w) noexcept{ _width = w; }
 
-    unsigned int entryHeight() const { return _entryHeight; }
-    void setEntryHeight(unsigned int h) {
+    constexpr unsigned int entry_height() const noexcept { return _entryHeight; }
+    constexpr void set_entry_height(unsigned int h) noexcept{
         _entryHeight = h;
         update_step();
     }
 
-    constexpr unsigned int entryWidth() const noexcept { return _entryWidth;}
-    constexpr void setEntryWidth(unsigned int w) noexcept {_entryWidth = w;}
+    constexpr unsigned int entry_width() const noexcept { return _entryWidth;}
+    constexpr void set_entry_width(unsigned int w) noexcept {_entryWidth = w;}
 
     constexpr unsigned int spacing() const  noexcept{ return _spacing; }
-    constexpr void setSpacing(unsigned int s) noexcept {
+    constexpr void set_spacing(unsigned int s) noexcept {
         _spacing = s;
         update_step();
     }
 
-    bool hovered() const { return _hovered; }
-    void setHovered(unsigned int h) { _hovered = h; }
+    constexpr bool hovered() const noexcept { return _hovered; }
+    constexpr void set_hovered(unsigned int h) noexcept{ _hovered = h; }
 
-    unsigned int nSources() const;
-    unsigned int nSinks() const;
+    unsigned int nb_sources() const;
+    unsigned int nb_sinks() const;
 
     QPointF const& draggingPos() const { return _draggingPos; }
     void setDraggingPosition(QPointF const& pos) { _draggingPos = pos; }
@@ -60,25 +60,22 @@ public:
     QRectF boundingRect() const;
 
     /// Updates size unconditionally
-    void recalculateSize() const;
+    void recalculate_size() const;
 
     /// Updates size if the QFontMetrics is changed
-    void recalculateSize(QFont const &font) const;
+    void recalculate_size(const QFont &font) const;
 
-    // TODO removed default QTransform()
-    QPointF portScenePosition(PortIndex index, PortType portType, QTransform const & t = QTransform()) const;
-
-    PortIndex checkHitScenePoint(PortType portType, QPointF point, QTransform const & t = QTransform()) const;
-
-    QRect resizeRect() const;
+    QPointF port_scene_position(PortIndex index, PortType portType, const QTransform &t = defaultTr) const;
+    PortIndex check_hit_scene_point(PortType portType, QPointF point, const QTransform &t = defaultTr) const;
+    QRect resize_rect() const;
 
     /// Returns the position of a widget on the Node surface
-    QPointF widgetPosition() const;
+    QPointF widget_position() const;
 
     /// Returns the maximum height a widget can be without causing the node to grow.
-    int equivalentWidgetHeight() const;
+    int equivalent_widget_height() const;
     unsigned int validationHeight() const;
-    unsigned int validationWidth() const;
+    unsigned int validation_width() const;
 
     static QPointF calculateNodePositionBetweenNodePorts(
         PortIndex targetPortIndex, PortType targetPort, Node* targetNode,
@@ -89,13 +86,13 @@ public:
 private:
 
     constexpr void update_step() noexcept{
-        _step = _entryHeight + _spacing;
+        _step     = _entryHeight + _spacing;
         _halfStep = _step/2;
     }
 
-    unsigned int captionHeight() const;
-    unsigned int captionWidth() const;
-    unsigned int portWidth(PortType portType) const;
+    unsigned int caption_height() const;
+    unsigned int caption_width() const;
+    unsigned int port_width(PortType portType) const;
 
 private:
 
@@ -120,9 +117,13 @@ private:
 
     QPointF _draggingPos;
 
-    std::unique_ptr<NodeDataModel> const &_dataModel;
+    const std::unique_ptr<NodeDataModel> &_dataModel;
 
-    mutable QFontMetrics _fontMetrics;
-    mutable QFontMetrics _boldFontMetrics;
+    mutable QFontMetrics _entryFontMetrics;
+    mutable QFontMetrics _captionFontMetrics;
+    mutable QFontMetrics _validationFontMetrics;
+
+    static constexpr unsigned int rectSize = 7;
+    static inline QTransform defaultTr = QTransform();
 };
 }

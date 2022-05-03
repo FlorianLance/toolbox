@@ -13,8 +13,6 @@
 #include "NodeData.hpp"
 #include "NodeGraphicsObject.hpp"
 #include "ConnectionGraphicsObject.hpp"
-#include "Serializable.hpp"
-#include "memory.hpp"
 
 namespace QtNodes{
 
@@ -23,7 +21,7 @@ class ConnectionState;
 class NodeGraphicsObject;
 class NodeDataModel;
 
-class NODE_EDITOR_PUBLIC Node : public QObject , public Serializable {
+class NODE_EDITOR_PUBLIC Node : public QObject{
   Q_OBJECT
 
 public:
@@ -31,11 +29,6 @@ public:
     /// NodeDataModel should be an rvalue and is moved into the Node
     Node(std::unique_ptr<NodeDataModel> && dataModel);
     virtual ~Node();
-
-public:
-
-    QJsonObject save() const override;
-    void restore(QJsonObject const &json) override;
 
 public:
 
@@ -62,11 +55,11 @@ public:
 public Q_SLOTS: // data propagation
 
     /// Propagates incoming data to the underlying model.
-    void propagateData(std::shared_ptr<NodeData> nodeData,PortIndex inPortIndex) const;
+    void propagateData(std::shared_ptr<QtNodes::NodeData> nodeData,QtNodes::PortIndex inPortIndex) const;
 
     /// Fetches data from model's OUT #index port
     /// and propagates it to the connection
-    void onDataUpdated(PortIndex index);
+    void onDataUpdated(QtNodes::PortIndex index);
 
     /// update the graphic part if the size of the embeddedwidget changes
     void onNodeSizeUpdated();

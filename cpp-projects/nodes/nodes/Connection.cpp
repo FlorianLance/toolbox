@@ -70,36 +70,6 @@ Connection::~Connection(){
     }
 }
 
-QJsonObject Connection::save() const{
-
-    QJsonObject connectionJson;
-    if (_inNode && _outNode){
-
-        connectionJson["in_id"] = _inNode->id().toString();
-        connectionJson["in_index"] = _inPortIndex;
-
-        connectionJson["out_id"] = _outNode->id().toString();
-        connectionJson["out_index"] = _outPortIndex;
-
-        if (_converter){
-            auto getTypeJson = [this](PortType type){
-                QJsonObject typeJson;
-                const NodeDataType &nodeType = this->dataType(type);
-                typeJson["id"] = nodeType.id;
-                typeJson["name"] = nodeType.name;
-
-                return typeJson;
-            };
-
-            QJsonObject converterTypeJson;
-            converterTypeJson["in"] = getTypeJson(PortType::In);
-            converterTypeJson["out"] = getTypeJson(PortType::Out);
-            connectionJson["converter"] = converterTypeJson;
-        }
-    }
-
-    return connectionJson;
-}
 
 QUuid Connection::id() const{
     return _uid;
@@ -152,7 +122,7 @@ void Connection::setGraphicsObject(std::unique_ptr<ConnectionGraphicsObject>&& g
         QTransform nodeSceneTransform =
         node->nodeGraphicsObject().sceneTransform();
 
-        QPointF pos = node->nodeGeometry().portScenePosition(attachedPortIndex,
+        QPointF pos = node->nodeGeometry().port_scene_position(attachedPortIndex,
         attachedPort,
         nodeSceneTransform);
 
@@ -288,7 +258,7 @@ const NodeDataType &Connection::dataType(PortType portType) const{
 
         auto const & model = (portType == PortType::In) ? _inNode->nodeDataModel() : _outNode->nodeDataModel();
         PortIndex index = (portType == PortType::In) ? _inPortIndex :_outPortIndex;
-        return model->dataType(portType, index);
+        return model->port_data_type(portType, index);
 
     }else{
 
@@ -305,7 +275,7 @@ const NodeDataType &Connection::dataType(PortType portType) const{
 
         if (validNode){
             auto const &model = validNode->nodeDataModel();
-            return model->dataType(portType, index);
+            return model->port_data_type(portType, index);
         }
     }
 
