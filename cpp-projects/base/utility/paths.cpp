@@ -30,8 +30,12 @@
 // std
 #include <filesystem>
 
+
 using namespace tool;
 using namespace std::filesystem;
+
+
+// https://stackoverflow.com/questions/1528298/get-path-of-executable
 
 void Paths::initialize(char *argv[]){
 
@@ -78,4 +82,5 @@ std::string Paths::get_shader(std::string_view name, std::string_view ext){
     }
     return shaderPath;
 }
+
 

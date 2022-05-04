@@ -33,6 +33,8 @@
 namespace tool{
 
 struct Paths{
+
+
     static void initialize(char *argv[]);
     static inline std::string executable = "";
     static inline std::string applicationDir = "";
@@ -41,11 +43,15 @@ struct Paths{
 
     static inline std::optional<std::string> dataDir = "";
     static inline std::string logsDir = "./";
-    static inline std::optional<std::string> configDir = "";
+
+    static inline std::optional<std::string> configDir      = "";
+
 
     static std::string get_shader(std::string_view name, std::string_view ext);
 
     static constexpr std::string_view sep = "/";
+
+
 
 };
 

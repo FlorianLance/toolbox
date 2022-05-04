@@ -58,7 +58,12 @@ struct Interface{
     static std::vector<Interface> list_local_interfaces(Protocol protocol);
 };
 
-
+struct NetworkInfos{
+    std::string readingAdress;
+    int readingPort;
+    std::string sendingAdress;
+    int sendingPort;
+};
 
 
 }

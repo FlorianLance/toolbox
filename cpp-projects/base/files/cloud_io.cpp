@@ -29,13 +29,14 @@
 
 // local
 #include "utility/logger.hpp"
+#include "utility/format.hpp"
 
 using namespace tool::files;
 
 bool CloudIO::open_file(const std::string &path, std::ofstream &file){
     file.open(path);
     if(!file.is_open()){
-        Logger::error(std::format("[CloudIO::save_cloud] Cannot open file from path {}.\n", path));
+        Logger::error(fmt("[CloudIO::save_cloud] Cannot open file from path {}.\n", path));
         return false;
     }
     return true;
