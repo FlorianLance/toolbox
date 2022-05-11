@@ -37,35 +37,38 @@ namespace tool::ex{
 
 using namespace std::literals::string_view_literals;
 
-
 struct RowId{int v;};
-struct UiElementKey{int v;};
-struct SetKey{int v;};
-struct ActionKey{int v;};
-struct ConfigKey{int v;};
-struct IntervalKey{int v;};
-struct TimelineKey{int v;};
-struct ConditionKey{int v;};
-struct ElementKey{int v;};
-struct ComponentKey{int v;};
-struct ConnectionKey{int v;};
-struct ConnectorKey{int v;};
 
-[[maybe_unused]] static bool operator==(const UiElementKey &l, const UiElementKey &r){
-    return  (l.v == r.v);
-}
-[[maybe_unused]] static bool operator==(const ComponentKey &l, const ComponentKey &r){
-    return  (l.v == r.v);
-}
-[[maybe_unused]] static bool operator==(const SetKey &l, const SetKey &r){
-    return  (l.v == r.v);
-}
-[[maybe_unused]] static bool operator==(const ElementKey &l, const ElementKey &r){
-    return  (l.v == r.v);
-}
-[[maybe_unused]] static bool operator==(const ConditionKey &l, const ConditionKey &r){
-    return  (l.v == r.v);
-}
+struct Key{
+    int v;
+    bool operator< (const Key& k) const{return this->v < k.v;}
+};
+[[maybe_unused]] static bool operator==(const Key &l, const Key &r){return  (l.v == r.v);}
+
+struct UiElementKey     : public Key{};
+struct SetKey           : public Key{};
+struct ActionKey        : public Key{};
+struct ConfigKey        : public Key{};
+struct IntervalKey      : public Key{};
+struct TimelineKey      : public Key{};
+struct ConditionKey     : public Key{};
+struct ElementKey       : public Key{};
+struct ComponentKey     : public Key{};
+struct ConnectionKey    : public Key{};
+struct ConnectorKey     : public Key{};
+
+//[[maybe_unused]] static bool operator==(const UiElementKey &l, const UiElementKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const SetKey &l, const SetKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const ActionKey &l, const ActionKey &r){return  (l.v == r.v);};
+//[[maybe_unused]] static bool operator==(const ConfigKey &l, const ConfigKey &r){return  (l.v == r.v);};
+//[[maybe_unused]] static bool operator==(const IntervalKey &l, const IntervalKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const TimelineKey &l, const TimelineKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const ConditionKey &l, const ConditionKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const ElementKey &l, const ElementKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const ComponentKey &l, const ComponentKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const ConnectionKey &l, const ConnectionKey &r){return  (l.v == r.v);}
+//[[maybe_unused]] static bool operator==(const ConnectorKey &l, const ConnectorKey &r){return  (l.v == r.v);}
+
 
 class IdKey{
 
@@ -76,19 +79,15 @@ public :
         SizeEnum
     };
 
-    IdKey() = delete;
-    IdKey(Type type, int id =-1);
-
-    constexpr int operator()() const {
-        return m_id;
-    }    
-
-
     using TypeStr = std::string_view;
     using TType = std::tuple<Type, TypeStr>;
 
+    IdKey() = delete;
+    IdKey(Type type, int id =-1);
 
+    constexpr int operator()() const noexcept {return m_id;}
     constexpr TypeStr type_name() const;
+
     static constexpr TypeStr to_string(IdKey::Type t) {
         return types.at<0,1>(t);
     }
@@ -131,24 +130,14 @@ private:
     Type m_type;
     int m_id = -1;
 };
+
 }
 
 namespace std{
-
-template<>
-class hash<tool::ex::UiElementKey>{
-public:
-    size_t operator()(tool::ex::UiElementKey const& k) const{
-         return std::hash<int>{}(k.v);
-    }
-};
-
-template<>
-class hash<tool::ex::ComponentKey>{
-public:
-    size_t operator()(tool::ex::ComponentKey const& k) const{
-         return std::hash<int>{}(k.v);
-    }
-};
+template<> class hash<tool::ex::Key>{public:size_t operator()(tool::ex::Key const& k) const{return std::hash<int>{}(k.v);}};
+template<> class hash<tool::ex::UiElementKey>{public:size_t operator()(tool::ex::UiElementKey const& k) const{return std::hash<int>{}(k.v);}};
+template<> class hash<tool::ex::ComponentKey>{public:size_t operator()(tool::ex::ComponentKey const& k) const{return std::hash<int>{}(k.v);}};
+template<> class hash<tool::ex::ConfigKey>{public:size_t operator()(tool::ex::ConfigKey const& k) const{return std::hash<int>{}(k.v);}};
 }
+
 
