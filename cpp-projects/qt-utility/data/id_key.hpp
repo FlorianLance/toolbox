@@ -56,19 +56,7 @@ struct ElementKey       : public Key{};
 struct ComponentKey     : public Key{};
 struct ConnectionKey    : public Key{};
 struct ConnectorKey     : public Key{};
-
-//[[maybe_unused]] static bool operator==(const UiElementKey &l, const UiElementKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const SetKey &l, const SetKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const ActionKey &l, const ActionKey &r){return  (l.v == r.v);};
-//[[maybe_unused]] static bool operator==(const ConfigKey &l, const ConfigKey &r){return  (l.v == r.v);};
-//[[maybe_unused]] static bool operator==(const IntervalKey &l, const IntervalKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const TimelineKey &l, const TimelineKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const ConditionKey &l, const ConditionKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const ElementKey &l, const ElementKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const ComponentKey &l, const ComponentKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const ConnectionKey &l, const ConnectionKey &r){return  (l.v == r.v);}
-//[[maybe_unused]] static bool operator==(const ConnectorKey &l, const ConnectorKey &r){return  (l.v == r.v);}
-
+struct ResourceKey     : public Key{};
 
 class IdKey{
 
@@ -83,14 +71,14 @@ public :
     using TType = std::tuple<Type, TypeStr>;
 
     IdKey() = delete;
-    IdKey(Type type, int id =-1);
+    IdKey(Type type, int id = -1);
+
+    ~IdKey();
 
     constexpr int operator()() const noexcept {return m_id;}
     constexpr TypeStr type_name() const;
 
-    static constexpr TypeStr to_string(IdKey::Type t) {
-        return types.at<0,1>(t);
-    }
+    static constexpr TypeStr to_string(IdKey::Type t) {return types.at<0,1>(t);}
 
     static void reset();
 
@@ -112,20 +100,39 @@ private:
         {Type::Connector,          "Connector"sv},
         {Type::Resource,           "Resource"sv},
         {Type::Set,                "Set"sv},
-
     }};
 
+    static inline std::unordered_map<Type,int> currentId = {
+        {Type::UiItemArgument,     0},
+        {Type::Action,             0},
+        {Type::Component,          0},
+        {Type::Condition,          0},
+        {Type::Config,             0},
+        {Type::Connection,         0},
+        {Type::Element,            0},
+        {Type::Interval,           0},
+        {Type::Timeline,           0},
+        {Type::ButtonElement,      0},
+        {Type::Connector,          0},
+        {Type::Resource,           0},
+        {Type::Set,                0},
+    };
 
-    int &current_id(){
-        return currentId[m_type];
-    }
-
-    std::unordered_set<int> &current_set(){        
-        return keys[m_type];
-    }
-
-    static inline std::unordered_map<Type,int> currentId = {};
-    static inline std::unordered_map<Type,std::unordered_set<int>> keys = {};
+    static inline std::unordered_map<Type,std::unordered_set<int>> keys = {
+        {Type::UiItemArgument,     {}},
+        {Type::Action,             {}},
+        {Type::Component,          {}},
+        {Type::Condition,          {}},
+        {Type::Config,             {}},
+        {Type::Connection,         {}},
+        {Type::Element,            {}},
+        {Type::Interval,           {}},
+        {Type::Timeline,           {}},
+        {Type::ButtonElement,      {}},
+        {Type::Connector,          {}},
+        {Type::Resource,           {}},
+        {Type::Set,                {}},
+    };
 
     Type m_type;
     int m_id = -1;

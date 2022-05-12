@@ -203,7 +203,7 @@ Arg Arg::generate_non_ui_arg(QString value, QString separator, QString name){
     return arg;
 }
 
-Arg Arg::copy_with_new_element_id(const Arg &argToCopy){
+Arg Arg::copy(const Arg &argToCopy){
     Arg arg;
     arg.name               = argToCopy.name;
     arg.m_associatedUiType = argToCopy.m_associatedUiType;
@@ -211,7 +211,7 @@ Arg Arg::copy_with_new_element_id(const Arg &argToCopy){
     arg.m_separator        = argToCopy.m_separator;
     arg.m_sizes            = argToCopy.m_sizes;
     arg.generator          = argToCopy.generator;
-    arg.m_unityType        = argToCopy.m_unityType;
+    arg.m_unityType        = argToCopy.m_unityType;    
     return arg;
 }
 

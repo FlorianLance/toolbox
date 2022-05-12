@@ -37,34 +37,52 @@ using namespace tool::ex;
 IdKey::IdKey(IdKey::Type type, int id) : m_type(type){
 
     if(id == -1){
-        m_id = current_id()++;
+        m_id = currentId[m_type];
+        currentId[m_type]++;
     }else{
         m_id = id;
-        if(id >= current_id()){
-            current_id() = id+1;
+        if(m_id >= currentId[m_type]){
+            currentId[m_type] = m_id + 1;
         }
     }
 
-    auto &set = current_set();
-    if(set.count(m_id) != 0){
-        if(m_type != Type::UiItemArgument && m_type != Type::Element && m_type != Type::Interval){// && m_type) != Type::Connector){
-            QtLogger::error(QSL("Id of type ") % from_view(type_name()) % QSL(" already exists: ") % QString::number(m_id));
-        }
+    if(keys[m_type].count(m_id) == 0){
+        keys[m_type].insert(m_id);
     }else{
-        set.insert(m_id);
+
+        if(m_type != Type::UiItemArgument && m_type != Type::Element && m_type != Type::Interval){
+
+            int idToTest = 0;
+            while(keys[m_type].count(idToTest) == 0){
+                ++idToTest;
+            }
+            keys[m_type].insert(m_id = idToTest);
+
+//            QtLogger::error(QSL("Id [") % QString::number(m_id) % QSL("] of type [") % from_view(type_name()) % QSL("] already exists:."));
+        }
     }
+
+}
+
+IdKey::~IdKey(){
+
+//    if(m_type != Type::UiItemArgument && m_type != Type::Element && m_type != Type::Interval){
+//        if(keys[m_type].contains(m_id)){
+//            keys[m_type].erase(m_id);
+//        }else{
+//            QtLogger::error(QSL("Id [") % QString::number(m_id) % QSL("] of type [") % from_view(type_name()) % QSL("] cannot be removed from set."));
+//        }
+//    }
 }
 
 void IdKey::reset(){
 
-    currentId.clear();
     for (auto& p : types.data) {
         currentId[std::get<0>(p)] = 0;
     }
 
-    keys.clear();
     for (auto& p : types.data) {
-        keys[std::get<0>(p)] = {};
+        keys[std::get<0>(p)].clear();
     }
 }
 

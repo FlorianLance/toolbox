@@ -56,9 +56,7 @@ struct Generator{
     std::optional<QString> step     = std::nullopt;
 };
 
-struct Arg{   
-
-    Arg() = default;
+struct Arg{
 
     // generate
     static Arg generate_item_ui_arg(QString name, UiType associatedUiType, bool hasGenerator, int generatorOrder);
@@ -67,7 +65,7 @@ struct Arg{
     static Arg generate_non_ui_arg(QString value, QString separator, QString name);
 
     // copy
-    static Arg copy_with_new_element_id(const Arg &argToCopy);   
+    static Arg copy(const Arg &argToCopy);
 
     inline int count() const {return m_value.count(m_separator)+1;}
 
@@ -98,7 +96,6 @@ struct Arg{
         init_from_curve_str(str::Convertor::curve_to_str(xCoords,yCoords,sep), sep);
     }
 
-//    void init_from_unknow(UiElementKey key, QString v);
     void init_from_unknow(QString v);
     void init_from(QString v);
     void init_from(QStringList list, QString sep = "|");
