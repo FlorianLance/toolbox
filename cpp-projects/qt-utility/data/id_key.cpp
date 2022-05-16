@@ -66,6 +66,14 @@ IdKey::IdKey(IdKey::Type type, int id) : m_type(type){
 
 IdKey::~IdKey(){
 
+    if(m_type == Type::Component || m_type == Type::Condition || m_type == Type::Config){
+        if(keys[m_type].contains(m_id)){
+            keys[m_type].erase(m_id);
+        }else{
+            QtLogger::error(QSL("Id [") % QString::number(m_id) % QSL("] of type [") % from_view(type_name()) % QSL("] cannot be removed from set."));
+        }
+    }
+
 //    if(m_type != Type::UiItemArgument && m_type != Type::Element && m_type != Type::Interval){
 //        if(keys[m_type].contains(m_id)){
 //            keys[m_type].erase(m_id);

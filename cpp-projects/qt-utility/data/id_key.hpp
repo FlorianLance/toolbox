@@ -70,9 +70,8 @@ public :
     using TypeStr = std::string_view;
     using TType = std::tuple<Type, TypeStr>;
 
-    IdKey() = delete;
+    IdKey()= default;
     IdKey(Type type, int id = -1);
-
     ~IdKey();
 
     constexpr int operator()() const noexcept {return m_id;}
