@@ -155,7 +155,6 @@ void PointMeshData::render_patches() const{
 }
 
 void PointMeshData::clean(){
-    Logger::message("[pmdc]");
     vao.clean();
     pointsB.clean();
     colorsB.clean();

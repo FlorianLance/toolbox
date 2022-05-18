@@ -89,6 +89,8 @@ public :
     static void set_source(Source source){m_source = source;}
     static Source current_source(){return m_source;}
 
+    static void debug_display();
+
 private:
 
     static constexpr TupleArray<Type::SizeEnum,TType> m_types ={{
@@ -98,7 +100,7 @@ private:
         {Type::Condition,          "Condition"sv},
         {Type::Config,             "Config"sv},
         {Type::Connection,         "Connection"sv},
-        {Type::FlowElement,            "Element"sv},
+        {Type::FlowElement,        "Element"sv},
         {Type::Connector,          "Connector"sv},
         {Type::Resource,           "Resource"sv},
         {Type::Set,                "Resource"sv},
@@ -111,7 +113,7 @@ private:
         {Type::Condition,          {0,0}},
         {Type::Config,             {0,0}},
         {Type::Connection,         {0,0}},
-        {Type::FlowElement,            {0,0}},
+        {Type::FlowElement,        {0,0}},
         {Type::Connector,          {0,0}},
         {Type::Resource,           {0,0}},
         {Type::Set,                {0,0}},
@@ -124,7 +126,7 @@ private:
         {Type::Condition,          {}},
         {Type::Config,             {}},
         {Type::Connection,         {}},
-        {Type::FlowElement,            {}},
+        {Type::FlowElement,        {}},
         {Type::Connector,          {}},
         {Type::Resource,           {}},
         {Type::Set,                {}},

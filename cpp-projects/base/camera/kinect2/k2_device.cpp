@@ -1003,8 +1003,7 @@ void K2Device::post_computing_color_data(){
 
                 auto color = (*m_p->colorData)[m_p->indicesDepthToColor[id]];
 
-                // test euclidian distance
-
+                // euclidian distance
                 auto delta = sqrt(
                     (color[0]-p.filterColor[0])*(color[0]-p.filterColor[0]) +
                     (color[1]-p.filterColor[1])*(color[1]-p.filterColor[1]) +
@@ -1014,20 +1013,6 @@ void K2Device::post_computing_color_data(){
                     depth[id].z() = k2_invalid_value;
                     return;
                 }
-
-
-//                if(abs(static_cast<int>(color.x())-static_cast<int>(p.filterColor.x())) > p.maxDiffColor.x()){
-//                    depth[id].z() = kinect2_invalid_value;
-//                    return;
-//                }
-//                if(abs(static_cast<int>(color.y())-static_cast<int>(p.filterColor.y())) > p.maxDiffColor.y()){
-//                    depth[id].z() = kinect2_invalid_value;
-//                    return;
-//                }
-//                if(abs(static_cast<int>(color.z())-static_cast<int>(p.filterColor.z())) > p.maxDiffColor.z()){
-//                    depth[id].z() = kinect2_invalid_value;
-//                    return;
-//                }
             }
         });
     }

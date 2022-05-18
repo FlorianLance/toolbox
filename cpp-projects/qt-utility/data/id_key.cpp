@@ -96,6 +96,42 @@ void IdKey::reset(){
     }
 }
 
+void IdKey::debug_display(){
+    QtLogger::message("[START ################# IdKeys::debug_display]");
+    QtLogger::message("Current id:");
+    for(const auto &pId : m_currentId){
+        QtLogger::message(QSL("Type: [") % from_view(to_string(pId.first)) %
+            QSL("] Id: [c:") % QString::number(pId.second[0]) % QSL("|i:") % QString::number(pId.second[1]) % QSL("]") );
+    }
+    QtLogger::message("Set size:");
+    for(const auto &pId : m_keys){
+
+        int maxC = -10;
+        int minC = 100000000;
+        int maxI = -10;
+        int minI = 100000000;
+        for(const auto &val : pId.second[0]){
+            if(val < minC){
+                minC = val;
+            }else if (val > maxC){
+                maxC = val;
+            }
+        }
+        for(const auto &val : pId.second[1]){
+            if(val < minI){
+                minI = val;
+            }else if (val > maxI){
+                maxI = val;
+            }
+        }
+        QtLogger::message(QSL("Type: [") % from_view(to_string(pId.first)) %
+            QSL("] Size: [c:") % QString::number(pId.second[0].size()) % QSL("|i:") % QString::number(pId.second[1].size()) %
+            QSL("] Min: [c:") % QString::number(minC) % QSL("|i:") %QString::number(minI) %
+            QSL("] Max: [c:") % QString::number(maxC) % QSL("|i:") %QString::number(maxI) % QSL("]"));
+    }
+    QtLogger::message("[END ################# IdKeys::debug_display]");
+}
+
 constexpr IdKey::TypeStr IdKey::type_name() const {
     return to_string(m_type);
 }

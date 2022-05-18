@@ -99,16 +99,16 @@ GrabberParametersW::GrabberParametersW(){
     // ## size
     cameraParametersElements << ui.sbMinH << ui.sbMaxH << ui.sbMinW << ui.sbMaxW;
     // ## color
-    cameraParametersElements << ui.sbRFiltered << ui.sbGFiltered << ui.sbBFiltered << ui.cbFilterDepthWithColor << ui.sbMaxDiffR << ui.sbMaxDiffG << ui.sbMaxDiffB;
+    cameraParametersElements << ui.sbRFiltered << ui.sbGFiltered << ui.sbBFiltered << ui.cbFilterDepthWithColor << ui.sbMaxDiffR;
     cameraParametersElements << ui.dsbYF << ui.dsbUF << ui.dsbVF;
     cameraParametersElements << ui.sbJpegCompressionRate;
     // ## infra
     cameraParametersElements << ui.sbMinInfra << ui.sbMaxInfra << ui.sbInfraMinRange << ui.sbInfraMaxRange << ui.cbInfraBinary << ui.cbInfraInvert;
     // ## depth
-    cameraParametersElements << ui.cbEnableSmoothing << ui.cbErosion << ui.cbTemporal << ui.sbSmoothingKernelSize;
+    cameraParametersElements << ui.cbErosion << ui.cbTemporal ;
     cameraParametersElements << ui.sbSizeKernelErode << ui.sbMinErosionValue;
-    cameraParametersElements << ui.sbMinNeighboursNb << ui.sbMinNeighboursLoops <<ui.dsbMinDepth << ui.dsbMaxDepth << ui.dsbLocalDiff << ui.cbSmoothingMethod << ui.cbErosionType;
-    cameraParametersElements << ui.dsbOffsetAfterMin << ui.dsbVMin << ui.dsbVMax << ui.dsbGMin;
+    cameraParametersElements << ui.sbMinNeighboursNb << ui.sbMinNeighboursLoops << ui.dsbMinDepth << ui.dsbMaxDepth << ui.dsbLocalDiff << ui.cbErosionType;
+    cameraParametersElements << ui.dsbOffsetAfterMin << ui.dsbVMin;
     // # display parameters -> this
     connect(ui.cbDisplayData,          &QCheckBox::toggled,                                this, &GrabberParametersW::set_display_state_signal);
     // ## model
@@ -220,8 +220,7 @@ void GrabberParametersW::init_force_all_cameras_calibration(){
     w_blocking(ui.sbGFiltered)->setValue(220);
     w_blocking(ui.sbBFiltered)->setValue(60);
     w_blocking(ui.sbMaxDiffR)->setValue(50);
-    w_blocking(ui.sbMaxDiffG)->setValue(65);
-    w_blocking(ui.sbMaxDiffB)->setValue(40);
+
     w_blocking(ui.dsbMaxDepth)->setValue(2.5);
     w_blocking(ui.cbTemporal)->setChecked(false);
     w_blocking(ui.cbErosion)->setChecked(false);
@@ -241,7 +240,7 @@ void GrabberParametersW::update_writing_connection_state(bool state){
 
 void GrabberParametersW::open_camera(K2FrameRequest frameMode){
 
-    emit set_display_state_signal(false);
+//    emit set_display_state_signal(false);
     emit set_data_state_signal(false);
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
 
@@ -256,7 +255,7 @@ void GrabberParametersW::open_camera(K2FrameRequest frameMode){
 void GrabberParametersW::close_camera(){
 
     emit set_display_state_signal(false);
-    emit set_data_state_signal(false);
+//    emit set_data_state_signal(false);
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
 
     w_blocking(ui.rbDoNothing)->setChecked(true);
@@ -281,8 +280,6 @@ void GrabberParametersW::update_ui_settings(K2Settings s){
     w_blocking(ui.sbBFiltered)->setValue(s.filterColor.z());
     w_blocking(ui.cbFilterDepthWithColor)->setChecked(s.filterDepthWithColor);
     w_blocking(ui.sbMaxDiffR)->setValue(s.maxDiffColor.x());
-    w_blocking(ui.sbMaxDiffG)->setValue(s.maxDiffColor.y());
-    w_blocking(ui.sbMaxDiffB)->setValue(s.maxDiffColor.z());
     w_blocking(ui.dsbYF)->setValue(static_cast<qreal>(s.yFactor));
     w_blocking(ui.dsbUF)->setValue(static_cast<qreal>(s.uFactor));
     w_blocking(ui.dsbVF)->setValue(static_cast<qreal>(s.vFactor));
@@ -295,9 +292,6 @@ void GrabberParametersW::update_ui_settings(K2Settings s){
     w_blocking(ui.cbInfraBinary)->setChecked(s.infraBinary);
     w_blocking(ui.cbInfraInvert)->setChecked(s.infraInvert);
     // depth
-    w_blocking(ui.cbEnableSmoothing)->setChecked(s.smoothingEnabled);
-    w_blocking(ui.cbSmoothingMethod)->setCurrentIndex(s.smoothingMethod);
-    w_blocking(ui.sbSmoothingKernelSize)->setValue(s.smoothingKernelSize);
     w_blocking(ui.sbSizeKernelErode)->setValue(s.erosionSize);
     w_blocking(ui.cbErosion)->setChecked(s.doErosion);
     w_blocking(ui.sbMinErosionValue)->setValue(s.minErosionValue);
@@ -310,8 +304,6 @@ void GrabberParametersW::update_ui_settings(K2Settings s){
     w_blocking(ui.sbMinNeighboursLoops)->setValue(s.minNeighboursLoops);
     w_blocking(ui.cbTemporal)->setChecked(s.doTemporalFilter);
     w_blocking(ui.dsbVMin)->setValue(static_cast<double>(s.vmin));
-    w_blocking(ui.dsbVMax)->setValue(static_cast<double>(s.vmax));
-    w_blocking(ui.dsbGMin)->setValue(static_cast<double>(s.gmin));
 }
 
 void GrabberParametersW::set_camera_state_ui(bool state){
@@ -363,8 +355,8 @@ K2Settings GrabberParametersW::read_settings_from_ui() const{
     p.filterDepthWithColor  = ui.cbFilterDepthWithColor->isChecked();
     p.maxDiffColor           = Pt3<std::uint8_t>(
         static_cast<std::uint8_t>(ui.sbMaxDiffR->value()),
-        static_cast<std::uint8_t>(ui.sbMaxDiffG->value()),
-        static_cast<std::uint8_t>(ui.sbMaxDiffB->value()));
+        0,//static_cast<std::uint8_t>(ui.sbMaxDiffG->value()),
+        0);//static_cast<std::uint8_t>(ui.sbMaxDiffB->value()));
     p.yFactor               = static_cast<float>(ui.dsbYF->value());
     p.uFactor               = static_cast<float>(ui.dsbUF->value());
     p.vFactor               = static_cast<float>(ui.dsbVF->value());
@@ -377,9 +369,9 @@ K2Settings GrabberParametersW::read_settings_from_ui() const{
     p.infraBinary           = ui.cbInfraBinary->isChecked();
     p.infraInvert           = ui.cbInfraInvert->isChecked();
     // depth
-    p.smoothingEnabled      = ui.cbEnableSmoothing->isChecked();
-    p.smoothingMethod       = static_cast<unsigned char>(ui.cbSmoothingMethod->currentIndex());
-    p.smoothingKernelSize   = static_cast<unsigned char>(ui.sbSmoothingKernelSize->value());
+    p.smoothingEnabled      = false;//ui.cbEnableSmoothing->isChecked();
+    p.smoothingMethod       = 0;//static_cast<unsigned char>(ui.cbSmoothingMethod->currentIndex());
+    p.smoothingKernelSize   = 0;//static_cast<unsigned char>(ui.sbSmoothingKernelSize->value());
     p.erosionSize           = static_cast<unsigned char>(ui.sbSizeKernelErode->value());
     p.doErosion             = ui.cbErosion->isChecked();
     p.minErosionValue       = static_cast<unsigned char>(ui.sbMinErosionValue->value());
@@ -392,8 +384,8 @@ K2Settings GrabberParametersW::read_settings_from_ui() const{
     p.minNeighboursLoops    = static_cast<unsigned char>(ui.sbMinNeighboursLoops->value());
     p.doTemporalFilter      = ui.cbTemporal->isChecked();
     p.vmin                  = static_cast<float>(ui.dsbVMin->value());
-    p.vmax                  = static_cast<float>(ui.dsbVMax->value());
-    p.gmin                  = static_cast<float>(ui.dsbGMin->value());
+    p.vmax                  = -1.f;//static_cast<float>(ui.dsbVMax->value());
+    p.gmin                  = -1.f;//static_cast<float>(ui.dsbGMin->value());
     return p;
 }
 
