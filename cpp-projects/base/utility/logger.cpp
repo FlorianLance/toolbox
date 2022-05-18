@@ -59,6 +59,7 @@ struct Logger::Impl{
     static inline constexpr std::string_view htmlDarkBlueColorBalise   = "<font color=\"DarkBlue\">";
     static inline constexpr std::string_view htmlDarkOrangeColorBalise = "<font color=\"Orange\">";
     static inline constexpr std::string_view htmlDarkRedColorBalise    = "<font color=\"DarkRed\">";
+    static inline constexpr std::string_view htmlLightGreyColorBalise  = "<font color=\"LightGrey\">";
     static inline constexpr std::string_view htmlDarkBlackColorBalise  = "<font color=\"Black\">";
 
     Impl(){
@@ -187,6 +188,21 @@ void Logger::warning(std::string_view warning, bool htmlFormat, bool triggersSig
     }
 }
 
+void Logger::log(std::string_view log, bool htmlFormat, bool triggersSignal, bool saveToFile){
+
+    if(Logger::Impl::loggerPtr == nullptr){
+        return;
+    }
+
+    if(triggersSignal){
+        trigger_log(log, htmlFormat && Logger::Impl::doFormat);
+    }
+
+    if(saveToFile && (Logger::Impl::out != nullptr)){
+        insert_line_to_log_file(MessageT::warning, log);
+    }
+}
+
 void Logger::error(std::string_view error, bool htmlFormat, bool triggersSignal, bool saveToFile){
 
     if(Logger::Impl::loggerPtr == nullptr){
@@ -270,6 +286,14 @@ void Logger::trigger_warning(std::string_view warning, bool htmlFormat){
     }
 }
 
+void Logger::trigger_log(std::string_view log, bool htmlFormat){
+    if(htmlFormat){
+        Logger::Impl::loggerPtr->log_signal(to_html_line(MessageT::log, log));
+    }else{
+        Logger::Impl::loggerPtr->log_signal(std::string(log));
+    }
+}
+
 void Logger::trigger_error(std::string_view error, bool htmlFormat){
     if(htmlFormat){
         Logger::Impl::loggerPtr->error_signal(to_html_line(MessageT::error, error));
@@ -340,6 +364,9 @@ std::string Logger::to_html_line(MessageT type, std::string_view text, bool addT
         colorCode = Logger::Impl::htmlDarkOrangeColorBalise;
         break;
     case MessageT::error:
+        colorCode = Logger::Impl::htmlDarkRedColorBalise;
+        break;
+    case MessageT::log:
         colorCode = Logger::Impl::htmlDarkRedColorBalise;
         break;
     case MessageT::unknow:

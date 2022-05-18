@@ -185,6 +185,7 @@ HEADERS += \
     network/udp_reader.hpp \
     network/udp_sender.hpp \
     # utility    
+    utility/algorithm.hpp \
     utility/array.hpp \
     utility/benchmark.hpp \
     utility/constants.hpp \

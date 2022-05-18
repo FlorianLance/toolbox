@@ -47,7 +47,7 @@ class Logger{
 public:
 
     enum class MessageT : int{
-        normal, warning, error, unknow,
+        normal, warning, error, log, unknow,
     };
 
     enum class SenderT : int {
@@ -65,6 +65,7 @@ public:
     static void message(std::string_view message, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void error(std::string_view error, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void warning(std::string_view warning, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
+    static void log(std::string_view log, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
 
     static void message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
     static void error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat = true, bool triggersSignal = true, bool saveToFile = true);
@@ -79,6 +80,7 @@ public:
     sigslot::signal<std::string> message_signal;
     sigslot::signal<std::string> warning_signal;
     sigslot::signal<std::string> error_signal;
+    sigslot::signal<std::string> log_signal;
 
     sigslot::signal<std::string, SenderT, int> message_id_signal;
     sigslot::signal<std::string, SenderT, int> warning_id_signal;
@@ -92,6 +94,8 @@ private:
     static void trigger_message(std::string_view message, bool htmlFormat = true);
     static void trigger_error(std::string_view error, bool htmlFormat = true);
     static void trigger_warning(std::string_view warning, bool htmlFormat = true);
+    static void trigger_log(std::string_view log, bool htmlFormat = true);
+
 
     static void trigger_message_id(std::string_view message, SenderT sType, int sKey, bool htmlFormat = true);
     static void trigger_error_id(std::string_view error, SenderT sType, int sKey, bool htmlFormat = true);

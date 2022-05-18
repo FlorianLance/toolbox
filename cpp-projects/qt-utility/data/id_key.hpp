@@ -41,107 +41,106 @@ struct RowId{int v;};
 
 struct Key{
     int v;
-    bool operator< (const Key& k) const{return this->v < k.v;}
 };
+[[maybe_unused]] static bool operator<(const Key &l, const Key &r){return  (l.v < r.v);}
 [[maybe_unused]] static bool operator==(const Key &l, const Key &r){return  (l.v == r.v);}
 
-struct UiElementKey     : public Key{};
-struct SetKey           : public Key{};
+
+// OK
 struct ActionKey        : public Key{};
 struct ConfigKey        : public Key{};
-struct IntervalKey      : public Key{};
-struct TimelineKey      : public Key{};
 struct ConditionKey     : public Key{};
 struct ElementKey       : public Key{};
 struct ComponentKey     : public Key{};
 struct ConnectionKey    : public Key{};
 struct ConnectorKey     : public Key{};
-struct ResourceKey     : public Key{};
+struct ResourceKey      : public Key{};
+struct SetKey           : public Key{};
+
 
 class IdKey{
 
 public :
 
+    enum class Source : int{
+        Current=0, Imported
+    };
+
     enum class Type : int {
-        UiItemArgument, Action, Component, Condition, Config, Connection, Element, Interval, Timeline, ButtonElement, Connector, Resource, Set,
+        Action, Component, Condition, Config, Connection, FlowElement, Connector, Resource, Set, ButtonFlowElement, NotUsed,
         SizeEnum
     };
 
     using TypeStr = std::string_view;
     using TType = std::tuple<Type, TypeStr>;
 
-    IdKey()= default;
+    IdKey() = default;
     IdKey(Type type, int id = -1);
+    IdKey(const IdKey &) = delete;
+    IdKey& operator=(const IdKey&) = delete;
+
     ~IdKey();
 
     constexpr int operator()() const noexcept {return m_id;}
     constexpr TypeStr type_name() const;
-
-    static constexpr TypeStr to_string(IdKey::Type t) {return types.at<0,1>(t);}
+    static constexpr TypeStr to_string(IdKey::Type t) {return m_types.at<0,1>(t);}
 
     static void reset();
+    static void set_source(Source source){m_source = source;}
+    static Source current_source(){return m_source;}
 
 private:
 
-
-    static constexpr TupleArray<Type::SizeEnum,TType> types ={{
+    static constexpr TupleArray<Type::SizeEnum,TType> m_types ={{
         TType
-        {Type::UiItemArgument,     "UI item argument"sv},
         {Type::Action,             "Action"sv},
         {Type::Component,          "Component"sv},
         {Type::Condition,          "Condition"sv},
         {Type::Config,             "Config"sv},
         {Type::Connection,         "Connection"sv},
-        {Type::Element,            "Element"sv},
-        {Type::Interval,           "Interval"sv},
-        {Type::Timeline,           "Timeline"sv},
-        {Type::ButtonElement,      "ButtonElement"sv},
+        {Type::FlowElement,            "Element"sv},
         {Type::Connector,          "Connector"sv},
         {Type::Resource,           "Resource"sv},
-        {Type::Set,                "Set"sv},
+        {Type::Set,                "Resource"sv},
+        {Type::ButtonFlowElement,  "Button flow element"sv},
     }};
 
-    static inline std::unordered_map<Type,int> currentId = {
-        {Type::UiItemArgument,     0},
-        {Type::Action,             0},
-        {Type::Component,          0},
-        {Type::Condition,          0},
-        {Type::Config,             0},
-        {Type::Connection,         0},
-        {Type::Element,            0},
-        {Type::Interval,           0},
-        {Type::Timeline,           0},
-        {Type::ButtonElement,      0},
-        {Type::Connector,          0},
-        {Type::Resource,           0},
-        {Type::Set,                0},
+    static inline std::unordered_map<Type, std::array<int,2>> m_currentId = {
+        {Type::Action,             {0,0}},
+        {Type::Component,          {0,0}},
+        {Type::Condition,          {0,0}},
+        {Type::Config,             {0,0}},
+        {Type::Connection,         {0,0}},
+        {Type::FlowElement,            {0,0}},
+        {Type::Connector,          {0,0}},
+        {Type::Resource,           {0,0}},
+        {Type::Set,                {0,0}},
+        {Type::ButtonFlowElement,  {0,0}},
     };
 
-    static inline std::unordered_map<Type,std::unordered_set<int>> keys = {
-        {Type::UiItemArgument,     {}},
+    static inline std::unordered_map<Type, std::array<std::unordered_set<int>,2>> m_keys = {
         {Type::Action,             {}},
         {Type::Component,          {}},
         {Type::Condition,          {}},
         {Type::Config,             {}},
         {Type::Connection,         {}},
-        {Type::Element,            {}},
-        {Type::Interval,           {}},
-        {Type::Timeline,           {}},
-        {Type::ButtonElement,      {}},
+        {Type::FlowElement,            {}},
         {Type::Connector,          {}},
         {Type::Resource,           {}},
         {Type::Set,                {}},
+        {Type::ButtonFlowElement,  {}},
     };
 
-    Type m_type;
+    Type m_type = Type::NotUsed;
     int m_id = -1;
+    static inline Source m_source = Source::Current;
 };
 
 }
 
 namespace std{
 template<> class hash<tool::ex::Key>{public:size_t operator()(tool::ex::Key const& k) const{return std::hash<int>{}(k.v);}};
-template<> class hash<tool::ex::UiElementKey>{public:size_t operator()(tool::ex::UiElementKey const& k) const{return std::hash<int>{}(k.v);}};
+//template<> class hash<tool::ex::UiElementKey>{public:size_t operator()(tool::ex::UiElementKey const& k) const{return std::hash<int>{}(k.v);}};
 template<> class hash<tool::ex::ComponentKey>{public:size_t operator()(tool::ex::ComponentKey const& k) const{return std::hash<int>{}(k.v);}};
 template<> class hash<tool::ex::ConfigKey>{public:size_t operator()(tool::ex::ConfigKey const& k) const{return std::hash<int>{}(k.v);}};
 }

@@ -42,7 +42,7 @@ Q_OBJECT
 public:
 
     enum class MessageType : int{
-        normal, warning, error, unknow,
+        normal, warning, error, log, unknow,
     };
 
 
@@ -58,11 +58,7 @@ public:
     static void message(const QString &message, bool triggersSignal = true, bool saveToFile = true);
     static void error(const QString &error, bool triggersSignal = true, bool saveToFile = true);
     static void warning(const QString &warning, bool triggersSignal = true, bool saveToFile = true);
-
-//    static void unity_message(const QString &message, bool triggersSignal = true, bool saveToFile = true);
-//    static void unity_error(const QString &error, bool triggersSignal = true, bool saveToFile = true);
-//    static void unity_warning(const QString &warning, bool triggersSignal = true, bool saveToFile = true);
-//    static void unity_unknow(const QString &unknow, bool triggersSignal = true, bool saveToFile = true);
+    static void log(const QString &log, bool triggersSignal = true, bool saveToFile = true);
 
     static void unity_message(QStringView message, bool triggersSignal = true, bool saveToFile = true);
     static void unity_error(QStringView error, bool triggersSignal = true, bool saveToFile = true);
@@ -85,17 +81,13 @@ signals:
     void message_signal(QString message);
     void error_signal(QString error);
     void warning_signal(QString warning);
+    void log_signal(QString log);
     void status_signal(QString status, int ms);
 
     void unity_message_signal(QStringView message);
     void unity_error_signal(QStringView error);
     void unity_warning_signal(QStringView warning);
     void unity_unknow_signal(QStringView unknow);
-
-//    void unity_message_signal(QStringView message);
-//    void unity_error_signal(QStringView error);
-//    void unity_warning_signal(QStringView warning);
-//    void unity_unknow_signal(QStringView unknow);
 
     void progress_signal(int state);
 

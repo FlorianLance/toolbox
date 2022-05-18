@@ -66,12 +66,10 @@ struct QtLogger::Impl{
     static inline QString htmlNormalBaliseColor     = QSL("<font color=\"DarkBlue\">");
     static inline QString htmlWarningBaliseColor    = QSL("<font color=\"Orange\">");
     static inline QString htmlErrorBaliseColor      = QSL("<font color=\"DarkRed\">");
+    static inline QString htmlLogBaliseColor        = QSL("<font color=\"LightGrey\">");
     static inline QString htmlUnknowBaliseColor     = QSL("<font color=\"Black\">");
 
-    // rgb(224, 0, 0)
-
-    Impl(){
-    }
+    Impl(){}
 };
 
 QtLogger::QtLogger() : m_p(std::make_unique<Impl>()){
@@ -97,29 +95,14 @@ void QtLogger::set_html_ui_type_message_color(QtLogger::MessageType type, const 
     case MessageType::error:
         QtLogger::Impl::htmlErrorBaliseColor = baliseStr;
         break;
+    case MessageType::log:
+        QtLogger::Impl::htmlLogBaliseColor = baliseStr;
+        break;
     case MessageType::unknow:
         QtLogger::Impl::htmlUnknowBaliseColor = baliseStr;
         break;
     }
 }
-
-//void QtLogger::set_as_console_type_message(QtLogger::MessageType type){
-
-//    switch (type) {
-//    case MessageType::normal:
-//        QtLogger::Impl::htmlNormalBaliseColor = baliseStr;
-//        break;
-//    case MessageType::warning:
-//        QtLogger::Impl::htmlWarningBaliseColor = baliseStr;
-//        break;
-//    case MessageType::error:
-//        QtLogger::Impl::htmlErrorBaliseColor = baliseStr;
-//        break;
-//    case MessageType::unknow:
-//        QtLogger::Impl::htmlUnknowBaliseColor = baliseStr;
-//        break;
-//    }
-//}
 
 QString QtLogger::to_html_line(QtLogger::MessageType type, QStringView text, bool addTimestamp){
 
@@ -133,6 +116,9 @@ QString QtLogger::to_html_line(QtLogger::MessageType type, QStringView text, boo
         break;
     case QtLogger::MessageType::error:
         colorCode = QtLogger::Impl::htmlErrorBaliseColor;
+        break;
+    case QtLogger::MessageType::log:
+        colorCode = QtLogger::Impl::htmlLogBaliseColor;
         break;
     case QtLogger::MessageType::unknow:
         colorCode = QtLogger::Impl::htmlUnknowBaliseColor;
@@ -160,7 +146,6 @@ void QtLogger::insert_line_to_log_file(QtLogger::MessageType type, QStringView m
         (*QtLogger::Impl::out) << to_html_line(type, message, true) << Qt::flush;
     }
 }
-
 
 void QtLogger::init(QString logDirectoryPath, QString logFileName, bool displayConsole){
 
@@ -291,6 +276,22 @@ void QtLogger::warning(const QString &warning, bool triggersSignal, bool saveToF
 
         if(saveToFile){
             insert_line_to_log_file(MessageType::warning, warning);
+        }
+    }
+}
+
+void QtLogger::log(const QString &log, bool triggersSignal, bool saveToFile){
+
+    if(auto logger = QtLogger::get(); logger != nullptr){
+
+        if(triggersSignal){
+            emit QtLogger::Impl::logger->log_signal(
+                to_html_line(MessageType::log, log, false)
+            );
+        }
+
+        if(saveToFile){
+            insert_line_to_log_file(MessageType::log, log);
         }
     }
 }
