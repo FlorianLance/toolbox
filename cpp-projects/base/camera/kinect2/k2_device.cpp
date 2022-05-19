@@ -1258,12 +1258,12 @@ void K2Device::post_computing_depth_data(){
         });
     }
 
-    // test
+
     if(parameters.vmin > 0.f){
         const auto squareMaxDist = parameters.vmin*parameters.vmin;
         Pt3f mean = {};
         size_t count = 0;
-        for_each(std::execution::seq, begin(m_p->indicesDepths), end(m_p->indicesDepths), [&](size_t &id){
+        for_each(std::execution::unseq, begin(m_p->indicesDepths), end(m_p->indicesDepths), [&](size_t &id){
 
             const auto depthZ = (*m_p->cloudData)[id].z();
             if(!is_kinect2_depth_valid(depthZ)){
@@ -1275,14 +1275,13 @@ void K2Device::post_computing_depth_data(){
         });
         if(count > 0){
             mean /= static_cast<float>(count);
-        }
 
-        std::cout << squareMaxDist << " " << mean << "\n";
-        for_each(execution::par_unseq, begin(m_p->indicesDepths), end(m_p->indicesDepths), [&](size_t &id){
-            if(square_norm(Vec3f{geo::vec((*m_p->cloudData)[id], mean)}) > squareMaxDist){
-                (*m_p->cloudData)[id].z() = k2_invalid_value;
-            }
-        });
+            for_each(execution::par_unseq, begin(m_p->indicesDepths), end(m_p->indicesDepths), [&](size_t &id){
+                if(square_norm(Vec3f{geo::vec((*m_p->cloudData)[id], mean)}) > squareMaxDist){
+                    (*m_p->cloudData)[id].z() = k2_invalid_value;
+                }
+            });
+        }
     }
 
     Bench::stop();

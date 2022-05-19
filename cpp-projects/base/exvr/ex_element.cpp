@@ -42,18 +42,18 @@ int ExElement::get_array_size(ParametersContainer pc, const std::string &name){
 }
 
 void ExElement::log_message(std::string message){
-//    (*exp->logMessageIdCBP)(message.c_str(), (int)sender_type(), key());
-//    exp->logger->message_id(message, sender_type(), key());
+    (*exp->logMessageIdCBP)(message.c_str(), (int)sender_type(), key());
+    exp->logger->message_id(message, sender_type(), key());
 }
 
 void ExElement::log_warning(std::string warningMessage){
-//    (*exp->logWarningIdCBP)(warningMessage.c_str(), (int)sender_type(), key());
-//    exp->logger->warning_id(warningMessage, sender_type(), key());
+    (*exp->logWarningIdCBP)(warningMessage.c_str(), (int)sender_type(), key());
+    exp->logger->warning_id(warningMessage, sender_type(), key());
 }
 
 void ExElement::log_error(std::string errorMessage){
-//    (*exp->logErrorIdCBP)(errorMessage.c_str(), (int)sender_type(), key());
-//    exp->logger->error_id(errorMessage, sender_type(), key());
+    (*exp->logErrorIdCBP)(errorMessage.c_str(), (int)sender_type(), key());
+    exp->logger->error_id(errorMessage, sender_type(), key());
 }
 
 void ExElement::stack_trace_log(std::string stackTraceMessage){

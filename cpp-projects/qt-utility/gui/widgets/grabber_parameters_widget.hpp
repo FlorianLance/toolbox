@@ -83,6 +83,7 @@ public slots:
     camera::K2Settings read_settings_from_ui() const;
     void copy_current_ui_settings();
     void send_current_ui_settings();
+    void send_ui_settings(camera::K2Settings settings);
 
     // display options
     void send_current_ui_display_options();

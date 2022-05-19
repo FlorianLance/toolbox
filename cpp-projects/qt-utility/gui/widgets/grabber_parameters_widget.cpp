@@ -110,7 +110,7 @@ GrabberParametersW::GrabberParametersW(){
     cameraParametersElements << ui.sbMinNeighboursNb << ui.sbMinNeighboursLoops << ui.dsbMinDepth << ui.dsbMaxDepth << ui.dsbLocalDiff << ui.cbErosionType;
     cameraParametersElements << ui.dsbOffsetAfterMin << ui.dsbVMin;
     // # display parameters -> this
-    connect(ui.cbDisplayData,          &QCheckBox::toggled,                                this, &GrabberParametersW::set_display_state_signal);
+    connect(ui.cbDisplayData,          &QCheckBox::toggled,     this, &GrabberParametersW::set_display_state_signal);
     // ## model
     // ### 4x4 transform
     rotListW = {ui.dsbT00,  ui.dsbT01,  ui.dsbT02,
@@ -240,13 +240,11 @@ void GrabberParametersW::update_writing_connection_state(bool state){
 
 void GrabberParametersW::open_camera(K2FrameRequest frameMode){
 
-//    emit set_display_state_signal(false);
     emit set_data_state_signal(false);
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
 
     w_blocking(ui.cbDataType)->setCurrentIndex(to_signed(mode_to_index(frameMode)));
     w_blocking(ui.rbDoNothing)->setChecked(true);
-    w_blocking(ui.cbDisplayData)->setChecked(false);
 
     emit open_camera_signal(frameMode);
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
@@ -254,12 +252,10 @@ void GrabberParametersW::open_camera(K2FrameRequest frameMode){
 
 void GrabberParametersW::close_camera(){
 
-    emit set_display_state_signal(false);
-//    emit set_data_state_signal(false);
+    emit set_data_state_signal(false);
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
 
     w_blocking(ui.rbDoNothing)->setChecked(true);
-    w_blocking(ui.cbDisplayData)->setChecked(false);
 
     emit close_camera_signal();
     QCoreApplication::processEvents(QEventLoop::AllEvents, 30);
@@ -454,6 +450,10 @@ void GrabberParametersW::set_parameters_tab_index(int index){
 
 void GrabberParametersW::send_current_ui_settings(){
     emit send_settings_parameters_signal(read_settings_from_ui());
+}
+
+void GrabberParametersW::send_ui_settings(camera::K2Settings settings){
+    emit send_settings_parameters_signal(settings);
 }
 
 void GrabberParametersW::send_reading_connection_parameters(){
