@@ -34,10 +34,31 @@ namespace tool::ex {
     using namespace std::literals::string_view_literals;
 
     enum class UiType : int {
-        Spin_box, Float_spin_box, Double_spin_box, Line_edit, Slider_integer, Slider_double, Check_box, Text_edit, Code_editor, Color_pick, Vector2D, Vector3D, Transformation, Combo_box_text,Combo_box_index,
-        Button, Radio_button, Generator, List_labels, Non_ui_labels, Label, Color_frame, Curve, Notepad, Camera_position, Tab, Unspecified, Time, PushButton, Component, ComponentsList,
-        Resource, ResourcesList, Component_config,
-        Custom,
+        // simple ui
+        // # bool
+        Check_box, Radio_button,
+        // # reals
+        Spin_box, Float_spin_box, Double_spin_box, Slider_integer, Slider_double,
+        // # text
+        Label, List_labels, Line_edit, Text_edit,
+        // # combo
+        Combo_box_index,Combo_box_text,
+        // # color
+        Color_pick,
+        // # vectors
+        Vector2D, Vector3D,
+        // # action
+        PushButton, // Button,
+        // complex ui
+        Transformation, Curve,
+        Notepad, Code_editor,
+        Color_frame, Time, Custom,
+        // generative ui
+        Tab, Generator,
+        // ex_data
+        Resource, ResourcesList, Component, ComponentsList, Component_config,
+        // others
+        Non_ui_labels, Unspecified, // Camera_position,
         SizeEnum};
 
     using UiT  = UiType;
@@ -49,38 +70,46 @@ namespace tool::ex {
         UiType,                 Name,                    Tooltip,                          Generative>;
     static constexpr TupleArray<UiType::SizeEnum, TUiType> uiTypes{{
         TUiType
-        // # ex data
-        {UiT::Resource,         "Resource"sv,            "get_resource"sv,                 true},
-        {UiT::ResourcesList,    "Resources list"sv,      "get_resource_list"sv,            true},
-        {UiT::Component,        "Component"sv,           "get_component"sv,                true},
-        {UiT::Component_config, "Component config"sv,    ""sv,                             true},
-        {UiT::ComponentsList,   "Components list"sv,     "get_component_list"sv,           true},
-        // # simple ui
-        {UiT::Label,            "Label"sv,               "string"sv,                       true},
-        {UiT::List_labels,      "List of lines"sv,       "List<string>"sv,                 false},
+        // simple ui
+        // # bool
+        {UiT::Check_box,        "Check box"sv,           "bool"sv,                         true},
+        {UiT::Radio_button,     "Radio buttons"sv,       "bool"sv,                         false},
+        // # reals
         {UiT::Spin_box,         "Integer spin box"sv,    "int"sv,                          true},
         {UiT::Float_spin_box,   "Float spin box"sv,      "float"sv,                        true},
         {UiT::Double_spin_box,  "Double spin box"sv,     "double"sv,                       false},
         {UiT::Slider_integer,   "Integer slider"sv,      "int"sv,                          true},
         {UiT::Slider_double,    "Float values slider"sv, "float"sv,                        true},
-        {UiT::Check_box,        "Check box"sv,           "bool"sv,                         true},
+        // # text
+        {UiT::Label,            "Label"sv,               "string"sv,                       true},        
+        {UiT::List_labels,      "List of lines"sv,       "List<string>"sv,                 false},
         {UiT::Line_edit,        "Line text editor"sv,    "string"sv,                       true},
-        {UiT::Text_edit,        "Block text editor"sv,   "string"sv,                       true},        
-        {UiT::Color_pick,       "Color pick"sv,          "get_color"sv,                    true},
+        {UiT::Text_edit,        "Block text editor"sv,   "string"sv,                       true},
+        // # combo
+        {UiT::Combo_box_index,  "Combo box index"sv,     "int"sv,                          true},
         {UiT::Combo_box_text,   "Combo box text"sv,      "string"sv,                       true},
-        {UiT::Combo_box_index,  "Combo box index"sv,     "int"sv,                          true},        
+        // #
         {UiT::Vector2D,         "Vector 2D"sv,           "Vector2 or List<float>"sv,       true},
         {UiT::Vector3D,         "Vector 3D"sv,           "Vector3 or List<float>"sv,       true},
-        {UiT::Button,           "Action button"sv,       "string"sv,                       false},        
-        {UiT::Radio_button,     "Radio buttons"sv,       "bool"sv,                         false},
-        // # complex ui
-        {UiT::Code_editor,      "Code editor"sv,         "string"sv,                       true},
-        {UiT::Transformation,   "Transformation"sv,      "Transform or List<Vector3>"sv,   true},        
+        // # colors
+        {UiT::Color_pick,       "Color pick"sv,          "get_color"sv,                    true},
+        // # action
+        {UiT::PushButton,       "Action button"sv,       "string"sv,                       false},
+        //{UiT::Button,           "Action button"sv,       "string"sv,                       false},
+        // complex ui
+        {UiT::Transformation,   "Transformation"sv,      "Transform or List<Vector3>"sv,   true},
         {UiT::Curve,            "Curve"sv,               "List<float>"sv,                  true},
         {UiT::Notepad,          "Notepad"sv,             ""sv,                             true},
+        {UiT::Code_editor,      "Code editor"sv,         "string"sv,                       true},
         {UiT::Color_frame,      "Color Frame"sv,         "bool"sv,                         false},
         {UiT::Time,             "Time"sv,                ""sv,                             false},
         {UiT::Custom,           "Custom"sv,              "string"sv,                       false},
+        // # ex data
+        {UiT::Resource,         "Resource"sv,            "get_resource"sv,                 true},
+        {UiT::ResourcesList,    "Resources list"sv,      "get_resource_list"sv,            true},
+        {UiT::Component,        "Component"sv,           "get_component"sv,                true},
+        {UiT::ComponentsList,   "Components list"sv,     "get_component_list"sv,           true},
+        {UiT::Component_config, "Component config"sv,    ""sv,                             true},
         // # generative ui
         {UiT::Tab,              "Tab"sv,                 "string"sv,                       false},        
         {UiT::Generator,        "Generator"sv,           ""sv,                             false},
