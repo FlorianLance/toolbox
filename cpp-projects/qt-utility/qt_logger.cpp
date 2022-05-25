@@ -171,13 +171,15 @@ void QtLogger::init(QString logDirectoryPath, QString logFileName, bool displayC
     std::unique_lock<std::mutex> lock(QtLogger::Impl::locker);
     if(QtLogger::Impl::logger == nullptr){
 
-        if(QFile::exists(absoluteFilePath)){
+        QFileInfo info(absoluteFilePath);
+
+        if(info.exists()){
 
             int id = absoluteFilePath.lastIndexOf('.');
             if(id != -1){
                 QString leftPart  = absoluteFilePath.left(id);
                 QString extension = absoluteFilePath.mid(id);
-                QString previousFileName  = leftPart % QSL("_previous") % extension;
+                QString previousFileName  = leftPart % QSL("_previous_") % info.lastModified().toString("yyyy-MM-dd_hh-mm-ss") % extension;
 
                 bool copyPrevious = true;
                 if(QFile::exists(previousFileName)){
