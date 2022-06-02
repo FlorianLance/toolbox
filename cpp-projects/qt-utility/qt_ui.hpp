@@ -61,6 +61,15 @@ namespace tool {
     struct LMargins{bool v;};
     struct LStretch {bool v;};
 
+    using MinI  = MinV<int>;
+    using MaxI  = MaxV<int>;
+    using ValI  = V<int>;
+    using StepI = StepV<int>;
+
+    using MinR  = MinV<qreal>;
+    using MaxR  = MaxV<qreal>;
+    using ValR  = V<qreal>;
+    using StepR = StepV<qreal>;
 
     struct LMarginsD{
         int left = 2;
@@ -75,24 +84,23 @@ namespace tool {
         std::vector<int> elementsStretch;
     };
 
-
     struct DsbSettings{
-        MinV<qreal> min = {-1000.};
-        V<qreal> value = {0.};
-        MaxV<qreal> max = {1000.};
-        StepV<qreal> singleStep = {0.1};
-        int decimals = 2;
+        MinR  min         = {-1000.};
+        ValR  value       = {0.};
+        MaxR  max         = {1000.};
+        StepR singleStep  = {0.1};
+        int   decimals    = 2;
     };
 
     struct Vector2dSettings{
-        DsbSettings sX = {MinV<qreal>{-1000.}, V<qreal>{0}, MaxV<qreal>{1000.}, StepV<qreal>{0.01}, 2};
-        DsbSettings sY = {MinV<qreal>{-1000.}, V<qreal>{0}, MaxV<qreal>{1000.}, StepV<qreal>{0.01}, 2};
+        DsbSettings sX = {MinR{-1000.}, ValR{0}, MaxR{1000.}, StepR{0.01}, 2};
+        DsbSettings sY = {MinR{-1000.}, ValR{0}, MaxR{1000.}, StepR{0.01}, 2};
     };
 
     struct Vector3dSettings{
-        DsbSettings sX = {MinV<qreal>{-1000.}, V<qreal>{0}, MaxV<qreal>{1000.}, StepV<qreal>{0.01}, 2};
-        DsbSettings sY = {MinV<qreal>{-1000.}, V<qreal>{0}, MaxV<qreal>{1000.}, StepV<qreal>{0.01}, 2};
-        DsbSettings sZ = {MinV<qreal>{-1000.}, V<qreal>{0}, MaxV<qreal>{1000.}, StepV<qreal>{0.01}, 2};
+        DsbSettings sX = {MinR{-1000.}, ValR{0}, MaxR{1000.}, StepR{0.01}, 2};
+        DsbSettings sY = {MinR{-1000.}, ValR{0}, MaxR{1000.}, StepR{0.01}, 2};
+        DsbSettings sZ = {MinR{-1000.}, ValR{0}, MaxR{1000.}, StepR{0.01}, 2};
     };
 }
 
