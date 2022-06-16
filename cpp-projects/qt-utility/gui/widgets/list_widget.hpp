@@ -50,7 +50,7 @@ class ListWidget : public QScrollArea{
 
 public:
 
-    ListWidget();
+    ListWidget(QColor contentColor = Qt::white);
 
     void set_margins(int left, int top, int right, int bottom, int inter);
 

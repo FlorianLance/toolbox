@@ -1,14 +1,16 @@
 
 #include "list_widget.hpp"
 
+// local
+#include "qt_str.hpp"
+
 // Qt
-#include <QDebug>
 #include <QMouseEvent>
 
 using namespace tool::ui;
 
 
-ListWidget::ListWidget(){
+ListWidget::ListWidget(QColor contentColor){
 
     setWidgetResizable(true);
 
@@ -18,7 +20,9 @@ ListWidget::ListWidget(){
     m_content->setLayout(m_layout);
     m_content->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     m_content->setObjectName("content");
-    m_content->setStyleSheet("QWidget[objectName=\"content\"] {background-color:white;}");
+//    m_content->setStyleSheet("QWidget[objectName=\"content\"] {background-color:white;}");
+
+    m_content->setStyleSheet(QSL("QWidget[objectName=\"content\"] {background-color:") % contentColor.name() % QSL(";}"));
     setWidget(m_content);
 
     m_layout->setContentsMargins(0,0,0,0);
@@ -41,7 +45,6 @@ QWidget *ListWidget::widget_at(int id){
 void ListWidget::move_from_to(int from, int to){
 
     if(from >= count() || to >= count()){
-        qWarning() << "Error move widget " << from << to;
         return;
     }
 
