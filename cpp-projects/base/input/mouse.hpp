@@ -50,6 +50,13 @@ public:
         SizeEnum
     };
 
+    enum class Axis : int {
+        Horizonal = 0, Vertical,
+        // counter
+        SizeEnum
+    };
+
+
     using Code = int;
     using Name = std::string_view;
     using TButton = std::tuple<Button, Name, Code>;
@@ -86,6 +93,22 @@ public:
 
     static constexpr std::optional<Button> get_button(Name name) {
         return buttons.optional_at<1,0>(name);
+    }
+
+    using TAxes = std::tuple<
+            Axis,               Name>;
+    static constexpr TupleArray<Axis::SizeEnum, TAxes> axes ={{
+        TAxes
+        {Axis::Horizonal,       "Horizontal"sv},
+        {Axis::Vertical,        "Vertical"sv},
+    }};
+
+    static constexpr Name get_name(Axis axis) {
+        return axes.at<0,1>(axis);
+    }
+
+    static constexpr std::optional<Axis> get_axis(Name name) {
+        return axes.optional_at<1,0>(name);
     }
 
 };
