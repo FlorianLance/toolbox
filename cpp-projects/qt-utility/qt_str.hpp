@@ -53,6 +53,13 @@ namespace tool {
         return view.mid(idStart, idEnd-idStart);
     }
 
+    [[maybe_unused]] static QString clamp(QString n, int maxLength){
+        if(n.length() > maxLength){
+            return n.left(maxLength) % QSL("...");
+        }
+        return n;
+    }
+
 }
 
 
