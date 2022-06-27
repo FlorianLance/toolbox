@@ -4,6 +4,10 @@
 .qmake.stash
 Makefile
 
+cpp-projects/_build
+cpp-projects/_resources
+cpp-projects/_thirdparty
+
 ## bin
 cpp-projects/**/Makefile
 cpp-projects/**/Makefile*
