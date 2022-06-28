@@ -8,46 +8,11 @@ cpp-projects/_build
 cpp-projects/_resources
 cpp-projects/_thirdparty
 
+.qtc_clangd
+
 ## bin
 cpp-projects/**/Makefile
 cpp-projects/**/Makefile*
 cpp-projects/**/*.pch
 cpp-projects/**/*.rc
-cpp-projects/_build/bin/**/*.exe
-cpp-projects/_build/bin/**/*.lib
-cpp-projects/_build/bin/**/*.ilk
-cpp-projects/_build/bin/**/*.pdb
-cpp-projects/_build/bin/**/*.exp
-cpp-projects/_build/bin/**/*logs.html
-cpp-projects/_build/bin/**/meshes*
-cpp-projects/_build/bin/base/*.png
-cpp-projects/_build/bin/base/*.obj
 
-## temp
-cpp-projects/_build/temp/**/*.obj
-cpp-projects/_build/temp/**/*.cpp
-cpp-projects/_build/temp/**/*.h
-cpp-projects/_build/temp/**/*.hpp
-cpp-projects/_build/temp/**/*.opt
-cpp-projects/_build/temp/**/*.res
-cpp-projects/_build/temp/**/*.pdb
-
-
-## thirdparty
-cpp-projects/_thirdparty/**/*.sh
-cpp-projects/_thirdparty/**/*.re
-cpp-projects/_thirdparty/**/*.txt
-cpp-projects/_thirdparty/**/*.dtd
-cpp-projects/_thirdparty/**/*.pl
-cpp-projects/_thirdparty/**/*.m4
-cpp-projects/_thirdparty/**/*.ilk
-cpp-projects/_thirdparty/**/*.inc
-cpp-projects/_thirdparty/**/*.db
-cpp-projects/_thirdparty/**/*.shm
-cpp-projects/_thirdparty/**/*.erb
-cpp-projects/_thirdparty/**/*.wal
-cpp-projects/_thirdparty/**/*.bat
-cpp-projects/_thirdparty/**/*.patch
-cpp-projects/_thirdparty/**/*.suo
-cpp-projects/_thirdparty/**/*.opendb
-cpp-projects/_thirdparty/**/.editorconfig
