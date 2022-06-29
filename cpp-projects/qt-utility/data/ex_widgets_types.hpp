@@ -52,7 +52,7 @@ namespace tool::ex {
         // complex ui
         Transformation, Curve,
         Notepad, Code_editor,
-        Color_frame, Time, Custom,
+        Color_frame, Time, KeyboardButtonTrigger, Custom,
         // generative ui
         Tab, Generator,
         // ex_data
@@ -103,6 +103,7 @@ namespace tool::ex {
         {UiT::Code_editor,      "Code editor"sv,         "string"sv,                       true},
         {UiT::Color_frame,      "Color Frame"sv,         "bool"sv,                         false},
         {UiT::Time,             "Time"sv,                ""sv,                             false},
+        {UiT::KeyboardButtonTrigger,   "KeyboardButtonTrigger"sv,      ""sv,                             false},
         {UiT::Custom,           "Custom"sv,              "string"sv,                       false},
         // # ex data
         {UiT::Resource,         "Resource"sv,            "get_resource"sv,                 true},
