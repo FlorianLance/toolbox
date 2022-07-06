@@ -33,6 +33,7 @@
 #include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
 #include "geometry/point4.hpp"
+#include "geometry/matrix4.hpp"
 #include "utility/tuple_array.hpp"
 
 namespace tool::camera {
@@ -297,6 +298,9 @@ namespace tool::camera {
         K4ConfigSettings config;
         K4DeviceSettings device   = camera::K4DeviceSettings::init_for_grabber();
         K4ActionsSettings actions = camera::K4ActionsSettings::init_for_grabber();
+        K4Filters filters;
+        K4DisplaySettings display; // local to grabber
+        geo::Mat4f model = geo::Mat4f::identity();
     };
 
 }

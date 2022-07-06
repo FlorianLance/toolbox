@@ -224,6 +224,8 @@ K4Device::K4Device() : i(std::make_unique<Impl>()){
         Logger::message(fmt("[Kinect4] Devices found: {}\n", i->deviceCount));
     }
 
+//    for(size)
+
     const int audioInitStatus = k4a::K4AAudioManager::Instance().Initialize();
     if (audioInitStatus != SoundIoErrorNone){
         Logger::error("[Kinect4] Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
@@ -335,6 +337,10 @@ K4Mode K4Device::mode() const{
     return i->config.mode;
 }
 
+K4CompressMode K4Device::compress_mode() const{
+    return i->settings.compressMode;
+}
+
 void K4Device::close(){
 
     if(i->microphone){
@@ -399,7 +405,7 @@ void K4Device::stop_reading(){
     }
 }
 
-void K4Device::set_settings(const K4DeviceSettings &settingsS){
+void K4Device::set_device_settings(const K4DeviceSettings &settingsS){
     i->parametersM.lock();
     i->settings = settingsS;
     i->parametersM.unlock();

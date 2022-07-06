@@ -215,18 +215,59 @@ bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemN
     return (update && autoUpdate) || manualUpdate;
 }
 
+bool K4SettingsDrawer::draw_model_tab_item(const std::string &tabItemName, geo::Mat4f &model, bool &autoUpdate){
+
+    if (!ImGui::BeginTabItem(tabItemName.c_str())){
+        return false;
+    }
+
+    bool update = false;
+    auto d = model.array.data();
+
+    ImGui::Text("Model matrix");
+    if(ImGui::DragFloat4("###r0", d)){
+        update = true;
+    }
+    if(ImGui::DragFloat4("###r1", d + 4)){
+        update = true;
+    }
+    if(ImGui::DragFloat4("###r2", d + 8)){
+        update = true;
+    }
+    if(ImGui::DragFloat4("###r3", d + 12)){
+        update = true;
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    bool manualUpdate = false;
+    if(ImGui::Button("Update###filters_update_button")){
+        manualUpdate = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Auto update###filters_auto_update_cb", &autoUpdate)){}
+
+    ImGui::EndTabItem();
+
+    return (update && autoUpdate) || manualUpdate;
+}
 
 
-std::tuple<bool,bool,bool> K4SettingsDrawer::draw_all_settings_tab_item(const std::string &tabItemName, const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config, camera::K4DeviceSettings &device, camera::K4ActionsSettings &action, bool &autoUpdate){
+
+std::tuple<bool,bool,bool> K4SettingsDrawer::draw_all_settings_tab_item(
+    const std::string &tabItemName,
+    const std::vector<std::string> &devicesName,
+    camera::K4GrabberSettings &settings, bool &autoUpdate){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return {false,false,false};
     }
     bool updateC = false, updateD = false, updateA = false;
 
-    draw_config(devicesName, config, updateC);
-    draw_device_settings(device, updateD);
-    draw_action_settings(action, updateA);
+    draw_config(devicesName, settings.config, updateC);
+    draw_device_settings(settings.device, updateD);
+    draw_actions_settings(settings.actions, updateA);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -326,29 +367,29 @@ void K4SettingsDrawer::draw_device_settings(camera::K4DeviceSettings &device, bo
     }
 }
 
-void K4SettingsDrawer::draw_action_settings(camera::K4ActionsSettings &action, bool &updateP){
+void K4SettingsDrawer::draw_actions_settings(camera::K4ActionsSettings &actions, bool &updateP){
 
     ImGui::Spacing();
     ImGui::TextCenter("Action");
     ImGui::Separator();
     ImGui::Spacing();
 
-    if(ImGui::Checkbox("Start device###settings_start_device", &action.startDevice)){
+    if(ImGui::Checkbox("Start device###settings_start_device", &actions.startDevice)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Open camera###settings_open_camera", &action.openCamera)){
+    if(ImGui::Checkbox("Open camera###settings_open_camera", &actions.openCamera)){
         updateP = true;
     }
 
     ImGui::Spacing();
     ImGui::Text("Data:");
     ImGui::SameLine();
-    if(ImGui::Checkbox("Record###settings_record_data_cb", &action.record)){
+    if(ImGui::Checkbox("Record###settings_record_data_cb", &actions.record)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Send###settings_send_data_cb", &action.sendData)){
+    if(ImGui::Checkbox("Send###settings_send_data_cb", &actions.sendData)){
         updateP = true;
     }
 

@@ -67,6 +67,7 @@ public:
     bool cameras_started()const;
     bool is_reading_frames()const;
     K4Mode mode()const;
+    K4CompressMode compress_mode()const;
 
     // cameras
     bool start_cameras(const K4ConfigSettings &config);
@@ -78,7 +79,7 @@ public:
     void stop_reading();
 
     // settings
-    void set_settings(const K4DeviceSettings &setings);
+    void set_device_settings(const K4DeviceSettings &setings);
     void set_filters(const K4Filters &filtersS);
 
     // signals
