@@ -258,16 +258,19 @@ bool K4SettingsDrawer::draw_model_tab_item(const std::string &tabItemName, geo::
 std::tuple<bool,bool,bool> K4SettingsDrawer::draw_all_settings_tab_item(
     const std::string &tabItemName,
     const std::vector<std::string> &devicesName,
-    camera::K4GrabberSettings &settings, bool &autoUpdate){
+    camera::K4ConfigSettings &config,
+    camera::K4DeviceSettings &device,
+    camera::K4ActionsSettings &actions,
+    bool &autoUpdate){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return {false,false,false};
     }
     bool updateC = false, updateD = false, updateA = false;
 
-    draw_config(devicesName, settings.config, updateC);
-    draw_device_settings(settings.device, updateD);
-    draw_actions_settings(settings.actions, updateA);
+    draw_config(devicesName, config, updateC);
+    draw_device_settings(device, updateD);
+    draw_actions_settings(actions, updateA);
 
     ImGui::Spacing();
     ImGui::Separator();

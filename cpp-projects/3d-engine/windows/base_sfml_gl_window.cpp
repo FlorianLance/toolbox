@@ -79,7 +79,9 @@ bool BaseSfmlGlWindow::init(){
     // init imgui
     m_scene.setActive(true);
 
-    initialize_gl();
+    if(!initialize_gl()){
+        return false;
+    }
 
     ImGui::SFML::Init(m_scene);
 

@@ -52,7 +52,6 @@ namespace tool::graphics {
 class UiDrawer{
 public:
     virtual void init(){}
-    virtual void update(){}
     virtual void draw(){}
 };
 
@@ -62,7 +61,13 @@ public:
     static void draw_config(const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config,  bool &updateP);
     static void draw_device_settings(camera::K4DeviceSettings &device, bool &updateP);
     static void draw_actions_settings(camera::K4ActionsSettings &actions,  bool &updateP);
-    static std::tuple<bool,bool,bool> draw_all_settings_tab_item(const std::string &tabItemName,const std::vector<std::string> &devicesName, camera::K4GrabberSettings &settings, bool &autoUpdate);
+    static std::tuple<bool,bool,bool> draw_all_settings_tab_item(
+        const std::string &tabItemName,const std::vector<std::string> &devicesName,
+        camera::K4ConfigSettings &config,
+        camera::K4DeviceSettings &device,
+        camera::K4ActionsSettings &actions,
+        bool &autoUpdate
+    );
     static bool draw_filters_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &autoUpdate);
     static bool draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &autoUpdate);
     static bool draw_model_tab_item(const std::string &tabItemName, geo::Mat4f &model, bool &autoUpdate);
