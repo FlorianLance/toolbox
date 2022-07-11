@@ -144,6 +144,7 @@ namespace std{
 template<> class hash<tool::ex::Key>{public:size_t operator()(tool::ex::Key const& k) const{return std::hash<int>{}(k.v);}};
 template<> class hash<tool::ex::ComponentKey>{public:size_t operator()(tool::ex::ComponentKey const& k) const{return std::hash<int>{}(k.v);}};
 template<> class hash<tool::ex::ConfigKey>{public:size_t operator()(tool::ex::ConfigKey const& k) const{return std::hash<int>{}(k.v);}};
+template<> class hash<tool::ex::ElementKey>{public:size_t operator()(tool::ex::ElementKey const& k) const{return std::hash<int>{}(k.v);}};
 }
 
 
