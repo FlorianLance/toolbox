@@ -49,13 +49,6 @@ namespace tool::graphics {
     "Full", "Cloud", "None"
 };
 
-class UiDrawer{
-public:
-    virtual void init(){}
-    virtual void draw(){}
-};
-
-
 class K4SettingsDrawer{
 public:
     static void draw_config(const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config,  bool &updateP);

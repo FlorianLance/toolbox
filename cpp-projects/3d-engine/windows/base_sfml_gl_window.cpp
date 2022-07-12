@@ -264,7 +264,6 @@ void BaseSfmlGlWindow::mouse_button_released_event(sf::Event::MouseButtonEvent e
     }
 }
 
-
 void BaseSfmlGlWindow::mouse_moved_event(sf::Event::MouseMoveEvent event){
     if(!imguiMouse){
         update_camera_with_mouse_moved_event(event);
@@ -316,7 +315,6 @@ void BaseSfmlGlWindow::keyboard_keypress_event(sf::Event::KeyEvent event){
 //}
 
 void BaseSfmlGlWindow::update_camera_with_mouse_button_event(sf::Event::MouseButtonEvent event, bool pressed){
-
 
     if(pressed){
         switch (event.button) {

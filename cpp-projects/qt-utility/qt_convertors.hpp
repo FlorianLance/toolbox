@@ -38,6 +38,7 @@
 #include "utility/types.hpp"
 #include "geometry/point2.hpp"
 #include "geometry/point3.hpp"
+#include "geometry/point4.hpp"
 
 // local
 #include "qt_str.hpp"
@@ -132,7 +133,6 @@ struct Convertor{
                 QString::number(static_cast<double>(value.y()));
     }
 
-
     static QString to_str(const geo::Pt2<double> &value){
         return  QString::number(value.x()) % QSL(", ") %
                 QString::number(value.y());
@@ -148,6 +148,22 @@ struct Convertor{
         return  QString::number(value.x()) % QSL(", ") %
                 QString::number(value.y()) % QSL(", ") %
                 QString::number(value.z());
+    }
+
+    static QString to_str(const geo::Pt4<float> &value){
+        return
+            QString::number(static_cast<double>(value.x())) % QSL(", ") %
+            QString::number(static_cast<double>(value.y())) % QSL(", ") %
+            QString::number(static_cast<double>(value.z())) % QSL(", ") %
+            QString::number(static_cast<double>(value.w()));
+    }
+
+    static QString to_str(const geo::Pt4<double> &value){
+        return
+            QString::number(value.x()) % QSL(", ") %
+            QString::number(value.y()) % QSL(", ") %
+            QString::number(value.z()) % QSL(", ") %
+            QString::number(value.w());
     }
 
     static QString to_str(const Transform &value){

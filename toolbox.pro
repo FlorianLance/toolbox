@@ -29,13 +29,23 @@ PROJECT_NAME = toolbox
 
 TEMPLATE = subdirs
 
-SUBDIRS = \
-	cpp-projects/base\
-        cpp-projects/opengl-utility\
-        cpp-projects/3d-engine\
-        cpp-projects/qt-utility\
-        cpp-projects/nodes\
-        cpp-projects/tool-test\
-        cpp-projects/demos\
 
-CONFIG += ordered
+SUBDIRS = base opengl-utility 3d-engine qt-utility nodes tool-test demos
+
+# where to find the sub projects
+base.subdir             = cpp-projects/base
+opengl-utility.subdir   = cpp-projects/opengl-utility
+3d-engine.subdir        = cpp-projects/3d-engine
+qt-utility.subdir       = cpp-projects/qt-utility
+nodes.subdir            = cpp-projects/nodes
+tool-test.subdir        = cpp-projects/tool-test
+demos.subdir            = cpp-projects/demos
+
+# dependencies
+opengl-utility.depends = base
+3d-engine.depends      = opengl-utility
+qt-utility.depends     = opengl-utility
+nodes.depends          = base
+tool-test.depends      = opengl-utility
+demos.depends          = 3d-engine
+
