@@ -93,8 +93,13 @@ struct Convertor{
 
     static QColor to_color(const QString &value, QString separator = " "){
         QStringList split = value.split(separator);
-        if(split.length() < 4){
+        if(split.length() < 3){
             return Qt::black;
+        }
+        if(split.length() == 3){
+            return QColor(static_cast<int>(split[0].toFloat()*255),
+                          static_cast<int>(split[1].toFloat()*255),
+                          static_cast<int>(split[2].toFloat()*255));
         }
         return QColor(static_cast<int>(split[1].toFloat()*255),
                       static_cast<int>(split[2].toFloat()*255),

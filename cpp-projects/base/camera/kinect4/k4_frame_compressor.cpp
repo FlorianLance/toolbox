@@ -39,6 +39,7 @@
 // local
 // # utility
 #include "utility/logger.hpp"
+#include "utility/format.hpp"
 
 using namespace tool;
 using namespace tool::geo;
@@ -72,12 +73,12 @@ std::unique_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
     k4a::image depthImage,
     k4a::image cloud, float *audioData, size_t audioSize){
 
-
     // create compressed frame
     auto cFrame                = std::make_unique<K4CompressedCloudFrame>();
     cFrame->validVerticesCount = validDepthValues;
     cFrame->colorWidth         = colorImage.get_width_pixels();
     cFrame->colorHeight        = colorImage.get_height_pixels();
+
 
     // get buffers
     auto cloudData = reinterpret_cast<geo::Pt3<int16_t>*>(cloud.get_buffer());
@@ -96,7 +97,7 @@ std::unique_ptr<K4CompressedCloudFrame> K4CloudFrameCompressor::compress(
     // fill valid id
     std::vector<size_t> validId;
     validId.reserve(idV);
-    for_each(std::execution::unseq, std::begin(i->indicesValid1D), std::end(i->indicesValid1D), [&](size_t id){
+    for_each(std::execution::unseq, std::begin(i->indicesValid1D), std::begin(i->indicesValid1D) + depthSize, [&](size_t id){
         if(depthData[id] != k4_invalid_depth_value){
             validId.push_back(id);
         }

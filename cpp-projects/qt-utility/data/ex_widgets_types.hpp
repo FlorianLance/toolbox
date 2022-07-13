@@ -56,7 +56,7 @@ namespace tool::ex {
         // generative ui
         Tab, Generator,
         // ex_data
-        Resource, ResourcesList, Component, ComponentsList, Component_config,
+        Resource, ResourcesList, Component, ComponentsList, Component_config, Routine_condition,
         // others
         Non_ui_labels, Unspecified, // Camera_position,
         SizeEnum};
@@ -111,6 +111,7 @@ namespace tool::ex {
         {UiT::Component,        "Component"sv,           "get_component"sv,                true},
         {UiT::ComponentsList,   "Components list"sv,     "get_component_list"sv,           true},
         {UiT::Component_config, "Component config"sv,    ""sv,                             true},
+        {UiT::Routine_condition,"Routine condition"sv,   ""sv,                             true},
         // # generative ui
         {UiT::Tab,              "Tab"sv,                 "string"sv,                       false},        
         {UiT::Generator,        "Generator"sv,           ""sv,                             false},

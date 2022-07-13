@@ -224,8 +224,6 @@ K4Device::K4Device() : i(std::make_unique<Impl>()){
         Logger::message(fmt("[Kinect4] Devices found: {}\n", i->deviceCount));
     }
 
-//    for(size)
-
     const int audioInitStatus = k4a::K4AAudioManager::Instance().Initialize();
     if (audioInitStatus != SoundIoErrorNone){
         Logger::error("[Kinect4] Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
@@ -562,9 +560,11 @@ void K4Device::Impl::read_frames(K4Mode mode){
         if(d.compressMode == K4CompressMode::Cloud){
             compress_cloud_frame(f,d);
         }
+
         if(d.compressMode == K4CompressMode::Full){
             compress_full_frame(f, d, mode);
         }
+
         if(d.displayRGB || d.displayDepth || d.displayInfra || d.displayCloud){
             display_frame(d, mode);
         }
@@ -572,7 +572,6 @@ void K4Device::Impl::read_frames(K4Mode mode){
         idCapture++;
     }
 }
-
 
 void K4Device::Impl::filter_depth_image(const K4Filters &f, K4Mode mode){
 
