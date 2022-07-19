@@ -107,6 +107,10 @@ struct Convertor{
                       static_cast<int>(split[0].toFloat()*255));
     }
 
+    static geo::Vec3f to_vector3(const QColor &value){
+        return {static_cast<float>(value.redF()),static_cast<float>(value.greenF()),static_cast<float>(value.blueF())};
+    }
+
     static std::pair<std_v1<double>,std_v1<double>> to_curve(const QString &value, QString separator = " "){
 
         std_v1<double> px,py;
