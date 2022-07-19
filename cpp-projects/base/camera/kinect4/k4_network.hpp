@@ -105,15 +105,11 @@ struct K4Feedback{
     FeedbackType feedback;
 };
 
-
 using K4UdpNetworkInfos    = UdpMonoPacketMessage<K4NetworkInfos>;
 using K4UdpCommand         = UdpMonoPacketMessage<K4Command>;
 using K4UdpFeedback        = UdpMonoPacketMessage<K4Feedback>;
-
 using K4UdpConfigSettings  = UdpMonoPacketMessage<camera::K4ConfigSettings>;
 using K4UdpDeviceSettings  = UdpMonoPacketMessage<camera::K4DeviceSettings>;
 using K4UdpActionsSettings = UdpMonoPacketMessage<camera::K4ActionsSettings>;
 using K4UdpFilters         = UdpMonoPacketMessage<camera::K4Filters>;
-
-
 }

@@ -196,13 +196,17 @@ namespace tool::camera {
         std::int64_t gyrTsMs;  /**< Timestamp of the gyroscope in microseconds */
     };
 
-    struct K4DisplaySettings{
+    struct K4CloudDisplaySettings{
         bool cloudVisible = true;
         bool forceCloudColor = false;
         geo::Pt4f cloudColor = {1.f,0.f,0.f, 1.f};
         bool useVoxels = false;
         float sizePoints = 5.f;
         float sizeVoxels = 0.002f;
+    };
+
+    struct K4SceneDisplaySettings{
+        geo::Pt4f backgroundColor = {0.83f, 0.84f, 0.81f, 1.f};
     };
 
     struct K4ConfigSettings{
@@ -225,17 +229,17 @@ namespace tool::camera {
         camera::K4CompressMode compressMode  = camera::K4CompressMode::Cloud;
 
         // display
-        bool displayRGB    = false;
-        bool displayDepth  = false;
-        bool displayInfra  = false;
-        bool displayCloud  = false;
+        bool generateRGBDisplayFrame    = false;
+        bool generateDepthDisplayFrame  = false;
+        bool generateInfraDisplayFrame  = false;
+        bool generateCloudDisplay       = false;
 
         static K4DeviceSettings init_for_grabber(){
             K4DeviceSettings device;
-            device.displayRGB    = true;
-            device.displayDepth  = true;
-            device.displayInfra  = true;
-            device.displayCloud  = true;
+            device.generateRGBDisplayFrame   = true;
+            device.generateDepthDisplayFrame = true;
+            device.generateInfraDisplayFrame = true;
+            device.generateCloudDisplay      = true;
             return device;
         }
     };

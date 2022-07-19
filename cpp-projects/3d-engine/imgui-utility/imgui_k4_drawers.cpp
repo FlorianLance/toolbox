@@ -166,7 +166,34 @@ bool K4SettingsDrawer::draw_filters_tab_item(const std::string &tabItemName, cam
     return (update && autoUpdate) || manualUpdate;
 }
 
-bool K4SettingsDrawer::draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &autoUpdate){
+bool K4SettingsDrawer::draw_scene_display_setings_tab_item(const std::string &tabItemName, camera::K4SceneDisplaySettings &display, bool &autoUpdate){
+
+    if (!ImGui::BeginTabItem(tabItemName.c_str())){
+        return false;
+    }
+
+    bool update = false;
+
+    if(ImGui::ColorEdit4("Background color###background_scene_color", display.backgroundColor.v.data())){
+        update = true;
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    bool manualUpdate = false;
+    if(ImGui::Button("Update###filters_update_button")){
+        manualUpdate = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Checkbox("Auto update###filters_auto_update_cb", &autoUpdate)){}
+
+    ImGui::EndTabItem();
+
+    return (update && autoUpdate) || manualUpdate;
+}
+
+bool K4SettingsDrawer::draw_cloud_display_setings_tab_item(const std::string &tabItemName, camera::K4CloudDisplaySettings &display, bool &autoUpdate){
 
     if (!ImGui::BeginTabItem(tabItemName.c_str())){
         return false;
@@ -353,19 +380,19 @@ void K4SettingsDrawer::draw_device_settings(camera::K4DeviceSettings &device, bo
     }
 
     ImGui::Spacing();
-    ImGui::Text("Display on grabber:");
-    if(ImGui::Checkbox("RGB###settings_display_rgb", &device.displayRGB)){
+    ImGui::Text("Generate grabber display frames:");
+    if(ImGui::Checkbox("RGB###settings_display_rgb", &device.generateRGBDisplayFrame)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Depth###settings_display_depth", &device.displayDepth)){
+    if(ImGui::Checkbox("Depth###settings_display_depth", &device.generateDepthDisplayFrame)){
         updateP = true;
     }
-    if(ImGui::Checkbox("Infra###settings_display_infra", &device.displayInfra)){
+    if(ImGui::Checkbox("Infra###settings_display_infra", &device.generateInfraDisplayFrame)){
         updateP = true;
     }
     ImGui::SameLine();
-    if(ImGui::Checkbox("Cloud###settings_display_cloud", &device.displayCloud)){
+    if(ImGui::Checkbox("Cloud###settings_display_cloud", &device.generateCloudDisplay)){
         updateP = true;
     }
 }
@@ -403,11 +430,11 @@ void K4SettingsDrawer::draw_actions_settings(camera::K4ActionsSettings &actions,
 
 
 
-void K4CloudsDrawer::populate(size_t nbConnections){
+void K4CloudsSceneDrawer::populate(size_t nbConnections){
     cloudsD.resize(nbConnections);
 }
 
-void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame){
+void K4CloudsSceneDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame){
 
     if(idCloud >= cloudsD.size()){
         // error
@@ -458,7 +485,7 @@ void K4CloudsDrawer::update_from_display_frame(size_t idCloud, std::shared_ptr<c
 //    }
 }
 
-void K4CloudsDrawer::update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame *frame){
+void K4CloudsSceneDrawer::update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame *frame){
 
     if(idCloud >= cloudsD.size()){
         // error
@@ -476,7 +503,7 @@ void K4CloudsDrawer::update_from_cloud_frame(size_t idCloud, camera::K4CloudFram
     cloudsD[idCloud].lastCloudFrameId = frame->idCapture;
 }
 
-void K4CloudsDrawer::update_from_full_frame(size_t idCloud, camera::K4FullFrame *frame){
+void K4CloudsSceneDrawer::update_from_full_frame(size_t idCloud, camera::K4FullFrame *frame){
 
     if(idCloud >= cloudsD.size()){
         // error
@@ -511,7 +538,7 @@ void K4CloudsDrawer::update_from_full_frame(size_t idCloud, camera::K4FullFrame 
 }
 
 
-void K4CloudsDrawer::draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiFboUiDrawer &fboD){
+void K4CloudsSceneDrawer::draw_clouds_to_fbo(ImguiFboUiDrawer &fboD){
 
     if(fboD.texture_id() == 0){
         return;
@@ -519,7 +546,7 @@ void K4CloudsDrawer::draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiF
 
     fboD.bind();
     fboD.update_viewport();
-    fboD.set_gl_states(backgroundColor);
+    fboD.set_gl_states(sceneSettings.backgroundColor);
 
     for(auto &cloudD : cloudsD){
 

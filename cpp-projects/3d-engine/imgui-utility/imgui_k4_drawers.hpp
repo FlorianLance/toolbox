@@ -62,7 +62,8 @@ public:
         bool &autoUpdate
     );
     static bool draw_filters_tab_item(const std::string &tabItemName, camera::K4Mode mode, camera::K4Filters &filters, bool &autoUpdate);
-    static bool draw_display_setings_tab_item(const std::string &tabItemName, camera::K4DisplaySettings &display, bool &autoUpdate);
+    static bool draw_scene_display_setings_tab_item(const std::string &tabItemName, camera::K4SceneDisplaySettings &display, bool &autoUpdate);
+    static bool draw_cloud_display_setings_tab_item(const std::string &tabItemName, camera::K4CloudDisplaySettings &display, bool &autoUpdate);
     static bool draw_model_tab_item(const std::string &tabItemName, geo::Mat4f &model, bool &autoUpdate);
 };
 
@@ -80,21 +81,24 @@ struct K4CloudDrawer{
     gl::Texture2D depthT;
     gl::Texture2D infraT;
     // settings
-    camera::K4DisplaySettings displaySettings;
+    camera::K4CloudDisplaySettings displaySettings;
 };
 
-struct K4CloudsDrawer{
+struct K4CloudsSceneDrawer{
 
     void populate(size_t nbConnections);
     void update_from_display_frame(size_t idCloud, std::shared_ptr<camera::K4DisplayFrame> frame);
     void update_from_cloud_frame(size_t idCloud, camera::K4CloudFrame *frame);
     void update_from_full_frame(size_t idCloud, camera::K4FullFrame *frame);
-    void draw_clouds_to_fbo(const geo::Pt4f &backgroundColor, ImguiFboUiDrawer &fboD);
+    void draw_clouds_to_fbo(ImguiFboUiDrawer &fboD);
 
-    // clouds
+    // drawers
     std::vector<K4CloudDrawer> cloudsD;
+    // shaders
     gl::ShaderProgram *cloudShader = nullptr;
-    gl::ShaderProgram *voxelShader = nullptr;
+    gl::ShaderProgram *voxelShader = nullptr;    
+    // settings
+    camera::K4SceneDisplaySettings sceneSettings;
 };
 
 

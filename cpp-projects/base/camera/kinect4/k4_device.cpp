@@ -565,7 +565,7 @@ void K4Device::Impl::read_frames(K4Mode mode){
             compress_full_frame(f, d, mode);
         }
 
-        if(d.displayRGB || d.displayDepth || d.displayInfra || d.displayCloud){
+        if(d.generateRGBDisplayFrame || d.generateDepthDisplayFrame || d.generateInfraDisplayFrame || d.generateCloudDisplay){
             display_frame(d, mode);
         }
 
@@ -911,7 +911,7 @@ void K4Device::Impl::display_frame(const K4DeviceSettings &d, K4Mode mode){
     }
 
     // send color frame
-    if(d.displayRGB && colorImage.has_value()){
+    if(d.generateRGBDisplayFrame && colorImage.has_value()){
 
         tool::Bench::start("[Kinect4] display_frame::color");
 
@@ -947,7 +947,7 @@ void K4Device::Impl::display_frame(const K4DeviceSettings &d, K4Mode mode){
     }
 
     // send depth frame
-    if(d.displayDepth && depthImage.has_value()){
+    if(d.generateDepthDisplayFrame && depthImage.has_value()){
 
         tool::Bench::start("[Kinect4] display_frame::depth");
 
@@ -983,7 +983,7 @@ void K4Device::Impl::display_frame(const K4DeviceSettings &d, K4Mode mode){
     }
 
     // send infrared frame
-    if(d.displayInfra && infraredImage.has_value()){
+    if(d.generateInfraDisplayFrame && infraredImage.has_value()){
 
         tool::Bench::start("[Kinect4] display_frame::infrared");
 
@@ -1011,7 +1011,7 @@ void K4Device::Impl::display_frame(const K4DeviceSettings &d, K4Mode mode){
         tool::Bench::stop();
     }
 
-    if(d.displayCloud && pointCloudImage.has_value() && colorImage.has_value() && depthImage.has_value()){
+    if(d.generateCloudDisplay && pointCloudImage.has_value() && colorImage.has_value() && depthImage.has_value()){
 
         tool::Bench::start("[Kinect4] display_frame::cloud");
 
