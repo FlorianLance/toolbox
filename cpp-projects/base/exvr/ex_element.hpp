@@ -89,7 +89,7 @@ public:
             try{
                 return std::any_cast<T>(containers[pc][name]);
             }catch (const std::bad_any_cast& e){
-                log_error(fmt("get: cast error: {}", e.what()));
+                log_error(std::format("get: cast error: {}", e.what()));
             }
         }
         return T{};
@@ -101,7 +101,7 @@ public:
             try{
                 return std::any_cast<T>(&containers[pc][name]);
             }catch (const std::bad_any_cast& e){
-                log_error(fmt("get_ptr: cast error: {}", e.what()));
+                log_error(std::format("get_ptr: cast error: {}", e.what()));
             }
         }
         return nullptr;
@@ -138,7 +138,7 @@ public:
             try{
                 return std::any_cast<std::vector<T>>(std::get<0>(arrayContainers[pc][name]));
             }catch (const std::bad_any_cast& e){
-                log_error(fmt("get_array: cast error: {}", e.what()));
+                log_error(std::format("get_array: cast error: {}", e.what()));
             }
         }
         return std::vector<T>{};

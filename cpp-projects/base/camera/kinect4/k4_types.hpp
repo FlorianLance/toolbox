@@ -219,7 +219,7 @@ namespace tool::camera {
         bool disableLED = false;
     };
 
-    struct K4DeviceSettings{
+    struct K4DataSettings{
 
         // capture
         bool captureAudio   = true;
@@ -234,8 +234,8 @@ namespace tool::camera {
         bool generateInfraDisplayFrame  = false;
         bool generateCloudDisplay       = false;
 
-        static K4DeviceSettings init_for_grabber(){
-            K4DeviceSettings device;
+        static K4DataSettings init_for_grabber(){
+            K4DataSettings device;
             device.generateRGBDisplayFrame   = true;
             device.generateDepthDisplayFrame = true;
             device.generateInfraDisplayFrame = true;

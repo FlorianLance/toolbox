@@ -42,7 +42,7 @@ void ImguiTextureDrawer::draw_texture(const std::string &name, geo::Pt2f screenP
     ImGui::SetCursorScreenPos(ImGui::to_iv2(screenPos));
 
     if(texture->id() == 0){
-        ImGui::Text(fmt("{}: texture not initialized.", name));
+        ImGui::Text(std::format("{}: texture not initialized.", name));
     }else{
         if(invert){
             ImGui::Image(texture->id(), ImGui::to_iv2(sizeTexture),  ImVec2(0,1), ImVec2(1,0));
@@ -59,9 +59,9 @@ void ImguiTextureDrawer::draw_texture(const std::string &name, geo::Pt2f screenP
 
 void ImguiTextureDrawer::draw_texture_tab_child(const std::string &windowName, geo::Pt2f sizeWindow, const gl::TBO *texture, bool invert){
 
-    if(ImGui::BeginChild(fmt("{}Window",windowName).c_str(), ImGui::to_iv2(sizeWindow),false,ImGuiWindowFlags_NoScrollWithMouse)){
+    if(ImGui::BeginChild(std::format("{}Window",windowName).c_str(), ImGui::to_iv2(sizeWindow),false,ImGuiWindowFlags_NoScrollWithMouse)){
 
-        if(ImGui::BeginTabBar(fmt("{}Tab",windowName).c_str(), ImGuiTabBarFlags_None)){
+        if(ImGui::BeginTabBar(std::format("{}Tab",windowName).c_str(), ImGuiTabBarFlags_None)){
             if(ImGui::BeginTabItem(windowName.c_str())){
 
                 auto size    = ImGui::content_region_size_available();

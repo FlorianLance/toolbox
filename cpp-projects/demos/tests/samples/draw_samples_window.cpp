@@ -99,7 +99,7 @@ bool DrawSampleWindow::init_shaders(){
             Managers::shaders.unbind();
             return false;
         }
-        Logger::message(fmt("Shader [{}] loaded.\n", shaderName.first));
+        Logger::message(std::format("Shader [{}] loaded.\n", shaderName.first));
     }
 
     Managers::shaders.add_shader("colored-cloud", std::move(gl::ColoredCloudShader()));
@@ -144,7 +144,7 @@ bool DrawSampleWindow::init_textures(){
         {"hardwood_diffuse",  "hardwood2_diffuse.jpg"},
     };
 
-    Logger::message(fmt("# Load textures from path [{}].\n", path));
+    Logger::message(std::format("# Load textures from path [{}].\n", path));
     if(!Managers::textures.load_textures_from_directory(path, texturesInfo)){
         return false;
     }
@@ -452,7 +452,7 @@ bool DrawSampleWindow::init_samples(){
     samples.emplace_back(std::make_tuple("ch8ShadowPcf",  std::make_unique<Ch8ShadowPcf>(&m_camera)));
 
     for(auto &demo : samples){
-        Logger::message(fmt("Init sample {}\n", std::get<0>(demo)));
+        Logger::message(std::format("Init sample {}\n", std::get<0>(demo)));
         std::get<1>(demo)->parent_init();
         samplesName.push_back(std::get<0>(demo));
     }
@@ -570,7 +570,7 @@ void DrawSampleWindow::draw_imgui(){
 //        ImGuiWindowFlags_AlwaysAutoResize;
 
     ImGui::Begin(m_imguiWindowTitle.c_str()); // begin window
-    ImGui::Text(fmt("Frame time generation [{} ms]", std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration).count()).c_str());
+    ImGui::Text(std::format("Frame time generation [{} ms]", std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration).count()).c_str());
 
     ImGui::Text("Drawer");
     ImGui::SameLine();

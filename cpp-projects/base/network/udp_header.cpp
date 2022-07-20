@@ -89,7 +89,7 @@ bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nb
     // # nb bytes received
     if(header.currentPacketSizeBytes != nbBytes){
         // drop packet
-        Logger::error(fmt("MutliPacketsMessageData::process Invalid packet size {}/{}\n", header.currentPacketSizeBytes,nbBytes));
+        Logger::error(std::format("MutliPacketsMessageData::process Invalid packet size {}/{}\n", header.currentPacketSizeBytes,nbBytes));
         receivingFrame = false;
         return false;
     }
@@ -99,7 +99,7 @@ bool UdpMultiPacketsMessage::copy_packet_to_data(const Header &header, size_t nb
     size_t ts = (currentTime-firstPacketTimestamp)*0.000001;
     if(ts > timeoutMs){
         // drop packet
-        Logger::error(fmt("MutliPacketsMessageData::process Timeout packet {}ms\n", ts));
+        Logger::error(std::format("MutliPacketsMessageData::process Timeout packet {}ms\n", ts));
         receivingFrame = false;
         return false;
     }

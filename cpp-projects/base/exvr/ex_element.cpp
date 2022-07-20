@@ -37,7 +37,7 @@ int ExElement::get_array_size(ParametersContainer pc, const std::string &name){
     if(contains_array(pc, name)){
         return std::get<1>(arrayContainers[pc][name]);
     }
-    Logger::get()->error(fmt("get_array_size: no value with name {}", name));
+    Logger::get()->error(std::format("get_array_size: no value with name {}", name));
     return 0;
 }
 

@@ -85,7 +85,7 @@ UdpReader::~UdpReader(){
 bool UdpReader::init_socket(std::string readingAdress, int port){
 
     if(is_reading()){
-        Logger::error(fmt("UdpReader: Cannot init socket while reading thread is still active.\n"));
+        Logger::error(std::format("UdpReader: Cannot init socket while reading thread is still active.\n"));
         return false;
     }
 
@@ -108,7 +108,7 @@ bool UdpReader::init_socket(std::string readingAdress, int port){
         i->socket->bind(i->endPoint);
 
     }catch (const boost::system::system_error &error){
-        Logger::error(fmt("UdpReader: Cannot bind endpoint {}, {}, error message: {}.\n",
+        Logger::error(std::format("UdpReader: Cannot bind endpoint {}, {}, error message: {}.\n",
             readingAdress, port, error.what()));
         clean_socket();
         return false;
@@ -127,7 +127,7 @@ void UdpReader::clean_socket(){
             std::this_thread::sleep_for (std::chrono::milliseconds(300));
             i->socket->close();
         }catch (const boost::system::system_error &error){
-            Logger::error(fmt("UdpReader::clean_socket: Cannot shutdown socket, error message: {}.\n", error.what()));
+            Logger::error(std::format("UdpReader::clean_socket: Cannot shutdown socket, error message: {}.\n", error.what()));
         }
     }
     i->socket = nullptr;
@@ -221,7 +221,7 @@ void UdpReader::read_data(){
 //        senderEndpoint.address().to_v6().to_bytes();
 //        senderEndpoint.protocol();
 //        endP.port();
-//        Logger::message(fmt("receive from {} {}\n"),
+//        Logger::message(std::format("receive from {} {}\n"),
 //            senderEndpoint.address().to_v4().to_uint(),
 //            senderEndpoint.port());
         process_packet(buffer, nbBytesReceived);

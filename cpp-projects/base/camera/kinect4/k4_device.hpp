@@ -70,7 +70,7 @@ public:
     K4CompressMode compress_mode()const;
 
     // cameras
-    bool start_cameras(const K4ConfigSettings &config);
+    bool start_cameras(const K4ConfigSettings &configS);
     bool start_cameras(const k4a_device_configuration_t &k4aConfig); // private
     void stop_cameras();
 
@@ -79,8 +79,8 @@ public:
     void stop_reading();
 
     // settings
-    void set_device_settings(const K4DeviceSettings &setings);
-    void set_filters(const K4Filters &filtersS);
+    void set_data_settings(const K4DataSettings &dataS);
+    void set_filters(const K4Filters &filters);
 
     // signals
     sigslot::signal<std::shared_ptr<K4DisplayFrame>> new_display_frame_signal;

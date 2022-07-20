@@ -91,8 +91,8 @@ struct K4Device::Impl{
     // imu
     K4ImuSample imuSample;
 
-    // parameters
-    K4DeviceSettings settings;
+    // parameters&
+    K4DataSettings data;
     K4Filters filters;
 
     // infos
@@ -149,9 +149,9 @@ struct K4Device::Impl{
     void filter_color_image(const K4Filters &f);
     void filter_infrared_image(const K4Filters &f);
     void generate_cloud(K4Mode mode);
-    void compress_cloud_frame(const K4Filters &f, const K4DeviceSettings &d);
-    void compress_full_frame(const K4Filters &f, const K4DeviceSettings &d, K4Mode mode);
-    void display_frame(const K4DeviceSettings &d, K4Mode mode);
+    void compress_cloud_frame(const K4Filters &f, const K4DataSettings &d);
+    void compress_full_frame(const K4Filters &f, const K4DataSettings &d, K4Mode mode);
+    void display_frame(const K4DataSettings &d, K4Mode mode);
 };
 
 
@@ -205,10 +205,10 @@ k4a_device_configuration_t K4Device::generate_config(
     config.subordinate_delay_off_master_usec = subordinateDelayUsec;
     config.disable_streaming_indicator       = disableLED;
 
-    Logger::message(fmt("config.color_format: {}\n", static_cast<int>(config.color_format)));
-    Logger::message(fmt("config.color_resolution: {}\n", static_cast<int>(config.color_resolution)));
-    Logger::message(fmt("config.depth_mode: {}\n", static_cast<int>(config.depth_mode)));
-    Logger::message(fmt("config.camera_fps: {}\n", static_cast<int>(config.camera_fps)));
+    Logger::message(std::format("config.color_format: {}\n", static_cast<int>(config.color_format)));
+    Logger::message(std::format("config.color_resolution: {}\n", static_cast<int>(config.color_resolution)));
+    Logger::message(std::format("config.depth_mode: {}\n", static_cast<int>(config.depth_mode)));
+    Logger::message(std::format("config.camera_fps: {}\n", static_cast<int>(config.camera_fps)));
 
     return config;
 }
@@ -221,7 +221,7 @@ K4Device::K4Device() : i(std::make_unique<Impl>()){
     if(i->deviceCount == 0){
         Logger::error("[Kinect4] No K4A devices found\n");
     }else{
-        Logger::message(fmt("[Kinect4] Devices found: {}\n", i->deviceCount));
+        Logger::message(std::format("[Kinect4] Devices found: {}\n", i->deviceCount));
     }
 
     const int audioInitStatus = k4a::K4AAudioManager::Instance().Initialize();
@@ -229,16 +229,16 @@ K4Device::K4Device() : i(std::make_unique<Impl>()){
         Logger::error("[Kinect4] Failed to initialize audio backend: {}\n", soundio_strerror(audioInitStatus));
     }else{
         size_t nbDevices = k4a::K4AAudioManager::Instance().get_devices_count();
-        Logger::message(fmt("[Kinect4] Audio devices count: {}\n", nbDevices));
+        Logger::message(std::format("[Kinect4] Audio devices count: {}\n", nbDevices));
 
         for(size_t ii = 0; ii < nbDevices; ++ii){
             std::string deviceName = k4a::K4AAudioManager::Instance().get_device_name(ii);
-            Logger::message(fmt(" - {}\n", deviceName));
+            Logger::message(std::format(" - {}\n", deviceName));
             if (deviceName.find("Azure Kinect Microphone Array") != std::string::npos) {
-                Logger::message(fmt("Found Azure kinect microphones array.\n"));
+                Logger::message(std::format("Found Azure kinect microphones array.\n"));
                 i->microphone = k4a::K4AAudioManager::Instance().get_microphone_for_device(deviceName);
                 if(i->microphone == nullptr){
-                    Logger::error(fmt("[Kinect4] Cannot init microphone.\n"));
+                    Logger::error(std::format("[Kinect4] Cannot init microphone.\n"));
                     i->audioListener = nullptr;
                     return;
                 }
@@ -246,11 +246,11 @@ K4Device::K4Device() : i(std::make_unique<Impl>()){
                 if(i->microphone->IsStarted()){
                     i->audioListener = i->microphone->CreateListener();
                 }else{
-                    Logger::error(fmt("[Kinect4] Cannot start microphone.\n"));
+                    Logger::error(std::format("[Kinect4] Cannot start microphone.\n"));
                 }
 //                i->audioListener =  std::make_shared<k4a::K4AMicrophoneListener>(i->microphone);
                 if(i->audioListener == nullptr){
-                    Logger::error(fmt("[Kinect4] Cannot init audio listener.\n"));
+                    Logger::error(std::format("[Kinect4] Cannot init audio listener.\n"));
                     return;
                 }
                 break;
@@ -274,7 +274,7 @@ bool K4Device::open(){
     try {
         i->device = k4a::device::open(i->config.idDevice);
     }  catch (std::runtime_error error) {
-        Logger::error(fmt("[Kinect4] open error: {}\n", error.what()));
+        Logger::error(std::format("[Kinect4] open error: {}\n", error.what()));
         return false;
     }
 
@@ -298,17 +298,17 @@ bool K4Device::open(){
     i->serialNumber = i->device.get_serialnum();
 
     Logger::message("[Kinect4] Device opened:\n");
-    Logger::message(fmt("  Serialnum: {}\n", i->serialNumber));
+    Logger::message(std::format("  Serialnum: {}\n", i->serialNumber));
     Logger::message("  Version:\n");
-    Logger::message(fmt("      Firmware build: {}\n", (debugFB ? "[debug]" : "[release]")));
-    Logger::message(fmt("      Firmware signature: {}\n", fsStr));
-    Logger::message(fmt("      Color camera firmware version {}.{}\n", version.rgb.major, version.rgb.minor));
-    Logger::message(fmt("      Depth camera firmware version {}.{}\n", version.depth.major, version.depth.minor));
-    Logger::message(fmt("      Audio device firmware version {}.{}\n", version.audio.major, version.audio.minor));
-    Logger::message(fmt("      Depth device firmware version {}.{}\n", version.depth_sensor.major, version.depth_sensor.minor));
+    Logger::message(std::format("      Firmware build: {}\n", (debugFB ? "[debug]" : "[release]")));
+    Logger::message(std::format("      Firmware signature: {}\n", fsStr));
+    Logger::message(std::format("      Color camera firmware version {}.{}\n", version.rgb.major, version.rgb.minor));
+    Logger::message(std::format("      Depth camera firmware version {}.{}\n", version.depth.major, version.depth.minor));
+    Logger::message(std::format("      Audio device firmware version {}.{}\n", version.audio.major, version.audio.minor));
+    Logger::message(std::format("      Depth device firmware version {}.{}\n", version.depth_sensor.major, version.depth_sensor.minor));
     Logger::message("  Synch:\n");
-    Logger::message(fmt("      IN connected {}\n", i->device.is_sync_in_connected()));
-    Logger::message(fmt("      OUT connected {}\n", i->device.is_sync_out_connected()));
+    Logger::message(std::format("      IN connected {}\n", i->device.is_sync_in_connected()));
+    Logger::message(std::format("      OUT connected {}\n", i->device.is_sync_out_connected()));
 
     return true;
 }
@@ -336,7 +336,7 @@ K4Mode K4Device::mode() const{
 }
 
 K4CompressMode K4Device::compress_mode() const{
-    return i->settings.compressMode;
+    return i->data.compressMode;
 }
 
 void K4Device::close(){
@@ -403,20 +403,20 @@ void K4Device::stop_reading(){
     }
 }
 
-void K4Device::set_device_settings(const K4DeviceSettings &settingsS){
+void K4Device::set_data_settings(const K4DataSettings &dataS){
     i->parametersM.lock();
-    i->settings = settingsS;
+    i->data = dataS;
     i->parametersM.unlock();
 }
 
-void K4Device::set_filters(const K4Filters &filtersS){
+void K4Device::set_filters(const K4Filters &filters){
     i->parametersM.lock();
-    i->filters = filtersS;
+    i->filters = filters;
     i->parametersM.unlock();
 }
 
-bool K4Device::start_cameras(const K4ConfigSettings &config){
-    return start_cameras(i->k4aConfig = generate_config(i->config = config));
+bool K4Device::start_cameras(const K4ConfigSettings &configS){
+    return start_cameras(i->k4aConfig = generate_config(i->config = configS));
 }
 
 bool K4Device::start_cameras(const k4a_device_configuration_t &k4aConfig){
@@ -431,15 +431,15 @@ bool K4Device::start_cameras(const k4a_device_configuration_t &k4aConfig){
 
         const auto &c = i->calibration;
         Logger::message("Calibration:\n");
-        Logger::message(fmt("  color resolution: {}\n", static_cast<int>(c.color_resolution)));
+        Logger::message(std::format("  color resolution: {}\n", static_cast<int>(c.color_resolution)));
         Logger::message("  color camera:\n");
-        Logger::message(fmt("      width: {}\n", c.color_camera_calibration.resolution_width));
-        Logger::message(fmt("      height: {}\n", c.color_camera_calibration.resolution_height));
-        Logger::message(fmt("      metric radius: {}\n", c.color_camera_calibration.metric_radius));
+        Logger::message(std::format("      width: {}\n", c.color_camera_calibration.resolution_width));
+        Logger::message(std::format("      height: {}\n", c.color_camera_calibration.resolution_height));
+        Logger::message(std::format("      metric radius: {}\n", c.color_camera_calibration.metric_radius));
 
         Logger::message("  depth mode:\n");
-        Logger::message(fmt("      width: {}\n", c.depth_camera_calibration.resolution_width));
-        Logger::message(fmt("      height: {}\n", c.depth_camera_calibration.resolution_height));
+        Logger::message(std::format("      width: {}\n", c.depth_camera_calibration.resolution_width));
+        Logger::message(std::format("      height: {}\n", c.depth_camera_calibration.resolution_height));
 
         Logger::message("[Kinect4] start cameras\n");
         i->device.start_cameras(&i->k4aConfig);
@@ -503,7 +503,7 @@ void K4Device::Impl::read_frames(K4Mode mode){
         // copy parameters
         parametersM.lock();
         const auto f = filters;
-        const auto d = settings;
+        const auto d = data;
         parametersM.unlock();
 
         // read data from device
@@ -532,7 +532,7 @@ void K4Device::Impl::read_frames(K4Mode mode){
             temperature = capture->get_temperature_c();
 
         }   catch (std::runtime_error error) {
-            Logger::error(fmt("[Kinect4] get_capture error: {}\n", error.what()));
+            Logger::error(std::format("[Kinect4] get_capture error: {}\n", error.what()));
             readFramesFromCameras = false;
             break;
         }
@@ -791,7 +791,7 @@ void K4Device::Impl::generate_cloud(K4Mode mode){
     }
 }
 
-void K4Device::Impl::compress_cloud_frame(const K4Filters &f, const K4DeviceSettings &d){
+void K4Device::Impl::compress_cloud_frame(const K4Filters &f, const K4DataSettings &d){
 
     if(!colorImage.has_value() || !depthImage.has_value() || !pointCloudImage.has_value()){
         return;
@@ -833,7 +833,7 @@ void K4Device::Impl::compress_cloud_frame(const K4Filters &f, const K4DeviceSett
     }
 }
 
-void K4Device::Impl::compress_full_frame(const K4Filters &f, const K4DeviceSettings &d, K4Mode mode){
+void K4Device::Impl::compress_full_frame(const K4Filters &f, const K4DataSettings &d, K4Mode mode){
 
     if(!colorImage.has_value() || !depthImage.has_value() || !infraredImage.has_value()){
         return;
@@ -876,7 +876,7 @@ void K4Device::Impl::compress_full_frame(const K4Filters &f, const K4DeviceSetti
     }
 }
 
-void K4Device::Impl::display_frame(const K4DeviceSettings &d, K4Mode mode){
+void K4Device::Impl::display_frame(const K4DataSettings &d, K4Mode mode){
 
     // write frame
     tool::Bench::start("[Kinect4] Write display data frame");
@@ -1184,9 +1184,9 @@ void K4Device::Impl::read_from_microphones(){
         });
 
         if (audioListener->GetStatus() != SoundIoErrorNone){
-            Logger::error(fmt("[Kinect4] Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
+            Logger::error(std::format("[Kinect4] Error while recording {}\n", soundio_strerror(audioListener->GetStatus())));
         }else if (audioListener->Overflowed()){
-            Logger::warning(fmt("[Kinect4] Warning: sound overflow detected!\n"));
+            Logger::warning(std::format("[Kinect4] Warning: sound overflow detected!\n"));
             audioListener->ClearOverflowed();
         }
     }

@@ -49,15 +49,15 @@ namespace tool::graphics {
     "Full", "Cloud", "None"
 };
 
-class K4SettingsDrawer{
+class K4UIDrawer{
 public:
     static void draw_config(const std::vector<std::string> &devicesName, camera::K4ConfigSettings &config,  bool &updateP);
-    static void draw_device_settings(camera::K4DeviceSettings &device, bool &updateP);
+    static void draw_data_settings(camera::K4DataSettings &data, bool &updateP);
     static void draw_actions_settings(camera::K4ActionsSettings &actions,  bool &updateP);
     static std::tuple<bool,bool,bool> draw_all_settings_tab_item(
         const std::string &tabItemName,const std::vector<std::string> &devicesName,
         camera::K4ConfigSettings &config,
-        camera::K4DeviceSettings &device,
+        camera::K4DataSettings &data,
         camera::K4ActionsSettings &actions,
         bool &autoUpdate
     );

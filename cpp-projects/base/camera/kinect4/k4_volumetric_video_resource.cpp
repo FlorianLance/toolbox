@@ -170,7 +170,7 @@ bool K4VolumetricVideoResource::save_to_file(const std::string &path){
     std::ofstream file;
     file.open(path, std::ios_base::binary);
     if(!file.is_open()){
-        Logger::error(fmt("[VolumetricVideoResource] Cannot save compressed frames to {}.\n", path));
+        Logger::error(std::format("[VolumetricVideoResource] Cannot save compressed frames to {}.\n", path));
         return false;
     }
 
@@ -190,7 +190,7 @@ bool K4VolumetricVideoResource::load_from_file(const std::string &path){
 
     std::ifstream file(path, std::ios_base::binary);
     if(!file.is_open()){
-        Logger::error(fmt("[VolumetricVideoResource] Cannot open compressed frames file: {}.\n", path));
+        Logger::error(std::format("[VolumetricVideoResource] Cannot open compressed frames file: {}.\n", path));
         return false;
     }
 

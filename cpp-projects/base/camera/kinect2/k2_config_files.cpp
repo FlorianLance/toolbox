@@ -46,13 +46,13 @@ bool K2ConfigFiles::save_grabber_settings_config_file(const K2Settings &settings
     std::ofstream file;
     file.open(path);
     if(!file.is_open()){
-        Logger::error(fmt("K2ConfigFiles: Cannot write on grabber settings config file with path: {}\n", path));
+        Logger::error(std::format("K2ConfigFiles: Cannot write on grabber settings config file with path: {}\n", path));
         return false;
     }
 
     file << settings.to_string();
 
-    Logger::message(fmt("K2ConfigFiles: Grabber settings config file written: {}", path));
+    Logger::message(std::format("K2ConfigFiles: Grabber settings config file written: {}", path));
     return true;
 }
 
@@ -64,14 +64,14 @@ std::optional<K2Settings> K2ConfigFiles::read_grabber_settings_config_file(std::
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            Logger::error(fmt("K2ConfigFiles: Invalid extension for settings config file {}\n", fsPath.string()));
+            Logger::error(std::format("K2ConfigFiles: Invalid extension for settings config file {}\n", fsPath.string()));
             return std::nullopt;
         }
     }
 
     std::ifstream inConfigFile(fsPath.string());
     if(!inConfigFile.is_open()){
-        Logger::error(fmt("K2ConfigFiles: No settings config file found at {}\n", fsPath.string()));
+        Logger::error(std::format("K2ConfigFiles: No settings config file found at {}\n", fsPath.string()));
         return std::nullopt;
     }
 
@@ -81,7 +81,7 @@ std::optional<K2Settings> K2ConfigFiles::read_grabber_settings_config_file(std::
     inConfigFile.seekg(0, std::ios::beg);
     str.assign((std::istreambuf_iterator<char>(inConfigFile)),std::istreambuf_iterator<char>());
 
-    Logger::message(fmt("Grabber settings config file read: {}", fsPath.string()));
+    Logger::message(std::format("Grabber settings config file read: {}", fsPath.string()));
     return {K2Settings::from_string(str)};
 }
 
@@ -93,14 +93,14 @@ bool K2ConfigFiles::read_grabber_network_config_file(int *readingPort, std::stri
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            Logger::error(fmt("Invalid extension for grabber network config file {}\n",fsPath.string()));
+            Logger::error(std::format("Invalid extension for grabber network config file {}\n",fsPath.string()));
             return false;
         }
     }
 
     std::ifstream inConfigFile(fsPath.string());
     if(!inConfigFile.is_open()){
-        Logger::error(fmt("Cannot open grabber network config file with path: {}\n", fsPath.string()));
+        Logger::error(std::format("Cannot open grabber network config file with path: {}\n", fsPath.string()));
         return false;
     }
 
@@ -110,7 +110,7 @@ bool K2ConfigFiles::read_grabber_network_config_file(int *readingPort, std::stri
         *readingPort = std::stoi(line);
     }
 
-    Logger::message(fmt("Grabber network config file read: {}", fsPath.string()));
+    Logger::message(std::format("Grabber network config file read: {}", fsPath.string()));
     return true;
 }
 
@@ -122,14 +122,14 @@ std::vector<K2GrabberTargetInfo> K2ConfigFiles::read_manager_network_config_file
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            Logger::error(fmt("Invalid extension for manager network config file {}\n", fsPath.string()));
+            Logger::error(std::format("Invalid extension for manager network config file {}\n", fsPath.string()));
             return {};
         }
     }
 
     std::ifstream inConfigFile(fsPath.string());
     if(!inConfigFile.is_open()){
-        Logger::error(fmt("Cannot open manager network config file with path: {}\n", fsPath.string()));
+        Logger::error(std::format("Cannot open manager network config file with path: {}\n", fsPath.string()));
         return {};
     }
 
@@ -139,13 +139,13 @@ std::vector<K2GrabberTargetInfo> K2ConfigFiles::read_manager_network_config_file
     while (std::getline(inConfigFile, line)){
         auto split = tool::str::split(line, ' ');
         if(split.size() != 4){
-            Logger::error(fmt("Invalid manager network config file with path:: {}\n", fsPath.string()));
+            Logger::error(std::format("Invalid manager network config file with path:: {}\n", fsPath.string()));
             return {};
         }
         infos.emplace_back(K2GrabberTargetInfo{split[0],std::stoi(split[1]),std::stoi(split[2]),std::stoi(split[3])});        
     }
 
-    Logger::message(fmt("Manager network config file read: {}", fsPath.string()));
+    Logger::message(std::format("Manager network config file read: {}", fsPath.string()));
     return infos;
 }
 
@@ -158,14 +158,14 @@ std::vector<tool::geo::Mat4d> K2ConfigFiles::read_manager_calibration_file(std::
     }else{
         fsPath = path;
         if(fsPath.extension() != ".config"){
-            Logger::error(fmt("Invalid extension for manager calibration config file {}\n", fsPath.string()));;
+            Logger::error(std::format("Invalid extension for manager calibration config file {}\n", fsPath.string()));;
             return {};
         }
     }
 
     std::ifstream inConfigfile(fsPath.string());
     if(!inConfigfile.is_open()){
-        Logger::error(fmt("Cannot open manager calibration config file with path: {}\n", fsPath.string()));
+        Logger::error(std::format("Cannot open manager calibration config file with path: {}\n", fsPath.string()));
         return {};
     }
 
@@ -207,7 +207,7 @@ std::vector<tool::geo::Mat4d> K2ConfigFiles::read_manager_calibration_file(std::
             if(matrix.has_value()){
                 mCalibs.emplace_back(std::move(matrix.value()));
             }else{
-                Logger::error(fmt("Invalid manager calibration config file with path:: {}\n", fsPath.string()));
+                Logger::error(std::format("Invalid manager calibration config file with path:: {}\n", fsPath.string()));
                 return {};
             }
 
@@ -216,6 +216,6 @@ std::vector<tool::geo::Mat4d> K2ConfigFiles::read_manager_calibration_file(std::
         }
     }
 
-    Logger::message(fmt("Manager calibfration config file read: {}", fsPath.string()));
+    Logger::message(std::format("Manager calibfration config file read: {}", fsPath.string()));
     return mCalibs;
 }

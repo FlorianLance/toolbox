@@ -31,14 +31,10 @@
 #include <string>
 
 namespace tool{
-    template <class... Args>
-    std::string fmt(const std::string& fmtString, Args&&... args){
-        return std::format(fmtString, std::forward<Args>(args)...);
-    }
 
     template <typename... Args>
-    std::string vfmt(std::string_view fmtVString, Args&&... args) {
-        return std::vformat(fmtVString, std::forward<Args>(args)...);
+    std::string fmt(std::string_view rt_fmt_str, Args&&... args) {
+        return std::vformat(rt_fmt_str, std::make_format_args(args...));
     }
 }
 

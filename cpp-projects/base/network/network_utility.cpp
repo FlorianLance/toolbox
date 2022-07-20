@@ -98,7 +98,7 @@ std::vector<Interface> Interface::list_local_interfaces(Protocol protocol){
             }
         }
     }catch (const boost::system::system_error &error){
-        Logger::error(fmt("list_local_interfaces: Cannot list interfaces, error message: {}\n", error.what()));
+        Logger::error(std::format("list_local_interfaces: Cannot list interfaces, error message: {}\n", error.what()));
     }
 
     ioService.stop();
